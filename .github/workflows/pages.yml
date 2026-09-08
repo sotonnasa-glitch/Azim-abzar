@@ -25,6 +25,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Wire products page into homepage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '<a href="#home">خانه</a><a href="#categories">دسته‌بندی‌ها</a><a href="#about">درباره عظیم ابزار</a><a href="#brands">برندها</a>'
+          new = '<a href="#home">خانه</a><a href="products.html">محصولات</a><a href="#categories">دسته‌بندی‌ها</a><a href="#about">درباره عظیم ابزار</a><a href="#brands">برندها</a>'
+          if old in s and 'href="products.html"' not in s:
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
