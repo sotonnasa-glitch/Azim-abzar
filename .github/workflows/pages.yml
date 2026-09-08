@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Wire products page into homepage
+      - name: Wire products page into homepage and live product store
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -37,17 +37,14 @@ jobs:
               if nav:
                   inside = nav.group(1)
                   home = re.search(r'<a\b[^>]*href=["\']#home["\'][^>]*>.*?</a>', inside, flags=re.I|re.S)
-                  if home:
-                      updated = inside[:home.end()] + '<a href="products.html">محصولات</a>' + inside[home.end():]
-                      s = s[:nav.start(1)] + updated + s[nav.end(1):]
-                  else:
-                      updated = '<a href="products.html">محصولات</a>' + inside
-                      s = s[:nav.start(1)] + updated + s[nav.end(1):]
-              else:
-                  marker = '<header'
-                  pos = s.find(marker)
-                  if pos != -1:
-                      s = s[:pos] + '<a href="products.html" style="display:none">محصولات</a>' + s[pos:]
+                  updated = inside[:home.end()] + '<a href="products.html">محصولات</a>' + inside[home.end():] if home else '<a href="products.html">محصولات</a>' + inside
+                  s = s[:nav.start(1)] + updated + s[nav.end(1):]
+              p.write_text(s, encoding='utf-8')
+          p = Path('products.html')
+          s = p.read_text(encoding='utf-8')
+          tag = '<script src="custom-products.js"></script>'
+          if tag not in s:
+              s = s.replace('</body>', tag + '</body>')
               p.write_text(s, encoding='utf-8')
           PY
       - name: Upload artifact
