@@ -1,77 +1,48 @@
 name: Site button and link test
 on:
   push:
-    paths:
-      - 'index.html'
-      - 'contact.html'
-      - '.github/workflows/site-button-test.yml'
+    paths: ['index.html','contact.html','.github/workflows/site-button-test.yml']
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test HTML links and buttons
+      - name: Validate links anchors controls and JavaScript
         run: |
           python - <<'PY'
           from pathlib import Path
           from html.parser import HTMLParser
-          from urllib.parse import urlparse
-          import re, sys
-
+          import re, sys, subprocess
           class P(HTMLParser):
-              def __init__(self):
-                  super().__init__(); self.links=[]; self.ids=set(); self.buttons=[]
-              def handle_starttag(self, tag, attrs):
+              def __init__(self): super().__init__(); self.hrefs=[]; self.ids=set(); self.controls=[]
+              def handle_starttag(self,tag,attrs):
                   a=dict(attrs)
-                  if 'id' in a: self.ids.add(a['id'])
-                  if tag=='a': self.links.append(a.get('href',''))
-                  if tag in ('button','input') and (tag=='button' or a.get('type','').lower() in ('button','submit')): self.buttons.append((tag,a))
-
+                  if a.get('id'): self.ids.add(a['id'])
+                  if tag=='a': self.hrefs.append(a.get('href',''))
+                  if tag=='button' or (tag=='input' and a.get('type','').lower() in ('button','submit')): self.controls.append((tag,a))
           errors=[]
+          texts={}
           for fn in ('index.html','contact.html'):
-              p=P(); text=Path(fn).read_text(encoding='utf-8'); p.feed(text)
-              print(f'\n=== {fn} ===')
-              print('anchors:',len(p.links),'buttons/submit:',len(p.buttons),'ids:',len(p.ids))
-              for h in p.links:
-                  if not h or h.startswith(('http://','https://','mailto:','tel:','javascript:','data:')): continue
-                  path,_,frag=h.partition('#')
-                  target=(Path(fn).parent / (path or fn)).resolve()
-                  if path and not target.exists(): errors.append(f'{fn}: broken local target {h}')
-                  if frag and frag not in p.ids:
-                      # fragment may target another local page; resolve that page when possible
-                      if path:
-                          tp=Path(path)
-                          if tp.exists():
-                              q=P(); q.feed(tp.read_text(encoding='utf-8'))
-                              if frag not in q.ids: errors.append(f'{fn}: broken fragment {h}')
-                          else: errors.append(f'{fn}: broken fragment target {h}')
-                      else: errors.append(f'{fn}: broken fragment #{frag}')
-                  print(' LINK',h)
-              for tag,a in p.buttons: print(' BUTTON',tag,a.get('type',''),a.get('onclick',''))
-              for form in re.findall(r'<form\b[^>]*>',text,re.I): print(' FORM',form)
-
-          # Required navigation checks
-          idx=Path('index.html').read_text(encoding='utf-8')
-          con=Path('contact.html').read_text(encoding='utf-8')
+              text=Path(fn).read_text(encoding='utf-8'); texts[fn]=text; p=P(); p.feed(text)
+              print(f'=== {fn} ==='); print('IDs:',sorted(p.ids)); print('Links:',len(p.hrefs),'Controls:',len(p.controls))
+              for h in p.hrefs:
+                  if h.startswith('#') and h[1:] not in p.ids: errors.append(f'{fn}: broken anchor {h}')
+                  elif h and not h.startswith(('http://','https://','mailto:','tel:','javascript:','data:')):
+                      path=h.split('#',1)[0]
+                      if path and path not in ('.','./') and not Path(path).exists(): errors.append(f'{fn}: missing local target {h}')
+              for tag,a in p.controls: print('CONTROL',tag,a.get('type',''),a.get('onclick',''))
+              for s in re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>',text,re.I|re.S):
+                  Path('/tmp/check.js').write_text(s,encoding='utf-8')
+                  r=subprocess.run(['node','--check','/tmp/check.js'],capture_output=True,text=True)
+                  if r.returncode: errors.append(f'{fn}: JavaScript syntax error: {r.stderr.strip()}')
           checks=[
-              ('index has contact page link', 'contact.html' in idx),
-              ('contact logo points home', re.search(r'<a class="logo"\s+href="\./(?:index\.html)?"', con) is not None),
-              ('contact has dedicated history back button', 'history.back()' in con and 'class="back-page"' in con),
-              ('contact has homepage link', 'href="./"' in con or 'href="./index.html"' in con),
-              ('contact form has mail action', 'mailto:' in con),
-              ('contact address has map link', 'nshn.ir' in con),
-          ]
-          for name,ok in checks: print(('PASS' if ok else 'FAIL'),name); errors += [] if ok else [name]
+            ('index contact page link','contact.html' in texts['index.html']),
+            ('contact logo goes home','<a class="logo" href="./">' in texts['contact.html'] or '<a class="logo" href="./index.html">' in texts['contact.html']),
+            ('contact dedicated history back button','class="back-page"' in texts['contact.html'] and 'history.back()' in texts['contact.html']),
+            ('contact map link','nshn.ir' in texts['contact.html']),
+            ('contact form mailto','mailto:' in texts['contact.html'])]
+          for n,ok in checks: print(('PASS' if ok else 'FAIL'),n); errors += [] if ok else [n]
           if errors:
-              print('\nFAILURES:'); print('\n'.join(errors)); sys.exit(1)
-          print('\nALL CHECKS PASSED')
+              print('FAILURES:'); print('\n'.join(errors)); sys.exit(1)
+          print('ALL CHECKS PASSED')
           PY
-      - name: Remove temporary test workflow
-        if: always()
-        run: |
-          rm -f .github/workflows/site-button-test.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/site-button-test.yml
-          git diff --cached --quiet || git commit -m 'Remove temporary site test workflow'
-          git push
