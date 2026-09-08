@@ -3,6 +3,7 @@ export default async function handler(req, res) {
   try {
     const message = String(req.body?.message || '').trim();
     if (!message) return res.status(400).json({ error: 'پیام خالی است' });
+    if (message.length > 1200) return res.status(413).json({ error: 'پیام بیش از حد طولانی است' });
     if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'OPENAI_API_KEY is not configured' });
 
     const response = await fetch('https://api.openai.com/v1/responses', {
@@ -12,7 +13,8 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-5.5',
+        model: 'gpt-5.6-luna',
+        store: false,
         instructions: 'تو دستیار هوشمند فروشگاه عظیم ابزار هستی. به فارسی و کوتاه و کاربردی پاسخ بده. برای انتخاب ابزار مکانیکی، تعمیرگاهی و دستی کمک کن. اگر اطلاعات کافی نیست، سوال روشن بپرس. قیمت یا موجودی را حدس نزن. ادعا نکن محصولی موجود است مگر داده واقعی فروشگاه در اختیار تو باشد.',
         input: message
       })
