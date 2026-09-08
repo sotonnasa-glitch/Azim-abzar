@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Add Products to homepage and live product store
+      - name: Add Products link and Supabase loader
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -40,10 +40,13 @@ jobs:
                   p.write_text(s, encoding='utf-8')
           p = Path('products.html')
           s = p.read_text(encoding='utf-8')
-          tag = '<script src="custom-products.js"></script>'
-          if tag not in s:
-              s = s.replace('</body>', tag + '</body>')
-              p.write_text(s, encoding='utf-8')
+          old = '<script src="custom-products.js"></script>'
+          new = '<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-products.js"></script>'
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'supabase-products.js' not in s:
+              s = s.replace('</body>', new + '</body>')
+          p.write_text(s, encoding='utf-8')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
