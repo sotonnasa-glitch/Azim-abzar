@@ -9,25 +9,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add back button
+      - name: Fix back button
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('contact.html')
           s=p.read_text(encoding='utf-8')
+          css='''.back-page{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:18px;padding:11px 16px;border:1px solid #343a36;border-radius:11px;background:rgba(255,255,255,.025);color:#d6dad7;font-size:10px;font-weight:900;transition:.25s}.back-page:hover{border-color:rgba(245,185,0,.45);color:var(--gold);transform:translateY(-2px)}'''
+          if '.back-page{' not in s:
+              s=s.replace('</style>',css+'\n</style>',1)
+          btn='<a class="back-page" href="javascript:history.back()" aria-label="بازگشت به صفحه قبل">← برگشت به صفحه قبل</a>'
           if 'class="back-page"' not in s:
-              css='''\n.back-page{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:11px 16px;border:1px solid #343a36;border-radius:11px;background:rgba(255,255,255,.025);color:#d6dad7;font-size:10px;font-weight:900;transition:.25s}.back-page:hover{border-color:rgba(245,185,0,.45);color:var(--gold);transform:translateY(-2px)}\n'''
-              s=s.replace('</style>',css+'</style>',1)
-              btn='<a class="back-page" href="javascript:history.back()">← برگشت به صفحه قبل</a>'
-              s=s.replace('</div></section>',btn+'</div></section>',1)
-              p.write_text(s,encoding='utf-8')
+              marker='<div class="hero-actions">'
+              pos=s.find(marker)
+              if pos != -1:
+                  end=s.find('</div>',pos)
+                  s=s[:end+6]+btn+s[end+6:]
+              else:
+                  body=s.find('<body>')
+                  s=s[:body+6]+btn+s[body+6:]
+          p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit
+      - name: Commit fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add contact.html
-          git diff --cached --quiet || git commit -m 'Add back button to contact page'
+          git diff --cached --quiet || git commit -m 'Fix contact page back button'
           git push
       - name: Remove temporary workflow
         if: always()
