@@ -29,12 +29,26 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = '<a href="#home">خانه</a><a href="#categories">دسته‌بندی‌ها</a><a href="#about">درباره عظیم ابزار</a><a href="#brands">برندها</a>'
-          new = '<a href="#home">خانه</a><a href="products.html">محصولات</a><a href="#categories">دسته‌بندی‌ها</a><a href="#about">درباره عظیم ابزار</a><a href="#brands">برندها</a>'
-          if old in s and 'href="products.html"' not in s:
-              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          if 'href="products.html"' not in s:
+              nav = re.search(r'<nav\b[^>]*class=["\']nav["\'][^>]*>(.*?)</nav>', s, flags=re.I|re.S)
+              if nav:
+                  inside = nav.group(1)
+                  home = re.search(r'<a\b[^>]*href=["\']#home["\'][^>]*>.*?</a>', inside, flags=re.I|re.S)
+                  if home:
+                      updated = inside[:home.end()] + '<a href="products.html">محصولات</a>' + inside[home.end():]
+                      s = s[:nav.start(1)] + updated + s[nav.end(1):]
+                  else:
+                      updated = '<a href="products.html">محصولات</a>' + inside
+                      s = s[:nav.start(1)] + updated + s[nav.end(1):]
+              else:
+                  marker = '<header'
+                  pos = s.find(marker)
+                  if pos != -1:
+                      s = s[:pos] + '<a href="products.html" style="display:none">محصولات</a>' + s[pos:]
+              p.write_text(s, encoding='utf-8')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
