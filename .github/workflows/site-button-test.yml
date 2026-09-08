@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate links anchors controls and JavaScript
+      - name: Validate both pages
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -21,28 +21,30 @@ jobs:
                   if tag=='a': self.hrefs.append(a.get('href',''))
                   if tag=='button' or (tag=='input' and a.get('type','').lower() in ('button','submit')): self.controls.append((tag,a))
           errors=[]
-          texts={}
           for fn in ('index.html','contact.html'):
-              text=Path(fn).read_text(encoding='utf-8'); texts[fn]=text; p=P(); p.feed(text)
-              print(f'=== {fn} ==='); print('IDs:',sorted(p.ids)); print('Links:',len(p.hrefs),'Controls:',len(p.controls))
+              text=Path(fn).read_text(encoding='utf-8'); p=P(); p.feed(text)
+              print(f'=== {fn} ===')
+              print('IDS', sorted(p.ids))
+              print('LINK_COUNT', len(p.hrefs), 'CONTROL_COUNT', len(p.controls))
               for h in p.hrefs:
                   if h.startswith('#') and h[1:] not in p.ids: errors.append(f'{fn}: broken anchor {h}')
                   elif h and not h.startswith(('http://','https://','mailto:','tel:','javascript:','data:')):
                       path=h.split('#',1)[0]
                       if path and path not in ('.','./') and not Path(path).exists(): errors.append(f'{fn}: missing local target {h}')
-              for tag,a in p.controls: print('CONTROL',tag,a.get('type',''),a.get('onclick',''))
-              for s in re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>',text,re.I|re.S):
+              for tag,a in p.controls: print('CONTROL', tag, a.get('type',''), a.get('onclick',''))
+              for s in re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',text,re.I|re.S):
                   Path('/tmp/check.js').write_text(s,encoding='utf-8')
                   r=subprocess.run(['node','--check','/tmp/check.js'],capture_output=True,text=True)
-                  if r.returncode: errors.append(f'{fn}: JavaScript syntax error: {r.stderr.strip()}')
+                  if r.returncode: errors.append(f'{fn}: JS syntax error: {r.stderr.strip()}')
+          con=Path('contact.html').read_text(encoding='utf-8')
           checks=[
-            ('index contact page link','contact.html' in texts['index.html']),
-            ('contact logo goes home','<a class="logo" href="./">' in texts['contact.html'] or '<a class="logo" href="./index.html">' in texts['contact.html']),
-            ('contact dedicated history back button','class="back-page"' in texts['contact.html'] and 'history.back()' in texts['contact.html']),
-            ('contact map link','nshn.ir' in texts['contact.html']),
-            ('contact form mailto','mailto:' in texts['contact.html'])]
+            ('index contact page link','contact.html' in Path('index.html').read_text(encoding='utf-8')),
+            ('contact logo home',bool(re.search(r'<a class="logo"\s+href="\./(?:index\.html)?"',con))),
+            ('contact back button', 'class="back-page"' in con and 'history.back()' in con),
+            ('contact map link','nshn.ir' in con),
+            ('contact form','mailto:' in con)]
           for n,ok in checks: print(('PASS' if ok else 'FAIL'),n); errors += [] if ok else [n]
           if errors:
-              print('FAILURES:'); print('\n'.join(errors)); sys.exit(1)
+              print('FAILURES'); print('\n'.join(errors)); sys.exit(1)
           print('ALL CHECKS PASSED')
           PY
