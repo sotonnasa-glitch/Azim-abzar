@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f59e0b" />
+  <meta name="description" content="عظیم ابزار؛ فروشگاه آنلاین ابزارآلات و تجهیزات فنی" />
+  <title>عظیم ابزار | فروشگاه تخصصی ابزارآلات</title>
+  <style>
+    :root{--bg:#f7f8fa;--surface:#fff;--text:#172033;--muted:#6b7280;--line:#e7eaf0;--brand:#f59e0b;--brand-dark:#d97706;--dark:#111827;--green:#16a34a;--shadow:0 12px 34px rgba(17,24,39,.08);--radius:22px}
+    *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}a{text-decoration:none;color:inherit}button,input{font:inherit}button{border:0;cursor:pointer}.container{width:min(1180px,calc(100% - 32px));margin:auto}
+    .topbar{background:var(--dark);color:#fff;font-size:12px}.topbar .inner{min-height:36px;display:flex;align-items:center;justify-content:space-between;gap:16px}.topbar span{opacity:.86}.topbar b{color:#fbbf24}
+    header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.nav{min-height:74px;display:flex;align-items:center;gap:20px}.logo{display:flex;align-items:center;gap:10px;min-width:max-content}.logo-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:grid;place-items:center;color:#111827;font-size:22px;box-shadow:0 7px 18px rgba(245,158,11,.3)}.logo strong{font-size:19px}.logo small{display:block;color:var(--muted);font-size:10px;margin-top:-5px}.search{flex:1;position:relative}.search input{width:100%;height:48px;border:1px solid var(--line);border-radius:15px;padding:0 48px 0 16px;outline:none;background:#f7f8fa;transition:.2s}.search input:focus{background:#fff;border-color:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,.12)}.search-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--muted)}.nav-actions{display:flex;gap:9px}.icon-btn{width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:14px;display:grid;place-items:center;font-size:19px;position:relative}.badge{position:absolute;top:-5px;left:-4px;background:#ef4444;color:#fff;border-radius:999px;min-width:18px;height:18px;font-size:10px;display:grid;place-items:center;border:2px solid #fff}
+    .main-nav{border-top:1px solid #f0f1f4}.main-nav .inner{display:flex;align-items:center;gap:26px;height:48px;font-size:13px;color:#4b5563}.main-nav a:first-child{font-weight:700;color:#111827}.main-nav a:hover{color:var(--brand-dark)}
+    .hero{padding:24px 0}.hero-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:16px}.hero-main{min-height:360px;border-radius:28px;padding:42px;position:relative;overflow:hidden;background:linear-gradient(135deg,#171717 0%,#242424 53%,#3a2a08 100%);color:#fff;box-shadow:var(--shadow)}.hero-main:before{content:"";position:absolute;width:360px;height:360px;border-radius:50%;background:rgba(245,158,11,.18);left:-90px;bottom:-170px;filter:blur(8px)}.hero-copy{position:relative;z-index:1;max-width:600px}.pill{display:inline-flex;padding:7px 11px;border-radius:999px;background:rgba(245,158,11,.16);border:1px solid rgba(251,191,36,.25);color:#fbbf24;font-size:11px;margin-bottom:15px}.hero h1{font-size:38px;line-height:1.35;margin-bottom:12px}.hero h1 span{color:#fbbf24}.hero p{color:#d1d5db;max-width:560px;font-size:14px}.hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.btn{height:46px;padding:0 20px;border-radius:13px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;justify-content:center}.btn-primary{background:var(--brand);color:#111827}.btn-primary:hover{background:#fbbf24}.btn-ghost{background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.15)}.hero-tools{position:absolute;right:0;bottom:-50px;font-size:180px;opacity:.10;transform:rotate(-18deg)}
+    .side-cards{display:grid;grid-template-rows:1fr 1fr;gap:16px}.side-card{border-radius:24px;padding:25px;position:relative;overflow:hidden;box-shadow:var(--shadow)}.side-card.sale{background:#fff3d6}.side-card.fast{background:#e9f8ee}.side-card h3{font-size:19px;margin:5px 0}.side-card p{font-size:12px;color:#64748b;max-width:250px}.side-emoji{position:absolute;left:20px;bottom:10px;font-size:76px;opacity:.45}.side-label{font-size:11px;color:#8a5b00;font-weight:700}
+    section{padding:18px 0}.section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:14px}.section-head h2{font-size:21px}.section-head p{font-size:12px;color:var(--muted)}.link{font-size:12px;color:var(--brand-dark);font-weight:700}
+    .categories{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.category{background:#fff;border:1px solid var(--line);border-radius:19px;padding:18px 10px;text-align:center;transition:.2s}.category:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#fcd34d}.cat-icon{width:52px;height:52px;margin:auto auto 10px;border-radius:17px;background:#fff7e6;display:grid;place-items:center;font-size:25px}.category b{font-size:12px}.category span{display:block;color:#8a93a3;font-size:10px;margin-top:2px}
+    .products{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.product{background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;transition:.2s}.product:hover{transform:translateY(-4px);box-shadow:var(--shadow)}.product-img{height:180px;background:linear-gradient(135deg,#f7f7f8,#eceff3);display:grid;place-items:center;font-size:75px;position:relative}.tag{position:absolute;right:11px;top:11px;padding:5px 8px;border-radius:999px;background:#fff;color:#d97706;font-size:9px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.08)}.product-body{padding:14px}.product-title{font-size:13px;font-weight:700;min-height:45px}.rating{font-size:11px;color:#f59e0b;margin:7px 0}.price-row{display:flex;align-items:end;justify-content:space-between;gap:8px}.price{font-size:16px;font-weight:800}.price small{font-size:9px;color:#8b93a1;font-weight:400}.add{width:38px;height:38px;border-radius:12px;background:#111827;color:#fff;font-size:20px}.add:hover{background:#f59e0b;color:#111827}
+    .trust{margin:12px 0 24px;display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden}.trust-item{padding:19px;display:flex;align-items:center;gap:12px;border-left:1px solid var(--line)}.trust-item:last-child{border-left:0}.trust-icon{font-size:27px}.trust b{font-size:12px;display:block}.trust span{font-size:10px;color:var(--muted)}
+    footer{margin-top:18px;background:#111827;color:#d1d5db;padding:38px 0 22px}.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px}.footer-title{color:#fff;font-weight:800;margin-bottom:10px;font-size:14px}.footer-text{font-size:11px;color:#9ca3af;max-width:330px}.footer-links{display:grid;gap:6px;font-size:11px}.footer-links a:hover{color:#fbbf24}.copyright{margin-top:28px;padding-top:16px;border-top:1px solid #283242;font-size:10px;color:#8d96a5;display:flex;justify-content:space-between;gap:10px}
+    .toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;padding:12px 16px;border-radius:14px;font-size:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(20px);pointer-events:none;transition:.25s;z-index:50}.toast.show{opacity:1;transform:translateY(0)}
+    @media(max-width:900px){.hero-grid{grid-template-columns:1fr}.side-cards{grid-template-columns:1fr 1fr;grid-template-rows:none}.categories{grid-template-columns:repeat(3,1fr)}.products{grid-template-columns:repeat(2,1fr)}.trust{grid-template-columns:repeat(2,1fr)}.trust-item:nth-child(2){border-left:0}.footer-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:620px){.container{width:min(100% - 22px,1180px)}.topbar{display:none}.nav{min-height:64px;gap:9px;flex-wrap:wrap;padding:9px 0}.logo strong{font-size:16px}.logo-mark{width:38px;height:38px}.search{order:3;flex-basis:100%}.search input{height:44px}.main-nav{display:none}.nav-actions{margin-right:auto}.hero{padding-top:14px}.hero-main{min-height:330px;padding:27px 22px}.hero h1{font-size:27px}.hero-tools{font-size:130px}.side-cards{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.side-card{min-height:150px}.section-head h2{font-size:18px}.categories{grid-template-columns:repeat(3,1fr);gap:8px}.category{padding:14px 5px}.cat-icon{width:45px;height:45px;font-size:22px}.products{gap:9px}.product-img{height:145px;font-size:60px}.product-body{padding:11px}.product-title{font-size:11px}.price{font-size:14px}.add{width:35px;height:35px}.trust{grid-template-columns:1fr 1fr}.trust-item{padding:14px 10px}.trust b{font-size:10px}.trust span{font-size:9px}.footer-grid{grid-template-columns:1fr 1fr}.copyright{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="topbar"><div class="container inner"><span>ارسال سریع به سراسر کشور 🚚</span><span>پشتیبانی فروش: <b>هر روز ۹ تا ۲۱</b></span></div></div>
+  <header>
+    <div class="container nav">
+      <a class="logo" href="#">
+        <div class="logo-mark">🔧</div>
+        <div><strong>عظیم ابزار</strong><small>ابزار درست، کار درست</small></div>
+      </a>
+      <div class="search"><span class="search-icon">⌕</span><input id="search" type="search" placeholder="جستجوی ابزار، برند یا دسته‌بندی..." /></div>
+      <div class="nav-actions"><button class="icon-btn" aria-label="حساب کاربری">👤</button><button class="icon-btn" aria-label="سبد خرید">🛒<span id="cartBadge" class="badge">0</span></button></div>
+    </div>
+    <div class="main-nav"><div class="container inner"><a href="#categories">دسته‌بندی‌ها</a><a href="#products">پرفروش‌ها</a><a href="#products">تخفیف‌ها</a><a href="#trust">خدمات عظیم ابزار</a><a href="#footer">تماس با ما</a></div></div>
+  </header>
+
+  <main>
+    <section class="hero"><div class="container hero-grid">
+      <div class="hero-main"><div class="hero-copy"><div class="pill">🟡 فروشگاه تخصصی ابزارآلات</div><h1>ابزار حرفه‌ای برای<br><span>کار حرفه‌ای</span></h1><p>از ابزار دستی و برقی تا تجهیزات کارگاهی؛ محصولات کاربردی را با قیمت مناسب و ضمانت اصالت پیدا کن.</p><div class="hero-cta"><a class="btn btn-primary" href="#products">مشاهده محصولات</a><a class="btn btn-ghost" href="#categories">دسته‌بندی‌ها</a></div></div><div class="hero-tools">🛠️</div></div>
+      <div class="side-cards"><div class="side-card sale"><div class="side-label">پیشنهاد ویژه</div><h3>تا ۳۰٪ تخفیف</h3><p>روی تعدادی از ابزارهای منتخب این هفته.</p><div class="side-emoji">⚙️</div></div><div class="side-card fast"><div class="side-label" style="color:#15803d">خرید مطمئن</div><h3>ارسال سریع</h3><p>سفارش خودت را راحت ثبت کن و پیگیری کن.</p><div class="side-emoji">🚚</div></div></div>
+    </div></section>
+
+    <section id="categories"><div class="container"><div class="section-head"><div><h2>دسته‌بندی ابزارها</h2><p>سریع به ابزار موردنیازت برس</p></div><a class="link" href="#">همه دسته‌ها ←</a></div>
+      <div class="categories">
+        <a class="category" href="#products"><div class="cat-icon">🔨</div><b>ابزار دستی</b><span>انواع ابزار</span></a>
+        <a class="category" href="#products"><div class="cat-icon">⚡</div><b>ابزار برقی</b><span>دریل و فرز</span></a>
+        <a class="category" href="#products"><div class="cat-icon">🔩</div><b>پیچ و مهره</b><span>اتصالات</span></a>
+        <a class="category" href="#products"><div class="cat-icon">🧰</div><b>جعبه ابزار</b><span>نگهداری ابزار</span></a>
+        <a class="category" href="#products"><div class="cat-icon">📏</div><b>اندازه‌گیری</b><span>متر و تراز</span></a>
+        <a class="category" href="#products"><div class="cat-icon">🦺</div><b>ایمنی</b><span>لوازم حفاظت</span></a>
+      </div>
+    </div></section>
+
+    <section id="products"><div class="container"><div class="section-head"><div><h2>محصولات پیشنهادی</h2><p>چند انتخاب برای شروع</p></div><a class="link" href="#">مشاهده همه ←</a></div>
+      <div class="products" id="productGrid">
+        <article class="product" data-name="دریل شارژی حرفه ای 21 ولت"><div class="product-img"><span class="tag">پرفروش</span>🔩</div><div class="product-body"><div class="product-title">دریل شارژی حرفه‌ای ۲۱ ولت</div><div class="rating">★★★★★ <span style="color:#9ca3af">۴.۸</span></div><div class="price-row"><div class="price">۲٬۸۹۰٬۰۰۰ <small>تومان</small></div><button class="add" data-product="دریل شارژی ۲۱ ولت">+</button></div></div></article>
+        <article class="product" data-name="جعبه ابزار 86 پارچه"><div class="product-img"><span class="tag">ویژه</span>🧰</div><div class="product-body"><div class="product-title">جعبه ابزار ۸۶ پارچه صنعتی</div><div class="rating">★★★★★ <span style="color:#9ca3af">۴.۷</span></div><div class="price-row"><div class="price">۴٬۴۵۰٬۰۰۰ <small>تومان</small></div><button class="add" data-product="جعبه ابزار 86 پارچه">+</button></div></div></article>
+        <article class="product" data-name="مجموعه پیچ گوشتی حرفه ای"><div class="product-img"><span class="tag">اقتصادی</span>🪛</div><div class="product-body"><div class="product-title">مجموعه پیچ‌گوشتی حرفه‌ای ۱۲ عددی</div><div class="rating">★★★★★ <span style="color:#9ca3af">۴.۶</span></div><div class="price-row"><div class="price">۷۹۰٬۰۰۰ <small>تومان</small></div><button class="add" data-product="مجموعه پیچ گوشتی">+</button></div></div></article>
+        <article class="product" data-name="متر لیزری 50 متری"><div class="product-img"><span class="tag">جدید</span>📐</div><div class="product-body"><div class="product-title">متر لیزری ۵۰ متری دقیق</div><div class="rating">★★★★★ <span style="color:#9ca3af">۴.۹</span></div><div class="price-row"><div class="price">۱٬۲۵۰٬۰۰۰ <small>تومان</small></div><button class="add" data-product="متر لیزری 50 متری">+</button></div></div></article>
+      </div>
+    </div></section>
+
+    <section id="trust"><div class="container"><div class="trust">
+      <div class="trust-item"><div class="trust-icon">✅</div><div><b>ضمانت اصالت کالا</b><span>خرید با خیال راحت</span></div></div>
+      <div class="trust-item"><div class="trust-icon">🚚</div><div><b>ارسال سریع</b><span>تحویل به‌موقع سفارش</span></div></div>
+      <div class="trust-item"><div class="trust-icon">💬</div><div><b>پشتیبانی واقعی</b><span>راهنمایی قبل و بعد خرید</span></div></div>
+      <div class="trust-item"><div class="trust-icon">💳</div><div><b>پرداخت امن</b><span>روند خرید مطمئن</span></div></div>
+    </div></div></section>
+  </main>
+
+  <footer id="footer"><div class="container"><div class="footer-grid"><div><div class="footer-title">عظیم ابزار</div><p class="footer-text">فروشگاه ابزارآلات و تجهیزات فنی با تمرکز روی انتخاب درست، قیمت مناسب و تجربه خرید ساده.</p></div><div><div class="footer-title">خدمات مشتریان</div><div class="footer-links"><a href="#">پیگیری سفارش</a><a href="#">راهنمای خرید</a><a href="#">شرایط ارسال</a><a href="#">قوانین و مقررات</a></div></div><div><div class="footer-title">دسته‌ها</div><div class="footer-links"><a href="#">ابزار دستی</a><a href="#">ابزار برقی</a><a href="#">ایمنی</a><a href="#">تجهیزات کارگاهی</a></div></div><div><div class="footer-title">ارتباط با ما</div><div class="footer-links"><span>📞 ۰۲۱-۱۲۳۴۵۶۷۸</span><span>📍 تهران</span><span>🕘 هر روز ۹ تا ۲۱</span></div></div></div><div class="copyright"><span>© ۱۴۰۵ عظیم ابزار — تمامی حقوق محفوظ است.</span><span>نسخه اول فروشگاه</span></div></div></footer>
+  <div id="toast" class="toast">محصول به سبد خرید اضافه شد ✅</div>
+  <script>
+    const badge=document.getElementById('cartBadge');const toast=document.getElementById('toast');const search=document.getElementById('search');const products=[...document.querySelectorAll('.product')];let cart=0;
+    document.querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{cart++;badge.textContent=cart;toast.textContent=`${btn.dataset.product} به سبد خرید اضافه شد ✅`;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1800)}));
+    search.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();products.forEach(p=>{p.style.display=!q||p.dataset.name.toLowerCase().includes(q)?'block':'none'})});
+  </script>
+</body>
+</html>
