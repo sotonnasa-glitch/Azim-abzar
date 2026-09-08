@@ -15,6 +15,10 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  AZIM_SUPABASE_URL: https://lzkrwtnylkordkwkdyzp.supabase.co
+  AZIM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AZIM_SUPABASE_PUBLISHABLE_KEY }}
+
 jobs:
   deploy:
     environment:
@@ -26,17 +30,28 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Add Products link and Supabase loader
+      - name: Configure Supabase and wire product store
         run: |
           python - <<'PY'
           from pathlib import Path
+          import json, os, re
+          key = os.environ.get('AZIM_SUPABASE_PUBLISHABLE_KEY', '').strip()
+          if not key:
+              raise SystemExit('Missing repository secret AZIM_SUPABASE_PUBLISHABLE_KEY')
+          Path('supabase-config.js').write_text(
+              'window.AZIM_SUPABASE_URL = ' + json.dumps(os.environ['AZIM_SUPABASE_URL']) + ';\n'
+              'window.AZIM_SUPABASE_ANON_KEY = ' + json.dumps(key) + ';\n',
+              encoding='utf-8'
+          )
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           if 'href="products.html"' not in s:
-              old = '<nav class="nav"><a href="#home">خانه</a>'
-              new = '<nav class="nav"><a href="#home">خانه</a><a href="products.html">محصولات</a>'
-              if old in s:
-                  s = s.replace(old, new, 1)
+              nav = re.search(r'<nav\b[^>]*class=["\']nav["\'][^>]*>(.*?)</nav>', s, flags=re.I|re.S)
+              if nav:
+                  inside = nav.group(1)
+                  home = re.search(r'<a\b[^>]*href=["\']#home["\'][^>]*>.*?</a>', inside, flags=re.I|re.S)
+                  updated = inside[:home.end()] + '<a href="products.html">محصولات</a>' + inside[home.end():] if home else '<a href="products.html">محصولات</a>' + inside
+                  s = s[:nav.start(1)] + updated + s[nav.end(1):]
                   p.write_text(s, encoding='utf-8')
           p = Path('products.html')
           s = p.read_text(encoding='utf-8')
