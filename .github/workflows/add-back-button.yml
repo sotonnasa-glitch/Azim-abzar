@@ -1,6 +1,9 @@
 name: add-back-button
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/add-back-button.yml'
+      - 'contact.html'
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -26,7 +29,7 @@ jobs:
           git add contact.html
           git diff --cached --quiet || git commit -m 'Add back button to contact page'
           git push
-      - name: Remove workflow
+      - name: Remove temporary workflow
         if: always()
         run: |
           rm -f .github/workflows/add-back-button.yml
