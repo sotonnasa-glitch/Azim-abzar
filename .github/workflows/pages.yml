@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Configure Supabase and wire product catalog
+      - name: Configure Supabase runtime config
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -42,32 +42,6 @@ jobs:
               'window.AZIM_SUPABASE_ANON_KEY = ' + json.dumps(key) + ';\n',
               encoding='utf-8'
           )
-
-          # Always expose the product catalog from the homepage, even if the
-          # original design uses a different navigation structure.
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          if 'href="products.html"' not in s:
-              marker = '<a href="products.html" class="azim-products-link">🧰 مشاهده همه محصولات</a>'
-              style = '<style>.azim-products-link{display:inline-flex;align-items:center;gap:8px;margin:14px 0;padding:12px 18px;border-radius:10px;background:#f5b900;color:#111;font-weight:900;text-decoration:none;box-shadow:0 8px 24px rgba(245,185,0,.18)}.azim-products-link:hover{transform:translateY(-1px)}</style>'
-              if '</body>' in s:
-                  s = s.replace('</body>', style + marker + '</body>', 1)
-              else:
-                  s += style + marker
-              p.write_text(s, encoding='utf-8')
-
-          p = Path('products.html')
-          s = p.read_text(encoding='utf-8')
-          old = '<script src="custom-products.js"></script>'
-          new = '<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-products.js"></script><script src="azim-catalog-data.js?v=101"></script><script src="custom-products.js?v=101"></script>'
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif 'custom-products.js' in s:
-              s = s.replace('custom-products.js', 'custom-products.js?v=101', 1)
-          elif 'azim-catalog-data.js' not in s:
-              s = s.replace('</body>', new + '</body>', 1)
-          p.write_text(s, encoding='utf-8')
-          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
