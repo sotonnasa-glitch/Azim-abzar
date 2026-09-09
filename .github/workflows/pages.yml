@@ -61,6 +61,21 @@ jobs:
           elif 'supabase-products.js' not in s:
               s = s.replace('</body>', new + '</body>')
           p.write_text(s, encoding='utf-8')
+
+          # Make the admin panel use the build-time Supabase config automatically.
+          p = Path('admin.html')
+          s = p.read_text(encoding='utf-8')
+          old = "function configFromStorage(){const u=localStorage.getItem('azim_sb_url'),k=localStorage.getItem('azim_sb_key');if(u&&k){window.AZIM_SUPABASE_URL=u;window.AZIM_SUPABASE_ANON_KEY=k;$('sbUrl').value=u;$('sbKey').value=k;return true}return !!(window.AZIM_SUPABASE_URL&&window.AZIM_SUPABASE_ANON_KEY)}"
+          new = "function configFromStorage(){if(window.AZIM_SUPABASE_URL&&window.AZIM_SUPABASE_ANON_KEY){localStorage.removeItem('azim_sb_url');localStorage.removeItem('azim_sb_key');return true}const u=localStorage.getItem('azim_sb_url'),k=localStorage.getItem('azim_sb_key');if(u&&k){window.AZIM_SUPABASE_URL=u;window.AZIM_SUPABASE_ANON_KEY=k;$('sbUrl').value=u;$('sbKey').value=k;return true}return false}"
+          if old not in s:
+              raise SystemExit('Expected admin config function was not found')
+          s = s.replace(old, new, 1)
+          old = "$('setup').classList.remove('hidden');if(await ensureAdmin()){$('login').classList.add('hidden')}"
+          new = "$('setup').classList.add('hidden');if(await ensureAdmin()){$('login').classList.add('hidden')}"
+          if old not in s:
+              raise SystemExit('Expected admin setup initialization was not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
