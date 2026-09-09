@@ -1,72 +1,8 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Legacy static Pages deploy (manual only)
 
 on:
-  push:
-    branches: ["main"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-env:
-  AZIM_SUPABASE_URL: https://lzkrwtnylkordkwkdyzp.supabase.co
-  AZIM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AZIM_SUPABASE_PUBLISHABLE_KEY }}
-
-jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Configure Supabase and wire product store
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, os, re
-          key = os.environ.get('AZIM_SUPABASE_PUBLISHABLE_KEY', '').strip()
-          if not key:
-              raise SystemExit('Missing repository secret AZIM_SUPABASE_PUBLISHABLE_KEY')
-          Path('supabase-config.js').write_text(
-              'window.AZIM_SUPABASE_URL = ' + json.dumps(os.environ['AZIM_SUPABASE_URL']) + ';\n'
-              'window.AZIM_SUPABASE_ANON_KEY = ' + json.dumps(key) + ';\n',
-              encoding='utf-8'
-          )
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          if 'href="products.html"' not in s:
-              nav = re.search(r'<nav\b[^>]*class=["\']nav["\'][^>]*>(.*?)</nav>', s, flags=re.I|re.S)
-              if nav:
-                  inside = nav.group(1)
-                  home = re.search(r'<a\b[^>]*href=["\']#home["\'][^>]*>.*?</a>', inside, flags=re.I|re.S)
-                  updated = inside[:home.end()] + '<a href="products.html">محصولات</a>' + inside[home.end():] if home else '<a href="products.html">محصولات</a>' + inside
-                  s = s[:nav.start(1)] + updated + s[nav.end(1):]
-                  p.write_text(s, encoding='utf-8')
-          p = Path('products.html')
-          s = p.read_text(encoding='utf-8')
-          old = '<script src="custom-products.js"></script>'
-          new = '<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-products.js"></script>'
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif 'supabase-products.js' not in s:
-              s = s.replace('</body>', new + '</body>')
-          p.write_text(s, encoding='utf-8')
-          PY
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+# The active deployment is .github/workflows/pages.yml.
+# This legacy workflow is intentionally disabled on push so it cannot
+# overwrite or cancel the real Azim Abzar catalog deployment.
