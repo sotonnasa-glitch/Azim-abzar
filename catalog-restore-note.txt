@@ -1,0 +1,1 @@
+The catalog data blob was restored from commit e1421ee34f63798246519a6e255621be4404fbb8.
