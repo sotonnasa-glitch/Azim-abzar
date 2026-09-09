@@ -1,8 +1,0 @@
-name: Legacy static Pages deploy (manual only)
-
-on:
-  workflow_dispatch:
-
-# The active deployment is .github/workflows/pages.yml.
-# This legacy workflow is intentionally disabled on push so it cannot
-# overwrite or cancel the real Azim Abzar catalog deployment.
