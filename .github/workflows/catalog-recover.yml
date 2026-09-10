@@ -1,0 +1,41 @@
+name: Recover historical catalog for verification
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/catalog-recover.yml'
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aae3e418096c4f0624217872e04e8728a2b8a826
+          fetch-depth: 1
+      - name: Decode historical catalog
+        shell: python
+        run: |
+          import re, base64, gzip, json
+          from pathlib import Path
+          s=Path('azim-catalog-data.js').read_text(encoding='utf-8')
+          m=re.search(r"const b='([^']+)'",s)
+          assert m, 'catalog gzip blob not found'
+          raw=gzip.decompress(base64.b64decode(m.group(1)))
+          Path('historical-catalog.json').write_bytes(raw)
+          data=json.loads(raw)
+          rows=[]
+          for i,p in enumerate(data,1):
+              rows.append({'index':i,'raw':p})
+          Path('historical-catalog-indexed.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('COUNT',len(data))
+          print('FIRST',data[:5])
+          print('LAST',data[-10:])
+      - uses: actions/upload-artifact@v4
+        with:
+          name: historical-catalog-recovery
+          path: |
+            historical-catalog.json
+            historical-catalog-indexed.json
+          retention-days: 1
