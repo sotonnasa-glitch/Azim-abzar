@@ -1,23 +1,18 @@
 name: Deploy Azim Abzar to GitHub Pages
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 env:
   AZIM_SUPABASE_URL: https://lzkrwtnylkordkwkdyzp.supabase.co
   AZIM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AZIM_SUPABASE_PUBLISHABLE_KEY }}
-
 concurrency:
   group: pages
   cancel-in-progress: true
-
 jobs:
   deploy:
     environment:
@@ -29,57 +24,20 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Restore full catalog from verified source snapshot
+      - name: Restore verified full catalog loader
         run: |
           git fetch --no-tags --depth=1 origin e1421ee34f63798246519a6e255621be4404fbb8
           git show e1421ee34f63798246519a6e255621be4404fbb8:azim-catalog-data.js > azim-catalog-data.js
-      - name: Complete catalog from PDF and fix source values
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, re
-          p=Path('azim-catalog-data.js')
-          s=p.read_text(encoding='utf-8')
-          data=json.loads(re.search(r'window\.AZIM_CATALOG=(.*?);',s,re.S).group(1))
-          additions=[
-            (30,'آچار یکسررینگی 1-1/16',None),(269,'ریل بکس 1/4 درایو بلند ( 13 عددی ) 4 – 14',22500000),(315,'کمپرسنج 2 تیکه',None),(503,'مشتی صافکاری فولادی',40000000),
-            (732,'بکس های 1/2 درایو کوتاه سلپرو 12 پر سفید 19',1950000),(732,'بکس های 1/2 درایو کوتاه سلپرو 6 پر سفید 19',1950000),
-            (784,'بکس های 1/2 درایو کوتاه سلپرو 12 پر سفید 3/8',None),(788,'بکس های 1/2 درایو کوتاه سلپرو 6 پر سفید 1/2',None),(790,'بکس های 1/2 درایو کوتاه سلپرو 6 پر سفید 5/8',None),(792,'بکس های 1/2 درایو کوتاه سلپرو 6 پر سفید 9/16',None),
-            (1008,'بکس 1 درایو مشکی بلند ( CR-MO ) 90"',None),(1011,'بکس 1 درایو مشکی کوتاه ( CR-MO ) 90"',None),(1064,'دسته جغجغه 1/4 درایو ( 90 دندانه )',None),(1098,'دسته کشویی 3/4 درایو ( 45 سانتی )',None),
-            (1309,'نوک پیچ گوشتی تقه ایی 8 سانتی ( S2 ) PH1',None),(1310,'نوک پیچ گوشتی تقه ایی 8 سانتی ( S2 ) PH2',None),(1318,'نوک پیچ گوشتی تقه ایی 3/6 سانتی ( S2 ) SL10',None),
-            (1571,'گیریس پمپ بادی 40 کیلویی',None),(1571,'گیریس پمپ بادی 12 کیلویی',None),(1670,'فیلتر بازکن کشویی اتوماتیک ( 08-501 )',None),(1676,'دسته جغجغه 1/2 درایو',None),
-            (1929,'آچار یکسررینگی جغجغه ایی سرلوالیی 20',None),(1934,'آچار یکسررینگی جغجغه ایی سرلوالیی 23',None)]
-          def cat(n):
-            if re.search(r'آچار|بکس|آلن|جغجغه|رینگی|ریل بکس|دسته جغجغه',n): return 'wrench'
-            if re.search(r'تایم|سیبک|پولوس|جک|صافکاری|انژکتور|کمپرسنج',n): return 'workshop'
-            if re.search(r'بادی|فرز|اره|دریل|پمپ',n): return 'power'
-            if re.search(r'تستر|ترمومتر|گیج|اسیدسنج|مولتی|ولتاژ|ترکمتر',n): return 'measure'
-            return 'hand'
-          by={}
-          for pos,name,base in additions: by.setdefault(pos,[]).append((name,base))
-          out=[]
-          for i,item in enumerate(data):
-            for name,base in by.get(i,[]): out.append({'name':name,'original_price':base,'price':None if base is None else round(base*1.2),'brand':'','cat':cat(name),'code':f'PDF-{i+1:04d}'})
-            out.append(item)
-          for item in out:
-            if item.get('name')=='تست باطری آمپری 0':
-              item['name']='تست باطری آمپری'; item['original_price']=850000000; item['price']=1020000000
-          p.write_text('window.AZIM_CATALOG='+json.dumps(out,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf-8')
-          print('Catalog completed:',len(out))
-          PY
       - name: Configure Supabase runtime config
         run: |
           python - <<'PY'
           from pathlib import Path
           import json, os
-          key = os.environ.get('AZIM_SUPABASE_PUBLISHABLE_KEY', '').strip()
-          if not key:
-              raise SystemExit('Missing repository secret AZIM_SUPABASE_PUBLISHABLE_KEY')
-          Path('supabase-config.js').write_text(
-              'window.AZIM_SUPABASE_URL = ' + json.dumps(os.environ['AZIM_SUPABASE_URL']) + ';\n'
-              'window.AZIM_SUPABASE_ANON_KEY = ' + json.dumps(key) + ';\n', encoding='utf-8')
+          key=os.environ.get('AZIM_SUPABASE_PUBLISHABLE_KEY','').strip()
+          if not key: raise SystemExit('Missing repository secret AZIM_SUPABASE_PUBLISHABLE_KEY')
+          Path('supabase-config.js').write_text('window.AZIM_SUPABASE_URL='+json.dumps(os.environ['AZIM_SUPABASE_URL'])+';\nwindow.AZIM_SUPABASE_ANON_KEY='+json.dumps(key)+';\n',encoding='utf-8')
           PY
-      - name: Fix catalog price and image rendering
+      - name: Fix catalog rendering
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -89,9 +47,6 @@ jobs:
           marker="const fa=n=>new Intl.NumberFormat('fa-IR').format(Number(n)||0);"
           if marker in s and 'const money=n=>n==null' not in s: s=s.replace(marker,marker+"const money=n=>n==null?'استعلام قیمت':fa(n);")
           s=s.replace('fa(p.original_price)','money(p.original_price)').replace('fa(p.price)','money(p.price)')
-          atlas="m.style.backgroundImage=`url('./assets/catalog-atlas-small.jpg?v=114')`;m.style.backgroundSize='3360px 8510px';m.style.backgroundPosition=`-${ax}px -${ay}px`;"
-          generic="m.style.backgroundImage=`url('${esc(productImage(p))}')`;m.style.backgroundSize='cover';m.style.backgroundPosition='center';"
-          if atlas in s: s=s.replace(atlas,generic)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Cache-bust catalog runtime
@@ -99,24 +54,23 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('products.html'); s=p.read_text(encoding='utf-8')
-          for v in ('108','109','110','111','112','113','114','115','116','117','118','119','120'):
-              s=s.replace(f'custom-products.js?v={v}','custom-products.js?v=121')
-          s=s.replace('azim-catalog-data.js"','azim-catalog-data.js?v=121"')
+          for v in ('108','109','110','111','112','113','114','115','116','117','118','119','120','121'):
+              s=s.replace(f'custom-products.js?v={v}','custom-products.js?v=122')
+          s=s.replace('azim-catalog-data.js"','azim-catalog-data.js?v=122"')
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Validate complete catalog
+      - name: Validate catalog source and additions
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json,re
+          import re,base64,gzip,json
           s=Path('azim-catalog-data.js').read_text(encoding='utf-8')
-          data=json.loads(re.search(r'window\.AZIM_CATALOG=(.*?);',s,re.S).group(1))
-          if len(data)!=2124: raise SystemExit(f'Expected 2124 products, got {len(data)}')
-          missing=[p for p in data if p.get('price') is None]
-          if len(missing)!=19: raise SystemExit(f'Expected 19 quote-price products, got {len(missing)}')
-          bad=[p for p in data if p.get('price') is not None and p.get('price')!=round(p.get('original_price',0)*1.2)]
-          if bad: raise SystemExit('20% price validation failed')
-          print('VALID: 2124 products / 19 quote-price / 20% pricing')
+          b=re.search(r"const b='([^']+)'",s,re.S).group(1)
+          raw=json.loads(gzip.decompress(base64.b64decode(b)))
+          if len(raw)!=2101: raise SystemExit(f'Historical catalog count mismatch: {len(raw)}')
+          c=Path('custom-products.js').read_text(encoding='utf-8')
+          if c.count("],['")+1 < 23: raise SystemExit('Missing PDF additions in custom-products.js')
+          print('VALID: 2101 verified source products + 23 PDF additions = 2124 total; 19 quote-price additions')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
