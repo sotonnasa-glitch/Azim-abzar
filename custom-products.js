@@ -1,12 +1,83 @@
-// Azim Abzar catalog loader v106 — resilient gzip with local/remote fallbacks
-(()=>{try{
-const EXPECTED_CATALOG_COUNT=2101;
-const apply=()=>{if(!Array.isArray(window.AZIM_CATALOG)||!window.AZIM_CATALOG.length)return false;window.AZIM_CATALOG=window.AZIM_CATALOG.map((p,i)=>{const base=Number(p.original_price??p.price)||0;return{...p,original_price:base,price:Math.round(base*1.2),code:p.code||`PDF-${String(i+1).padStart(4,'0')}`,img:p.img||'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=900&q=85'}});try{if(typeof normalize==='function'&&typeof render==='function'){products=normalize(window.AZIM_CATALOG);page=1;render()}}catch(e){console.warn('Azim render',e)}const count=window.AZIM_CATALOG.length;document.dispatchEvent(new CustomEvent('azim-catalog-loaded',{detail:{count}}));return true};
-const getBytes=async()=>{const r=await fetch('./azim-catalog-data.js?v=106',{cache:'no-store'});if(!r.ok)throw new Error('catalog file '+r.status);const s=await r.text();const m=s.match(/const b=['\"]([^'\"]+)['\"]/);if(!m)throw new Error('gzip payload missing');const bin=atob(m[1]);return Uint8Array.from(bin,c=>c.charCodeAt(0))};
-const loadPako=()=>new Promise((resolve,reject)=>{if(window.pako)return resolve();const urls=['https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js','https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js','https://unpkg.com/pako@2.1.0/dist/pako.min.js'];let i=0;const next=()=>{if(window.pako)return resolve();if(i>=urls.length)return reject(new Error('all pako CDNs failed'));const sc=document.createElement('script');sc.src=urls[i++];sc.onload=()=>window.pako?resolve():next();sc.onerror=next;document.head.appendChild(sc)};next()});
-const decode=async()=>{if(Array.isArray(window.AZIM_CATALOG)&&window.AZIM_CATALOG.length)return apply();const bytes=await getBytes();let out='';if('DecompressionStream'in window){try{const ds=new DecompressionStream('gzip');out=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text()}catch(e){console.warn('Native gzip failed',e)}}if(!out){await loadPako();out=new TextDecoder().decode(window.pako.ungzip(bytes))}const data=JSON.parse(out);window.AZIM_CATALOG=Array.isArray(data)?data:(data.products||data.items||data.data||data.catalog||[]);return apply()};
-const fail=()=>{const el=document.getElementById('error');if(el){el.style.display='block';el.textContent='بارگذاری کاتالوگ انجام نشد. لطفاً صفحه را یک‌بار تازه‌سازی کنید.'}const ld=document.getElementById('loading');if(ld)ld.innerHTML='خطا در بارگذاری کاتالوگ';const info=document.getElementById('info');if(info)info.textContent='خطا در بارگذاری کاتالوگ'};
-const start=async()=>{if(apply())return;try{await decode()}catch(e){console.error('Azim catalog decode failed',e);let n=0;const t=setInterval(()=>{if(apply()||++n>40){clearInterval(t);if(!Array.isArray(window.AZIM_CATALOG)||!window.AZIM_CATALOG.length)fail()}},250)}};
-document.addEventListener('azim-catalog-ready',()=>apply(),{once:false});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-}catch(e){console.error('Azim catalog loader',e)}})();
+// Azim Abzar catalog loader v107 — load the readable catalog parts directly.
+(()=>{
+  const PARTS=['./azim-catalog-part-1.js?v=107','./azim-catalog-part-2.js?v=107'];
+  const labels={wrench:'آچار و بکس',hand:'ابزار دستی',workshop:'تعمیرگاهی',measure:'اندازه‌گیری',power:'برقی / بادی',safety:'ایمنی'};
+  const fallbackImages={
+    wrench:'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=900&q=85',
+    hand:'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=900&q=85',
+    workshop:'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=900&q=85',
+    measure:'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=900&q=85',
+    power:'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=900&q=85',
+    safety:'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=900&q=85'
+  };
+  const classify=(name='')=>{
+    const s=String(name).toLowerCase();
+    if(/بکس|آچار|آلن|جغجغه|ستاره|رینگی/.test(s))return'wrench';
+    if(/مولتی|متر|گیج|ترمومتر|تست باطری|تست باتری/.test(s))return'measure';
+    if(/بادی|دریل|فرز|اره|کمپرسور/.test(s))return'power';
+    if(/ایمنی|عینک|دستکش|ماسک|کلاه/.test(s))return'safety';
+    if(/تعمیر|پولوس|سیبک|انژکتور|تایم|صافکاری|جک|کمپرسنج/.test(s))return'workshop';
+    return'hand';
+  };
+  const apply=()=>{
+    const a=Array.isArray(window.AZIM_PART_1)?window.AZIM_PART_1:[];
+    const b=Array.isArray(window.AZIM_PART_2)?window.AZIM_PART_2:[];
+    const rows=a.concat(b);
+    if(!rows.length)return false;
+    window.AZIM_CATALOG=rows.map((r,i)=>{
+      const original=Number(r?.[1])||0;
+      const name=String(r?.[0]??'محصول').replace(/\s+/g,' ').trim();
+      const code=String(r?.[3]??'').replace(/\s+/g,' ').trim() || `PDF-${String(i+1).padStart(4,'0')}`;
+      const cat=classify(name);
+      return {
+        name,
+        original_price:original,
+        price:Math.round(original*1.2),
+        brand:String(r?.[2]??'بدون برند').trim()||'بدون برند',
+        code,
+        cat,
+        img:fallbackImages[cat],
+        description:`${labels[cat]} · اطلاعات این محصول از کاتالوگ عظیم ابزار.`
+      };
+    }).filter(p=>p.name);
+    try{
+      if(typeof normalize==='function'&&typeof render==='function'){
+        products=normalize(window.AZIM_CATALOG);
+        page=1;
+        render();
+      }
+    }catch(e){console.warn('Azim catalog render sync',e)}
+    document.dispatchEvent(new CustomEvent('azim-catalog-loaded',{detail:{count:window.AZIM_CATALOG.length}}));
+    document.dispatchEvent(new Event('azim-catalog-ready'));
+    return true;
+  };
+  const loadScript=(src)=>new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src=src;
+    s.async=false;
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error(`catalog part failed: ${src}`));
+    document.head.appendChild(s);
+  });
+  const fail=()=>{
+    const el=document.getElementById('error');
+    if(el){el.textContent='بارگذاری کاتالوگ انجام نشد. فایل‌های part کاتالوگ در دسترس نیستند.';el.style.display='block';}
+    const ld=document.getElementById('loading');
+    if(ld){ld.style.display='none';}
+    const info=document.getElementById('info');
+    if(info)info.textContent='خطا در بارگذاری کاتالوگ';
+  };
+  const start=async()=>{
+    if(apply())return;
+    try{
+      await loadScript(PARTS[0]);
+      await loadScript(PARTS[1]);
+      if(!apply())fail();
+    }catch(e){
+      console.error('Azim catalog parts load failed',e);
+      setTimeout(()=>{if(!apply())fail()},500);
+    }
+  };
+  document.addEventListener('azim-catalog-ready',()=>{if(!window.AZIM_CATALOG||!window.AZIM_CATALOG.length)apply()});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
