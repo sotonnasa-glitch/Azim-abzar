@@ -29,6 +29,16 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Build full PDF catalog
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+          payload = Path('catalog-full.gz.b64').read_text(encoding='utf-8').strip()
+          data = gzip.decompress(base64.b64decode(payload))
+          Path('azim-catalog-data.js').write_bytes(data)
+          print('Full PDF catalog restored:', len(data), 'bytes')
+          PY
       - name: Configure Supabase runtime config
         run: |
           python - <<'PY'
@@ -42,17 +52,53 @@ jobs:
               'window.AZIM_SUPABASE_ANON_KEY = ' + json.dumps(key) + ';\n',
               encoding='utf-8'
           )
+      - name: Fix catalog price and image rendering
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('products.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('price:Number(p.price)||0', 'price:p.price==null?null:Number(p.price)||0')
+          s = s.replace('original_price:Number(p.original_price??p.price)||0', 'original_price:p.original_price==null?null:Number(p.original_price)||0')
+          marker = "const fa=n=>new Intl.NumberFormat('fa-IR').format(Number(n)||0);"
+          if marker in s and 'const money=n=>n==null' not in s:
+              s = s.replace(marker, marker + "const money=n=>n==null?'استعلام قیمت':fa(n);")
+          s = s.replace('fa(p.original_price)', 'money(p.original_price)')
+          s = s.replace('fa(p.price)', 'money(p.price)')
+          atlas = "m.style.backgroundImage=`url('./assets/catalog-atlas-small.jpg?v=114')`;m.style.backgroundSize='3360px 8510px';m.style.backgroundPosition=`-${ax}px -${ay}px`;"
+          generic = "m.style.backgroundImage=`url('${esc(productImage(p))}')`;m.style.backgroundSize='cover';m.style.backgroundPosition='center';"
+          if atlas in s:
+              s = s.replace(atlas, generic)
+          p.write_text(s, encoding='utf-8')
+          print('Catalog null-price and image rendering fixes applied')
+          PY
       - name: Cache-bust catalog runtime
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('products.html')
           s = p.read_text(encoding='utf-8')
-          for v in ('108','109','110','111','112','113','114','115','116','117','118'):
-              s = s.replace(f'custom-products.js?v={v}', 'custom-products.js?v=119')
-          s = s.replace('custom-products.js?v=118', 'custom-products.js?v=119')
+          for v in ('108','109','110','111','112','113','114','115','116','117','118','119'):
+              s = s.replace(f'custom-products.js?v={v}', 'custom-products.js?v=120')
+          s = s.replace('azim-catalog-data.js"', 'azim-catalog-data.js?v=120"')
           p.write_text(s, encoding='utf-8')
-          print('Catalog runtime cache-busted to v119')
+          print('Catalog runtime cache-busted to v120')
+          PY
+      - name: Validate catalog payload
+        run: |
+          python - <<'PY'
+          import re, json
+          from pathlib import Path
+          s=Path('azim-catalog-data.js').read_text(encoding='utf-8')
+          m=re.search(r'window\.AZIM_CATALOG=(.*);\s*$',s,re.S)
+          if not m: raise SystemExit('Catalog payload missing')
+          data=json.loads(m.group(1))
+          if len(data)!=2123: raise SystemExit(f'Expected 2123 products, got {len(data)}')
+          missing=[p['code'] for p in data if p.get('price') is None]
+          if len(missing)!=19: raise SystemExit(f'Expected 19 quote-price products, got {len(missing)}')
+          bad=[p['code'] for p in data if p.get('price') is not None and p.get('price') != round(p.get('original_price',0)*1.2)]
+          if bad: raise SystemExit('20% price check failed: '+','.join(bad[:10]))
+          print('VALID: 2123 products / 19 quote-price / 20% pricing')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
