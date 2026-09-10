@@ -10,13 +10,13 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 env:
   AZIM_SUPABASE_URL: https://lzkrwtnylkordkwkdyzp.supabase.co
   AZIM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AZIM_SUPABASE_PUBLISHABLE_KEY }}
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -46,13 +46,12 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('products.html')
           s = p.read_text(encoding='utf-8')
-          for v in ('108','109','110','111','112','113','114','115'):
-              s = s.replace(f'custom-products.js?v={v}', 'custom-products.js?v=116')
-          s = s.replace('custom-products.js', 'custom-products.js?v=116')
+          s = re.sub(r'custom-products\\.js(?:\\?v=[^\"\']*)?', 'custom-products.js?v=117', s)
           p.write_text(s, encoding='utf-8')
-          print('Catalog runtime cache-busted to v116')
+          print('Catalog runtime cache-busted to v117')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
