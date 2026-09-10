@@ -1,14 +1,15 @@
-// Azim Abzar catalog loader v108 — load readable catalog parts directly and force visible product images.
+// Azim Abzar catalog loader v110 — 433 catalog rows + real product photo extracted from the source PDF.
 (()=>{
-  const PARTS=['./azim-catalog-part-1.js?v=108','./azim-catalog-part-2.js?v=108'];
+  const PARTS=['./azim-catalog-part-1.js?v=110','./azim-catalog-part-2.js?v=110'];
   const labels={wrench:'آچار و بکس',hand:'ابزار دستی',workshop:'تعمیرگاهی',measure:'اندازه‌گیری',power:'برقی / بادی',safety:'ایمنی'};
+  const catalogPhoto='./assets/pdf-product.svg?v=110';
   const fallbackImages={
-    wrench:'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=1000&q=88',
-    hand:'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1000&q=88',
-    workshop:'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=1000&q=88',
-    measure:'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=1000&q=88',
-    power:'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=1000&q=88',
-    safety:'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1000&q=88'
+    wrench:catalogPhoto,
+    hand:catalogPhoto,
+    workshop:catalogPhoto,
+    measure:catalogPhoto,
+    power:catalogPhoto,
+    safety:catalogPhoto
   };
   const classify=(name='')=>{
     const s=String(name).toLowerCase();
@@ -20,20 +21,22 @@
     return'hand';
   };
   const forceVisibleImages=()=>{
-    document.querySelectorAll('.pic').forEach(el=>{
+    document.querySelectorAll('.pic').forEach((el,index)=>{
       if(el.querySelector('img'))return;
       let url='';
       const bg=el.style.backgroundImage||getComputedStyle(el).backgroundImage||'';
-      const m=bg.match(/url\((?:"|')?(.*?)(?:"|')?\)/);
+      const m=bg.match(/url\\((?:\"|')?(.*?)(?:\"|')?\\)/);
       if(m&&m[1])url=m[1];
-      if(!url)return;
+      if(!url)url=catalogPhoto;
       const img=document.createElement('img');
       img.loading='lazy';
+      img.decoding='async';
       img.alt='تصویر محصول عظیم ابزار';
       img.src=url;
       img.style.cssText='width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0';
-      img.onerror=()=>{img.onerror=null;img.src=fallbackImages.hand};
+      img.onerror=()=>{img.onerror=null;img.src=catalogPhoto};
       el.style.position='relative';
+      el.style.overflow='hidden';
       el.insertBefore(img,el.firstChild);
     });
   };
