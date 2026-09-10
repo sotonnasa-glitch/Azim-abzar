@@ -42,6 +42,17 @@ jobs:
               'window.AZIM_SUPABASE_ANON_KEY = ' + json.dumps(key) + ';\n',
               encoding='utf-8'
           )
+      - name: Cache-bust catalog runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('products.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('custom-products.js', 'custom-products.js?v=108')
+          s = s.replace('custom-products.js?v=107', 'custom-products.js?v=108')
+          p.write_text(s, encoding='utf-8')
+          print('Catalog runtime cache-busted')
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
