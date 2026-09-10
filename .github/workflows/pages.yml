@@ -48,10 +48,11 @@ jobs:
           from pathlib import Path
           p = Path('products.html')
           s = p.read_text(encoding='utf-8')
-          s = s.replace('custom-products.js', 'custom-products.js?v=108')
-          s = s.replace('custom-products.js?v=107', 'custom-products.js?v=108')
+          s = s.replace('custom-products.js?v=108', 'custom-products.js?v=110')
+          s = s.replace('custom-products.js?v=109', 'custom-products.js?v=110')
+          s = s.replace('custom-products.js', 'custom-products.js?v=110')
           p.write_text(s, encoding='utf-8')
-          print('Catalog runtime cache-busted')
+          print('Catalog runtime cache-busted to v110')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
