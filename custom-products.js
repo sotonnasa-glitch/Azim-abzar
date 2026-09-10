@@ -1,18 +1,36 @@
-// Azim Abzar catalog runtime v118 — exact first 433 catalog entries, catalog prices as stored (already 20% uplift), PDF photo atlas.
+// Full catalog loader — uses the historical restored catalog blob, which contains the complete catalog dataset.
 (()=>{
- const DATA='./azim-catalog-data.js?v=118';
- const ATLAS=['./assets/catalog-atlas-1-mini.jpg?v=118','./assets/catalog-atlas-2-mini.jpg?v=118'];
- const PHOTO=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,2,3,2,3,2,3,2,3,2,3,2,3,2,3,4,5,4,5,4,5,4,5,4,5,4,5,5,5,5,5,5,4,5,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,6,7,8,8,7,7,7,9,9,9,10,10,10,10,7,10,11,11,11,12,12,12,13,13,12,14,14,14,15,16,16,17,17,17,17,17,17,17,17,17,17,17,17,17,18,17,17,17,17,17,19,18,18,18,18,18,17,17,20,21,21,21,21,21,21,21,22,22,23,23,21,21,21,21,24,24,24,25,25,24,25,25,25,25,25,25,25,25,25,26,26,26,27,27,27,28,29,28,29,29,29,30,30,30,31,31,32,32,33,33,33,34,34,34,35,35,35,34,34,34,34,34,34,36,36,36,37,37,38,38,38,37,39,39,40,40,40,40,40,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44,45,45,45,46,47,48,49,49,50,50,50,51,51,51,52,53,52,54,55,56,57,52,52,57,57,57,58,57,57,59,60,61,61,61,62,62,61,63,63,63,64,64,64,65,65,65,66,66,66,67,67,67,68,68,68,69,69,69,70,70,71,71,71,71,72,72,72,73,73,73,74,75,75,76,76,76,77,77,77,78,78,78,77,77,77,79,79,77,80,80,81,80,80,80,82,83,83,83,83,83,84,84,84,85,85,85,86,86,87,86,86,86,88,89,90,90,90,91,91,90,92,92,92,92,92,93,93,93,94,94,94,95,95,95,96,96,96,97,97,97,98,98,98,99,99,99,100,100,100];
- const COLS=10,CW=80,CH=64,AW=800,AH=640;
- const labels={wrench:'آچار و بکس',hand:'ابزار دستی',workshop:'تعمیرگاهی',measure:'اندازه‌گیری',power:'برقی / بادی',safety:'ایمنی'};
- const classify=(name='')=>{const s=String(name).toLowerCase();if(/بکس|آچار|آلن|جغجغه|ستاره|رینگی|ترکمتر/.test(s))return'wrench';if(/مولتی|متر|گیج|ترمومتر|تست باطری|تست باتری/.test(s))return'measure';if(/بادی|دریل|فرز|اره|کمپرسور/.test(s))return'power';if(/ایمنی|عینک|دستکش|ماسک|کلاه/.test(s))return'safety';if(/تعمیر|پولوس|سیبک|انژکتور|تایم|صافکاری|جک|کمپرسنج/.test(s))return'workshop';return'hand'};
- const getPhoto=(i)=>{const n=PHOTO[Math.max(0,Number(i)||0)]??0,a=Math.floor(n/100),slot=n%100,x=(slot%COLS)*CW,y=Math.floor(slot/COLS)*CH;return {url:ATLAS[a]||'',x,y}};
- const setCardImage=el=>{if(el.querySelector('img[data-azim-atlas]'))return;const idx=Number(el.dataset.atlas)||0,{url,x,y}=getPhoto(idx);if(!url)return;const img=document.createElement('img');img.dataset.azimAtlas='1';img.alt='تصویر واقعی محصول از کاتالوگ اصلی عظیم ابزار';img.decoding='async';img.src=url;img.style.cssText=`position:absolute;left:-${x}px;top:-${y}px;width:${AW}px;height:${AH}px;max-width:none;display:block;z-index:0`;el.style.position='relative';el.style.overflow='hidden';el.style.background='#fff';el.insertBefore(img,el.firstChild)};
- const forceImages=()=>document.querySelectorAll('.pic[data-atlas]').forEach(setCardImage);
- const installModal=()=>{if(typeof window.openModal!=='function'||window.openModal.__azim118)return;const original=window.openModal;const fn=function(p){const out=original(p);if(p){const modalImg=document.getElementById('modalImg'),{url,x,y}=getPhoto(p.atlasIndex);if(modalImg&&url){modalImg.innerHTML=`<div style="width:100%;height:100%;min-height:360px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center"><img alt="تصویر واقعی محصول از کاتالوگ اصلی عظیم ابزار" src="${url}" style="position:relative;left:-${x}px;top:-${y}px;width:${AW}px;height:${AH}px;max-width:none;flex:none;display:block"></div>`;modalImg.style.backgroundImage='none';}}return out};fn.__azim118=true;window.openModal=fn};
- const run=()=>{try{const raw=Array.isArray(window.AZIM_CATALOG)?window.AZIM_CATALOG:[],rows=raw.slice(0,433);if(rows.length!==433)throw new Error('Catalog data count is '+rows.length);window.AZIM_CATALOG=rows.map((r,i)=>({name:String(r?.name??'محصول').replace(/\s+/g,' ').trim(),original_price:Number(r?.original_price)||0,price:Number(r?.price)||0,brand:String(r?.brand??'').trim()||'بدون برند',code:String(r?.code??(`AZ-${String(i+1).padStart(4,'0')}`)).trim(),cat:r?.cat||classify(r?.name),img:'',atlasIndex:i,description:`${labels[r?.cat||classify(r?.name)]||'ابزار'} · اطلاعات و تصویر از کاتالوگ اصلی عظیم ابزار.`}));document.dispatchEvent(new CustomEvent('azim-catalog-loaded',{detail:{count:433}}));if(typeof normalize==='function'&&typeof render==='function'){products=normalize(window.AZIM_CATALOG);page=1;render();setTimeout(forceImages,0);setTimeout(forceImages,200);setTimeout(installModal,0)}}catch(e){console.error('Azim catalog runtime v118',e)}};
- const load=()=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=DATA;s.async=false;s.onload=()=>{setTimeout(run,0);res()};s.onerror=()=>rej(new Error('catalog data load failed'));document.head.appendChild(s)});
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>load().catch(console.error),{once:true});else load().catch(console.error);
- const begin=()=>{const g=document.getElementById('grid');if(g)new MutationObserver(()=>{forceImages();installModal()}).observe(g,{childList:true,subtree:true});forceImages();installModal()};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',begin,{once:true});else begin();
+  const HISTORICAL='https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/e1421ee34f63798246519a6e255621be4404fbb8/azim-catalog-data.js';
+  const load=()=>new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src=HISTORICAL+'?v=full-catalog-1';
+    s.async=false;
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error('full historical catalog failed to load'));
+    document.head.appendChild(s);
+  });
+  const normalizeRows=()=>{
+    const raw=Array.isArray(window.AZIM_CATALOG)?window.AZIM_CATALOG:[];
+    window.AZIM_CATALOG=raw.map((r,i)=>({
+      name:String(r?.name??r?.title??'محصول').replace(/\s+/g,' ').trim(),
+      original_price:Number(r?.original_price??r?.basePrice??r?.price)||0,
+      price:Number(r?.price??r?.salePrice)||0,
+      brand:String(r?.brand??'').trim()||'بدون برند',
+      code:String(r?.code??`PDF-${String(i+1).padStart(4,'0')}`).trim(),
+      cat:r?.cat||r?.category||'hand',
+      img:r?.img||r?.image||'',
+      atlasIndex:i,
+      description:r?.description||r?.desc||'اطلاعات محصول از کاتالوگ اصلی عظیم ابزار.'
+    }));
+    document.dispatchEvent(new CustomEvent('azim-catalog-loaded',{detail:{count:window.AZIM_CATALOG.length}}));
+    if(typeof window.loadCatalog==='function') window.loadCatalog();
+    if(typeof window.render==='function'){
+      window.products=window.AZIM_CATALOG.slice();
+      window.page=1;
+      window.render();
+    }
+    document.querySelectorAll('#count,#sourceCount,#footerCount').forEach(el=>{ if(el.id==='footerCount') el.textContent=new Intl.NumberFormat('fa-IR').format(window.AZIM_CATALOG.length)+' محصول'; else el.textContent=new Intl.NumberFormat('fa-IR').format(window.AZIM_CATALOG.length); });
+  };
+  const start=()=>load().then(normalizeRows).catch(e=>console.error('Azim full catalog:',e));
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
 })();
