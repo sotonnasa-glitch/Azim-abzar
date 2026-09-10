@@ -1,16 +1,9 @@
-// Azim Abzar catalog loader v110 — 433 catalog rows + real product photo extracted from the source PDF.
+// Azim Abzar catalog loader v111 — 433 catalog rows + guaranteed local PDF-derived product image.
 (()=>{
-  const PARTS=['./azim-catalog-part-1.js?v=110','./azim-catalog-part-2.js?v=110'];
+  const PARTS=['./azim-catalog-part-1.js?v=111','./azim-catalog-part-2.js?v=111'];
   const labels={wrench:'آچار و بکس',hand:'ابزار دستی',workshop:'تعمیرگاهی',measure:'اندازه‌گیری',power:'برقی / بادی',safety:'ایمنی'};
-  const catalogPhoto='./assets/pdf-product.svg?v=110';
-  const fallbackImages={
-    wrench:catalogPhoto,
-    hand:catalogPhoto,
-    workshop:catalogPhoto,
-    measure:catalogPhoto,
-    power:catalogPhoto,
-    safety:catalogPhoto
-  };
+  const catalogPhoto='./assets/pdf-product.svg?v=111';
+  const fallbackImages={wrench:catalogPhoto,hand:catalogPhoto,workshop:catalogPhoto,measure:catalogPhoto,power:catalogPhoto,safety:catalogPhoto};
   const classify=(name='')=>{
     const s=String(name).toLowerCase();
     if(/بکس|آچار|آلن|جغجغه|ستاره|رینگی/.test(s))return'wrench';
@@ -21,20 +14,15 @@
     return'hand';
   };
   const forceVisibleImages=()=>{
-    document.querySelectorAll('.pic').forEach((el,index)=>{
+    document.querySelectorAll('.pic').forEach(el=>{
       if(el.querySelector('img'))return;
-      let url='';
-      const bg=el.style.backgroundImage||getComputedStyle(el).backgroundImage||'';
-      const m=bg.match(/url\\((?:\"|')?(.*?)(?:\"|')?\\)/);
-      if(m&&m[1])url=m[1];
-      if(!url)url=catalogPhoto;
       const img=document.createElement('img');
       img.loading='lazy';
       img.decoding='async';
       img.alt='تصویر محصول عظیم ابزار';
-      img.src=url;
+      img.src=catalogPhoto;
       img.style.cssText='width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0';
-      img.onerror=()=>{img.onerror=null;img.src=catalogPhoto};
+      img.onerror=()=>{img.onerror=null;el.style.backgroundImage=`url("${catalogPhoto}")`};
       el.style.position='relative';
       el.style.overflow='hidden';
       el.insertBefore(img,el.firstChild);
@@ -44,7 +32,7 @@
     const grid=document.getElementById('grid');
     if(!grid||grid.dataset.imageWatcher==='1')return;
     grid.dataset.imageWatcher='1';
-    new MutationObserver(()=>forceVisibleImages()).observe(grid,{childList:true,subtree:true});
+    new MutationObserver(forceVisibleImages).observe(grid,{childList:true,subtree:true});
     forceVisibleImages();
   };
   const apply=()=>{
