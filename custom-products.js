@@ -1,10 +1,54 @@
-// Azim Abzar catalog loader v105 — resilient gzip + pako fallback
-(()=>{try{
-const EXPECTED_CATALOG_COUNT=2101;
-const apply=()=>{if(!Array.isArray(window.AZIM_CATALOG)||!window.AZIM_CATALOG.length)return false;window.AZIM_CATALOG=window.AZIM_CATALOG.map((p,i)=>{const base=Number(p.original_price??p.price)||0;return{...p,original_price:base,price:Math.round(base*1.2),code:p.code||`PDF-${String(i+1).padStart(4,'0')}`,img:p.img||'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=900&q=85'}});if(window.AZIM_CATALOG.length!==EXPECTED_CATALOG_COUNT)console.warn(`Azim catalog count mismatch: expected ${EXPECTED_CATALOG_COUNT}, got ${window.AZIM_CATALOG.length}`);try{if(typeof products!=='undefined'&&typeof normalize==='function'){products=normalize(window.AZIM_CATALOG);page=1;if(typeof render==='function')render()}}catch(e){console.warn('Azim render',e)}document.dispatchEvent(new CustomEvent('azim-catalog-loaded',{detail:{count:window.AZIM_CATALOG.length}}));return true};
-const getBytes=async()=>{const r=await fetch('azim-catalog-data.js?v=105',{cache:'no-store'});if(!r.ok)throw new Error('catalog file '+r.status);const s=await r.text();const m=s.match(/const b=['\"]([^'\"]+)['\"]/);if(!m)throw new Error('gzip payload missing');const bin=atob(m[1]);return Uint8Array.from(bin,c=>c.charCodeAt(0))};
-const loadPako=()=>new Promise((resolve,reject)=>{if(window.pako)return resolve();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js';sc.onload=resolve;sc.onerror=()=>reject(new Error('pako CDN failed'));document.head.appendChild(sc)});
-const decode=async()=>{const bytes=await getBytes();let out='';try{if('DecompressionStream'in window){const ds=new DecompressionStream('gzip');out=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text()}else{throw new Error('native DecompressionStream unavailable')}}catch(nativeErr){console.warn('Native gzip decode failed; using pako fallback',nativeErr);await loadPako();out=new TextDecoder().decode(window.pako.ungzip(bytes))}const data=JSON.parse(out);window.AZIM_CATALOG=Array.isArray(data)?data:(data.products||data.items||data.data||data.catalog||[]);return apply()};
-const start=()=>{if(apply())return;decode().then(ok=>{if(!ok){let n=0;const t=setInterval(()=>{if(apply()||++n>120)clearInterval(t)},250)}}).catch(e=>{console.error('Azim catalog decode failed',e);let n=0;const t=setInterval(()=>{if(apply()||++n>120)clearInterval(t)},250)})};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-}catch(e){console.error('Azim catalog loader',e)}})();
+// Applies the catalog price policy only after the complete local catalog is available.
+(() => {
+  const EXPECTED_CATALOG_COUNT = 2116;
+
+  const showCatalogError = message => {
+    console.error(message);
+    document.dispatchEvent(new CustomEvent('azim-catalog-error', { detail: { message } }));
+    const info = document.getElementById('info');
+    if (info) info.textContent = message;
+  };
+
+  const apply = () => {
+    if (!Array.isArray(window.AZIM_CATALOG)) return false;
+    if (window.AZIM_CATALOG.length !== EXPECTED_CATALOG_COUNT) {
+      showCatalogError(`کاتالوگ ناقص است: ${window.AZIM_CATALOG.length} محصول دریافت شد؛ ${EXPECTED_CATALOG_COUNT} محصول لازم است.`);
+      return false;
+    }
+
+    try {
+      window.AZIM_CATALOG = window.AZIM_CATALOG.map((product, index) => {
+        const originalPrice = Number(product.original_price);
+        if (!String(product.name || '').trim() || !Number.isFinite(originalPrice) || originalPrice <= 0) {
+          throw new Error(`Invalid catalog product at index ${index}`);
+        }
+        return {
+          ...product,
+          original_price: originalPrice,
+          price: originalPrice * 1.2,
+          code: product.code || `PDF-${String(index + 1).padStart(4, '0')}`
+        };
+      });
+    } catch (error) {
+      showCatalogError(`کاتالوگ نامعتبر است: ${error.message}`);
+      return false;
+    }
+
+    try {
+      if (typeof products !== 'undefined' && typeof normalize === 'function') {
+        products = normalize(window.AZIM_CATALOG);
+        page = 1;
+        if (typeof render === 'function') render();
+      }
+    } catch (error) {
+      showCatalogError(`نمایش کاتالوگ ناموفق بود: ${error.message}`);
+      return false;
+    }
+
+    document.dispatchEvent(new CustomEvent('azim-catalog-loaded', { detail: { count: window.AZIM_CATALOG.length } }));
+    return true;
+  };
+
+  document.addEventListener('azim-catalog-ready', apply);
+  apply();
+})();
