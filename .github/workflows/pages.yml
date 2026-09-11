@@ -48,8 +48,9 @@ jobs:
           import base64,gzip,json
           from pathlib import Path
           s=Path('catalog-full.gz.b64').read_text(encoding='utf-8').strip()
-          s=''.join(s.split())
-          assert s and len(s)%4==0, f'full catalog Base64 length invalid: {len(s)}'
+          s=''.join(s.split()).rstrip('=')
+          assert s and len(s)%4 != 1, f'full catalog Base64 length invalid: {len(s)}'
+          s += '=' * ((4-len(s)%4)%4)
           raw=base64.b64decode(s,validate=True)
           assert raw[:2]==b'\x1f\x8b', 'full catalog is not gzip data'
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
