@@ -38,13 +38,11 @@ jobs:
           else:
               Path('supabase-config.js').write_text('window.AZIM_SUPABASE_URL="";\nwindow.AZIM_SUPABASE_ANON_KEY="";\n',encoding='utf-8')
           PY
-      - name: Restore catalog as local browser asset
+      - name: Validate catalog database
         run: |
-          git fetch origin aae3e418096c4f0624217872e04e8728a2b8a826 --depth=1
-          mkdir -p data
-          git show aae3e418096c4f0624217872e04e8728a2b8a826:azim-catalog-data.js > data/azim-catalog-runtime.js
           test -s data/azim-catalog-runtime.js
-          grep -q "const b=" data/azim-catalog-runtime.js
+          grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
+          grep -q "DecompressionStream" data/azim-catalog-runtime.js
       - name: Validate site files
         run: |
           test -s index.html
@@ -55,9 +53,7 @@ jobs:
           from pathlib import Path
           for f in ('index.html','products.html'):
               s=Path(f).read_text(encoding='utf-8')
-              assert '<html' in s.lower() and '</html>' in s.lower(), f'{f}: invalid HTML shell'
-          runtime=Path('data/azim-catalog-runtime.js').read_text(encoding='utf-8')
-          assert 'const b=' in runtime, 'catalog runtime payload missing'
+              assert '<html' in s.lower() and '</html>' in s.lower()
           print('SITE VALIDATION OK')
           PY
       - name: Upload artifact
