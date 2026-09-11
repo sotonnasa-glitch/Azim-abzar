@@ -27,18 +27,13 @@ jobs:
         run: |
           test -s data/azim-catalog-runtime.js
           grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
-          grep -q "catalog-full.gz.b64" data/azim-catalog-runtime.js
-          test -s catalog-full.gz.b64
           python - <<'PY'
           import base64, gzip, json, re
           from pathlib import Path
-          s=Path('catalog-full.gz.b64').read_text(encoding='utf-8-sig')
-          s=''.join(s.split()).replace('-','+').replace('_','/')
-          s=re.sub(r'[^A-Za-z0-9+/]', '', s)
-          assert s and len(s)%4 != 1, f'invalid catalog Base64 length: {len(s)}'
-          s += '=' * ((4-len(s)%4)%4)
-          raw=base64.b64decode(s, validate=False)
-          assert raw[:2] == b'\x1f\x8b', 'catalog payload is not gzip'
+          s=Path('data/azim-catalog-runtime.js').read_text(encoding='utf-8')
+          m=re.search(r"const s='([A-Za-z0-9+/=]+)'", s)
+          assert m, 'embedded catalog payload not found'
+          raw=base64.b64decode(m.group(1), validate=True)
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
           assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
           print('CATALOG PAYLOAD VALID:', len(data), 'products')
