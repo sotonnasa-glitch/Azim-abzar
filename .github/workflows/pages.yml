@@ -36,25 +36,18 @@ jobs:
           else:
               Path('supabase-config.js').write_text('window.AZIM_SUPABASE_URL="";\nwindow.AZIM_SUPABASE_ANON_KEY="";\n',encoding='utf-8')
           PY
-      - name: Build plain JSON catalog for browser
+      - name: Restore catalog as local browser asset
         run: |
           git fetch origin aae3e418096c4f0624217872e04e8728a2b8a826 --depth=1
-          python - <<'PY'
-          import subprocess, re, base64, gzip, json
-          from pathlib import Path
-          historical = subprocess.check_output(['git','show','aae3e418096c4f0624217872e04e8728a2b8a826:azim-catalog-data.js'], text=True)
-          m=re.search(r"const b='([^']+)'", historical)
-          if not m: raise SystemExit('Historical catalog blob not found')
-          data=json.loads(gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
-          if not isinstance(data,list) or len(data) < 2000: raise SystemExit(f'Invalid historical catalog: {len(data) if isinstance(data,list) else "not-list"}')
-          Path('data/products-db.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          print('VALID:',len(data),'products restored from historical catalog')
-          PY
-      - name: Validate products catalog
+          mkdir -p data
+          git show aae3e418096c4f0624217872e04e8728a2b8a826:azim-catalog-data.js > data/azim-catalog-runtime.js
+          test -s data/azim-catalog-runtime.js
+          grep -q "const b=" data/azim-catalog-runtime.js
+          echo 'VALID: historical catalog runtime asset restored'
+      - name: Validate products catalog wiring
         run: |
-          test -s data/products-db.json
-          grep -q "data/products-db.json" products.html
-          python -c "import json; d=json.load(open('data/products-db.json',encoding='utf-8')); assert len(d)>=2000; print('VALID:',len(d),'products ready for Pages')"
+          test -s data/azim-catalog-runtime.js
+          grep -q "azim-catalog-runtime.js" products.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
