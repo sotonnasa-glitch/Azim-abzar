@@ -52,9 +52,14 @@ jobs:
               m=re.search(r'window\.AZIM_CATALOG_B64_PARTS\['+str(i-1)+r'\]="([A-Za-z0-9+/=]+)"',s)
               assert m, f'base64 part {i} missing or invalid'
               part=m.group(1).strip()
-              assert len(part)%4==0, f'base64 part {i} length is not a multiple of 4'
-              parts.append(part)
-          raw=b''.join(base64.b64decode(part,validate=True) for part in parts)
+              assert part, f'base64 part {i} is empty'
+              # Chunks may be split at arbitrary Base64 boundaries. Remove any
+              # chunk-local padding and add padding only after reassembly.
+              parts.append(part.rstrip('='))
+          joined=''.join(parts)
+          assert len(joined)%4 != 1, f'reassembled Base64 has invalid length: {len(joined)}'
+          joined+='='*((4-len(joined)%4)%4)
+          raw=base64.b64decode(joined,validate=True)
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
           assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
           print('CATALOG PAYLOAD VALID:',len(data),'products')
