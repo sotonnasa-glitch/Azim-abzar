@@ -39,21 +39,18 @@ jobs:
       - name: Build plain JSON catalog for browser
         run: |
           python - <<'PY'
+          import subprocess, re, base64, gzip, json
           from pathlib import Path
-          import base64, gzip, json, re
-          raw=Path('catalog-full.gz.b64').read_text(encoding='utf-8-sig').replace('-','+').replace('_','/')
-          raw=re.sub(r'[^A-Za-z0-9+/=]','',raw)
-          raw += '=' * (-len(raw) % 4)
-          blob=base64.b64decode(raw, validate=False)
-          payload=gzip.decompress(blob)
-          data=json.loads(payload.decode('utf-8'))
-          if not isinstance(data,list) or len(data) < 2000: raise SystemExit(f'Invalid catalog: {len(data) if isinstance(data,list) else "not-list"}')
+          historical = subprocess.check_output(['git','show','aae3e418096c4f0624217872e04e8728a2b8a826:azim-catalog-data.js'], text=True)
+          m=re.search(r"const b='([^']+)'", historical)
+          if not m: raise SystemExit('Historical catalog blob not found')
+          data=json.loads(gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
+          if not isinstance(data,list) or len(data) < 2000: raise SystemExit(f'Invalid historical catalog: {len(data) if isinstance(data,list) else "not-list"}')
           Path('data/products-db.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          print('VALID:',len(data),'products')
+          print('VALID:',len(data),'products restored from historical catalog')
           PY
       - name: Validate products catalog
         run: |
-          test -s catalog-full.gz.b64
           test -s data/products-db.json
           grep -q "data/products-db.json" products.html
           python -c "import json; d=json.load(open('data/products-db.json',encoding='utf-8')); assert len(d)>=2000; print('VALID:',len(d),'products ready for Pages')"
