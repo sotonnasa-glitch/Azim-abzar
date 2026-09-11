@@ -40,29 +40,23 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import base64, gzip, json
-          src=Path('data/products-db.gz.b64')
-          raw=''.join(src.read_text(encoding='utf-8-sig').split())
-          blob=base64.b64decode(raw, validate=True)
+          import base64, gzip, json, re
+          raw=Path('data/products-db.gz.b64').read_text(encoding='utf-8-sig').replace('-','+').replace('_','/')
+          raw=re.sub(r'[^A-Za-z0-9+/=]','',raw)
+          raw += '=' * (-len(raw) % 4)
+          blob=base64.b64decode(raw, validate=False)
           payload=gzip.decompress(blob)
           data=json.loads(payload.decode('utf-8'))
-          if not isinstance(data,list) or len(data) < 2000:
-              raise SystemExit(f'Invalid catalog: {len(data) if isinstance(data,list) else "not-list"} records')
+          if not isinstance(data,list) or len(data) < 2000: raise SystemExit('Invalid catalog')
           Path('data/products-db.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          print(f'VALID: generated browser catalog with {len(data)} products')
+          print('VALID:',len(data),'products')
           PY
       - name: Validate products catalog
         run: |
           test -s data/products-db.gz.b64
           test -s data/products-db.json
           grep -q "data/products-db.json" products.html
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          d=json.loads(Path('data/products-db.json').read_text(encoding='utf-8'))
-          assert len(d) >= 2000
-          print(f'VALID: {len(d)} products ready for Pages')
-          PY
+          python -c "import json; d=json.load(open('data/products-db.json',encoding='utf-8')); assert len(d)>=2000; print('VALID:',len(d),'products ready for Pages')"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
