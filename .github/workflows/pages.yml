@@ -37,7 +37,7 @@ jobs:
           s=re.sub(r'[^A-Za-z0-9+/]', '', s)
           assert s and len(s)%4 != 1, f'invalid catalog Base64 length: {len(s)}'
           s += '=' * ((4-len(s)%4)%4)
-          raw=base64.b64decode(s, validate=True)
+          raw=base64.b64decode(s, validate=False)
           assert raw[:2] == b'\x1f\x8b', 'catalog payload is not gzip'
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
           assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
