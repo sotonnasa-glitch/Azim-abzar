@@ -30,10 +30,11 @@ jobs:
           grep -q "catalog-full.gz.b64" data/azim-catalog-runtime.js
           test -s catalog-full.gz.b64
           python - <<'PY'
-          import base64, gzip, json
+          import base64, gzip, json, re
           from pathlib import Path
-          s=Path('catalog-full.gz.b64').read_text(encoding='utf-8')
-          s=''.join(s.split()).replace('=','')
+          s=Path('catalog-full.gz.b64').read_text(encoding='utf-8-sig')
+          s=''.join(s.split()).replace('-','+').replace('_','/')
+          s=re.sub(r'[^A-Za-z0-9+/]', '', s)
           assert s and len(s)%4 != 1, f'invalid catalog Base64 length: {len(s)}'
           s += '=' * ((4-len(s)%4)%4)
           raw=base64.b64decode(s, validate=True)
