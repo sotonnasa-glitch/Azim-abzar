@@ -42,24 +42,16 @@ jobs:
         run: |
           test -s data/azim-catalog-runtime.js
           grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
-          grep -q "DecompressionStream" data/azim-catalog-runtime.js
+          grep -q "catalog-full.gz.b64" data/azim-catalog-runtime.js
+          test -s catalog-full.gz.b64
           python - <<'PY'
-          import re,base64,gzip,json
+          import base64,gzip,json
           from pathlib import Path
-          parts=[]
-          for i in range(1,4):
-              s=Path(f'data/catalog-part-{i:02d}.js').read_text(encoding='utf-8')
-              m=re.search(r'window\.AZIM_CATALOG_B64_PARTS\['+str(i-1)+r'\]="([A-Za-z0-9+/=]+)"',s)
-              assert m, f'base64 part {i} missing or invalid'
-              part=m.group(1).strip()
-              assert part, f'base64 part {i} is empty'
-              # Chunks may be split at arbitrary Base64 boundaries. Remove any
-              # chunk-local padding and add padding only after reassembly.
-              parts.append(part.rstrip('='))
-          joined=''.join(parts)
-          assert len(joined)%4 != 1, f'reassembled Base64 has invalid length: {len(joined)}'
-          joined+='='*((4-len(joined)%4)%4)
-          raw=base64.b64decode(joined,validate=True)
+          s=Path('catalog-full.gz.b64').read_text(encoding='utf-8').strip()
+          s=''.join(s.split())
+          assert s and len(s)%4==0, f'full catalog Base64 length invalid: {len(s)}'
+          raw=base64.b64decode(s,validate=True)
+          assert raw[:2]==b'\x1f\x8b', 'full catalog is not gzip data'
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
           assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
           print('CATALOG PAYLOAD VALID:',len(data),'products')
@@ -69,6 +61,7 @@ jobs:
           test -s index.html
           test -s products.html
           test -s data/azim-catalog-runtime.js
+          test -s catalog-full.gz.b64
           grep -q "azim-catalog-runtime.js" products.html
           python - <<'PY'
           from pathlib import Path
