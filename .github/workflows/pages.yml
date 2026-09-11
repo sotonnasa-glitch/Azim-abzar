@@ -1,0 +1,63 @@
+name: Deploy Azim Abzar to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Validate complete catalog
+        run: |
+          test -s data/azim-catalog-runtime.js
+          grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
+          grep -q "catalog-full.gz.b64" data/azim-catalog-runtime.js
+          test -s catalog-full.gz.b64
+          python - <<'PY'
+          import base64, gzip, json
+          from pathlib import Path
+          s=Path('catalog-full.gz.b64').read_text(encoding='utf-8')
+          s=''.join(s.split()).replace('=','')
+          assert s and len(s)%4 != 1, f'invalid catalog Base64 length: {len(s)}'
+          s += '=' * ((4-len(s)%4)%4)
+          raw=base64.b64decode(s, validate=True)
+          assert raw[:2] == b'\x1f\x8b', 'catalog payload is not gzip'
+          data=json.loads(gzip.decompress(raw).decode('utf-8'))
+          assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
+          print('CATALOG PAYLOAD VALID:', len(data), 'products')
+          PY
+      - name: Validate site files
+        run: |
+          test -s index.html
+          test -s products.html
+          grep -q "azim-catalog-runtime.js" products.html
+          python - <<'PY'
+          from pathlib import Path
+          for f in ('index.html','products.html'):
+              s=Path(f).read_text(encoding='utf-8')
+              assert '<html' in s.lower() and '</html>' in s.lower()
+          print('SITE VALIDATION OK')
+          PY
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
