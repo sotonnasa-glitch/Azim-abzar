@@ -1,0 +1,1 @@
+window.AZIM_PRODUCTS=[{"name":"آچار یکسررینگی — سایز 46","category":"آچار یکسررینگی","price":53000000,"original_price":53000000,"code":"1","page":2}];window.AZIM_CATALOG=window.AZIM_PRODUCTS;
