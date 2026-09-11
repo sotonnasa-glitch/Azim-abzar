@@ -31,9 +31,13 @@ jobs:
           import base64, gzip, json, re
           from pathlib import Path
           s=Path('data/azim-catalog-runtime.js').read_text(encoding='utf-8')
-          m=re.search(r"const s='([A-Za-z0-9+/=]+)'", s)
+          m=re.search(r"const s='([^']+)';const bin", s)
           assert m, 'embedded catalog payload not found'
-          raw=base64.b64decode(m.group(1), validate=True)
+          enc=re.sub(r'[^A-Za-z0-9+/=]', '', m.group(1)).replace('=','')
+          assert enc and len(enc)%4 != 1, f'invalid embedded Base64 length: {len(enc)}'
+          enc += '=' * ((4-len(enc)%4)%4)
+          raw=base64.b64decode(enc, validate=True)
+          assert raw[:2] == b'\x1f\x8b', 'embedded catalog is not gzip'
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
           assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
           print('CATALOG PAYLOAD VALID:', len(data), 'products')
