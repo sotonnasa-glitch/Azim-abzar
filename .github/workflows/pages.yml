@@ -28,14 +28,17 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin e1421ee34f63798246519a6e255621be4404fbb8
           git show e1421ee34f63798246519a6e255621be4404fbb8:azim-catalog-data.js > azim-catalog-data.js
-      - name: Configure Supabase runtime config
+      - name: Configure optional Supabase runtime config
         run: |
           python - <<'PY'
           from pathlib import Path
           import json, os
           key=os.environ.get('AZIM_SUPABASE_PUBLISHABLE_KEY','').strip()
-          if not key: raise SystemExit('Missing repository secret AZIM_SUPABASE_PUBLISHABLE_KEY')
-          Path('supabase-config.js').write_text('window.AZIM_SUPABASE_URL='+json.dumps(os.environ['AZIM_SUPABASE_URL'])+';\nwindow.AZIM_SUPABASE_ANON_KEY='+json.dumps(key)+';\n',encoding='utf-8')
+          url=os.environ.get('AZIM_SUPABASE_URL','').strip()
+          if key and url:
+              Path('supabase-config.js').write_text('window.AZIM_SUPABASE_URL='+json.dumps(url)+';\nwindow.AZIM_SUPABASE_ANON_KEY='+json.dumps(key)+';\n',encoding='utf-8')
+          else:
+              Path('supabase-config.js').write_text('window.AZIM_SUPABASE_URL="";\nwindow.AZIM_SUPABASE_ANON_KEY="";\n',encoding='utf-8')
           PY
       - name: Fix catalog rendering
         run: |
@@ -54,18 +57,19 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('products.html'); s=p.read_text(encoding='utf-8')
-          for v in ('108','109','110','111','112','113','114','115','116','117','118','119','120','121','122'):
-              s=s.replace(f'custom-products.js?v={v}','custom-products.js?v=123')
-          s=s.replace('azim-catalog-data.js"','azim-catalog-data.js?v=123"')
+          import re
+          s=re.sub(r'custom-products\.js\?v=\d+', 'custom-products.js?v=124', s)
+          s=re.sub(r'azim-catalog-data\.js(?:\?v=\d+)?', 'azim-catalog-data.js?v=124', s)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Validate deployment inputs
         run: |
           test -s azim-catalog-data.js
+          test -s data/products-db.gz.b64
           grep -q "آچار یکسررینگی 1-1/16" custom-products.js
           grep -q "گیریس پمپ بادی 40 کیلویی" custom-products.js
           grep -q "price:p.price==null?null" products.html
-          echo 'VALID: full catalog loader + PDF additions + null-price rendering fix'
+          echo 'VALID: full catalog loader + bundled database + PDF additions + rendering fix'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
