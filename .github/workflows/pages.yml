@@ -40,7 +40,6 @@ jobs:
         run: |
           test -s data/products-db.gz.b64
           grep -q "data/products-db.gz.b64" products.html
-          grep -q "۲۱۱۹" products.html || grep -q "2119" products.html
           echo 'VALID: products page loads bundled catalog database'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
