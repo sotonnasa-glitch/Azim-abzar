@@ -51,10 +51,13 @@ jobs:
               s=Path(f'data/catalog-part-{i:02d}.js').read_text(encoding='utf-8')
               m=re.search(r'window\.AZIM_CATALOG_B64_PARTS\['+str(i-1)+r'\]="([A-Za-z0-9+/=]+)"',s)
               assert m, f'base64 part {i} missing or invalid'
-              parts.append(m.group(1))
-          raw=base64.b64decode(''.join(parts),validate=True)
+              parts.append(m.group(1).strip())
+          joined=''.join(parts)
+          joined=joined.rstrip('=')
+          joined+='='*((4-len(joined)%4)%4)
+          raw=base64.b64decode(joined,validate=True)
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
-          assert isinstance(data,list) and len(data)==1855, len(data)
+          assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
           print('CATALOG PAYLOAD VALID:',len(data),'products')
           PY
       - name: Validate site files
