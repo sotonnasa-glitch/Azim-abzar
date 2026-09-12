@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""Build Azim Abzar's browser catalog directly from the source PDF.
+
+Usage:
+  python scripts/build_catalog.py [input.pdf] [output.js]
+
+The PDF uses Persian price typography such as 850/000 and 1/800/000.
+The extractor treats slash-separated numeric groups as prices when they form
+an integer amount >= 100,000 and the final group has 2-4 digits. This handles
+both 220/000 and 380/000/850/000-style layouts without treating normal sizes
+such as 4/1 or 5/5 as prices.
+"""
+from __future__ import annotations
+import base64, gzip, json, re, sys
+from pathlib import Path
+import fitz
+
+EXPECTED_PRODUCTS = 2106
+DIGIT_TRANSLATION = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+
+def norm(s: str) -> str:
+    return s.translate(DIGIT_TRANSLATION)
+
+def is_digit_token(s: str) -> bool:
+    return bool(re.fullmatch(r"\d+", norm(s)))
+
+def price_sequences(words):
+    """Return (price, word_group) pairs found in one visual row."""
+    out, i = [], 0
+    while i < len(words):
+        if not is_digit_token(words[i][4]):
+            i += 1; continue
+        j = i
+        parts = [norm(words[i][4])]
+        group = [words[i]]
+        while (j + 2 < len(words)
+               and norm(words[j + 1][4]) == "/"
+               and is_digit_token(words[j + 2][4])
+               and words[j + 2][0] - words[j + 1][2] < 12):
+            parts.extend(("/", norm(words[j + 2][4])))
+            group.extend((words[j + 1], words[j + 2]))
+            j += 2
+        if (len(parts) >= 3 and len(parts) % 2 == 1
+            and all(parts[k] == "/" for k in range(1, len(parts), 2))
+            and 2 <= len(parts[-1]) <= 4):
+            digits = "".join(parts[::2])
+            value = int(digits)
+            if value >= 100_000:
+                out.append((value, group))
+        i = max(i + 1, j + 1)
+    return out
+
+def clean_text(tokens):
+    text = " ".join(tokens)
+    text = re.sub(r"\s+", " ", text).strip(" |")
+    return text
+
+def build(pdf_path: Path):
+    doc = fitz.open(pdf_path)
+    entries = []
+    for page_no, page in enumerate(doc, 1):
+        words = page.get_text("words")
+        rows = []
+        for w in words:
+            yc = (w[1] + w[3]) / 2
+            row = min(rows, key=lambda r: abs(r[0] - yc), default=None) if rows else None
+            if row is not None and abs(row[0] - yc) < 3.5:
+                row[1].append(w)
+            else:
+                rows.append([yc, [w]])
+        rows.sort(key=lambda r: r[0])
+        for row in rows:
+            row[1].sort(key=lambda w: w[0])
+
+        headings = []
+        for idx, (_, ws) in enumerate(rows):
+            txt = " ".join(w[4] for w in ws)
+            if re.search(r"[\u0600-\u06ffA-Za-z]", txt) and len(txt) > 3:
+                headings.append((idx, ws, txt))
+
+        for idx, (_, ws) in enumerate(rows):
+            for price, price_words in price_sequences(ws):
+                pc = sum((w[0] + w[2]) / 2 for w in price_words) / len(price_words)
+                best = None; best_score = float("inf")
+                for hidx, hws, htxt in headings:
+                    if hidx >= idx or idx - hidx > 30:
+                        continue
+                    hc = sum((w[0] + w[2]) / 2 for w in hws) / len(hws)
+                    score = (idx - hidx) * 15 + abs(hc - pc) / 20
+                    if score < best_score:
+                        best_score = score; best = (hidx, hws, htxt)
+                category = clean_text(re.findall(r"[\u0600-\u06ffA-Za-z]+", best[2])) if best else "ابزار"
+                if not category:
+                    category = "ابزار"
+                price_ids = {id(w) for w in price_words}
+                nearby = []
+                for w in ws:
+                    if id(w) in price_ids:
+                        continue
+                    t = norm(w[4])
+                    if t == "/" or re.fullmatch(r"[-*]+", t):
+                        continue
+                    if abs(((w[0] + w[2]) / 2) - pc) < 180:
+                        nearby.append(w[4])
+                spec = clean_text(nearby)
+                name = category if not spec else f"{category} — {spec}"
+                entries.append({
+                    "name": name,
+                    "category": category,
+                    "price": price,
+                    "code": str(len(entries) + 1),
+                    "page": page_no,
+                })
+    if len(entries) != EXPECTED_PRODUCTS:
+        raise SystemExit(f"Expected {EXPECTED_PRODUCTS} priced products, extracted {len(entries)}")
+    return entries
+
+def write_runtime(products, output_path: Path):
+    products = [{k:x[k] for k in ("name","category","price","code","page")} for x in products]
+    payload = json.dumps(products, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    compressed = gzip.compress(payload, compresslevel=9, mtime=0)
+    if compressed[:2] != b"\x1f\x8b":
+        raise SystemExit("gzip magic check failed")
+    encoded = base64.b64encode(compressed).decode("ascii")
+    js = (
+        "// Generated by scripts/build_catalog.py; do not edit by hand.\n"
+        "window.AZIM_CATALOG_READY=(async()=>{"
+        f"const s='{encoded}';"
+        "if(!s||s.length%4===1)throw new Error('داده رمزگذاری‌شده دیتابیس نامعتبر است');"
+        "const b=Uint8Array.from(atob(s),c=>c.charCodeAt(0));"
+        "if(b[0]!==0x1f||b[1]!==0x8b)throw new Error('داده کاتالوگ gzip نیست');"
+        "if(!('DecompressionStream' in window))throw new Error('مرورگر شما از بارگذاری کاتالوگ پشتیبانی نمی‌کند؛ لطفاً Chrome یا Edge به‌روز استفاده کنید');"
+        "const ds=new DecompressionStream('gzip');"
+        "const ab=await new Response(new Blob([b]).stream().pipeThrough(ds)).arrayBuffer();"
+        "const data=JSON.parse(new TextDecoder().decode(ab));"
+        f"if(!Array.isArray(data)||data.length!=={EXPECTED_PRODUCTS})throw new Error('تعداد محصولات دیتابیس صحیح نیست: '+(data?.length??0));"
+        "window.AZIM_CATALOG=data;window.AZIM_PRODUCTS=data;return data;})();\n"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(js, encoding="utf-8")
+    print(f"ENCODED BASE64 LENGTH: {len(encoded)}")
+    written_js = output_path.read_text(encoding="utf-8")
+    m = re.search(r"const s='([^']+)'", written_js)
+    if not m:
+        raise SystemExit("could not recover Base64 from written runtime file")
+    written_encoded = m.group(1)
+    print(f"WRITTEN BASE64 LENGTH: {len(written_encoded)}")
+    assert len(written_encoded) == len(encoded), (
+        f"Base64 length changed while writing: generated={len(encoded)}, written={len(written_encoded)}"
+    )
+    assert len(written_encoded) % 4 == 0, f"final Base64 length is not divisible by 4: {len(written_encoded)}"
+    raw = base64.b64decode(written_encoded, validate=True)
+    assert raw[:2] == b"\x1f\x8b"
+    decoded = json.loads(gzip.decompress(raw).decode("utf-8"))
+    assert len(decoded) == EXPECTED_PRODUCTS
+    print(f"ROUNDTRIP PRODUCTS: {len(decoded)}")
+
+def main():
+    root = Path(__file__).resolve().parents[1]
+    pdf = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "catalog-source.pdf"
+    out = Path(sys.argv[2]) if len(sys.argv) > 2 else root / "data/azim-catalog-runtime.js"
+    products = build(pdf)
+    write_runtime(products, out)
+    print(f"EXTRACTED PRODUCTS: {len(products)}")
+    print("GZIP MAGIC: 1f8b")
+    print(f"OUTPUT: {out}")
+
+if __name__ == "__main__": main()
