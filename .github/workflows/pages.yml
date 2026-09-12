@@ -19,23 +19,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
       - name: Build complete 1855-product catalog chunks
         run: |
+          set -euo pipefail
+          curl -fsSL "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/e048ccf3e8276442ae81ca46d9bd5b8e000ff6d7/catalog-full.gz.b64" -o /tmp/catalog-full.gz.b64
           python - <<'PY'
-          import base64, gzip, json, subprocess
+          import base64, gzip, json
           from pathlib import Path
-          # The current catalog-full.gz.b64 blob is one character short.
-          # The immediately preceding intact catalog commit was generated from the same 89-page PDF.
-          intact = subprocess.check_output([
-              'git', 'show', 'e048ccf3e8276442ae81ca46d9bd5b8e000ff6d7:catalog-full.gz.b64'
-          ], text=True)
-          raw = ''.join(intact.split())
+          src = Path('/tmp/catalog-full.gz.b64')
+          raw = ''.join(src.read_text(encoding='utf-8').split())
+          print(f'CATALOG SOURCE BASE64 LENGTH: {len(raw)}')
           payload = gzip.decompress(base64.b64decode(raw, validate=True))
           products = json.loads(payload)
           assert isinstance(products, list), 'catalog payload is not a list'
