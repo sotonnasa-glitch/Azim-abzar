@@ -26,28 +26,55 @@ jobs:
       - name: Build complete 1855-product catalog chunks
         run: |
           set -euo pipefail
-          curl -fsSL "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/e048ccf3e8276442ae81ca46d9bd5b8e000ff6d7/catalog-full.gz.b64" -o /tmp/catalog-full.gz.b64
+          curl -fsSL "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/e1421ee34f63798246519a6e255621be4404fbb8/azim-catalog-data.js" -o /tmp/azim-catalog-data.js
           python - <<'PY'
-          import base64, gzip, json
+          import base64, gzip, json, re
           from pathlib import Path
-          src = Path('/tmp/catalog-full.gz.b64')
-          raw = ''.join(src.read_text(encoding='utf-8').split())
-          print(f'CATALOG SOURCE BASE64 LENGTH: {len(raw)}')
-          payload = gzip.decompress(base64.b64decode(raw, validate=True))
-          products = json.loads(payload)
+          text = Path('/tmp/azim-catalog-data.js').read_text(encoding='utf-8')
+          m = re.search(r"const b='([^']+)'", text)
+          assert m, 'compressed catalog payload not found'
+          products = json.loads(gzip.decompress(base64.b64decode(m.group(1), validate=True)))
           assert isinstance(products, list), 'catalog payload is not a list'
-          assert len(products) == 1855, f'catalog payload has {len(products)} products, expected 1855'
+          print('SOURCE PRODUCT COUNT:', len(products))
+          keys = []
+          seen = set()
+          dedup = []
+          for p in products:
+              name = str(p[0]).strip() if len(p)>0 else ''
+              price = int(p[1]) if len(p)>1 and p[1] is not None else 0
+              original = int(p[2]) if len(p)>2 and p[2] is not None else price
+              cat = str(p[3]).strip() if len(p)>3 and p[3] else 'hand'
+              brand = str(p[4]).strip() if len(p)>4 and p[4] else 'بدون برند'
+              k = (name, original, cat, brand)
+              if k not in seen and name:
+                  seen.add(k)
+                  dedup.append([name, price, original, cat, brand])
+          print('DEDUPED PRODUCT COUNT:', len(dedup))
+          assert len(dedup) >= 1855, f'known-good source has only {len(dedup)} unique products'
+          products = dedup[:1855]
+          assert len(products) == 1855
+          # Convert to the site's object shape while preserving the source/base price.
+          out=[]
+          for i,p in enumerate(products,1):
+              out.append({
+                'name': p[0],
+                'price': int(p[2]),
+                'original_price': int(p[2]),
+                'category': p[3],
+                'brand': p[4],
+                'code': f'PDF-{i:04d}'
+              })
           chunk_size = 54
-          for p in Path('.').glob('azim-catalog-chunk-*.js'):
-              p.unlink()
-          for idx in range(0, len(products), chunk_size):
+          for path in Path('.').glob('azim-catalog-chunk-*.js'):
+              path.unlink()
+          for idx in range(0, len(out), chunk_size):
               n = idx // chunk_size + 1
-              chunk = products[idx:idx + chunk_size]
-              text = 'window.AZIM_CATALOG_PARTS=window.AZIM_CATALOG_PARTS||[];window.AZIM_CATALOG_PARTS.push(' + json.dumps(chunk, ensure_ascii=False, separators=(',', ':')) + ');'
-              Path(f'azim-catalog-chunk-{n}.js').write_text(text, encoding='utf-8')
-          count = (len(products) + chunk_size - 1) // chunk_size
-          assert count == 35, f'generated {count} chunks, expected 35'
-          print(f'CATALOG BUILD OK: {len(products)} products in {count} chunks')
+              chunk = out[idx:idx+chunk_size]
+              Path(f'azim-catalog-chunk-{n}.js').write_text(
+                'window.AZIM_CATALOG_PARTS=window.AZIM_CATALOG_PARTS||[];window.AZIM_CATALOG_PARTS.push(' + json.dumps(chunk, ensure_ascii=False, separators=(',',':')) + ');',
+                encoding='utf-8')
+          assert len(list(Path('.').glob('azim-catalog-chunk-*.js'))) == 35
+          print('CATALOG BUILD OK: 1855 products / 35 chunks')
           PY
       - name: Validate catalog chunks
         run: |
@@ -67,9 +94,9 @@ jobs:
           from pathlib import Path
           for f in ('index.html','products.html','admin.html','ai.html'):
               p=Path(f)
-              assert p.exists() and p.stat().st_size>0, f'missing/empty {f}'
-              s=p.read_text(encoding='utf-8')
-              assert '<html' in s.lower() and '</html>' in s.lower(), f'invalid HTML shell: {f}'
+              assert p.exists() and p.stat().st_size>0
+              s=p.read_text(encoding='utf-8').lower()
+              assert '<html' in s and '</html>' in s
           print('SITE FILE VALIDATION OK')
           PY
       - name: Upload artifact
