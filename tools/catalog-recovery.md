@@ -1,0 +1,1 @@
+Recovery branch created to repair the 1855-product build without silently accepting corrupted gzip data. Next step: replace the workflow source with a verified catalog payload, then run and validate 1855 records and deployment.
