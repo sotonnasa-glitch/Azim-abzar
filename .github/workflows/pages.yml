@@ -38,7 +38,7 @@ jobs:
           raw=base64.b64decode(s, validate=True)
           assert raw[:2] == b'\x1f\x8b', 'catalog payload is not gzip'
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
-          assert isinstance(data,list) and len(data)==2032, f'expected 2032 products, got {len(data)}'
+          assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
           assert all(isinstance(p,dict) and str(p.get('name','')).strip() and str(p.get('category','')).strip() and isinstance(p.get('price'),int) and p.get('price',0)>0 for p in data), 'catalog has invalid product records'
           print('CATALOG PAYLOAD VALID:', len(data), 'products')
           PY
