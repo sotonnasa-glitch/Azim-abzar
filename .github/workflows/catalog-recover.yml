@@ -1,3 +1,4 @@
+# recovery trigger
 name: Recover historical catalog for verification
 on:
   workflow_dispatch:
