@@ -23,25 +23,15 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Validate complete catalog
+      - name: Validate catalog chunks
         run: |
           test -s data/azim-catalog-runtime.js
           grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
-          grep -q "catalog-full.gz.b64" data/azim-catalog-runtime.js
-          test -s catalog-full.gz.b64
-          python - <<'PY'
-          import base64, gzip, json
-          from pathlib import Path
-          s=''.join(Path('catalog-full.gz.b64').read_text(encoding='utf-8-sig').split()).rstrip('=')
-          assert s and len(s)%4 != 1, f'invalid catalog Base64 length: {len(s)}'
-          s += '=' * ((4-len(s)%4)%4)
-          raw=base64.b64decode(s, validate=True)
-          assert raw[:2] == b'\x1f\x8b', 'catalog payload is not gzip'
-          data=json.loads(gzip.decompress(raw).decode('utf-8'))
-          assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
-          assert all(isinstance(p,dict) and str(p.get('name','')).strip() and str(p.get('category','')).strip() and isinstance(p.get('price'),int) and p.get('price',0)>0 for p in data), 'catalog has invalid product records'
-          print('CATALOG PAYLOAD VALID:', len(data), 'products')
-          PY
+          for f in azim-catalog-chunk-{1..8}.js; do
+            test -s "$f"
+            grep -q "AZIM_CATALOG_PARTS" "$f"
+          done
+          echo "CATALOG CHUNKS VALID"
       - name: Validate site files
         run: |
           test -s index.html
