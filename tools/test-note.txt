@@ -1,0 +1,1 @@
+Using a streaming gzip decompressor can recover the uncompressed payload if only the gzip trailer is truncated.
