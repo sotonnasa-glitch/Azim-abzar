@@ -32,7 +32,6 @@ jobs:
           assert isinstance(data,list) and len(data)>=1855, f'catalog source has {len(data) if isinstance(data,list) else 0}, expected at least 1855'
           items=data[:1855]
           assert all(str(p.get('name','')).strip() for p in items), 'missing product name'
-          # Validate exact 20% markup using integer arithmetic to avoid float precision failures.
           assert all(int(p.get('price'))*5==int(p.get('original_price'))*6 for p in items), '20% price validation failed'
           assert items[0].get('code')=='PDF-0001' and items[-1].get('code')=='PDF-1855', 'PDF code range mismatch'
           print('CATALOG SOURCE OK: 1855 live products; 20% price rule verified')
@@ -40,12 +39,11 @@ jobs:
       - name: Validate site files
         run: |
           test -s products.html
-          test -s azim-catalog-chunk-1.js
-          for f in azim-catalog-chunk-{2..8}.js; do test -s "$f"; done
+          for f in azim-catalog-chunk-{1..8}.js; do test -s "$f"; done
           python - <<'PY'
           from pathlib import Path
           s=Path('products.html').read_text(encoding='utf-8')
-          assert '1855' in s
+          assert ('1855' in s) or ('۱۸۵۵' in s), 'products.html does not declare the 1855-product catalog'
           for f in ('index.html','products.html','admin.html','ai.html'):
               t=Path(f).read_text(encoding='utf-8').lower()
               assert '<html' in t and '</html>' in t, f'invalid html: {f}'
