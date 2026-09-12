@@ -1,4 +1,3 @@
-# catalog validation trigger
 name: Deploy Azim Abzar to GitHub Pages
 on:
   push:
@@ -28,19 +27,19 @@ jobs:
         run: |
           test -s data/azim-catalog-runtime.js
           grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
+          grep -q "catalog-full.gz.b64" data/azim-catalog-runtime.js
+          test -s catalog-full.gz.b64
           python - <<'PY'
-          import base64, gzip, json, re
+          import base64, gzip, json
           from pathlib import Path
-          s=Path('data/azim-catalog-runtime.js').read_text(encoding='utf-8')
-          m=re.search(r"const s='([^']+)';const bin", s)
-          assert m, 'embedded catalog payload not found'
-          enc=re.sub(r'[^A-Za-z0-9+/=]', '', m.group(1)).replace('=','')
-          assert enc and len(enc)%4 != 1, f'invalid embedded Base64 length: {len(enc)}'
-          enc += '=' * ((4-len(enc)%4)%4)
-          raw=base64.b64decode(enc, validate=True)
-          assert raw[:2] == b'\x1f\x8b', 'embedded catalog is not gzip'
+          s=''.join(Path('catalog-full.gz.b64').read_text(encoding='utf-8-sig').split()).rstrip('=')
+          assert s and len(s)%4 != 1, f'invalid catalog Base64 length: {len(s)}'
+          s += '=' * ((4-len(s)%4)%4)
+          raw=base64.b64decode(s, validate=True)
+          assert raw[:2] == b'\x1f\x8b', 'catalog payload is not gzip'
           data=json.loads(gzip.decompress(raw).decode('utf-8'))
-          assert isinstance(data,list) and len(data)==1855, f'expected 1855 products, got {len(data)}'
+          assert isinstance(data,list) and len(data)==2032, f'expected 2032 products, got {len(data)}'
+          assert all(isinstance(p,dict) and str(p.get('name','')).strip() and str(p.get('category','')).strip() and isinstance(p.get('price'),int) and p.get('price',0)>0 for p in data), 'catalog has invalid product records'
           print('CATALOG PAYLOAD VALID:', len(data), 'products')
           PY
       - name: Validate site files
@@ -50,10 +49,12 @@ jobs:
           grep -q "azim-catalog-runtime.js" products.html
           python - <<'PY'
           from pathlib import Path
-          for f in ('index.html','products.html'):
-              s=Path(f).read_text(encoding='utf-8')
-              assert '<html' in s.lower() and '</html>' in s.lower()
-          print('SITE VALIDATION OK')
+          for f in ('index.html','products.html','admin.html','ai.html'):
+              p=Path(f)
+              assert p.exists() and p.stat().st_size>0, f'missing/empty {f}'
+              s=p.read_text(encoding='utf-8')
+              assert '<html' in s.lower() and '</html>' in s.lower(), f'invalid HTML shell: {f}'
+          print('SITE FILE VALIDATION OK')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
