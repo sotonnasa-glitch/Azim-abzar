@@ -32,7 +32,8 @@ jobs:
           assert isinstance(data,list) and len(data)>=1855, f'catalog source has {len(data) if isinstance(data,list) else 0}, expected at least 1855'
           items=data[:1855]
           assert all(str(p.get('name','')).strip() for p in items), 'missing product name'
-          assert all(float(p.get('price'))==float(p.get('original_price'))*1.2 for p in items), '20% price validation failed'
+          # Validate exact 20% markup using integer arithmetic to avoid float precision failures.
+          assert all(int(p.get('price'))*5==int(p.get('original_price'))*6 for p in items), '20% price validation failed'
           assert items[0].get('code')=='PDF-0001' and items[-1].get('code')=='PDF-1855', 'PDF code range mismatch'
           print('CATALOG SOURCE OK: 1855 live products; 20% price rule verified')
           PY
