@@ -116,7 +116,7 @@ def build(pdf_path: Path):
     return entries
 
 def write_runtime(products, output_path: Path):
-    products = [{k:x[k] for k in ("name","category","price","code","page")} for x in products]
+    products = [{k:x[k] for k in ("name","category","price")} for x in products]
     payload = json.dumps(products, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     compressed = gzip.compress(payload, compresslevel=9, mtime=0)
     if compressed[:2] != b"\x1f\x8b":
