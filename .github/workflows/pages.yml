@@ -23,15 +23,38 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Build complete 1855-product catalog chunks
+        run: |
+          python - <<'PY'
+          import base64, gzip, json
+          from pathlib import Path
+          src = Path('catalog-full.gz.b64')
+          raw = ''.join(src.read_text(encoding='utf-8').split())
+          payload = gzip.decompress(base64.b64decode(raw, validate=True))
+          products = json.loads(payload)
+          assert isinstance(products, list), 'catalog payload is not a list'
+          assert len(products) == 1855, f'catalog payload has {len(products)} products, expected 1855'
+          chunk_size = 54
+          for p in Path('.').glob('azim-catalog-chunk-*.js'):
+              p.unlink()
+          for idx in range(0, len(products), chunk_size):
+              n = idx // chunk_size + 1
+              chunk = products[idx:idx + chunk_size]
+              text = 'window.AZIM_CATALOG_PARTS=window.AZIM_CATALOG_PARTS||[];window.AZIM_CATALOG_PARTS.push(' + json.dumps(chunk, ensure_ascii=False, separators=(',', ':')) + ');'
+              Path(f'azim-catalog-chunk-{n}.js').write_text(text, encoding='utf-8')
+          count = (len(products) + chunk_size - 1) // chunk_size
+          assert count == 35, f'generated {count} chunks, expected 35'
+          print(f'CATALOG BUILD OK: {len(products)} products in {count} chunks')
+          PY
       - name: Validate catalog chunks
         run: |
           test -s data/azim-catalog-runtime.js
           grep -q "AZIM_CATALOG_READY" data/azim-catalog-runtime.js
-          for f in azim-catalog-chunk-{1..8}.js; do
+          for f in azim-catalog-chunk-{1..35}.js; do
             test -s "$f"
             grep -q "AZIM_CATALOG_PARTS" "$f"
           done
-          echo "CATALOG CHUNKS VALID"
+          echo "CATALOG CHUNKS VALID: 35/35"
       - name: Validate site files
         run: |
           test -s index.html
