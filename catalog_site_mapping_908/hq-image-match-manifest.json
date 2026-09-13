@@ -1,0 +1,1755 @@
+{
+  "archive": "catalog_products_part_1_of_2.zip",
+  "candidate_images": 453,
+  "authoritative_products": 880,
+  "replaced": 5,
+  "weak_matches": [
+    {
+      "id": "P0492",
+      "candidate": "P00501.jpg",
+      "hamming": 57,
+      "cost": 57.017
+    },
+    {
+      "id": "P0480",
+      "candidate": "P00486.jpg",
+      "hamming": 63,
+      "cost": 63.009
+    },
+    {
+      "id": "P0491",
+      "candidate": "P00502.jpg",
+      "hamming": 66,
+      "cost": 66.013
+    },
+    {
+      "id": "P0828",
+      "candidate": "P00825.jpg",
+      "hamming": 69,
+      "cost": 69.04
+    },
+    {
+      "id": "P0511",
+      "candidate": "P00309.jpg",
+      "hamming": 75,
+      "cost": 75.01
+    },
+    {
+      "id": "P0499",
+      "candidate": "P00510.jpg",
+      "hamming": 76,
+      "cost": 76.042
+    },
+    {
+      "id": "P0513",
+      "candidate": "P00523.jpg",
+      "hamming": 86,
+      "cost": 86.045
+    },
+    {
+      "id": "P0463",
+      "candidate": "P00460.jpg",
+      "hamming": 105,
+      "cost": 105.037
+    },
+    {
+      "id": "P0482",
+      "candidate": "P00179.jpg",
+      "hamming": 109,
+      "cost": 109.032
+    },
+    {
+      "id": "P0495",
+      "candidate": "P00456.jpg",
+      "hamming": 125,
+      "cost": 125.01
+    },
+    {
+      "id": "P0009",
+      "candidate": "P00478.jpg",
+      "hamming": 128,
+      "cost": 128.026
+    },
+    {
+      "id": "P0534",
+      "candidate": "P00533.jpg",
+      "hamming": 129,
+      "cost": 129.05
+    },
+    {
+      "id": "P0469",
+      "candidate": "P00467.jpg",
+      "hamming": 135,
+      "cost": 135.068
+    },
+    {
+      "id": "P0486",
+      "candidate": "P00497.jpg",
+      "hamming": 136,
+      "cost": 136.032
+    },
+    {
+      "id": "P0505",
+      "candidate": "P00499.jpg",
+      "hamming": 137,
+      "cost": 137.218
+    },
+    {
+      "id": "P0497",
+      "candidate": "P00520.jpg",
+      "hamming": 151,
+      "cost": 151.358
+    },
+    {
+      "id": "P0548",
+      "candidate": "P00541.jpg",
+      "hamming": 161,
+      "cost": 161.044
+    },
+    {
+      "id": "P0507",
+      "candidate": "P00507.jpg",
+      "hamming": 161,
+      "cost": 161.156
+    },
+    {
+      "id": "P0822",
+      "candidate": "P00194.jpg",
+      "hamming": 162,
+      "cost": 162.353
+    },
+    {
+      "id": "P0010",
+      "candidate": "P00047.jpg",
+      "hamming": 223,
+      "cost": 223.046
+    },
+    {
+      "id": "P0552",
+      "candidate": "P00435.jpg",
+      "hamming": 240,
+      "cost": 240.116
+    },
+    {
+      "id": "P0535",
+      "candidate": "P00021.jpg",
+      "hamming": 251,
+      "cost": 251.327
+    },
+    {
+      "id": "P0290",
+      "candidate": "P00294.jpg",
+      "hamming": 262,
+      "cost": 262.194
+    },
+    {
+      "id": "P0829",
+      "candidate": "P00261.jpg",
+      "hamming": 287,
+      "cost": 287.156
+    },
+    {
+      "id": "P0837",
+      "candidate": "P00835.jpg",
+      "hamming": 289,
+      "cost": 289.17
+    },
+    {
+      "id": "P0706",
+      "candidate": "P00484.jpg",
+      "hamming": 349,
+      "cost": 349.462
+    },
+    {
+      "id": "P0043",
+      "candidate": "P00732.jpg",
+      "hamming": 362,
+      "cost": 362.477
+    },
+    {
+      "id": "P0002",
+      "candidate": "P00196.jpg",
+      "hamming": 370,
+      "cost": 370.221
+    },
+    {
+      "id": "P0042",
+      "candidate": "P00437.jpg",
+      "hamming": 380,
+      "cost": 380.307
+    },
+    {
+      "id": "P0361",
+      "candidate": "P00489.jpg",
+      "hamming": 399,
+      "cost": 399.344
+    },
+    {
+      "id": "P0292",
+      "candidate": "P00295.jpg",
+      "hamming": 407,
+      "cost": 407.259
+    },
+    {
+      "id": "P0369",
+      "candidate": "P00247.jpg",
+      "hamming": 408,
+      "cost": 408.769
+    },
+    {
+      "id": "P0703",
+      "candidate": "P00296.jpg",
+      "hamming": 411,
+      "cost": 411.29
+    },
+    {
+      "id": "P0189",
+      "candidate": "P00894.jpg",
+      "hamming": 411,
+      "cost": 411.295
+    },
+    {
+      "id": "P0704",
+      "candidate": "P00780.jpg",
+      "hamming": 437,
+      "cost": 437.397
+    },
+    {
+      "id": "P0862",
+      "candidate": "P00859.jpg",
+      "hamming": 447,
+      "cost": 447.336
+    },
+    {
+      "id": "P0368",
+      "candidate": "P00331.jpg",
+      "hamming": 453,
+      "cost": 453.733
+    },
+    {
+      "id": "P0334",
+      "candidate": "P00641.jpg",
+      "hamming": 458,
+      "cost": 458.768
+    },
+    {
+      "id": "P0472",
+      "candidate": "P00883.jpg",
+      "hamming": 463,
+      "cost": 463.598
+    },
+    {
+      "id": "P0293",
+      "candidate": "P00211.jpg",
+      "hamming": 465,
+      "cost": 465.312
+    },
+    {
+      "id": "P0409",
+      "candidate": "P00330.jpg",
+      "hamming": 466,
+      "cost": 466.979
+    },
+    {
+      "id": "P0192",
+      "candidate": "P00858.jpg",
+      "hamming": 492,
+      "cost": 492.294
+    },
+    {
+      "id": "P0194",
+      "candidate": "P00327.jpg",
+      "hamming": 494,
+      "cost": 494.296
+    },
+    {
+      "id": "P0836",
+      "candidate": "P00560.jpg",
+      "hamming": 510,
+      "cost": 510.558
+    },
+    {
+      "id": "P0193",
+      "candidate": "P00293.jpg",
+      "hamming": 511,
+      "cost": 511.559
+    },
+    {
+      "id": "P0241",
+      "candidate": "P00828.jpg",
+      "hamming": 516,
+      "cost": 516.18
+    },
+    {
+      "id": "P0390",
+      "candidate": "P00243.jpg",
+      "hamming": 572,
+      "cost": 572.561
+    },
+    {
+      "id": "P0800",
+      "candidate": "P00005.jpg",
+      "hamming": 573,
+      "cost": 573.559
+    },
+    {
+      "id": "P0771",
+      "candidate": "P00324.jpg",
+      "hamming": 573,
+      "cost": 573.906
+    },
+    {
+      "id": "P0243",
+      "candidate": "P00104.jpg",
+      "hamming": 575,
+      "cost": 575.784
+    },
+    {
+      "id": "P0804",
+      "candidate": "P00575.jpg",
+      "hamming": 577,
+      "cost": 578.176
+    },
+    {
+      "id": "P0134",
+      "candidate": "P00119.jpg",
+      "hamming": 585,
+      "cost": 585.65
+    },
+    {
+      "id": "P0578",
+      "candidate": "P00232.jpg",
+      "hamming": 587,
+      "cost": 588.613
+    },
+    {
+      "id": "P0522",
+      "candidate": "P00446.jpg",
+      "hamming": 589,
+      "cost": 590.448
+    },
+    {
+      "id": "P0247",
+      "candidate": "P00275.jpg",
+      "hamming": 594,
+      "cost": 594.45
+    },
+    {
+      "id": "P0248",
+      "candidate": "P00784.jpg",
+      "hamming": 602,
+      "cost": 602.4
+    },
+    {
+      "id": "P0609",
+      "candidate": "P00362.jpg",
+      "hamming": 602,
+      "cost": 602.641
+    },
+    {
+      "id": "P0222",
+      "candidate": "P00108.jpg",
+      "hamming": 610,
+      "cost": 610.893
+    },
+    {
+      "id": "P0447",
+      "candidate": "P00900.jpg",
+      "hamming": 612,
+      "cost": 613.029
+    },
+    {
+      "id": "P0130",
+      "candidate": "P00405.jpg",
+      "hamming": 615,
+      "cost": 615.648
+    },
+    {
+      "id": "P0206",
+      "candidate": "P00182.jpg",
+      "hamming": 631,
+      "cost": 632.13
+    },
+    {
+      "id": "P0653",
+      "candidate": "P00485.jpg",
+      "hamming": 633,
+      "cost": 634.471
+    },
+    {
+      "id": "P0301",
+      "candidate": "P00207.jpg",
+      "hamming": 634,
+      "cost": 634.472
+    },
+    {
+      "id": "P0748",
+      "candidate": "P00747.jpg",
+      "hamming": 637,
+      "cost": 637.456
+    },
+    {
+      "id": "P0752",
+      "candidate": "P00346.jpg",
+      "hamming": 640,
+      "cost": 640.599
+    },
+    {
+      "id": "P0320",
+      "candidate": "P00543.jpg",
+      "hamming": 641,
+      "cost": 641.551
+    },
+    {
+      "id": "P0214",
+      "candidate": "P00640.jpg",
+      "hamming": 645,
+      "cost": 645.759
+    },
+    {
+      "id": "P0167",
+      "candidate": "P00660.jpg",
+      "hamming": 649,
+      "cost": 649.093
+    },
+    {
+      "id": "P0681",
+      "candidate": "P00449.jpg",
+      "hamming": 653,
+      "cost": 655.341
+    },
+    {
+      "id": "P0215",
+      "candidate": "P00319.jpg",
+      "hamming": 655,
+      "cost": 656.208
+    },
+    {
+      "id": "P0760",
+      "candidate": "P00110.jpg",
+      "hamming": 659,
+      "cost": 660.831
+    },
+    {
+      "id": "P0413",
+      "candidate": "P00169.jpg",
+      "hamming": 660,
+      "cost": 661.306
+    },
+    {
+      "id": "P0683",
+      "candidate": "P00044.jpg",
+      "hamming": 660,
+      "cost": 661.316
+    },
+    {
+      "id": "P0329",
+      "candidate": "P00390.jpg",
+      "hamming": 673,
+      "cost": 673.662
+    },
+    {
+      "id": "P0233",
+      "candidate": "P00767.jpg",
+      "hamming": 673,
+      "cost": 673.755
+    },
+    {
+      "id": "P0608",
+      "candidate": "P00601.jpg",
+      "hamming": 675,
+      "cost": 675.875
+    },
+    {
+      "id": "P0174",
+      "candidate": "P00699.jpg",
+      "hamming": 677,
+      "cost": 679.603
+    },
+    {
+      "id": "P0739",
+      "candidate": "P00777.jpg",
+      "hamming": 680,
+      "cost": 681.895
+    },
+    {
+      "id": "P0406",
+      "candidate": "P00342.jpg",
+      "hamming": 680,
+      "cost": 681.946
+    },
+    {
+      "id": "P0282",
+      "candidate": "P00842.jpg",
+      "hamming": 683,
+      "cost": 684.08
+    },
+    {
+      "id": "P0218",
+      "candidate": "P00636.jpg",
+      "hamming": 683,
+      "cost": 684.112
+    },
+    {
+      "id": "P0733",
+      "candidate": "P00318.jpg",
+      "hamming": 691,
+      "cost": 691.456
+    },
+    {
+      "id": "P0201",
+      "candidate": "P00717.jpg",
+      "hamming": 693,
+      "cost": 694.489
+    },
+    {
+      "id": "P0573",
+      "candidate": "P00688.jpg",
+      "hamming": 697,
+      "cost": 697.635
+    },
+    {
+      "id": "P0150",
+      "candidate": "P00616.jpg",
+      "hamming": 703,
+      "cost": 705.04
+    },
+    {
+      "id": "P0779",
+      "candidate": "P00225.jpg",
+      "hamming": 707,
+      "cost": 708.172
+    },
+    {
+      "id": "P0396",
+      "candidate": "P00101.jpg",
+      "hamming": 710,
+      "cost": 710.52
+    },
+    {
+      "id": "P0217",
+      "candidate": "P00358.jpg",
+      "hamming": 722,
+      "cost": 723.028
+    },
+    {
+      "id": "P0220",
+      "candidate": "P00743.jpg",
+      "hamming": 727,
+      "cost": 728.828
+    },
+    {
+      "id": "P0228",
+      "candidate": "P00704.jpg",
+      "hamming": 728,
+      "cost": 728.971
+    },
+    {
+      "id": "P0473",
+      "candidate": "P00253.jpg",
+      "hamming": 730,
+      "cost": 730.574
+    },
+    {
+      "id": "P0140",
+      "candidate": "P00268.jpg",
+      "hamming": 732,
+      "cost": 732.932
+    },
+    {
+      "id": "P0263",
+      "candidate": "P00364.jpg",
+      "hamming": 748,
+      "cost": 749.857
+    },
+    {
+      "id": "P0209",
+      "candidate": "P00149.jpg",
+      "hamming": 752,
+      "cost": 753.911
+    },
+    {
+      "id": "P0152",
+      "candidate": "P00868.jpg",
+      "hamming": 757,
+      "cost": 758.611
+    },
+    {
+      "id": "P0254",
+      "candidate": "P00755.jpg",
+      "hamming": 759,
+      "cost": 760.192
+    },
+    {
+      "id": "P0436",
+      "candidate": "P00440.jpg",
+      "hamming": 773,
+      "cost": 773.552
+    },
+    {
+      "id": "P0789",
+      "candidate": "P00126.jpg",
+      "hamming": 773,
+      "cost": 774.047
+    },
+    {
+      "id": "P0319",
+      "candidate": "P00219.jpg",
+      "hamming": 773,
+      "cost": 775.348
+    },
+    {
+      "id": "P0224",
+      "candidate": "P00695.jpg",
+      "hamming": 774,
+      "cost": 775.525
+    },
+    {
+      "id": "P0387",
+      "candidate": "P00462.jpg",
+      "hamming": 776,
+      "cost": 778.529
+    },
+    {
+      "id": "P0256",
+      "candidate": "P00880.jpg",
+      "hamming": 779,
+      "cost": 780.487
+    },
+    {
+      "id": "P0601",
+      "candidate": "P00713.jpg",
+      "hamming": 786,
+      "cost": 786.641
+    },
+    {
+      "id": "P0299",
+      "candidate": "P00369.jpg",
+      "hamming": 789,
+      "cost": 789.522
+    },
+    {
+      "id": "P0162",
+      "candidate": "P00249.jpg",
+      "hamming": 794,
+      "cost": 795.858
+    },
+    {
+      "id": "P0389",
+      "candidate": "P00837.jpg",
+      "hamming": 797,
+      "cost": 797.946
+    },
+    {
+      "id": "P0333",
+      "candidate": "P00521.jpg",
+      "hamming": 797,
+      "cost": 798.272
+    },
+    {
+      "id": "P0700",
+      "candidate": "P00722.jpg",
+      "hamming": 807,
+      "cost": 807.968
+    },
+    {
+      "id": "P0253",
+      "candidate": "P00681.jpg",
+      "hamming": 807,
+      "cost": 808.934
+    },
+    {
+      "id": "P0141",
+      "candidate": "P00646.jpg",
+      "hamming": 811,
+      "cost": 811.846
+    },
+    {
+      "id": "P0225",
+      "candidate": "P00627.jpg",
+      "hamming": 814,
+      "cost": 815.118
+    },
+    {
+      "id": "P0245",
+      "candidate": "P00450.jpg",
+      "hamming": 815,
+      "cost": 816.309
+    },
+    {
+      "id": "P0879",
+      "candidate": "P00165.jpg",
+      "hamming": 815,
+      "cost": 817.224
+    },
+    {
+      "id": "P0212",
+      "candidate": "P00013.jpg",
+      "hamming": 817,
+      "cost": 818.843
+    },
+    {
+      "id": "P0210",
+      "candidate": "P00410.jpg",
+      "hamming": 820,
+      "cost": 821.807
+    },
+    {
+      "id": "P0204",
+      "candidate": "P00525.jpg",
+      "hamming": 821,
+      "cost": 822.994
+    },
+    {
+      "id": "P0177",
+      "candidate": "P00436.jpg",
+      "hamming": 824,
+      "cost": 826.196
+    },
+    {
+      "id": "P0136",
+      "candidate": "P00291.jpg",
+      "hamming": 826,
+      "cost": 826.57
+    },
+    {
+      "id": "P0353",
+      "candidate": "P00229.jpg",
+      "hamming": 824,
+      "cost": 827.033
+    },
+    {
+      "id": "P0355",
+      "candidate": "P00092.jpg",
+      "hamming": 835,
+      "cost": 837.084
+    },
+    {
+      "id": "P0246",
+      "candidate": "P00372.jpg",
+      "hamming": 836,
+      "cost": 837.226
+    },
+    {
+      "id": "P0240",
+      "candidate": "P00897.jpg",
+      "hamming": 844,
+      "cost": 844.557
+    },
+    {
+      "id": "P0434",
+      "candidate": "P00832.jpg",
+      "hamming": 849,
+      "cost": 850.545
+    },
+    {
+      "id": "P0148",
+      "candidate": "P00373.jpg",
+      "hamming": 849,
+      "cost": 850.996
+    },
+    {
+      "id": "P0502",
+      "candidate": "P00679.jpg",
+      "hamming": 854,
+      "cost": 855.98
+    },
+    {
+      "id": "P0034",
+      "candidate": "P00896.jpg",
+      "hamming": 855,
+      "cost": 856.332
+    },
+    {
+      "id": "P0004",
+      "candidate": "P00495.jpg",
+      "hamming": 860,
+      "cost": 860.143
+    },
+    {
+      "id": "P0154",
+      "candidate": "P00308.jpg",
+      "hamming": 862,
+      "cost": 864.44
+    },
+    {
+      "id": "P0300",
+      "candidate": "P00469.jpg",
+      "hamming": 863,
+      "cost": 865.031
+    },
+    {
+      "id": "P0230",
+      "candidate": "P00597.jpg",
+      "hamming": 866,
+      "cost": 867.58
+    },
+    {
+      "id": "P0356",
+      "candidate": "P00752.jpg",
+      "hamming": 871,
+      "cost": 873.514
+    },
+    {
+      "id": "P0843",
+      "candidate": "P00648.jpg",
+      "hamming": 876,
+      "cost": 877.604
+    },
+    {
+      "id": "P0474",
+      "candidate": "P00715.jpg",
+      "hamming": 884,
+      "cost": 887.148
+    },
+    {
+      "id": "P0328",
+      "candidate": "P00148.jpg",
+      "hamming": 887,
+      "cost": 889.075
+    },
+    {
+      "id": "P0117",
+      "candidate": "P00749.jpg",
+      "hamming": 890,
+      "cost": 891.186
+    },
+    {
+      "id": "P0410",
+      "candidate": "P00103.jpg",
+      "hamming": 892,
+      "cost": 893.289
+    },
+    {
+      "id": "P0261",
+      "candidate": "P00017.jpg",
+      "hamming": 899,
+      "cost": 900.227
+    },
+    {
+      "id": "P0139",
+      "candidate": "P00263.jpg",
+      "hamming": 902,
+      "cost": 903.67
+    },
+    {
+      "id": "P0383",
+      "candidate": "P00581.jpg",
+      "hamming": 902,
+      "cost": 905.85
+    },
+    {
+      "id": "P0448",
+      "candidate": "P00197.jpg",
+      "hamming": 904,
+      "cost": 906.149
+    },
+    {
+      "id": "P0182",
+      "candidate": "P00399.jpg",
+      "hamming": 903,
+      "cost": 906.491
+    },
+    {
+      "id": "P0860",
+      "candidate": "P00366.jpg",
+      "hamming": 924,
+      "cost": 925.427
+    },
+    {
+      "id": "P0408",
+      "candidate": "P00820.jpg",
+      "hamming": 924,
+      "cost": 926.471
+    },
+    {
+      "id": "P0323",
+      "candidate": "P00479.jpg",
+      "hamming": 927,
+      "cost": 928.788
+    },
+    {
+      "id": "P0634",
+      "candidate": "P00033.jpg",
+      "hamming": 934,
+      "cost": 934.514
+    },
+    {
+      "id": "P0348",
+      "candidate": "P00629.jpg",
+      "hamming": 938,
+      "cost": 941.483
+    },
+    {
+      "id": "P0116",
+      "candidate": "P00313.jpg",
+      "hamming": 941,
+      "cost": 942.063
+    },
+    {
+      "id": "P0790",
+      "candidate": "P00434.jpg",
+      "hamming": 942,
+      "cost": 944.248
+    },
+    {
+      "id": "P0832",
+      "candidate": "P00666.jpg",
+      "hamming": 947,
+      "cost": 947.661
+    },
+    {
+      "id": "P0629",
+      "candidate": "P00536.jpg",
+      "hamming": 955,
+      "cost": 955.744
+    },
+    {
+      "id": "P0165",
+      "candidate": "P00782.jpg",
+      "hamming": 955,
+      "cost": 956.943
+    },
+    {
+      "id": "P0087",
+      "candidate": "P00904.jpg",
+      "hamming": 958,
+      "cost": 961.27
+    },
+    {
+      "id": "P0262",
+      "candidate": "P00775.jpg",
+      "hamming": 960,
+      "cost": 962.546
+    },
+    {
+      "id": "P0135",
+      "candidate": "P00528.jpg",
+      "hamming": 965,
+      "cost": 965.594
+    },
+    {
+      "id": "P0309",
+      "candidate": "P00482.jpg",
+      "hamming": 968,
+      "cost": 970.107
+    },
+    {
+      "id": "P0378",
+      "candidate": "P00397.jpg",
+      "hamming": 968,
+      "cost": 970.173
+    },
+    {
+      "id": "P0487",
+      "candidate": "P00540.jpg",
+      "hamming": 967,
+      "cost": 971.448
+    },
+    {
+      "id": "P0713",
+      "candidate": "P00802.jpg",
+      "hamming": 973,
+      "cost": 973.597
+    },
+    {
+      "id": "P0846",
+      "candidate": "P00122.jpg",
+      "hamming": 975,
+      "cost": 976.536
+    },
+    {
+      "id": "P0710",
+      "candidate": "P00087.jpg",
+      "hamming": 979,
+      "cost": 979.685
+    },
+    {
+      "id": "P0741",
+      "candidate": "P00606.jpg",
+      "hamming": 981,
+      "cost": 982.707
+    },
+    {
+      "id": "P0133",
+      "candidate": "P00538.jpg",
+      "hamming": 982,
+      "cost": 983.24
+    },
+    {
+      "id": "P0707",
+      "candidate": "P00438.jpg",
+      "hamming": 989,
+      "cost": 989.602
+    },
+    {
+      "id": "P0155",
+      "candidate": "P00455.jpg",
+      "hamming": 989,
+      "cost": 991.855
+    },
+    {
+      "id": "P0712",
+      "candidate": "P00062.jpg",
+      "hamming": 992,
+      "cost": 992.46
+    },
+    {
+      "id": "P0677",
+      "candidate": "P00769.jpg",
+      "hamming": 992,
+      "cost": 993.383
+    },
+    {
+      "id": "P0339",
+      "candidate": "P00025.jpg",
+      "hamming": 995,
+      "cost": 995.388
+    },
+    {
+      "id": "P0668",
+      "candidate": "P00866.jpg",
+      "hamming": 997,
+      "cost": 999.689
+    },
+    {
+      "id": "P0670",
+      "candidate": "P00181.jpg",
+      "hamming": 999,
+      "cost": 1001.761
+    },
+    {
+      "id": "P0788",
+      "candidate": "P00466.jpg",
+      "hamming": 1004,
+      "cost": 1006.115
+    },
+    {
+      "id": "P0358",
+      "candidate": "P00477.jpg",
+      "hamming": 1004,
+      "cost": 1008.013
+    },
+    {
+      "id": "P0037",
+      "candidate": "P00083.jpg",
+      "hamming": 1009,
+      "cost": 1011.27
+    },
+    {
+      "id": "P0036",
+      "candidate": "P00746.jpg",
+      "hamming": 1011,
+      "cost": 1013.093
+    },
+    {
+      "id": "P0132",
+      "candidate": "P00490.jpg",
+      "hamming": 1022,
+      "cost": 1023.638
+    },
+    {
+      "id": "P0494",
+      "candidate": "P00209.jpg",
+      "hamming": 1022,
+      "cost": 1023.704
+    },
+    {
+      "id": "P0669",
+      "candidate": "P00039.jpg",
+      "hamming": 1030,
+      "cost": 1032.743
+    },
+    {
+      "id": "P0091",
+      "candidate": "P00075.jpg",
+      "hamming": 1032,
+      "cost": 1035.779
+    },
+    {
+      "id": "P0470",
+      "candidate": "P00745.jpg",
+      "hamming": 1036,
+      "cost": 1041.342
+    },
+    {
+      "id": "P0753",
+      "candidate": "P00570.jpg",
+      "hamming": 1040,
+      "cost": 1042.527
+    },
+    {
+      "id": "P0395",
+      "candidate": "P00135.jpg",
+      "hamming": 1046,
+      "cost": 1047.299
+    },
+    {
+      "id": "P0567",
+      "candidate": "P00545.jpg",
+      "hamming": 1050,
+      "cost": 1053.178
+    },
+    {
+      "id": "P0100",
+      "candidate": "P00465.jpg",
+      "hamming": 1058,
+      "cost": 1058.813
+    },
+    {
+      "id": "P0386",
+      "candidate": "P00038.jpg",
+      "hamming": 1057,
+      "cost": 1059.096
+    },
+    {
+      "id": "P0555",
+      "candidate": "P00307.jpg",
+      "hamming": 1057,
+      "cost": 1060.9
+    },
+    {
+      "id": "P0496",
+      "candidate": "P00669.jpg",
+      "hamming": 1060,
+      "cost": 1061.109
+    },
+    {
+      "id": "P0371",
+      "candidate": "P00255.jpg",
+      "hamming": 1060,
+      "cost": 1062.132
+    },
+    {
+      "id": "P0283",
+      "candidate": "P00524.jpg",
+      "hamming": 1072,
+      "cost": 1076.179
+    },
+    {
+      "id": "P0265",
+      "candidate": "P00419.jpg",
+      "hamming": 1078,
+      "cost": 1081.425
+    },
+    {
+      "id": "P0237",
+      "candidate": "P00185.jpg",
+      "hamming": 1082,
+      "cost": 1083.696
+    },
+    {
+      "id": "P0349",
+      "candidate": "P00751.jpg",
+      "hamming": 1084,
+      "cost": 1088.382
+    },
+    {
+      "id": "P0114",
+      "candidate": "P00474.jpg",
+      "hamming": 1087,
+      "cost": 1089.317
+    },
+    {
+      "id": "P0050",
+      "candidate": "P00178.jpg",
+      "hamming": 1086,
+      "cost": 1089.722
+    },
+    {
+      "id": "P0039",
+      "candidate": "P00125.jpg",
+      "hamming": 1091,
+      "cost": 1094.331
+    },
+    {
+      "id": "P0514",
+      "candidate": "P00006.jpg",
+      "hamming": 1093,
+      "cost": 1094.598
+    },
+    {
+      "id": "P0176",
+      "candidate": "P00901.jpg",
+      "hamming": 1092,
+      "cost": 1095.115
+    },
+    {
+      "id": "P0876",
+      "candidate": "P00549.jpg",
+      "hamming": 1103,
+      "cost": 1105.972
+    },
+    {
+      "id": "P0797",
+      "candidate": "P00208.jpg",
+      "hamming": 1105,
+      "cost": 1109.277
+    },
+    {
+      "id": "P0317",
+      "candidate": "P00123.jpg",
+      "hamming": 1108,
+      "cost": 1110.543
+    },
+    {
+      "id": "P0048",
+      "candidate": "P00360.jpg",
+      "hamming": 1118,
+      "cost": 1122.018
+    },
+    {
+      "id": "P0803",
+      "candidate": "P00173.jpg",
+      "hamming": 1127,
+      "cost": 1129.406
+    },
+    {
+      "id": "P0403",
+      "candidate": "P00014.jpg",
+      "hamming": 1127,
+      "cost": 1131.019
+    },
+    {
+      "id": "P0122",
+      "candidate": "P00675.jpg",
+      "hamming": 1131,
+      "cost": 1133.216
+    },
+    {
+      "id": "P0341",
+      "candidate": "P00504.jpg",
+      "hamming": 1130,
+      "cost": 1135.715
+    },
+    {
+      "id": "P0153",
+      "candidate": "P00861.jpg",
+      "hamming": 1138,
+      "cost": 1140.078
+    },
+    {
+      "id": "P0399",
+      "candidate": "P00642.jpg",
+      "hamming": 1137,
+      "cost": 1141.472
+    },
+    {
+      "id": "P0388",
+      "candidate": "P00812.jpg",
+      "hamming": 1139,
+      "cost": 1141.64
+    },
+    {
+      "id": "P0066",
+      "candidate": "P00656.jpg",
+      "hamming": 1142,
+      "cost": 1145.85
+    },
+    {
+      "id": "P0060",
+      "candidate": "P00378.jpg",
+      "hamming": 1145,
+      "cost": 1149.29
+    },
+    {
+      "id": "P0744",
+      "candidate": "P00840.jpg",
+      "hamming": 1150,
+      "cost": 1151.897
+    },
+    {
+      "id": "P0742",
+      "candidate": "P00352.jpg",
+      "hamming": 1153,
+      "cost": 1154.337
+    },
+    {
+      "id": "P0467",
+      "candidate": "P00565.jpg",
+      "hamming": 1151,
+      "cost": 1157.319
+    },
+    {
+      "id": "P0142",
+      "candidate": "P00772.jpg",
+      "hamming": 1159,
+      "cost": 1163.312
+    },
+    {
+      "id": "P0438",
+      "candidate": "P00872.jpg",
+      "hamming": 1170,
+      "cost": 1171.443
+    },
+    {
+      "id": "P0196",
+      "candidate": "P00879.jpg",
+      "hamming": 1174,
+      "cost": 1174.426
+    },
+    {
+      "id": "P0344",
+      "candidate": "P00706.jpg",
+      "hamming": 1178,
+      "cost": 1181.858
+    },
+    {
+      "id": "P0441",
+      "candidate": "P00895.jpg",
+      "hamming": 1191,
+      "cost": 1192.882
+    },
+    {
+      "id": "P0181",
+      "candidate": "P00888.jpg",
+      "hamming": 1200,
+      "cost": 1202.683
+    },
+    {
+      "id": "P0183",
+      "candidate": "P00689.jpg",
+      "hamming": 1202,
+      "cost": 1205.135
+    },
+    {
+      "id": "P0890",
+      "candidate": "P00700.jpg",
+      "hamming": 1206,
+      "cost": 1210.427
+    },
+    {
+      "id": "P0728",
+      "candidate": "P00735.jpg",
+      "hamming": 1212,
+      "cost": 1217.369
+    },
+    {
+      "id": "P0188",
+      "candidate": "P00566.jpg",
+      "hamming": 1217,
+      "cost": 1221.465
+    },
+    {
+      "id": "P0877",
+      "candidate": "P00591.jpg",
+      "hamming": 1222,
+      "cost": 1223.484
+    },
+    {
+      "id": "P0420",
+      "candidate": "P00757.jpg",
+      "hamming": 1221,
+      "cost": 1223.536
+    },
+    {
+      "id": "P0085",
+      "candidate": "P00870.jpg",
+      "hamming": 1222,
+      "cost": 1224.1
+    },
+    {
+      "id": "P0061",
+      "candidate": "P00887.jpg",
+      "hamming": 1221,
+      "cost": 1227.025
+    },
+    {
+      "id": "P0899",
+      "candidate": "P00815.jpg",
+      "hamming": 1223,
+      "cost": 1227.681
+    },
+    {
+      "id": "P0824",
+      "candidate": "P00022.jpg",
+      "hamming": 1228,
+      "cost": 1229.075
+    },
+    {
+      "id": "P0475",
+      "candidate": "P00610.jpg",
+      "hamming": 1231,
+      "cost": 1233.964
+    },
+    {
+      "id": "P0446",
+      "candidate": "P00049.jpg",
+      "hamming": 1234,
+      "cost": 1235.264
+    },
+    {
+      "id": "P0689",
+      "candidate": "P00741.jpg",
+      "hamming": 1233,
+      "cost": 1236.375
+    },
+    {
+      "id": "P0088",
+      "candidate": "P00019.jpg",
+      "hamming": 1234,
+      "cost": 1236.877
+    },
+    {
+      "id": "P0049",
+      "candidate": "P00889.jpg",
+      "hamming": 1236,
+      "cost": 1239.813
+    },
+    {
+      "id": "P0717",
+      "candidate": "P00891.jpg",
+      "hamming": 1250,
+      "cost": 1250.179
+    },
+    {
+      "id": "P0086",
+      "candidate": "P00355.jpg",
+      "hamming": 1247,
+      "cost": 1250.894
+    },
+    {
+      "id": "P0428",
+      "candidate": "P00380.jpg",
+      "hamming": 1249,
+      "cost": 1253.723
+    },
+    {
+      "id": "P0168",
+      "candidate": "P00855.jpg",
+      "hamming": 1257,
+      "cost": 1259.91
+    },
+    {
+      "id": "P0067",
+      "candidate": "P00414.jpg",
+      "hamming": 1258,
+      "cost": 1263.137
+    },
+    {
+      "id": "P0695",
+      "candidate": "P00867.jpg",
+      "hamming": 1262,
+      "cost": 1266.646
+    },
+    {
+      "id": "P0089",
+      "candidate": "P00312.jpg",
+      "hamming": 1277,
+      "cost": 1279.99
+    },
+    {
+      "id": "P0079",
+      "candidate": "P00821.jpg",
+      "hamming": 1283,
+      "cost": 1288.112
+    },
+    {
+      "id": "P0099",
+      "candidate": "P00588.jpg",
+      "hamming": 1291,
+      "cost": 1294.593
+    },
+    {
+      "id": "P0664",
+      "candidate": "P00210.jpg",
+      "hamming": 1299,
+      "cost": 1302.372
+    },
+    {
+      "id": "P0794",
+      "candidate": "P00205.jpg",
+      "hamming": 1299,
+      "cost": 1304.195
+    },
+    {
+      "id": "P0756",
+      "candidate": "P00256.jpg",
+      "hamming": 1302,
+      "cost": 1304.549
+    },
+    {
+      "id": "P0084",
+      "candidate": "P00905.jpg",
+      "hamming": 1304,
+      "cost": 1306.918
+    },
+    {
+      "id": "P0793",
+      "candidate": "P00066.jpg",
+      "hamming": 1308,
+      "cost": 1310.764
+    },
+    {
+      "id": "P0076",
+      "candidate": "P00557.jpg",
+      "hamming": 1313,
+      "cost": 1317.277
+    },
+    {
+      "id": "P0631",
+      "candidate": "P00848.jpg",
+      "hamming": 1331,
+      "cost": 1336.683
+    },
+    {
+      "id": "P0878",
+      "candidate": "P00670.jpg",
+      "hamming": 1343,
+      "cost": 1344.368
+    },
+    {
+      "id": "P0768",
+      "candidate": "P00558.jpg",
+      "hamming": 1352,
+      "cost": 1355.692
+    },
+    {
+      "id": "P0761",
+      "candidate": "P00468.jpg",
+      "hamming": 1357,
+      "cost": 1360.042
+    },
+    {
+      "id": "P0627",
+      "candidate": "P00586.jpg",
+      "hamming": 1362,
+      "cost": 1364.982
+    },
+    {
+      "id": "P0092",
+      "candidate": "P00180.jpg",
+      "hamming": 1360,
+      "cost": 1366.85
+    },
+    {
+      "id": "P0381",
+      "candidate": "P00564.jpg",
+      "hamming": 1375,
+      "cost": 1379.613
+    },
+    {
+      "id": "P0006",
+      "candidate": "P00823.jpg",
+      "hamming": 1375,
+      "cost": 1380.668
+    },
+    {
+      "id": "P0830",
+      "candidate": "P00472.jpg",
+      "hamming": 1400,
+      "cost": 1402.822
+    },
+    {
+      "id": "P0380",
+      "candidate": "P00262.jpg",
+      "hamming": 1411,
+      "cost": 1417.711
+    },
+    {
+      "id": "P0465",
+      "candidate": "P00831.jpg",
+      "hamming": 1430,
+      "cost": 1432.205
+    },
+    {
+      "id": "P0046",
+      "candidate": "P00240.jpg",
+      "hamming": 1429,
+      "cost": 1434.943
+    },
+    {
+      "id": "P0466",
+      "candidate": "P00098.jpg",
+      "hamming": 1432,
+      "cost": 1437.619
+    },
+    {
+      "id": "P0093",
+      "candidate": "P00852.jpg",
+      "hamming": 1434,
+      "cost": 1437.731
+    },
+    {
+      "id": "P0799",
+      "candidate": "P00029.jpg",
+      "hamming": 1459,
+      "cost": 1462.369
+    },
+    {
+      "id": "P0336",
+      "candidate": "P00864.jpg",
+      "hamming": 1463,
+      "cost": 1467.053
+    },
+    {
+      "id": "P0186",
+      "candidate": "P00050.jpg",
+      "hamming": 1468,
+      "cost": 1468.208
+    },
+    {
+      "id": "P0305",
+      "candidate": "P00403.jpg",
+      "hamming": 1480,
+      "cost": 1483.913
+    },
+    {
+      "id": "P0579",
+      "candidate": "P00860.jpg",
+      "hamming": 1513,
+      "cost": 1516.246
+    },
+    {
+      "id": "P0621",
+      "candidate": "P00365.jpg",
+      "hamming": 1512,
+      "cost": 1516.549
+    },
+    {
+      "id": "P0632",
+      "candidate": "P00877.jpg",
+      "hamming": 1525,
+      "cost": 1525.718
+    },
+    {
+      "id": "P0662",
+      "candidate": "P00116.jpg",
+      "hamming": 1534,
+      "cost": 1542.872
+    },
+    {
+      "id": "P0112",
+      "candidate": "P00674.jpg",
+      "hamming": 1559,
+      "cost": 1565.605
+    },
+    {
+      "id": "P0307",
+      "candidate": "P00644.jpg",
+      "hamming": 1571,
+      "cost": 1576.261
+    },
+    {
+      "id": "P0584",
+      "candidate": "P00491.jpg",
+      "hamming": 1588,
+      "cost": 1593.625
+    },
+    {
+      "id": "P0611",
+      "candidate": "P00315.jpg",
+      "hamming": 1599,
+      "cost": 1602.582
+    },
+    {
+      "id": "P0647",
+      "candidate": "P00429.jpg",
+      "hamming": 1597,
+      "cost": 1603.288
+    },
+    {
+      "id": "P0680",
+      "candidate": "P00416.jpg",
+      "hamming": 1627,
+      "cost": 1633.159
+    },
+    {
+      "id": "P0649",
+      "candidate": "P00783.jpg",
+      "hamming": 1643,
+      "cost": 1649.397
+    },
+    {
+      "id": "P0169",
+      "candidate": "P00893.jpg",
+      "hamming": 1664,
+      "cost": 1669.282
+    },
+    {
+      "id": "P0885",
+      "candidate": "P00145.jpg",
+      "hamming": 1678,
+      "cost": 1682.077
+    },
+    {
+      "id": "P0014",
+      "candidate": "P00554.jpg",
+      "hamming": 1688,
+      "cost": 1695.088
+    },
+    {
+      "id": "P0407",
+      "candidate": "P00813.jpg",
+      "hamming": 1690,
+      "cost": 1696.632
+    },
+    {
+      "id": "P0819",
+      "candidate": "P00037.jpg",
+      "hamming": 1704,
+      "cost": 1710.349
+    },
+    {
+      "id": "P0617",
+      "candidate": "P00496.jpg",
+      "hamming": 1704,
+      "cost": 1710.74
+    },
+    {
+      "id": "P0887",
+      "candidate": "P00816.jpg",
+      "hamming": 1720,
+      "cost": 1725.217
+    },
+    {
+      "id": "P0593",
+      "candidate": "P00822.jpg",
+      "hamming": 1724,
+      "cost": 1729.766
+    },
+    {
+      "id": "P0288",
+      "candidate": "P00643.jpg",
+      "hamming": 1734,
+      "cost": 1740.11
+    },
+    {
+      "id": "P0022",
+      "candidate": "P00426.jpg",
+      "hamming": 1733,
+      "cost": 1740.492
+    },
+    {
+      "id": "P0287",
+      "candidate": "P00801.jpg",
+      "hamming": 1765,
+      "cost": 1771.607
+    },
+    {
+      "id": "P0020",
+      "candidate": "P00137.jpg",
+      "hamming": 1766,
+      "cost": 1774.434
+    },
+    {
+      "id": "P0589",
+      "candidate": "P00174.jpg",
+      "hamming": 1767,
+      "cost": 1774.969
+    },
+    {
+      "id": "P0900",
+      "candidate": "P00003.jpg",
+      "hamming": 1781,
+      "cost": 1785.57
+    },
+    {
+      "id": "P0587",
+      "candidate": "P00613.jpg",
+      "hamming": 1814,
+      "cost": 1819.928
+    }
+  ],
+  "note": "High-confidence matches replace authoritative product images without re-encoding when the source is already JPG."
+}
