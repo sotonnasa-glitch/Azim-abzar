@@ -20,22 +20,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract uploaded 908 catalog ZIP
-        if: ${{ hashFiles('catalog_site_mapping_908.zip') != '' }}
+      - name: Rebuild and extract 908 catalog archive
+        if: ${{ hashFiles('azim_abzar_908_full.zip.part-*') != '' }}
         run: |
           set -e
-          unzip -q -o catalog_site_mapping_908.zip -d .
-          test -s catalog_site_mapping_908/products.json
-          test -d catalog_site_mapping_908/images
-          rm -f catalog_site_mapping_908.zip
+          cat azim_abzar_908_full.zip.part-* > /tmp/azim_abzar_908_full.zip
+          rm -rf /tmp/azim_catalog_extract
+          mkdir -p /tmp/azim_catalog_extract
+          unzip -q -o /tmp/azim_abzar_908_full.zip -d /tmp/azim_catalog_extract
+          test -s /tmp/azim_catalog_extract/final/products.json
+          test -d /tmp/azim_catalog_extract/final/images
+          rm -rf catalog_site_mapping_908
+          mv /tmp/azim_catalog_extract/final catalog_site_mapping_908
+          rm -f azim_abzar_908_full.zip.part-*
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add catalog_site_mapping_908
-          git add -u catalog_site_mapping_908.zip
+          git add -u azim_abzar_908_full.zip.part-*
           if git diff --cached --quiet; then
             echo 'No catalog changes to commit.'
           else
-            git commit -m 'Add 908-product catalog and images'
+            git commit -m 'Add complete 908-product catalog and original-quality images'
             git push
           fi
 
@@ -57,7 +62,9 @@ jobs:
           bad=image_ids-set(ids)
           missing=set(ids)-image_ids
           assert not bad, f'images with unknown product IDs: {sorted(bad)}'
-          print(f'CATALOG SOURCE OK: 908 products; {len(image_ids)} mapped images; {len(missing)} products without image')
+          assert not missing, f'missing product images: {sorted(missing)}'
+          assert len(image_ids)==908, f'found {len(image_ids)} images, expected 908'
+          print('CATALOG SOURCE OK: 908 products; 908 mapped images; 0 missing images')
           PY
 
       - name: Validate site files
