@@ -3,89 +3,28 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: write
   pages: write
   id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: true
+
 jobs:
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Merge uploaded high-quality catalog images
-        run: |
-          set -e
-          command -v unzip >/dev/null 2>&1
-          mkdir -p /tmp/azim_hq_extract /tmp/azim_hq_images
-          found_archive=0
-          for f in catalog_images_part_1 catalog_products_part_1_of_2.zip; do
-            if [ -f "$f" ] && unzip -t -q "$f" >/dev/null 2>&1; then
-              echo "Extracting high-quality archive: $f"
-              found_archive=1
-              d="/tmp/azim_hq_extract/$(printf '%s' "$f" | tr '/ ' '__')"
-              mkdir -p "$d"
-              unzip -q -o "$f" -d "$d"
-            fi
-          done
-          if [ "$found_archive" -eq 0 ]; then
-            echo 'No ZIP-compatible high-quality upload found; keeping existing images.'
-            exit 0
-          fi
-
-          find /tmp/azim_hq_extract -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -print0 |
-            while IFS= read -r -d '' img; do
-              base="$(basename "$img")"
-              if [[ "$base" =~ (P[0-9]{4})\.(jpg|jpeg|png|webp)$ ]]; then
-                id="${BASH_REMATCH[1]}"
-                ext="${BASH_REMATCH[2]}"
-                cp -f "$img" "/tmp/azim_hq_images/${id}.${ext}"
-              fi
-            done
-
-          mkdir -p catalog_site_mapping_908/images
-          replaced=0
-          for img in /tmp/azim_hq_images/P*.jpg /tmp/azim_hq_images/P*.jpeg /tmp/azim_hq_images/P*.png /tmp/azim_hq_images/P*.webp; do
-            [ -f "$img" ] || continue
-            id="$(basename "$img" | sed -E 's/\.(jpg|jpeg|png|webp)$//')"
-            case "$img" in
-              *.jpg) target="catalog_site_mapping_908/images/${id}.jpg" ;;
-              *) target="catalog_site_mapping_908/images/${id}.jpg" ;;
-            esac
-            if command -v magick >/dev/null 2>&1; then
-              # Keep the uploaded image's original pixels/quality. Only change the filename/format when needed.
-              if [[ "$img" == *.jpg ]]; then
-                cp -f "$img" "$target"
-              else
-                magick "$img" "$target"
-              fi
-            else
-              cp -f "$img" "$target"
-            fi
-            replaced=$((replaced+1))
-          done
-
-          echo "High-quality product images merged: $replaced"
-          if [ "$replaced" -gt 0 ]; then
-            git add catalog_site_mapping_908/images
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            if git diff --cached --quiet; then
-              echo 'No image changes detected.'
-            else
-              git commit -m 'Use uploaded high-quality product images'
-              git push
-            fi
-          fi
-
-      - name: Extract authoritative 908 catalog ZIP
+      - name: Extract authoritative 908-product catalog
         if: ${{ hashFiles('catalog_site_mapping_908.zip') != '' }}
         run: |
           set -e
@@ -97,58 +36,170 @@ jobs:
           rm -rf catalog_site_mapping_908
           mv /tmp/azim_catalog_extract/catalog_site_mapping_908 catalog_site_mapping_908
           rm -f catalog_site_mapping_908.zip
-          for f in azim_abzar_908_full.zip.part-*; do
-            if [ -e "$f" ]; then
-              git add -u -- "$f"
-            fi
-          done
-          git add catalog_site_mapping_908
-          if git ls-files --error-unmatch catalog_site_mapping_908.zip >/dev/null 2>&1; then
-            git add -u -- catalog_site_mapping_908.zip
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
           if git diff --cached --quiet; then
-            echo 'No catalog changes to commit.'
+            echo 'Authoritative catalog already present.'
           else
-            git commit -m 'Use authoritative 908-product catalog image mapping'
+            git commit -m 'Use authoritative 908-product catalog'
             git push
           fi
 
-      - name: Validate 908-product catalog source
+      - name: Match uploaded high-quality images to authoritative products
         run: |
+          set -e
+          python -m pip install --quiet pillow numpy
+
+          ARCHIVE=''
+          for f in catalog_site_ready_1200.zip catalog_images_part_1 catalog_products_part_1_of_2.zip; do
+            if [ -f "$f" ] && unzip -t -q "$f" >/dev/null 2>&1; then
+              ARCHIVE="$f"
+              break
+            fi
+          done
+
+          if [ -z "$ARCHIVE" ]; then
+            echo 'No uploaded image archive found; keeping authoritative images.'
+            exit 0
+          fi
+
+          export AZIM_HQ_ARCHIVE="$ARCHIVE"
+          rm -rf /tmp/azim_hq
+          mkdir -p /tmp/azim_hq
+          unzip -q -o "$ARCHIVE" -d /tmp/azim_hq
+
           python - <<'PY'
-          import json
-          import re
+          from pathlib import Path
+          import json, shutil, re, os
+          import numpy as np
+          from PIL import Image, ImageOps
+
+          root = Path('catalog_site_mapping_908')
+          old_dir = root / 'images'
+          old_files = sorted(old_dir.glob('P*.jpg'))
+          candidates = sorted(
+              p for p in Path('/tmp/azim_hq').rglob('*')
+              if p.is_file() and p.suffix.lower() in {'.jpg','.jpeg','.png','.webp'}
+          )
+          candidates = [p for p in candidates if re.fullmatch(r'P\d{5}\.(jpg|jpeg|png|webp)', p.name, re.I)]
+          if not old_files or not candidates:
+              raise SystemExit('No authoritative or candidate product images found.')
+
+          def load_gray(path):
+              with Image.open(path) as im:
+                  im = ImageOps.exif_transpose(im).convert('L').resize((65,64), Image.Resampling.LANCZOS)
+                  return np.asarray(im, dtype=np.uint8)
+
+          def dhash(path):
+              a = load_gray(path)
+              return np.packbits((a[:,1:] > a[:,:-1]).reshape(-1))
+
+          def mean_rgb(path):
+              with Image.open(path) as im:
+                  im = ImageOps.exif_transpose(im).convert('RGB').resize((16,16), Image.Resampling.BILINEAR)
+                  return np.asarray(im, dtype=np.float32).mean(axis=(0,1))
+
+          def ham(a,b):
+              return int(np.unpackbits(np.bitwise_xor(a,b)).sum())
+
+          old_hash = {p:dhash(p) for p in old_files}
+          old_rgb = {p:mean_rgb(p) for p in old_files}
+          cand_hash = {p:dhash(p) for p in candidates}
+          cand_rgb = {p:mean_rgb(p) for p in candidates}
+
+          pairs=[]
+          for old in old_files:
+              ranked=[]
+              for cand in candidates:
+                  h=ham(old_hash[old],cand_hash[cand])
+                  rgb=float(np.linalg.norm(old_rgb[old]-cand_rgb[cand]))/255.0
+                  ranked.append((h + rgb*8.0, h, rgb, cand))
+              ranked.sort(key=lambda x:x[0])
+              for rank,item in enumerate(ranked[:60]):
+                  cost,h,rgb,cand=item
+                  pairs.append((cost,rank,old,cand,h,rgb))
+
+          pairs.sort(key=lambda x:(x[0],x[1]))
+          used_old=set(); used_cand=set(); assignments=[]
+          for cost,rank,old,cand,h,rgb in pairs:
+              if old in used_old or cand in used_cand:
+                  continue
+              if h>80 and rank>0:
+                  continue
+              used_old.add(old); used_cand.add(cand)
+              assignments.append((old,cand,cost,h,rgb))
+
+          replaced=0; weak=[]
+          for old,cand,cost,h,rgb in assignments:
+              if h<=45 or cost<=52:
+                  target=old_dir/old.name
+                  if cand.suffix.lower()=='.jpg':
+                      shutil.copy2(cand,target)
+                  else:
+                      with Image.open(cand) as im:
+                          ImageOps.exif_transpose(im).convert('RGB').save(target,format='JPEG',quality=95,subsampling=0)
+                  replaced+=1
+              else:
+                  weak.append({'id':old.stem,'candidate':cand.name,'hamming':h,'cost':round(cost,3)})
+
+          manifest={
+              'archive':Path(os.environ['AZIM_HQ_ARCHIVE']).name,
+              'candidate_images':len(candidates),
+              'authoritative_products':len(old_files),
+              'replaced':replaced,
+              'weak_matches':weak,
+              'note':'High-confidence matches replace authoritative product images without re-encoding when the source is already JPG.'
+          }
+          (root/'hq-image-match-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          if replaced==0:
+              raise SystemExit('No high-confidence high-quality image matches were found.')
+          print(f'Replaced {replaced} authoritative product images with matched high-quality uploads.')
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add catalog_site_mapping_908/images catalog_site_mapping_908/hq-image-match-manifest.json
+          if git diff --cached --quiet; then
+            echo 'No image changes detected.'
+          else
+            git commit -m 'Map uploaded high-quality product images correctly'
+            git push
+          fi
+
+      - name: Validate authoritative catalog and image mapping
+        run: |
+          set -e
+          python - <<'PY'
+          import json, re
           from pathlib import Path
           p=Path('catalog_site_mapping_908/products.json')
-          assert p.is_file() and p.stat().st_size > 0, 'catalog_site_mapping_908/products.json is missing'
           data=json.loads(p.read_text(encoding='utf-8'))
-          assert isinstance(data,list), 'products.json must be an array'
-          assert len(data)==908, f'catalog source has {len(data)}, expected 908'
+          assert isinstance(data,list) and len(data)==908, f'Expected 908 products, found {len(data)}'
           ids=[str(x.get('id','')) for x in data]
-          assert len(set(ids))==908 and all(re.fullmatch(r'P\d{4}',x) for x in ids), 'invalid or duplicate product IDs'
+          assert len(set(ids))==908 and all(re.fullmatch(r'P\d{4}',x) for x in ids), 'Invalid or duplicate IDs'
           image_dir=Path('catalog_site_mapping_908/images')
           image_ids={p.stem for p in image_dir.glob('*.jpg')}
-          bad=image_ids-set(ids)
-          missing=set(ids)-image_ids
-          assert not bad, f'images with unknown product IDs: {sorted(bad)}'
-          assert len(image_ids)==880, f'authoritative image set must contain 880 images, found {len(image_ids)}'
-          assert len(missing)==28, f'expected 28 products without extracted image, found {len(missing)}'
-          print(f'CATALOG SOURCE OK: 908 products; {len(image_ids)} authoritative mapped images; {len(missing)} products without extracted image')
+          assert not (image_ids-set(ids)), 'Unknown image IDs exist'
+          assert len(image_ids)==880, f'Expected 880 mapped images, found {len(image_ids)}'
+          assert len(set(ids)-image_ids)==28, 'Expected exactly 28 products without images'
+          for img in image_dir.glob('*.jpg'):
+              assert img.stat().st_size>1000, f'Bad/empty image: {img}'
+          print('CATALOG AND IMAGE VALIDATION OK')
           PY
 
       - name: Validate site files
         run: |
+          set -e
           test -s products.html
           python - <<'PY'
           from pathlib import Path
           s=Path('products.html').read_text(encoding='utf-8')
-          assert 'products.json' in s, 'products.html is not using products.json'
-          assert 'IMAGE_DIR' in s and 'p.id' in s, 'products.html does not use stable ID image mapping'
+          assert 'products.json' in s
+          assert 'IMAGE_DIR' in s and 'p.id' in s
           for f in ('index.html','products.html','admin.html','ai.html'):
               t=Path(f).read_text(encoding='utf-8').lower()
-              assert '<html' in t and '</html>' in t, f'invalid html: {f}'
+              assert '<html' in t and '</html>' in t, f'Invalid HTML: {f}'
           print('SITE FILE VALIDATION OK')
           PY
 
