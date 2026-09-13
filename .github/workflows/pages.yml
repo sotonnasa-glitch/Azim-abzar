@@ -86,54 +86,59 @@ jobs:
           if not old_files or not candidates:
               raise SystemExit('No authoritative or candidate product images found.')
 
-          def load_gray(path):
+          def feature(path):
               with Image.open(path) as im:
-                  im = ImageOps.exif_transpose(im).convert('L').resize((65,64), Image.Resampling.LANCZOS)
-                  return np.asarray(im, dtype=np.uint8)
+                  im = ImageOps.exif_transpose(im).convert('L').resize((9,8), Image.Resampling.LANCZOS)
+                  a = np.asarray(im, dtype=np.uint8)
+                  bits = (a[:,1:] > a[:,:-1]).reshape(-1)
+                  # 64-bit dHash, packed into one uint64 for fast vectorized Hamming distance.
+                  h = np.uint64(0)
+                  for bit in bits:
+                      h = (h << np.uint64(1)) | np.uint64(bool(bit))
+                  rgb = ImageOps.exif_transpose(Image.open(path)).convert('RGB').resize((8,8), Image.Resampling.BILINEAR)
+                  mean = np.asarray(rgb, dtype=np.float32).mean(axis=(0,1))
+                  return h, mean
 
-          def dhash(path):
-              a = load_gray(path)
-              return np.packbits((a[:,1:] > a[:,:-1]).reshape(-1))
+          old_hash=[]; old_rgb=[]
+          for p in old_files:
+              h,c = feature(p); old_hash.append(h); old_rgb.append(c)
+          cand_hash=[]; cand_rgb=[]
+          for p in candidates:
+              h,c = feature(p); cand_hash.append(h); cand_rgb.append(c)
+          old_hash=np.asarray(old_hash,dtype=np.uint64)
+          cand_hash=np.asarray(cand_hash,dtype=np.uint64)
+          old_rgb=np.asarray(old_rgb,dtype=np.float32)
+          cand_rgb=np.asarray(cand_rgb,dtype=np.float32)
 
-          def mean_rgb(path):
-              with Image.open(path) as im:
-                  im = ImageOps.exif_transpose(im).convert('RGB').resize((16,16), Image.Resampling.BILINEAR)
-                  return np.asarray(im, dtype=np.float32).mean(axis=(0,1))
+          # Vectorized Hamming distance over all 908x906 candidates.
+          xor = np.bitwise_xor(old_hash[:,None], cand_hash[None,:])
+          bytes_view = xor.view(np.uint8).reshape(len(old_files), len(candidates), 8)
+          bits = np.unpackbits(bytes_view, axis=2).sum(axis=2)
+          # Color is only a tie-breaker; image structure dominates.
+          color = np.linalg.norm(old_rgb[:,None,:]-cand_rgb[None,:,:],axis=2) / 255.0
+          cost = bits.astype(np.float32) + color * 8.0
 
-          def ham(a,b):
-              return int(np.unpackbits(np.bitwise_xor(a,b)).sum())
-
-          old_hash = {p:dhash(p) for p in old_files}
-          old_rgb = {p:mean_rgb(p) for p in old_files}
-          cand_hash = {p:dhash(p) for p in candidates}
-          cand_rgb = {p:mean_rgb(p) for p in candidates}
-
-          pairs=[]
-          for old in old_files:
-              ranked=[]
-              for cand in candidates:
-                  h=ham(old_hash[old],cand_hash[cand])
-                  rgb=float(np.linalg.norm(old_rgb[old]-cand_rgb[cand]))/255.0
-                  ranked.append((h + rgb*8.0, h, rgb, cand))
-              ranked.sort(key=lambda x:x[0])
-              for rank,item in enumerate(ranked[:60]):
-                  cost,h,rgb,cand=item
-                  pairs.append((cost,rank,old,cand,h,rgb))
-
-          pairs.sort(key=lambda x:(x[0],x[1]))
-          used_old=set(); used_cand=set(); assignments=[]
-          for cost,rank,old,cand,h,rgb in pairs:
-              if old in used_old or cand in used_cand:
+          # Unique one-to-one assignment: process pairs in globally best order.
+          flat = np.argsort(cost, axis=None)
+          used_old=np.zeros(len(old_files),dtype=bool)
+          used_cand=np.zeros(len(candidates),dtype=bool)
+          assignments=[]
+          for idx in flat:
+              oi,ci=np.unravel_index(int(idx),cost.shape)
+              if used_old[oi] or used_cand[ci]:
                   continue
-              if h>80 and rank>0:
+              h=int(bits[oi,ci]); co=float(cost[oi,ci])
+              if h>50 and co>58:
                   continue
-              used_old.add(old); used_cand.add(cand)
-              assignments.append((old,cand,cost,h,rgb))
+              used_old[oi]=True; used_cand[ci]=True
+              assignments.append((oi,ci,h,co))
+              if len(assignments)>=len(old_files):
+                  break
 
           replaced=0; weak=[]
-          for old,cand,cost,h,rgb in assignments:
-              if h<=45 or cost<=52:
-                  target=old_dir/old.name
+          for oi,ci,h,co in assignments:
+              old=old_files[oi]; cand=candidates[ci]; target=old_dir/old.name
+              if h<=45 or co<=52:
                   if cand.suffix.lower()=='.jpg':
                       shutil.copy2(cand,target)
                   else:
@@ -141,7 +146,7 @@ jobs:
                           ImageOps.exif_transpose(im).convert('RGB').save(target,format='JPEG',quality=95,subsampling=0)
                   replaced+=1
               else:
-                  weak.append({'id':old.stem,'candidate':cand.name,'hamming':h,'cost':round(cost,3)})
+                  weak.append({'id':old.stem,'candidate':cand.name,'hamming':h,'cost':round(co,3)})
 
           manifest={
               'archive':Path(os.environ['AZIM_HQ_ARCHIVE']).name,
@@ -149,12 +154,13 @@ jobs:
               'authoritative_products':len(old_files),
               'replaced':replaced,
               'weak_matches':weak,
-              'note':'High-confidence matches replace authoritative product images without re-encoding when the source is already JPG.'
+              'note':'High-confidence matches replace authoritative product images. Existing JPG source bytes are copied without JPEG re-encoding.'
           }
           (root/'hq-image-match-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
-          if replaced==0:
-              raise SystemExit('No high-confidence high-quality image matches were found.')
-          print(f'Replaced {replaced} authoritative product images with matched high-quality uploads.')
+
+          if replaced < min(800,len(old_files)):
+              raise SystemExit(f'Too few high-confidence matches: {replaced}; refusing to deploy uncertain image mapping.')
+          print(f'High-quality image mapping completed: {replaced}/{len(old_files)} authoritative images replaced.')
           PY
 
           git config user.name 'github-actions[bot]'
