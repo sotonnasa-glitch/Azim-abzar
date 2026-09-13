@@ -20,6 +20,71 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Merge uploaded high-quality catalog images
+        run: |
+          set -e
+          command -v unzip >/dev/null 2>&1
+          mkdir -p /tmp/azim_hq_extract /tmp/azim_hq_images
+          found_archive=0
+          for f in catalog_images_part_1 catalog_products_part_1_of_2.zip; do
+            if [ -f "$f" ] && unzip -t -q "$f" >/dev/null 2>&1; then
+              echo "Extracting high-quality archive: $f"
+              found_archive=1
+              d="/tmp/azim_hq_extract/$(printf '%s' "$f" | tr '/ ' '__')"
+              mkdir -p "$d"
+              unzip -q -o "$f" -d "$d"
+            fi
+          done
+          if [ "$found_archive" -eq 0 ]; then
+            echo 'No ZIP-compatible high-quality upload found; keeping existing images.'
+            exit 0
+          fi
+
+          find /tmp/azim_hq_extract -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -print0 |
+            while IFS= read -r -d '' img; do
+              base="$(basename "$img")"
+              if [[ "$base" =~ (P[0-9]{4})\.(jpg|jpeg|png|webp)$ ]]; then
+                id="${BASH_REMATCH[1]}"
+                ext="${BASH_REMATCH[2]}"
+                cp -f "$img" "/tmp/azim_hq_images/${id}.${ext}"
+              fi
+            done
+
+          mkdir -p catalog_site_mapping_908/images
+          replaced=0
+          for img in /tmp/azim_hq_images/P*.jpg /tmp/azim_hq_images/P*.jpeg /tmp/azim_hq_images/P*.png /tmp/azim_hq_images/P*.webp; do
+            [ -f "$img" ] || continue
+            id="$(basename "$img" | sed -E 's/\.(jpg|jpeg|png|webp)$//')"
+            case "$img" in
+              *.jpg) target="catalog_site_mapping_908/images/${id}.jpg" ;;
+              *) target="catalog_site_mapping_908/images/${id}.jpg" ;;
+            esac
+            if command -v magick >/dev/null 2>&1; then
+              # Keep the uploaded image's original pixels/quality. Only change the filename/format when needed.
+              if [[ "$img" == *.jpg ]]; then
+                cp -f "$img" "$target"
+              else
+                magick "$img" "$target"
+              fi
+            else
+              cp -f "$img" "$target"
+            fi
+            replaced=$((replaced+1))
+          done
+
+          echo "High-quality product images merged: $replaced"
+          if [ "$replaced" -gt 0 ]; then
+            git add catalog_site_mapping_908/images
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            if git diff --cached --quiet; then
+              echo 'No image changes detected.'
+            else
+              git commit -m 'Use uploaded high-quality product images'
+              git push
+            fi
+          fi
+
       - name: Extract authoritative 908 catalog ZIP
         if: ${{ hashFiles('catalog_site_mapping_908.zip') != '' }}
         run: |
