@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -19,14 +19,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
+
+      - name: Extract uploaded 908 catalog ZIP
+        if: ${{ hashFiles('catalog_site_mapping_908.zip') != '' }}
+        run: |
+          set -e
+          unzip -q -o catalog_site_mapping_908.zip -d .
+          test -s catalog_site_mapping_908/products.json
+          test -d catalog_site_mapping_908/images
+          rm -f catalog_site_mapping_908.zip
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add catalog_site_mapping_908
+          git add -u catalog_site_mapping_908.zip
+          if git diff --cached --quiet; then
+            echo 'No catalog changes to commit.'
+          else
+            git commit -m 'Add 908-product catalog and images'
+            git push
+          fi
+
       - name: Validate 908-product catalog source
         run: |
           python - <<'PY'
           import json
+          import re
           from pathlib import Path
           p=Path('catalog_site_mapping_908/products.json')
           assert p.is_file() and p.stat().st_size > 0, 'catalog_site_mapping_908/products.json is missing'
@@ -34,9 +51,15 @@ jobs:
           assert isinstance(data,list), 'products.json must be an array'
           assert len(data)==908, f'catalog source has {len(data)}, expected 908'
           ids=[str(x.get('id','')) for x in data]
-          assert len(set(ids))==908 and all(__import__('re').fullmatch(r'P\d{4}',x) for x in ids), 'invalid or duplicate product IDs'
-          print('CATALOG SOURCE OK: 908 products; stable ID mapping verified')
+          assert len(set(ids))==908 and all(re.fullmatch(r'P\d{4}',x) for x in ids), 'invalid or duplicate product IDs'
+          image_dir=Path('catalog_site_mapping_908/images')
+          image_ids={p.stem for p in image_dir.glob('*.jpg')}
+          bad=image_ids-set(ids)
+          missing=set(ids)-image_ids
+          assert not bad, f'images with unknown product IDs: {sorted(bad)}'
+          print(f'CATALOG SOURCE OK: 908 products; {len(image_ids)} mapped images; {len(missing)} products without image')
           PY
+
       - name: Validate site files
         run: |
           test -s products.html
@@ -50,10 +73,12 @@ jobs:
               assert '<html' in t and '</html>' in t, f'invalid html: {f}'
           print('SITE FILE VALIDATION OK')
           PY
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
