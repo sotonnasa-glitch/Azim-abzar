@@ -1,0 +1,1 @@
+window.AZIM_EXCEL_IMAGE_TEXT_MAP="+JSON.stringify({})+";
