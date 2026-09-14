@@ -39,10 +39,7 @@ jobs:
           from PIL import Image
 
           root = Path('catalog_site_mapping_908')
-          products_path = root / 'products.json'
           images_dir = root / 'images'
-          legacy = json.loads(products_path.read_text(encoding='utf-8'))
-          assert isinstance(legacy, list) and len(legacy) > 0
 
           rows = []
           for i in range(1, 5):
