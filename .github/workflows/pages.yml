@@ -48,7 +48,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --quiet numpy pillow opencv-python-headless scipy
-          base64 -d .github/source_image_geometry.json.gz.b64 > /tmp/source_geometry.gz
+          cat .github/geom/source.part0* > /tmp/source_geometry.b64
+          base64 -d /tmp/source_geometry.b64 > /tmp/source_geometry.gz
           gzip -dc /tmp/source_geometry.gz > /tmp/source_image_geometry.json
           python - <<'PY'
           from pathlib import Path
@@ -70,9 +71,6 @@ jobs:
           targets=[p for p in products if (image_dir/f"{p['id']}.jpg").is_file()]
           assert len(targets)==880, len(targets)
 
-          # Each product has the exact PDF page/header rectangle used when its image was extracted.
-          # Candidate source images are restricted to the same page, below that product header,
-          # inside its column/box, and before the next product header on that page.
           by_page={}
           for idx,(pg,bbox) in enumerate(source_geom):
               by_page.setdefault(int(pg),[]).append(idx)
@@ -109,33 +107,27 @@ jobs:
           diagnostics=[]
           for page, plist in products_by_page.items():
               plist=sorted(plist,key=lambda p:(float(p['header_bbox_pt'][1]),float(p['header_bbox_pt'][0])))
-              # Same-page next header strictly below this header; same-row siblings share y and don't bound each other.
               candidates_by_id={}
               for k,p in enumerate(plist):
                   x,y,w,h=map(float,p['header_bbox_pt'])
                   next_y=min([float(q['header_bbox_pt'][1]) for q in plist[k+1:] if float(q['header_bbox_pt'][1])>y+0.5] or [1e9])
                   cand=[]
                   for si in by_page.get(page,[]):
-                      sy,sb= int(source_geom[si][0]), source_geom[si][1]
+                      _,sb=source_geom[si]
                       x1,y1,x2,y2=map(float,sb)
-                      # Require source image to be below header, and its center to be in the header's horizontal span.
-                      cx=(x1+x2)/2.0; cy=(y1+y2)/2.0
+                      cx=(x1+x2)/2.0
                       if y2 <= y+h-1.0: continue
                       if y1 >= next_y-1.0: continue
                       if not (x-8.0 <= cx <= x+w+8.0): continue
                       cand.append(si)
-                  # Some layouts put two visual images in one product area; keep them all and resolve by visual similarity.
                   if not cand:
-                      # Fallback: same page and closest image below header with horizontal overlap.
                       for si in by_page.get(page,[]):
                           x1,y1,x2,y2=map(float,source_geom[si][1])
-                          cx=(x1+x2)/2.0
                           overlap=max(0.0,min(x+w,x2)-max(x,x1))
                           if y2>y+h and overlap>0 and y1<next_y:
                               cand.append(si)
                   candidates_by_id[p['id']]=cand
 
-              # Solve page-local one-to-one assignment using visual similarity only among spatially valid candidates.
               all_si=sorted(set(i for c in candidates_by_id.values() for i in c))
               row_ids=[p['id'] for p in plist if candidates_by_id[p['id']]]
               if len(row_ids)==0: continue
@@ -157,7 +149,6 @@ jobs:
                   selected.append((pid,si,hd,gm,float(cost[ri,cj])))
                   if hd>85 and gm<5:
                       diagnostics.append({'id':pid,'source':source_files[si].name,'dhash':hd,'good_features':gm})
-              # Every image-bearing product must have one spatial candidate.
               missing=set(row_ids)-assigned
               if missing:
                   raise SystemExit(f'Missing deterministic image assignment on page {page}: {sorted(missing)}')
@@ -166,7 +157,7 @@ jobs:
           source_ids=[si for _,si,_,_,_ in selected]
           assert len(set(source_ids))==880, 'A PDF image instance was assigned to multiple products.'
 
-          for pid,si,hd,gm,score in selected:
+          for pid,si,_,_,_ in selected:
               shutil.copy2(source_files[si],image_dir/f'{pid}.jpg')
 
           manifest={
@@ -215,6 +206,8 @@ jobs:
             --exclude='catalog_images_part_1' \
             --exclude='catalog_products_part_1_of_2.zip' \
             --exclude='catalog_site_ready_1200.zip' \
+            --exclude='.github/source_image_geometry.json.gz.b64' \
+            --exclude='.github/geom/' \
             ./ _site/
           test -s _site/products.html
           test -s _site/catalog_site_mapping_908/products.json
