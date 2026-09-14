@@ -47,7 +47,7 @@ jobs:
           assert isinstance(legacy, list) and len(legacy) > 0
 
           payload = payload_path.read_text(encoding='utf-8').strip()
-          m = re.fullmatch(r'window\\.AZIM_PRODUCTS_GZIP="([A-Za-z0-9+/=]+)";?', payload)
+          m = re.fullmatch(r'window\.AZIM_PRODUCTS_GZIP="([A-Za-z0-9+/=]+)";?', payload)
           assert m, 'Invalid Excel product payload wrapper'
           encoded = m.group(1)
           encoded += '=' * (-len(encoded) % 4)
