@@ -43,15 +43,18 @@ jobs:
           images_dir = root / 'images'
           payload_path = root / 'excel-products-gzip.js'
 
-          # The site now uses the Excel-derived payload for the authoritative
-          # product sequence; products.json remains as the legacy mapping file.
           legacy = json.loads(products_path.read_text(encoding='utf-8'))
           assert isinstance(legacy, list) and len(legacy) > 0
 
           payload = payload_path.read_text(encoding='utf-8').strip()
-          m = re.fullmatch(r'window\.AZIM_PRODUCTS_GZIP="([A-Za-z0-9+/=]+)";?', payload)
+          m = re.fullmatch(r'window\\.AZIM_PRODUCTS_GZIP="([A-Za-z0-9+/=]+)";?', payload)
           assert m, 'Invalid Excel product payload wrapper'
-          decoded = gzip.decompress(base64.b64decode(m.group(1)))
+          encoded = m.group(1)
+          encoded += '=' * (-len(encoded) % 4)
+          try:
+              decoded = gzip.decompress(base64.b64decode(encoded, validate=True))
+          except Exception as exc:
+              raise AssertionError(f'Invalid Excel gzip payload: {exc}') from exc
           data = json.loads(decoded.decode('utf-8'))
           assert isinstance(data, list)
           assert len(data) == 1085, len(data)
