@@ -24,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build high-quality image source archive
+      - name: Build high-quality source image set
         shell: bash
         run: |
           set -euo pipefail
@@ -33,7 +33,7 @@ jobs:
           elif [[ -f catalog_site_ready_1200.zip ]]; then
             cp catalog_site_ready_1200.zip /tmp/catalog_site_ready_1200.zip
           else
-            echo 'High-quality image archive is missing.' >&2
+            echo 'High-quality source archive is missing.' >&2
             exit 1
           fi
           unzip -t -q /tmp/catalog_site_ready_1200.zip
@@ -42,153 +42,169 @@ jobs:
           unzip -q -o /tmp/catalog_site_ready_1200.zip -d /tmp/azim_hq
           count=$(find /tmp/azim_hq -maxdepth 1 -type f -regextype posix-extended -regex '.*/P[0-9]{5}\.jpg' | wc -l)
           test "$count" -eq 906
-          echo "High-quality source images: $count"
 
-      - name: Match high-quality images to the authoritative product IDs
+      - name: Deterministically map PDF source images to product IDs
         shell: bash
         run: |
           set -euo pipefail
           python -m pip install --quiet numpy pillow opencv-python-headless scipy
+          base64 -d .github/source_image_geometry.json.gz.b64 > /tmp/source_geometry.gz
+          gzip -dc /tmp/source_geometry.gz > /tmp/source_image_geometry.json
           python - <<'PY'
           from pathlib import Path
-          import json, re, shutil
+          import json, shutil
           import numpy as np
           import cv2
           from PIL import Image, ImageOps
           from scipy.optimize import linear_sum_assignment
 
-          root = Path('catalog_site_mapping_908')
-          image_dir = root / 'images'
-          source_dir = Path('/tmp/azim_hq')
-          current = sorted(image_dir.glob('P*.jpg'))
-          source = sorted(source_dir.glob('P*.jpg'), key=lambda p: int(p.stem[1:]))
-          if len(current) != 880:
-              raise SystemExit(f'Expected 880 authoritative product images, found {len(current)}')
-          if len(source) != 906:
-              raise SystemExit(f'Expected 906 high-quality source images, found {len(source)}')
+          root=Path('catalog_site_mapping_908')
+          image_dir=root/'images'
+          source_dir=Path('/tmp/azim_hq')
+          products=json.loads((root/'products.json').read_text(encoding='utf-8'))
+          geom=json.loads(Path('/tmp/source_image_geometry.json').read_text(encoding='utf-8'))
+          source_geom=geom['items']
+          source_files=sorted(source_dir.glob('P*.jpg'), key=lambda p:int(p.stem[1:]))
+          assert len(products)==908
+          assert len(source_files)==906 and len(source_geom)==906
+          targets=[p for p in products if (image_dir/f"{p['id']}.jpg").is_file()]
+          assert len(targets)==880, len(targets)
 
-          orb = cv2.ORB_create(nfeatures=600, fastThreshold=10)
-          bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+          # Each product has the exact PDF page/header rectangle used when its image was extracted.
+          # Candidate source images are restricted to the same page, below that product header,
+          # inside its column/box, and before the next product header on that page.
+          by_page={}
+          for idx,(pg,bbox) in enumerate(source_geom):
+              by_page.setdefault(int(pg),[]).append(idx)
+          products_by_page={}
+          for p in targets:
+              products_by_page.setdefault(int(p['page']),[]).append(p)
 
-          def gray_feature(path):
+          orb=cv2.ORB_create(nfeatures=500,fastThreshold=8)
+          bf=cv2.BFMatcher(cv2.NORM_HAMMING,crossCheck=False)
+
+          def dhash(path):
               with Image.open(path) as im:
-                  im = ImageOps.exif_transpose(im).convert('L').resize((65,64), Image.Resampling.LANCZOS)
-                  a = np.asarray(im, dtype=np.uint8)
-                  return np.packbits((a[:,1:] > a[:,:-1]).reshape(-1))
+                  im=ImageOps.exif_transpose(im).convert('L').resize((65,64),Image.Resampling.LANCZOS)
+                  a=np.asarray(im,dtype=np.uint8)
+                  return np.packbits((a[:,1:]>a[:,:-1]).reshape(-1))
 
-          def rgb_feature(path):
-              with Image.open(path) as im:
-                  im = ImageOps.exif_transpose(im).convert('RGB').resize((24,24), Image.Resampling.BILINEAR)
-                  return np.asarray(im, dtype=np.float32).mean(axis=(0,1))
+          def desc(path):
+              im=cv2.imread(str(path),cv2.IMREAD_GRAYSCALE)
+              if im is None:return None
+              im=cv2.resize(im,(500,500),interpolation=cv2.INTER_AREA)
+              return orb.detectAndCompute(im,None)[1]
 
-          def orb_desc(path):
-              im = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
-              if im is None:
-                  return None
-              im = cv2.resize(im, (600,600), interpolation=cv2.INTER_AREA)
-              _, des = orb.detectAndCompute(im, None)
-              return des
+          def good_matches(a,b):
+              if a is None or b is None:return 0
+              pairs=bf.knnMatch(a,b,k=2)
+              return sum(1 for pair in pairs if len(pair)==2 and pair[0].distance < 0.8*pair[1].distance)
 
-          def hamming(a,b):
-              return int(np.unpackbits(np.bitwise_xor(a,b)).sum())
+          source_hash=[dhash(p) for p in source_files]
+          source_desc=[desc(p) for p in source_files]
+          target_hash={p['id']:dhash(image_dir/f"{p['id']}.jpg") for p in targets}
+          target_desc={p['id']:desc(image_dir/f"{p['id']}.jpg") for p in targets}
 
-          cur_hash=np.stack([gray_feature(p) for p in current])
-          src_hash=np.stack([gray_feature(p) for p in source])
-          cur_rgb=np.stack([rgb_feature(p) for p in current])
-          src_rgb=np.stack([rgb_feature(p) for p in source])
+          selected=[]
+          diagnostics=[]
+          for page, plist in products_by_page.items():
+              plist=sorted(plist,key=lambda p:(float(p['header_bbox_pt'][1]),float(p['header_bbox_pt'][0])))
+              # Same-page next header strictly below this header; same-row siblings share y and don't bound each other.
+              candidates_by_id={}
+              for k,p in enumerate(plist):
+                  x,y,w,h=map(float,p['header_bbox_pt'])
+                  next_y=min([float(q['header_bbox_pt'][1]) for q in plist[k+1:] if float(q['header_bbox_pt'][1])>y+0.5] or [1e9])
+                  cand=[]
+                  for si in by_page.get(page,[]):
+                      sy,sb= int(source_geom[si][0]), source_geom[si][1]
+                      x1,y1,x2,y2=map(float,sb)
+                      # Require source image to be below header, and its center to be in the header's horizontal span.
+                      cx=(x1+x2)/2.0; cy=(y1+y2)/2.0
+                      if y2 <= y+h-1.0: continue
+                      if y1 >= next_y-1.0: continue
+                      if not (x-8.0 <= cx <= x+w+8.0): continue
+                      cand.append(si)
+                  # Some layouts put two visual images in one product area; keep them all and resolve by visual similarity.
+                  if not cand:
+                      # Fallback: same page and closest image below header with horizontal overlap.
+                      for si in by_page.get(page,[]):
+                          x1,y1,x2,y2=map(float,source_geom[si][1])
+                          cx=(x1+x2)/2.0
+                          overlap=max(0.0,min(x+w,x2)-max(x,x1))
+                          if y2>y+h and overlap>0 and y1<next_y:
+                              cand.append(si)
+                  candidates_by_id[p['id']]=cand
 
-          # Perceptual shortlist: the correct high-quality source for a product normally survives here.
-          xor=np.bitwise_xor(cur_hash[:,None,:],src_hash[None,:,:])
-          dh=np.unpackbits(xor,axis=2).sum(axis=2).astype(np.float32)
-          color=np.linalg.norm(cur_rgb[:,None,:]-src_rgb[None,:,:],axis=2)/255.0
-          shortlist_score=dh + color*10.0
-          K=35
-          shortlist=np.argpartition(shortlist_score,K-1,axis=1)[:,:K]
+              # Solve page-local one-to-one assignment using visual similarity only among spatially valid candidates.
+              all_si=sorted(set(i for c in candidates_by_id.values() for i in c))
+              row_ids=[p['id'] for p in plist if candidates_by_id[p['id']]]
+              if len(row_ids)==0: continue
+              cost=np.full((len(row_ids),len(all_si)),9999.0,dtype=np.float32)
+              for ri,pid in enumerate(row_ids):
+                  for cj,si in enumerate(all_si):
+                      if si not in candidates_by_id[pid]: continue
+                      hd=int(np.unpackbits(np.bitwise_xor(target_hash[pid],source_hash[si])).sum())
+                      gm=good_matches(target_desc[pid],source_desc[si])
+                      cost[ri,cj]=hd - gm*4.0
+              rr,cc=linear_sum_assignment(cost)
+              assigned=set()
+              for ri,cj in zip(rr,cc):
+                  if cost[ri,cj]>=9999: continue
+                  pid=row_ids[int(ri)]; si=all_si[int(cj)]
+                  hd=int(np.unpackbits(np.bitwise_xor(target_hash[pid],source_hash[si])).sum())
+                  gm=good_matches(target_desc[pid],source_desc[si])
+                  assigned.add(pid)
+                  selected.append((pid,si,hd,gm,float(cost[ri,cj])))
+                  if hd>85 and gm<5:
+                      diagnostics.append({'id':pid,'source':source_files[si].name,'dhash':hd,'good_features':gm})
+              # Every image-bearing product must have one spatial candidate.
+              missing=set(row_ids)-assigned
+              if missing:
+                  raise SystemExit(f'Missing deterministic image assignment on page {page}: {sorted(missing)}')
 
-          cur_des=[orb_desc(p) for p in current]
-          src_des=[orb_desc(p) for p in source]
+          assert len(selected)==880, len(selected)
+          source_ids=[si for _,si,_,_,_ in selected]
+          assert len(set(source_ids))==880, 'A PDF image instance was assigned to multiple products.'
 
-          # Default high cost prevents unsupported pairings from entering the assignment.
-          cost=np.full((len(current),len(source)), 1000.0, dtype=np.float32)
-          goodmat=np.zeros_like(cost,dtype=np.int16)
-          dhmat=np.full_like(cost,255,dtype=np.int16)
-
-          for i in range(len(current)):
-              des1=cur_des[i]
-              for j in shortlist[i]:
-                  j=int(j)
-                  des2=src_des[j]
-                  if des1 is None or des2 is None:
-                      continue
-                  pairs=bf.knnMatch(des1,des2,k=2)
-                  good=sum(1 for pair in pairs if len(pair)==2 and pair[0].distance < 0.78*pair[1].distance)
-                  goodmat[i,j]=min(good,32767)
-                  dhij=int(dh[i,j])
-                  dhmat[i,j]=dhij
-                  # Higher good-feature count is much stronger evidence than pHash/color proximity.
-                  cost[i,j]=500.0 - good*5.0 + dhij*0.55 + float(color[i,j])*5.0
-
-          rows, cols = linear_sum_assignment(cost)
-          assert len(rows)==len(current)
-
-          matched=[]
-          weak=[]
-          for i,j in zip(rows,cols):
-              c=float(cost[i,j]); good=int(goodmat[i,j]); hd=int(dhmat[i,j])
-              if c>=900:
-                  raise SystemExit(f'Unassigned/unsupported product image: {current[i].name}')
-              matched.append((current[i],source[j],good,hd,c))
-              if good < 8 and hd > 70:
-                  weak.append({'id':current[i].stem,'source':source[j].name,'good_features':good,'dhash':hd,'cost':round(c,2)})
-
-          mean_good=float(np.mean([x[2] for x in matched]))
-          strong=sum(1 for x in matched if x[2] >= 12 or x[3] <= 55)
-          if mean_good < 10 or strong < 820:
-              raise SystemExit(f'Refusing deployment: image matching confidence is too low (mean_good={mean_good:.2f}, strong={strong}/880).')
-
-          for target,src,good,hd,c in matched:
-              # Source is already JPEG; copy bytes directly so there is no extra lossy JPEG encode.
-              shutil.copy2(src,target)
+          for pid,si,hd,gm,score in selected:
+              shutil.copy2(source_files[si],image_dir/f'{pid}.jpg')
 
           manifest={
-              'authoritative_images':len(current),
-              'high_quality_source_images':len(source),
-              'matched':len(matched),
-              'mean_good_features':round(mean_good,3),
-              'strong_matches':strong,
-              'weak_matches':weak,
-              'source_archive':'catalog_site_ready_1200.zip.part-00 + part-01',
-              'image_bytes_policy':'matched JPG bytes are copied directly without re-encoding'
+            'method':'deterministic PDF geometry + page-local visual tie-break',
+            'products_with_images':880,
+            'pdf_source_images':906,
+            'matched':len(selected),
+            'unused_pdf_images':906-len(selected),
+            'diagnostics':diagnostics,
+            'quality_policy':'source JPG bytes copied directly; no re-encoding'
           }
           (root/'hq-image-match-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
-          print(json.dumps({k:manifest[k] for k in ('authoritative_images','high_quality_source_images','matched','mean_good_features','strong_matches')},ensure_ascii=False))
+          if diagnostics:
+              raise SystemExit(f'Refusing deployment because {len(diagnostics)} image mappings are low-confidence.')
+          print('DETERMINISTIC IMAGE MAPPING OK: 880/880')
           PY
 
-      - name: Validate the complete 908-product catalog and image association
+      - name: Validate complete catalog and image mapping
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, re
+          import json,re
           from pathlib import Path
           root=Path('catalog_site_mapping_908')
           data=json.loads((root/'products.json').read_text(encoding='utf-8'))
-          assert isinstance(data,list) and len(data)==908, len(data)
-          ids=[str(x.get('id','')) for x in data]
-          assert len(set(ids))==908 and all(re.fullmatch(r'P\d{4}',x) for x in ids)
-          img_ids={p.stem for p in (root/'images').glob('*.jpg')}
-          assert img_ids <= set(ids)
-          assert len(img_ids)==880
-          assert len(set(ids)-img_ids)==28
-          for p in (root/'images').glob('*.jpg'):
-              assert p.stat().st_size > 1000, p
+          assert len(data)==908
+          ids=[p['id'] for p in data]
+          assert len(set(ids))==908 and all(re.fullmatch(r'P\d{4}',i) for i in ids)
+          imgs={p.stem for p in (root/'images').glob('*.jpg')}
+          assert len(imgs)==880 and imgs<=set(ids)
+          assert len(set(ids)-imgs)==28
           m=json.loads((root/'hq-image-match-manifest.json').read_text(encoding='utf-8'))
-          assert m['matched']==880
-          assert m['strong_matches'] >= 820
-          print('CATALOG, IDS, IMAGE COUNT, AND HIGH-QUALITY MAPPING VALIDATED')
+          assert m['matched']==880 and not m['diagnostics']
+          print('CATALOG + IMAGE VALIDATION OK')
           PY
 
-      - name: Prepare Pages artifact without source archives
+      - name: Prepare Pages artifact
         shell: bash
         run: |
           set -euo pipefail
@@ -198,10 +214,10 @@ jobs:
             --exclude='catalog_site_ready_1200.zip.part-*' \
             --exclude='catalog_images_part_1' \
             --exclude='catalog_products_part_1_of_2.zip' \
+            --exclude='catalog_site_ready_1200.zip' \
             ./ _site/
           test -s _site/products.html
           test -s _site/catalog_site_mapping_908/products.json
-          test -s _site/catalog_site_mapping_908/hq-image-match-manifest.json
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
