@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, json
+          import base64, json, zlib
           from pathlib import Path
           from PIL import Image
 
@@ -54,9 +54,9 @@ jobs:
           assert encoded and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=' for c in encoded), 'Invalid Excel product payload characters'
           encoded += '=' * (-len(encoded) % 4)
           try:
-              decoded = gzip.decompress(base64.b64decode(encoded, validate=True))
+              decoded = zlib.decompress(base64.b64decode(encoded, validate=True), -15)
           except Exception as exc:
-              raise AssertionError(f'Invalid Excel gzip payload: {exc}') from exc
+              raise AssertionError(f'Invalid Excel deflate payload: {exc}') from exc
           data = json.loads(decoded.decode('utf-8'))
           assert isinstance(data, list)
           assert len(data) == 1085, len(data)
