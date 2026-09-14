@@ -34,38 +34,43 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, re
+          import base64, gzip, json, re
           from pathlib import Path
           from PIL import Image
 
           root = Path('catalog_site_mapping_908')
           products_path = root / 'products.json'
           images_dir = root / 'images'
+          payload_path = root / 'excel-products-gzip.js'
 
-          data = json.loads(products_path.read_text(encoding='utf-8'))
-          assert len(data) == 908, len(data)
+          # The site now uses the Excel-derived payload for the authoritative
+          # product sequence; products.json remains as the legacy mapping file.
+          legacy = json.loads(products_path.read_text(encoding='utf-8'))
+          assert isinstance(legacy, list) and len(legacy) > 0
+
+          payload = payload_path.read_text(encoding='utf-8').strip()
+          m = re.fullmatch(r'window\.AZIM_PRODUCTS_GZIP="([A-Za-z0-9+/=]+)";?', payload)
+          assert m, 'Invalid Excel product payload wrapper'
+          decoded = gzip.decompress(base64.b64decode(m.group(1)))
+          data = json.loads(decoded.decode('utf-8'))
+          assert isinstance(data, list)
+          assert len(data) == 1085, len(data)
 
           ids = [str(p.get('id', '')) for p in data]
-          assert len(set(ids)) == 908
-          assert all(re.fullmatch(r'P\d{4}', x) for x in ids)
-
-          for p in data:
-              assert str(p.get('name', '')).strip(), f"Empty product name: {p.get('id')}"
+          assert ids == [f'P{i:04d}' for i in range(1, 1086)]
+          assert all(str(p.get('name', '')).strip() for p in data)
 
           image_files = sorted(images_dir.glob('P*.jpg'))
           image_ids = {p.stem for p in image_files}
           assert len(image_files) == 880, len(image_files)
           assert image_ids <= set(ids)
-          assert len(set(ids) - image_ids) == 28
 
-          # Do not rename, remap, recompress, or replace any image here.
-          # The exact JPG bytes already stored in GitHub are the images deployed.
           checked = 0
           for p in image_files:
               with Image.open(p) as im:
                   assert im.width > 0 and im.height > 0
                   checked += 1
-          print(f'CATALOG VALIDATED: 908 products, 880 exact GitHub JPGs, 28 intentionally missing, {checked} images readable')
+          print(f'CATALOG VALIDATED: {len(data)} Excel products, {checked} exact GitHub JPGs')
           PY
 
       - name: Prepare Pages artifact
@@ -76,7 +81,7 @@ jobs:
           mkdir -p _site
           rsync -a --exclude='.git/' ./ _site/
           test -s _site/products.html
-          test -s _site/catalog_site_mapping_908/products.json
+          test -s _site/catalog_site_mapping_908/excel-products-gzip.js
           test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
 
       - name: Upload Pages artifact
