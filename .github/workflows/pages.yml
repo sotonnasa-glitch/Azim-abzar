@@ -1,19 +1,15 @@
 name: Deploy Azim Abzar to GitHub Pages
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: write
   pages: write
   id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: true
-
 jobs:
   deploy:
     environment:
@@ -24,37 +20,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install validation dependency
-        shell: bash
         run: python -m pip install --disable-pip-version-check --no-input pillow
-      - name: Build and validate 1085-product catalog
+      - name: Build and validate 906-product catalog
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json
+          import json,re
           from pathlib import Path
           from PIL import Image
-          root=Path('catalog_site_mapping_908'); images_dir=root/'images'; rows=[]
+          root=Path('catalog_site_mapping_908'); images=root/'images'; rows=[]
           for i in range(1,5):
-              text=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
+              t=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
               prefix=f'window.AZIM_EXCEL_NAMES_{i}='
-              assert text.startswith(prefix) and text.endswith(';')
-              rows.extend(json.loads(text[len(prefix):-1]))
+              assert t.startswith(prefix) and t.endswith(';')
+              rows.extend(json.loads(t[len(prefix):-1]))
           assert len(rows)==1085
-          names=[str(row[0] if isinstance(row,list) and row else '').strip() for row in rows]
-          assert all(names)
-          ids={f'P{i:04d}' for i in range(1,1086)}
-          image_files=sorted(images_dir.glob('P*.jpg'))
-          assert len(image_files)==880
-          assert {p.stem for p in image_files} <= ids
-          for p in image_files:
-              with Image.open(p) as im: assert im.width>0 and im.height>0
-          products=[{'id':f'P{i:04d}','name':str(row[0]).strip(),'image':f'catalog_site_mapping_908/images/P{i:04d}.jpg'} for i,row in enumerate(rows,1)]
-          out=root/'products.json'
-          out.write_text(json.dumps(products,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          check=json.loads(out.read_text(encoding='utf-8'))
-          assert len(check)==1085 and check[0]['id']=='P0001' and check[-1]['id']=='P1085'
-          print('CATALOG VALIDATED AND JSON GENERATED: 1085 products')
+          names=[str(r[0]).strip() for r in rows[:906]]
+          assert len(names)==906 and all(names)
+          files=sorted(images.glob('P*.jpg'))
+          assert len(files)==906
+          ids={f'P{i:04d}' for i in range(1,907)}
+          assert {p.stem for p in files}==ids
+          for p in files:
+              with Image.open(p) as im: assert im.width==1200 and im.height==1200
+          products=[{'id':f'P{i:04d}','name':rows[i-1][0],'image':f'catalog_site_mapping_908/images/P{i:04d}.jpg'} for i in range(1,907)]
+          out=root/'products.json'; out.write_text(json.dumps(products,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          chk=json.loads(out.read_text(encoding='utf-8'))
+          assert len(chk)==906 and chk[0]['id']=='P0001' and chk[-1]['id']=='P0906'
+          print('906 PRODUCT NAMES + 906 MATCHED IMAGES VALIDATED')
           PY
       - name: Persist generated catalog JSON to main
         shell: bash
@@ -63,12 +57,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add catalog_site_mapping_908/products.json
-          if git diff --cached --quiet; then
-            echo "products.json already current"
-          else
-            git commit -m "Persist 1085-product catalog JSON"
-            git push origin HEAD:main
-          fi
+          if git diff --cached --quiet; then echo 'products.json already current'; else git commit -m 'Persist 906 matched product catalog JSON'; git push origin HEAD:main; fi
       - name: Prepare Pages artifact
         shell: bash
         run: |
@@ -76,11 +65,8 @@ jobs:
           rm -rf _site; mkdir -p _site; rsync -a --exclude='.git/' ./ _site/
           test -s _site/products.html
           test -s _site/catalog_site_mapping_908/products.json
-          test -s _site/catalog_site_mapping_908/excel-products-part-1.js
-          test -s _site/catalog_site_mapping_908/excel-products-part-2.js
-          test -s _site/catalog_site_mapping_908/excel-products-part-3.js
-          test -s _site/catalog_site_mapping_908/excel-products-part-4.js
-          test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
+          for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
+          test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 906
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
