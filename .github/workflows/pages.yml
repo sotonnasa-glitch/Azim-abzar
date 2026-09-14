@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, json, re
+          import base64, gzip, json
           from pathlib import Path
           from PIL import Image
 
@@ -47,9 +47,11 @@ jobs:
           assert isinstance(legacy, list) and len(legacy) > 0
 
           payload = payload_path.read_text(encoding='utf-8').strip()
-          m = re.fullmatch(r'window\.AZIM_PRODUCTS_GZIP="([A-Za-z0-9+/=]+)";?', payload)
-          assert m, 'Invalid Excel product payload wrapper'
-          encoded = m.group(1)
+          prefix = 'window.AZIM_PRODUCTS_GZIP="'
+          suffix = '";'
+          assert payload.startswith(prefix) and payload.endswith(suffix), 'Invalid Excel product payload wrapper'
+          encoded = payload[len(prefix):-len(suffix)]
+          assert encoded and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=' for c in encoded), 'Invalid Excel product payload characters'
           encoded += '=' * (-len(encoded) % 4)
           try:
               decoded = gzip.decompress(base64.b64decode(encoded, validate=True))
