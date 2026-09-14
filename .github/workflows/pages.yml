@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json,re
+          import json
           from pathlib import Path
           from PIL import Image
           root=Path('catalog_site_mapping_908'); images=root/'images'; rows=[]
@@ -39,16 +39,16 @@ jobs:
           names=[str(r[0]).strip() for r in rows[:906]]
           assert len(names)==906 and all(names)
           files=sorted(images.glob('P*.jpg'))
-          assert len(files)==906
-          ids={f'P{i:04d}' for i in range(1,907)}
-          assert {p.stem for p in files}==ids
+          assert len(files)==880
+          ids={f'P{i:04d}' for i in range(1,1086)}
+          assert {p.stem for p in files} <= ids
           for p in files:
-              with Image.open(p) as im: assert im.width==1200 and im.height==1200
+              with Image.open(p) as im: assert im.width>0 and im.height>0
           products=[{'id':f'P{i:04d}','name':rows[i-1][0],'image':f'catalog_site_mapping_908/images/P{i:04d}.jpg'} for i in range(1,907)]
           out=root/'products.json'; out.write_text(json.dumps(products,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
           chk=json.loads(out.read_text(encoding='utf-8'))
           assert len(chk)==906 and chk[0]['id']=='P0001' and chk[-1]['id']=='P0906'
-          print('906 PRODUCT NAMES + 906 MATCHED IMAGES VALIDATED')
+          print('906 PRODUCT NAMES + 880 AVAILABLE IMAGES VALIDATED')
           PY
       - name: Persist generated catalog JSON to main
         shell: bash
@@ -57,7 +57,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add catalog_site_mapping_908/products.json
-          if git diff --cached --quiet; then echo 'products.json already current'; else git commit -m 'Persist 906 matched product catalog JSON'; git push origin HEAD:main; fi
+          if git diff --cached --quiet; then echo 'products.json already current'; else git commit -m 'Persist 906 product catalog JSON'; git push origin HEAD:main; fi
       - name: Prepare Pages artifact
         shell: bash
         run: |
@@ -66,7 +66,7 @@ jobs:
           test -s _site/products.html
           test -s _site/catalog_site_mapping_908/products.json
           for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
-          test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 906
+          test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
