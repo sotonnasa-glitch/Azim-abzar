@@ -20,15 +20,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Install validation dependency
         shell: bash
         run: python -m pip install --disable-pip-version-check --no-input pillow
-
       - name: Validate Excel catalog and preserve GitHub images exactly
         shell: bash
         run: |
@@ -37,57 +34,59 @@ jobs:
           import json
           from pathlib import Path
           from PIL import Image
-
-          root = Path('catalog_site_mapping_908')
-          images_dir = root / 'images'
-
-          rows = []
-          for i in range(1, 5):
-              path = root / f'excel-products-part-{i}.js'
-              text = path.read_text(encoding='utf-8').strip()
-              prefix = f'window.AZIM_EXCEL_NAMES_{i}='
-              assert text.startswith(prefix) and text.endswith(';'), f'Invalid Excel chunk wrapper: part {i}'
-              chunk = json.loads(text[len(prefix):-1])
-              assert isinstance(chunk, list), f'Invalid Excel chunk: part {i}'
-              rows.extend(chunk)
-
-          assert len(rows) == 1085, f'Expected 1085 Excel products, got {len(rows)}'
-          names = [str(row[0] if isinstance(row, list) and row else '').strip() for row in rows]
-          assert all(names), 'At least one Excel product name is empty'
-          ids = [f'P{i:04d}' for i in range(1, 1086)]
-
-          image_files = sorted(images_dir.glob('P*.jpg'))
-          image_ids = {p.stem for p in image_files}
-          assert len(image_files) == 880, len(image_files)
-          assert image_ids <= set(ids)
-
-          checked = 0
+          root=Path('catalog_site_mapping_908'); images_dir=root/'images'; rows=[]
+          for i in range(1,5):
+              text=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
+              prefix=f'window.AZIM_EXCEL_NAMES_{i}='
+              assert text.startswith(prefix) and text.endswith(';')
+              rows.extend(json.loads(text[len(prefix):-1]))
+          assert len(rows)==1085, len(rows)
+          names=[str(row[0] if isinstance(row,list) and row else '').strip() for row in rows]
+          assert all(names)
+          ids={f'P{i:04d}' for i in range(1,1086)}
+          image_files=sorted(images_dir.glob('P*.jpg'))
+          assert len(image_files)==880, len(image_files)
+          assert {p.stem for p in image_files} <= ids
           for p in image_files:
-              with Image.open(p) as im:
-                  assert im.width > 0 and im.height > 0
-                  checked += 1
-          print(f'CATALOG VALIDATED: {len(names)} Excel products, {checked} exact GitHub JPGs')
+              with Image.open(p) as im: assert im.width>0 and im.height>0
+          print(f'CATALOG VALIDATED: {len(names)} Excel products, {len(image_files)} JPGs')
           PY
-
+      - name: Build legacy products.json compatibility catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('catalog_site_mapping_908'); rows=[]
+          for i in range(1,5):
+              text=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
+              prefix=f'window.AZIM_EXCEL_NAMES_{i}='
+              rows.extend(json.loads(text[len(prefix):-1]))
+          assert len(rows)==1085
+          products=[{'id':f'P{i:04d}','name':str(row[0]).strip(),'image':f'catalog_site_mapping_908/images/P{i:04d}.jpg'} for i,row in enumerate(rows,1)]
+          out=root/'products.json'
+          out.write_text(json.dumps(products,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          check=json.loads(out.read_text(encoding='utf-8'))
+          assert len(check)==1085 and check[0]['id']=='P0001' and check[-1]['id']=='P1085'
+          print('LEGACY JSON GENERATED: 1085 products')
+          PY
       - name: Prepare Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf _site
-          mkdir -p _site
-          rsync -a --exclude='.git/' ./ _site/
+          rm -rf _site; mkdir -p _site; rsync -a --exclude='.git/' ./ _site/
           test -s _site/products.html
+          test -s _site/catalog_site_mapping_908/products.json
           test -s _site/catalog_site_mapping_908/excel-products-part-1.js
           test -s _site/catalog_site_mapping_908/excel-products-part-2.js
           test -s _site/catalog_site_mapping_908/excel-products-part-3.js
           test -s _site/catalog_site_mapping_908/excel-products-part-4.js
           test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
