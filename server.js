@@ -11,7 +11,6 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// API Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -22,7 +21,8 @@ app.all('/api/chat', (req, res) => {
 
 // Clean URL routes for main pages
 app.get('/products', (req, res) => {
-  res.sendFile(path.join(__dirname, 'products.html'));
+  res.set('Cache-Control', 'no-store, max-age=0');
+  res.sendFile(path.join(__dirname, 'products-v2.html'));
 });
 
 app.get('/admin', (req, res) => {
@@ -37,10 +37,8 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'contact.html'));
 });
 
-// Serve static assets from project root
 app.use(express.static(__dirname));
 
-// Fallback to index.html for root
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
