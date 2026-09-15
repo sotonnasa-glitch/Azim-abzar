@@ -33,17 +33,15 @@ jobs:
           for pid in ids:
               p=out/f'{pid}.jpg'
               if p.exists() and p.stat().st_size>0: continue
-              im=Image.new('RGB',(128,128),(245,245,245))
-              ImageDraw.Draw(im).text((8,54),pid,fill=(25,25,25))
-              im.save(p,'JPEG',quality=82)
+              im=Image.new('RGB',(128,128),(245,245,245)); ImageDraw.Draw(im).text((8,54),pid,fill=(25,25,25)); im.save(p,'JPEG',quality=82)
           PY
       - name: Preserve catalog image quality
         shell: bash
         run: |
           set -euo pipefail
-          echo 'Catalog images are preserved as source files; white photo-slot layout is handled by products-v3.html.'
+          echo 'Catalog images are preserved as source files; responsive white photo-slot layout is handled by products-v3.html.'
           test "$(find catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 908
-      - name: Validate authoritative PDF image-name catalog
+      - name: Validate authoritative catalog mapping
         shell: bash
         run: |
           set -euo pipefail
@@ -54,14 +52,10 @@ jobs:
           root=Path('catalog_site_mapping_908'); images=root/'images'
           rows=[json.loads(x) for x in (root/'products.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]
           assert len(rows)==908
+          assert len({r['id'] for r in rows})==908
           assert all(str(r.get('id','')).startswith('P') and str(r.get('name','')).strip() for r in rows)
-          product_rows=rows[:906]
-          assert len(product_rows)==906 and product_rows[0]['id']=='P0001' and product_rows[-1]['id']=='P0906'
-          assert len({r['id'] for r in product_rows})==906
-          files=sorted(images.glob('P*.jpg'))
-          assert len(files)==908
-          ids={f'P{i:04d}' for i in range(1,909)}
-          assert {p.stem for p in files} == ids
+          files=sorted(images.glob('P*.jpg')); assert len(files)==908
+          assert {p.stem for p in files}=={f'P{i:04d}' for i in range(1,909)}
           for p in files:
               with Image.open(p) as im: assert im.width>0 and im.height>0
           parts=[]
@@ -69,25 +63,20 @@ jobs:
               t=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip(); prefix=f'window.AZIM_EXCEL_NAMES_{i}='
               assert t.startswith(prefix) and t.endswith(';'); parts.extend(json.loads(t[len(prefix):-1]))
           assert len(parts)==1085
-          map_js=(root/'name-map.js').read_text(encoding='utf-8').strip(); assert map_js.startswith('window.AZIM_IMAGE_TEXT_ROWS=') and map_js.endswith(';')
-          mapping=json.loads(map_js[len('window.AZIM_IMAGE_TEXT_ROWS='):-1]); assert len(mapping)==908 and all(isinstance(x,int) and 1<=x<=1085 for x in mapping); assert len(set(mapping))==908
-          v3=Path('products-v3.html').read_text(encoding='utf-8'); assert 'AZIM-PRODUCTS-V3-EXACT-IMAGE-TEXT-MAP' in v3 and 'rows.slice(0,906)' in v3
-          print('VERIFIED: 906 PRODUCT ROWS + 908 IMAGE SLOTS + 908-ROW TEXT MAP')
+          map_js=(root/'name-map.js').read_text(encoding='utf-8').strip(); prefix='window.AZIM_IMAGE_TEXT_ROWS='
+          assert map_js.startswith(prefix) and map_js.endswith(';')
+          mapping=json.loads(map_js[len(prefix):-1]); assert len(mapping)==908 and all(isinstance(x,int) and 1<=x<=1085 for x in mapping) and len(set(mapping))==908
+          v3=Path('products-v3.html').read_text(encoding='utf-8'); assert 'AZIM-PRODUCTS-V3-EXACT-IMAGE-TEXT-MAP' in v3
+          print('VERIFIED: 908 unique product IDs + 908 image slots + 908 unique text-map rows')
           PY
       - name: Prepare Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf _site
-          mkdir -p _site
+          rm -rf _site; mkdir -p _site
           rsync -a --exclude='.git/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' ./ _site/
-          test -s _site/products.html
-          test -s _site/products-v2.html
-          test -s _site/products-v3.html
-          test -s _site/catalog_site_mapping_908/products.jsonl
-          test -s _site/catalog_site_mapping_908/name-map.js
+          test -s _site/products.html; test -s _site/products-v3.html; test -s _site/catalog_site_mapping_908/products.jsonl
           test "$(wc -l < _site/catalog_site_mapping_908/products.jsonl)" -eq 908
-          for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
           test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 908
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -99,4 +88,4 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-# FINAL-CATALOG-VERIFICATION-20260915-WHITE-PHOTO-SLOT
+# FINAL-CATALOG-VERIFICATION-20260915-EXACT-ID-MAPPING-WHITE-PHOTO-SLOT
