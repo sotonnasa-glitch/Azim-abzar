@@ -63,8 +63,26 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _site; mkdir -p _site; rsync -a --exclude='.git/' ./ _site/
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_site/products.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="./catalog_site_mapping_908/name-fixes.js"></script>'
+          marker='<script>const IMAGE_DIR'
+          assert marker in s
+          s=s.replace(marker,tag+marker,1)
+          old="all=rows.map(r=>({id:r[0],name:String(r[1]||'').trim()}));"
+          new="all=rows.map(r=>({id:r[0],name:(window.AZIM_NAME_OVERRIDES?.[r[0]]||String(r[1]||'').trim())}));"
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          check=p.read_text(encoding='utf-8')
+          assert 'AZIM_NAME_OVERRIDES' in check
+          print('VERIFIED NAME OVERRIDES IN DEPLOYED PRODUCTS PAGE')
+          PY
           test -s _site/products.html
           test -s _site/catalog_site_mapping_908/products.json
+          test -s _site/catalog_site_mapping_908/name-fixes.js
           for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
           test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
       - name: Upload Pages artifact
