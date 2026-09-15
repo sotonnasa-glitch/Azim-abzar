@@ -45,9 +45,9 @@ jobs:
                   assert im.width>0 and im.height>0
           page=Path('products-v2.html').read_text(encoding='utf-8')
           assert 'AZIM-PRODUCTS-V2-AUTHORITATIVE-PDF-MAP' in page
-          assert "products.jsonl?v=20260915" in page
-          assert "rows.slice(0,906)" in page
-          assert "IMAGE_DIR+x.id+'.jpg'" in page
+          assert 'products.jsonl?v=20260915' in page
+          assert 'rows.slice(0,906)' in page
+          assert 'IMAGE_DIR+x.id}.jpg' in page
           print('VERIFIED: 906 EXACT PDF NAME-IMAGE PAIRS + 880 VALID IMAGES')
           PY
       - name: Persist generated catalog JSON to main
