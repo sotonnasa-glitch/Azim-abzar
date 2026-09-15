@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build exact 908-product catalog from uploaded Excel source
+      - name: Build exact 908-product catalog
         shell: bash
         run: |
           set -euo pipefail
@@ -34,34 +34,39 @@ jobs:
           assert [p['id'] for p in products] == [f'P{i:04d}' for i in range(1, 909)]
           assert len({p['id'] for p in products}) == 908
           assert all(str(p.get('name','')).strip() for p in products)
-          assert all(p.get('image') == f'catalog_site_mapping_908/images/{p["id"]}.jpg' for p in products)
+          for p in products:
+              p['image'] = f'https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/{p["id"]}.jpg'
           (root / 'products.json').write_text(json.dumps(products, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
           print('EXACT CATALOG VERIFIED: 908 products P0001-P0908')
-          print('SAMPLES:', products[2], products[6], products[7], products[-1])
+          print('IMAGE HOST: Supabase Storage / catalog-images')
           PY
 
-      - name: Replace image set from the two uploaded ZIP parts
+      - name: Migrate existing product images to Supabase Storage
+        if: hashFiles('catalog_site_mapping_908/images/P*.jpg') != ''
         shell: bash
+        env:
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          test -s azim_abzar_images_part1.zip
-          test -s azim_abzar_images_part2.zip
-          rm -rf /tmp/azim-images
-          mkdir -p /tmp/azim-images
-          find catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' -delete
-          unzip -q azim_abzar_images_part1.zip -d /tmp/azim-images/part1
-          unzip -q azim_abzar_images_part2.zip -d /tmp/azim-images/part2
-          find /tmp/azim-images -type f -iname 'P*.jpg' -exec cp -f {} catalog_site_mapping_908/images/ \;
-          count=$(find catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)
-          test "$count" -eq 881
-          test -f catalog_site_mapping_908/images/P0001.jpg
-          test -f catalog_site_mapping_908/images/P0002.jpg
-          test -f catalog_site_mapping_908/images/P0908.jpg
-          echo "IMAGE SET VERIFIED: $count uploaded product images"
-          echo "SHA1 P0001: $(sha1sum catalog_site_mapping_908/images/P0001.jpg | cut -d' ' -f1)"
-          echo "SHA1 P0002: $(sha1sum catalog_site_mapping_908/images/P0002.jpg | cut -d' ' -f1)"
+          curl --fail --silent --show-error -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=start"
+          for i in $(seq 1 120); do
+            sleep 5
+            state=$(curl --fail --silent --show-error -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=status")
+            echo "$state"
+            done=$(python -c 'import json,sys; print(json.load(sys.stdin)["done"])' <<< "$state")
+            failed=$(python -c 'import json,sys; print(json.load(sys.stdin)["failedCount"])' <<< "$state")
+            running=$(python -c 'import json,sys; print(json.load(sys.stdin)["running"])' <<< "$state")
+            if [ "$failed" -gt 0 ]; then echo "Supabase migration reported failures"; exit 1; fi
+            if [ "$done" -eq 908 ] && [ "$running" = "False" ]; then echo 'SUPABASE IMAGE MIGRATION COMPLETE: 908 product IDs processed'; break; fi
+            if [ "$i" -eq 120 ]; then echo 'Supabase migration timed out'; exit 1; fi
+          done
+          for sample in P0001 P0002 P0908; do
+            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
+          done
+          echo 'SUPABASE PUBLIC IMAGE CHECKS PASSED'
 
-      - name: Validate catalog, image IDs and page
+      - name: Validate catalog and remote image configuration
         shell: bash
         run: |
           set -euo pipefail
@@ -72,27 +77,35 @@ jobs:
           p = json.loads((root / 'products.json').read_text(encoding='utf-8'))
           assert isinstance(p, list) and len(p) == 908
           assert [x['id'] for x in p] == [f'P{i:04d}' for i in range(1, 909)]
-          image_ids = {f.stem for f in (root / 'images').glob('P*.jpg')}
-          assert len(image_ids) == 881
-          assert all(i in {f'P{n:04d}' for n in range(1,909)} for i in image_ids)
+          expected = 'https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/'
+          assert all(x.get('image','').startswith(expected) and x['image'].endswith(f'{x["id"]}.jpg') for x in p)
           assert 'catalog_site_mapping_908/products.json' in Path('products-v3.html').read_text(encoding='utf-8')
-          missing = [f'P{i:04d}' for i in range(1,909) if f'P{i:04d}' not in image_ids]
           print(f'CATALOG VERIFIED: {len(p)} products')
-          print(f'IMAGES VERIFIED: {len(image_ids)} uploaded, {len(missing)} IDs without an uploaded image')
-          print('MISSING IDS:', ','.join(missing))
+          print('REMOTE IMAGES VERIFIED: Supabase URLs for all 908 product IDs')
           PY
 
-      - name: Persist generated products.json
+      - name: Remove heavy image archives and local product-image copies
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f azim_abzar_images_part1.zip azim_abzar_images_part2.zip
+          rm -rf catalog_site_mapping_908/images
+          test ! -e azim_abzar_images_part1.zip
+          test ! -e azim_abzar_images_part2.zip
+          test ! -d catalog_site_mapping_908/images
+          echo 'GITHUB IMAGE ASSETS REMOVED: ZIP parts and local product-image directory'
+
+      - name: Persist lightweight catalog
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add catalog_site_mapping_908/products.json catalog_site_mapping_908/images
+          git add -A
           if git diff --cached --quiet; then
-            echo "No generated catalog/image changes to persist"
+            echo "No repository changes to persist"
           else
-            git commit -m "chore: sync exact catalog and uploaded images [skip ci]"
+            git commit -m "chore: store catalog images in Supabase Storage [skip ci]"
             git push origin HEAD:main
           fi
 
@@ -102,7 +115,7 @@ jobs:
           set -euo pipefail
           rm -rf _site
           mkdir -p _site
-          rsync -a --exclude='.git/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' ./ _site/
+          rsync -a --exclude='.git/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='catalog_site_mapping_908/images/' ./ _site/
           test -s _site/products.html
           test -s _site/products-v3.html
           python - <<'PY'
@@ -111,7 +124,10 @@ jobs:
           p = json.loads(Path('_site/catalog_site_mapping_908/products.json').read_text(encoding='utf-8'))
           assert isinstance(p, list) and len(p) == 908
           assert [x['id'] for x in p] == [f'P{i:04d}' for i in range(1, 909)]
-          print('PAGES ARTIFACT VERIFIED: exact 908-product array present')
+          assert all(x['image'].startswith('https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/') for x in p)
+          assert not list(Path('_site').rglob('azim_abzar_images_part*.zip'))
+          assert not list(Path('_site/catalog_site_mapping_908').glob('images/P*.jpg'))
+          print('PAGES ARTIFACT VERIFIED: lightweight catalog with remote images')
           PY
 
       - name: Upload Pages artifact
