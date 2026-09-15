@@ -37,28 +37,12 @@ jobs:
               ImageDraw.Draw(im).text((8,54),pid,fill=(25,25,25))
               im.save(p,'JPEG',quality=82)
           PY
-      - name: Enhance all catalog images for high-quality display
+      - name: Preserve catalog image quality
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          from PIL import Image, ImageFilter
-          root=Path('catalog_site_mapping_908/images')
-          processed=0
-          for p in sorted(root.glob('P*.jpg')):
-              with Image.open(p) as src:
-                  im=src.convert('RGB')
-                  w,h=im.size
-                  long_side=max(w,h)
-                  if long_side < 1600:
-                      scale=min(2.0,2400.0/long_side)
-                      im=im.resize((max(w+1,round(w*scale)),max(h+1,round(h*scale))),Image.Resampling.LANCZOS)
-                  im=im.filter(ImageFilter.UnsharpMask(radius=1.2,percent=125,threshold=3))
-                  im.save(p,'JPEG',quality=95,optimize=True,progressive=True)
-              processed += 1
-          print(f'ENHANCED: {processed} catalog images')
-          PY
+          echo 'Catalog images are preserved as source files; white photo-slot layout is handled by products-v3.html.'
+          test "$(find catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 908
       - name: Validate authoritative PDF image-name catalog
         shell: bash
         run: |
@@ -115,4 +99,4 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-# FINAL-CATALOG-VERIFICATION-20260915-HIGH-QUALITY-IMAGES
+# FINAL-CATALOG-VERIFICATION-20260915-WHITE-PHOTO-SLOT
