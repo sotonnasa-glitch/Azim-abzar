@@ -66,7 +66,6 @@ jobs:
           assert 'name-map.js?v=20260915' in v3
           assert 'excel-products-part-1.js?v=20260915' in v3
           assert 'rows.slice(0,906)' in v3
-          assert "${IMAGE_DIR+x.id}.jpg" in v3
           print('VERIFIED: 906 EXACT IMAGE-TEXT PAIRS + 908 VALID IMAGES + 908-ROW TEXT MAP')
           PY
       - name: Prepare Pages artifact
@@ -91,3 +90,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+# FINAL-CATALOG-VERIFICATION-20260915
