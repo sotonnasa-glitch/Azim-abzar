@@ -33,6 +33,9 @@ jobs:
           rows=[json.loads(x) for x in (root/'products.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]
           assert len(rows)==908, f'expected 908 catalog rows, got {len(rows)}'
           assert all(str(r.get('id','')).startswith('P') and str(r.get('name','')).strip() for r in rows)
+          product_rows=rows[:906]
+          assert len(product_rows)==906 and product_rows[0]['id']=='P0001' and product_rows[-1]['id']=='P0906'
+          assert len({r['id'] for r in product_rows})==906
           files=sorted(images.glob('P*.jpg'))
           assert len(files)==880, f'expected 880 images, got {len(files)}'
           ids={f'P{i:04d}' for i in range(1,909)}
@@ -40,7 +43,12 @@ jobs:
           for p in files:
               with Image.open(p) as im:
                   assert im.width>0 and im.height>0
-          print('VERIFIED: 908 PDF-MAPPED PRODUCTS + 880 VALID IMAGES')
+          page=Path('products-v2.html').read_text(encoding='utf-8')
+          assert 'AZIM-PRODUCTS-V2-AUTHORITATIVE-PDF-MAP' in page
+          assert "products.jsonl?v=20260915" in page
+          assert "rows.slice(0,906)" in page
+          assert "IMAGE_DIR+x.id+'.jpg'" in page
+          print('VERIFIED: 906 EXACT PDF NAME-IMAGE PAIRS + 880 VALID IMAGES')
           PY
       - name: Persist generated catalog JSON to main
         shell: bash
@@ -58,6 +66,7 @@ jobs:
           mkdir -p _site
           rsync -a --exclude='.git/' ./ _site/
           test -s _site/products.html
+          test -s _site/products-v2.html
           test -s _site/catalog_site_mapping_908/products.jsonl
           test "$(wc -l < _site/catalog_site_mapping_908/products.jsonl)" -eq 908
           for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
