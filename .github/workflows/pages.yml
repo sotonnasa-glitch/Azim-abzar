@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Install validation dependency
         run: python -m pip install --disable-pip-version-check --no-input pillow
-      - name: Build and validate 906-product catalog
+      - name: Validate authoritative PDF image-name catalog
         shell: bash
         run: |
           set -euo pipefail
@@ -29,26 +29,18 @@ jobs:
           import json
           from pathlib import Path
           from PIL import Image
-          root=Path('catalog_site_mapping_908'); images=root/'images'; rows=[]
-          for i in range(1,5):
-              t=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
-              prefix=f'window.AZIM_EXCEL_NAMES_{i}='
-              assert t.startswith(prefix) and t.endswith(';')
-              rows.extend(json.loads(t[len(prefix):-1]))
-          assert len(rows)==1085
-          names=[str(r[0]).strip() for r in rows[:906]]
-          assert len(names)==906 and all(names)
+          root=Path('catalog_site_mapping_908'); images=root/'images'
+          rows=[json.loads(x) for x in (root/'products.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]
+          assert len(rows)==908, f'expected 908 catalog rows, got {len(rows)}'
+          assert all(str(r.get('id','')).startswith('P') and str(r.get('name','')).strip() for r in rows)
           files=sorted(images.glob('P*.jpg'))
-          assert len(files)==880
-          ids={f'P{i:04d}' for i in range(1,1086)}
+          assert len(files)==880, f'expected 880 images, got {len(files)}'
+          ids={f'P{i:04d}' for i in range(1,909)}
           assert {p.stem for p in files} <= ids
           for p in files:
-              with Image.open(p) as im: assert im.width>0 and im.height>0
-          products=[{'id':f'P{i:04d}','name':rows[i-1][0],'image':f'catalog_site_mapping_908/images/P{i:04d}.jpg'} for i in range(1,907)]
-          out=root/'products.json'; out.write_text(json.dumps(products,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          chk=json.loads(out.read_text(encoding='utf-8'))
-          assert len(chk)==906 and chk[0]['id']=='P0001' and chk[-1]['id']=='P0906'
-          print('906 PRODUCT NAMES + 880 AVAILABLE IMAGES VALIDATED')
+              with Image.open(p) as im:
+                  assert im.width>0 and im.height>0
+          print('VERIFIED: 908 PDF-MAPPED PRODUCTS + 880 VALID IMAGES')
           PY
       - name: Persist generated catalog JSON to main
         shell: bash
@@ -62,27 +54,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf _site; mkdir -p _site; rsync -a --exclude='.git/' ./ _site/
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('_site/products.html')
-          s=p.read_text(encoding='utf-8')
-          tag='<script src="./catalog_site_mapping_908/name-fixes.js"></script>'
-          marker='<script>const IMAGE_DIR'
-          assert marker in s
-          s=s.replace(marker,tag+marker,1)
-          old="all=rows.map(r=>({id:r[0],name:String(r[1]||'').trim()}));"
-          new="all=rows.map(r=>({id:r[0],name:(window.AZIM_NAME_OVERRIDES?.[r[0]]||String(r[1]||'').trim())}));"
-          assert old in s
-          s=s.replace(old,new,1)
-          p.write_text(s,encoding='utf-8')
-          check=p.read_text(encoding='utf-8')
-          assert 'AZIM_NAME_OVERRIDES' in check
-          print('VERIFIED NAME OVERRIDES IN DEPLOYED PRODUCTS PAGE')
-          PY
+          rm -rf _site
+          mkdir -p _site
+          rsync -a --exclude='.git/' ./ _site/
           test -s _site/products.html
-          test -s _site/catalog_site_mapping_908/products.json
-          test -s _site/catalog_site_mapping_908/name-fixes.js
+          test -s _site/catalog_site_mapping_908/products.jsonl
+          test "$(wc -l < _site/catalog_site_mapping_908/products.jsonl)" -eq 908
           for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
           test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
       - name: Upload Pages artifact
