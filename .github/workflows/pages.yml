@@ -19,91 +19,109 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build products.json from the 908-ID catalog mapping
+
+      - name: Build exact 908-product catalog from uploaded Excel source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, json, zlib
+          from pathlib import Path
+          root = Path('catalog_site_mapping_908')
+          packed = (root / 'products-exact-compressed.b64').read_text(encoding='utf-8').strip()
+          products = json.loads(zlib.decompress(base64.b64decode(packed)).decode('utf-8'))
+          assert isinstance(products, list) and len(products) == 908
+          assert [p['id'] for p in products] == [f'P{i:04d}' for i in range(1, 909)]
+          assert len({p['id'] for p in products}) == 908
+          assert all(str(p.get('name','')).strip() for p in products)
+          assert all(p.get('image') == f'catalog_site_mapping_908/images/{p["id"]}.jpg' for p in products)
+          (root / 'products.json').write_text(json.dumps(products, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          print('EXACT CATALOG VERIFIED: 908 products P0001-P0908')
+          print('SAMPLES:', products[2], products[6], products[7], products[-1])
+          PY
+
+      - name: Replace image set from the two uploaded ZIP parts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s azim_abzar_images_part1.zip
+          test -s azim_abzar_images_part2.zip
+          rm -rf /tmp/azim-images
+          mkdir -p /tmp/azim-images
+          find catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' -delete
+          unzip -q azim_abzar_images_part1.zip -d /tmp/azim-images/part1
+          unzip -q azim_abzar_images_part2.zip -d /tmp/azim-images/part2
+          find /tmp/azim-images -type f -iname 'P*.jpg' -exec cp -f {} catalog_site_mapping_908/images/ \;
+          count=$(find catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)
+          test "$count" -eq 881
+          test -f catalog_site_mapping_908/images/P0001.jpg
+          test -f catalog_site_mapping_908/images/P0002.jpg
+          test -f catalog_site_mapping_908/images/P0908.jpg
+          echo "IMAGE SET VERIFIED: $count uploaded product images"
+          echo "SHA1 P0001: $(sha1sum catalog_site_mapping_908/images/P0001.jpg | cut -d' ' -f1)"
+          echo "SHA1 P0002: $(sha1sum catalog_site_mapping_908/images/P0002.jpg | cut -d' ' -f1)"
+
+      - name: Validate catalog, image IDs and page
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
-          root=Path('catalog_site_mapping_908')
-          names=[]
-          for i in range(1,5):
-              t=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
-              prefix=f'window.AZIM_EXCEL_NAMES_{i}='
-              assert t.startswith(prefix) and t.endswith(';')
-              names.extend(json.loads(t[len(prefix):-1]))
-          assert len(names)==1085
-          t=(root/'name-map.js').read_text(encoding='utf-8').strip()
-          prefix='window.AZIM_IMAGE_TEXT_ROWS='
-          assert t.startswith(prefix) and t.endswith(';')
-          mapping=json.loads(t[len(prefix):-1])
-          assert len(mapping)==908 and len(set(mapping))==908
-          products=[]
-          for i,row_index in enumerate(mapping,1):
-              row=names[row_index-1]
-              name=(row[0] if isinstance(row,list) else row).strip()
-              products.append({'id':f'P{i:04d}','name':name,'image':f'catalog_site_mapping_908/images/P{i:04d}.jpg'})
-          assert len(products)==908
-          assert [p['id'] for p in products]==[f'P{i:04d}' for i in range(1,909)]
-          (root/'products.json').write_text(json.dumps(products,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          print('BUILT: 908 product records P0001-P0908')
+          root = Path('catalog_site_mapping_908')
+          p = json.loads((root / 'products.json').read_text(encoding='utf-8'))
+          assert isinstance(p, list) and len(p) == 908
+          assert [x['id'] for x in p] == [f'P{i:04d}' for i in range(1, 909)]
+          image_ids = {f.stem for f in (root / 'images').glob('P*.jpg')}
+          assert len(image_ids) == 881
+          assert all(i in {f'P{n:04d}' for n in range(1,909)} for i in image_ids)
+          assert 'catalog_site_mapping_908/products.json' in Path('products-v3.html').read_text(encoding='utf-8')
+          missing = [f'P{i:04d}' for i in range(1,909) if f'P{i:04d}' not in image_ids]
+          print(f'CATALOG VERIFIED: {len(p)} products')
+          print(f'IMAGES VERIFIED: {len(image_ids)} uploaded, {len(missing)} IDs without an uploaded image')
+          print('MISSING IDS:', ','.join(missing))
           PY
-      - name: Validate catalog and page
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          root=Path('catalog_site_mapping_908')
-          p=json.loads((root/'products.json').read_text(encoding='utf-8'))
-          assert isinstance(p,list) and len(p)==908
-          assert [x['id'] for x in p]==[f'P{i:04d}' for i in range(1,909)]
-          assert len(set(x['id'] for x in p))==908
-          assert all(str(x.get('name','')).strip() for x in p)
-          assert all(x['image']==f'catalog_site_mapping_908/images/{x["id"]}.jpg' for x in p)
-          v3=Path('products-v3.html').read_text(encoding='utf-8')
-          assert 'catalog_site_mapping_908/products.json' in v3
-          print('VERIFIED: products.json is a plain 908-item array with fixed IDs and image paths')
-          PY
-      - name: Persist plain products.json
+
+      - name: Persist generated products.json
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add catalog_site_mapping_908/products.json
+          git add catalog_site_mapping_908/products.json catalog_site_mapping_908/images
           if git diff --cached --quiet; then
-            echo "products.json already matches generated plain array"
+            echo "No generated catalog/image changes to persist"
           else
-            git commit -m "chore: persist plain products.json [skip ci]"
+            git commit -m "chore: sync exact catalog and uploaded images [skip ci]"
             git push origin HEAD:main
           fi
+
       - name: Prepare Pages artifact
         shell: bash
         run: |
           set -euo pipefail
           rm -rf _site
           mkdir -p _site
-          rsync -a --exclude='.git/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' ./ _site/
+          rsync -a --exclude='.git/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' ./ _site/
           test -s _site/products.html
           test -s _site/products-v3.html
           python - <<'PY'
           import json
-          p=json.load(open('_site/catalog_site_mapping_908/products.json',encoding='utf-8'))
-          assert isinstance(p,list) and len(p)==908
-          assert [x['id'] for x in p]==[f'P{i:04d}' for i in range(1,909)]
-          print('PAGES ARTIFACT VERIFIED: 908 product array present')
+          from pathlib import Path
+          p = json.loads(Path('_site/catalog_site_mapping_908/products.json').read_text(encoding='utf-8'))
+          assert isinstance(p, list) and len(p) == 908
+          assert [x['id'] for x in p] == [f'P{i:04d}' for i in range(1, 909)]
+          print('PAGES ARTIFACT VERIFIED: exact 908-product array present')
           PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
           name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-# PRODUCT-CATALOG-RESET-20260915
