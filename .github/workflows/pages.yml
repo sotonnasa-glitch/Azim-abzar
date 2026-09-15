@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json
+          import json,re
           from pathlib import Path
           from PIL import Image
           root=Path('catalog_site_mapping_908'); images=root/'images'
@@ -43,21 +43,26 @@ jobs:
           for p in files:
               with Image.open(p) as im:
                   assert im.width>0 and im.height>0
-          page=Path('products-v2.html').read_text(encoding='utf-8')
-          assert 'AZIM-PRODUCTS-V2-AUTHORITATIVE-PDF-MAP' in page
-          assert 'products.jsonl?v=20260915' in page
-          assert 'rows.slice(0,906)' in page
-          assert 'IMAGE_DIR+x.id}.jpg' in page
-          print('VERIFIED: 906 EXACT PDF NAME-IMAGE PAIRS + 880 VALID IMAGES')
+          parts=[]
+          for i in range(1,5):
+              t=(root/f'excel-products-part-{i}.js').read_text(encoding='utf-8').strip()
+              prefix=f'window.AZIM_EXCEL_NAMES_{i}='
+              assert t.startswith(prefix) and t.endswith(';')
+              parts.extend(json.loads(t[len(prefix):-1]))
+          assert len(parts)==1085
+          map_js=(root/'name-map.js').read_text(encoding='utf-8').strip()
+          assert map_js.startswith('window.AZIM_IMAGE_TEXT_ROWS=') and map_js.endswith(';')
+          mapping=json.loads(map_js[len('window.AZIM_IMAGE_TEXT_ROWS='):-1])
+          assert len(mapping)==908 and all(isinstance(x,int) and 1<=x<=1085 for x in mapping)
+          assert len(set(mapping))==908
+          v3=Path('products-v3.html').read_text(encoding='utf-8')
+          assert 'AZIM-PRODUCTS-V3-EXACT-IMAGE-TEXT-MAP' in v3
+          assert 'name-map.js?v=20260915' in v3
+          assert 'excel-products-part-1.js?v=20260915' in v3
+          assert 'rows.slice(0,906)' in v3
+          assert "${IMAGE_DIR+x.id}.jpg" in v3
+          print('VERIFIED: 906 EXACT IMAGE-TEXT PAIRS + 880 VALID IMAGES + 908-ROW TEXT MAP')
           PY
-      - name: Persist generated catalog JSON to main
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add catalog_site_mapping_908/products.json
-          if git diff --cached --quiet; then echo 'products.json already current'; else git commit -m 'Persist 906 product catalog JSON'; git push origin HEAD:main; fi
       - name: Prepare Pages artifact
         shell: bash
         run: |
@@ -67,7 +72,9 @@ jobs:
           rsync -a --exclude='.git/' ./ _site/
           test -s _site/products.html
           test -s _site/products-v2.html
+          test -s _site/products-v3.html
           test -s _site/catalog_site_mapping_908/products.jsonl
+          test -s _site/catalog_site_mapping_908/name-map.js
           test "$(wc -l < _site/catalog_site_mapping_908/products.jsonl)" -eq 908
           for i in 1 2 3 4; do test -s "_site/catalog_site_mapping_908/excel-products-part-$i.js"; done
           test "$(find _site/catalog_site_mapping_908/images -maxdepth 1 -type f -name 'P*.jpg' | wc -l)" -eq 880
