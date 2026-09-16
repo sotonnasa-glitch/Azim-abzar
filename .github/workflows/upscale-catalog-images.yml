@@ -6,45 +6,27 @@ on:
 permissions:
   contents: write
 jobs:
-  upscale:
+  diagnose:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - name: Verify image processor
-        shell: bash
-        env:
-          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --max-time 60 "$MIGRATOR_URL?action=health"
-      - name: Upscale and sharpen 881 existing images
+      - name: Process chunks and save diagnostics
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
         run: |
-          set -euo pipefail
-          total=0
-          missing=0
+          set -u
+          : > chunks-report.txt
           for offset in $(seq 0 5 905); do
-            state=$(curl --fail --silent --show-error --max-time 180 -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=upscale&offset=$offset&limit=5")
-            echo "$state"
-            processed=$(python -c 'import json,sys; print(json.load(sys.stdin)["processed"])' <<< "$state")
-            miss=$(python -c 'import json,sys; print(len(json.load(sys.stdin)["missing"]))' <<< "$state")
-            bad=$(python -c 'import json,sys; print(json.load(sys.stdin)["failedCount"])' <<< "$state")
-            total=$((total + processed))
-            missing=$((missing + miss))
-            if [ "$bad" -gt 0 ]; then echo "Image enhancement failed in this chunk"; exit 1; fi
-            echo "UPSCALE CHUNK COMPLETE: offset=$offset processed=$processed missing=$miss"
+            body=$(mktemp)
+            code=$(curl --silent --show-error --max-time 180 -o "$body" -w '%{http_code}' -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=upscale&offset=$offset&limit=5")
+            echo "OFFSET=$offset HTTP=$code" | tee -a chunks-report.txt
+            cat "$body" | tee -a chunks-report.txt
+            rm -f "$body"
           done
-          test "$total" -eq 881
-          test "$missing" -eq 27
-          for sample in P0001 P0002 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
-          done
-          echo "SUPABASE UPSCALE COMPLETE: processed=$total missing=$missing"
-      - name: Remove one-time workflow and diagnostics
-        if: success()
+      - name: Persist diagnostics and remove one-time workflow
+        if: always()
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,9 +34,10 @@ jobs:
           set -euo pipefail
           git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo-cleanup
           cd repo-cleanup
-          rm -f .github/workflows/upscale-catalog-images.yml lightweight-upscale-test.txt chunks-report.txt image-debug-response.txt
+          cp ../chunks-report.txt .
+          rm -f .github/workflows/upscale-catalog-images.yml lightweight-upscale-test.txt image-debug-response.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "chore: finish image enhancement cleanup [skip ci]"
+          git commit -m "chore: save image chunk diagnostics and remove one-time workflow [skip ci]"
           git push origin HEAD:main
