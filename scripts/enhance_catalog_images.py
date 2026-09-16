@@ -16,7 +16,7 @@ SOURCE_TEMPLATE = (
     f"{SOURCE_COMMIT}/catalog_site_mapping_908/images/{{id}}.jpg"
 )
 UPLOAD_URL = "https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator?action=upload"
-OUT_DIR = Path(".image-enhancement-work")
+OUT_DIR = Path("/tmp/azim-image-enhancement-work")
 WORKERS = 4
 
 
