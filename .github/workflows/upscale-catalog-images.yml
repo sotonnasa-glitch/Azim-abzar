@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   upscale:
     runs-on: ubuntu-latest
@@ -21,9 +21,7 @@ jobs:
           missing=0
           failed=0
           for offset in $(seq 0 10 900); do
-            state=$(curl --fail --silent --show-error --max-time 180 \
-              -H "x-github-token: $GITHUB_TOKEN" \
-              "$MIGRATOR_URL?action=upscale&offset=$offset&limit=10")
+            state=$(curl --fail --silent --show-error --max-time 180 -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=upscale&offset=$offset&limit=10")
             echo "$state"
             processed=$(python -c 'import json,sys; print(json.load(sys.stdin)["processed"])' <<< "$state")
             miss=$(python -c 'import json,sys; print(len(json.load(sys.stdin)["missing"]))' <<< "$state")
@@ -31,10 +29,7 @@ jobs:
             total=$((total + processed))
             missing=$((missing + miss))
             failed=$((failed + bad))
-            if [ "$bad" -gt 0 ]; then
-              echo "Supabase image enhancement reported failures"
-              exit 1
-            fi
+            if [ "$bad" -gt 0 ]; then echo "Supabase image enhancement reported failures"; exit 1; fi
             echo "UPSCALE CHUNK COMPLETE: offset=$offset processed=$processed missing=$miss"
           done
           test "$total" -eq 881
