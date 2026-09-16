@@ -1,0 +1,36 @@
+name: Upscale catalog images in Supabase
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save first enhancement response
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --max-time 180 -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=upscale&offset=0&limit=2" > response.txt
+          cat response.txt
+      - name: Save response and remove debug workflow
+        if: always()
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo-cleanup
+          cd repo-cleanup
+          cp ../response.txt image-debug-response.txt
+          rm -f .github/workflows/upscale-catalog-images.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: save image processor response and remove debug workflow [skip ci]"
+          git push origin HEAD:main
