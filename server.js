@@ -43,7 +43,7 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
   const file = path.join(__dirname, 'index.html');
   const html = fs.readFileSync(file, 'utf8');
-  const injected = html.replace('</body>', '<script src="/azim-motion.js" defer></script>\n</body>');
+  const injected = html.replace('</body>', '<script src="/azim-motion.js" defer></script>\n<script src="/azim-home-gallery.js" defer></script>\n</body>');
   res.type('html').send(injected);
 });
 
