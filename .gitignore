@@ -10,6 +10,14 @@ Thumbs.db
 node_modules/
 dist/
 .cache/
+.wrangler/
+_site/
+tmp/
+tmp-*/
+*.log
+
+# Archives / generated outputs
+*.zip
 
 # Environment files
 .env
