@@ -38,14 +38,16 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'contact.html'));
 });
 
-app.use(express.static(__dirname));
-
+// Homepage must be handled before express.static so injected scripts are actually served.
 app.get('/', (req, res) => {
   const file = path.join(__dirname, 'index.html');
   const html = fs.readFileSync(file, 'utf8');
-  const injected = html.replace('</body>', '<script src="/azim-motion.js" defer></script>\n<script src="/azim-home-gallery.js" defer></script>\n<script src="/azim-home-copy.js" defer></script>\n</body>');
+  const injected = html.replace('</body>', '<script src="/azim-motion.js?v=2" defer></script>\n<script src="/azim-home-gallery.js?v=2" defer></script>\n<script src="/azim-home-copy.js?v=2" defer></script>\n</body>');
+  res.set('Cache-Control', 'no-store, max-age=0');
   res.type('html').send(injected);
 });
+
+app.use(express.static(__dirname));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Azim Abzar server running at http://0.0.0.0:${PORT}`);
