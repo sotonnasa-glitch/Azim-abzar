@@ -20,7 +20,6 @@ app.all('/api/chat', (req, res) => {
   return chatHandler(req, res);
 });
 
-// Clean URL routes for main pages
 app.get('/products', (req, res) => {
   res.set('Cache-Control', 'no-store, max-age=0');
   res.sendFile(path.join(__dirname, 'products-v2.html'));
@@ -38,16 +37,23 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'contact.html'));
 });
 
-// Homepage must be handled before express.static so injected scripts are actually served.
 app.get('/', (req, res) => {
   const file = path.join(__dirname, 'index.html');
   const html = fs.readFileSync(file, 'utf8');
-  const injected = html.replace('</body>', '<script src="/azim-motion.js?v=2" defer></script>\n<script src="/azim-home-gallery.js?v=2" defer></script>\n<script src="/azim-home-copy.js?v=2" defer></script>\n</body>');
-  res.set('Cache-Control', 'no-store, max-age=0');
+  const injected = html.replace('</body>', '<script src="/azim-motion.js?v=3" defer></script>\n<script src="/azim-home-gallery.js?v=3" defer></script>\n<script src="/azim-home-copy.js?v=5" defer></script>\n</body>');
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.type('html').send(injected);
 });
 
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, {
+  etag: false,
+  maxAge: 0,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  }
+}));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Azim Abzar server running at http://0.0.0.0:${PORT}`);
