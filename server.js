@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import chatHandler from './api/chat.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,7 +43,7 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
   const file = path.join(__dirname, 'index.html');
   const html = fs.readFileSync(file, 'utf8');
-  const injected = html.replace('</body>', '<script src="/azim-motion.js" defer></script>\n<script src="/azim-home-gallery.js" defer></script>\n</body>');
+  const injected = html.replace('</body>', '<script src="/azim-motion.js" defer></script>\n<script src="/azim-home-gallery.js" defer></script>\n<script src="/azim-home-copy.js" defer></script>\n</body>');
   res.type('html').send(injected);
 });
 
