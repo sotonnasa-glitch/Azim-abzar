@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import chatHandler from './api/chat.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,7 +41,10 @@ app.get('/contact', (req, res) => {
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  const file = path.join(__dirname, 'index.html');
+  const html = fs.readFileSync(file, 'utf8');
+  const injected = html.replace('</body>', '<script src="/azim-motion.js" defer></script>\n</body>');
+  res.type('html').send(injected);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
