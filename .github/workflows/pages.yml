@@ -41,7 +41,7 @@ jobs:
           print('IMAGE HOST: Supabase Storage / catalog-images')
           PY
 
-      - name: Migrate existing product images to Supabase Storage (existing files only)
+      - name: Migrate existing product images to Supabase Storage in chunks
         if: hashFiles('catalog_site_mapping_908/images/P*.jpg') != ''
         shell: bash
         env:
@@ -49,23 +49,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=start"
-          for i in $(seq 1 120); do
-            sleep 5
-            state=$(curl --fail --silent --show-error -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=status")
+          total=0
+          for offset in $(seq 0 50 900); do
+            state=$(curl --fail --silent --show-error --max-time 120 -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=chunk&offset=$offset&limit=50")
             echo "$state"
-            done=$(python -c 'import json,sys; print(json.load(sys.stdin)["done"])' <<< "$state")
-            total=$(python -c 'import json,sys; print(json.load(sys.stdin)["total"])' <<< "$state")
+            count=$(python -c 'import json,sys; print(json.load(sys.stdin)["count"])' <<< "$state")
             failed=$(python -c 'import json,sys; print(json.load(sys.stdin)["failedCount"])' <<< "$state")
-            running=$(python -c 'import json,sys; print(json.load(sys.stdin)["running"])' <<< "$state")
+            chunk_total=$(python -c 'import json,sys; print(json.load(sys.stdin)["total"])' <<< "$state")
+            total=$((total + count))
             if [ "$failed" -gt 0 ]; then echo "Supabase migration reported failures"; exit 1; fi
-            if [ "$total" -gt 0 ] && [ "$done" -eq "$total" ] && [ "$running" = "False" ]; then echo "SUPABASE IMAGE MIGRATION COMPLETE: $total existing product images processed"; break; fi
-            if [ "$i" -eq 120 ]; then echo 'Supabase migration timed out'; exit 1; fi
+            if [ "$count" -eq 0 ]; then break; fi
+            echo "SUPABASE CHUNK VERIFIED: offset=$offset count=$count total=$chunk_total"
           done
+          test "$total" -eq 881
           for sample in P0001 P0002 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null || true
+            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
-          echo 'SUPABASE IMAGE CHECKS COMPLETE'
+          echo "SUPABASE IMAGE MIGRATION COMPLETE: $total existing product images"
 
       - name: Validate catalog and remote image configuration
         shell: bash
