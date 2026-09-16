@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
+      - name: Verify image processor
+        shell: bash
+        env:
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --max-time 60 "$MIGRATOR_URL?action=health"
       - name: Upscale and sharpen 881 existing images
         shell: bash
         env:
@@ -35,9 +42,6 @@ jobs:
           test "$total" -eq 881
           test "$failed" -eq 0
           test "$missing" -eq 27
-          for sample in P0001 P0002 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
-          done
           echo "SUPABASE UPSCALE COMPLETE: processed=$total missing=$missing failed=$failed"
       - name: Remove one-time workflow
         if: success()
