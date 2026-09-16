@@ -1,0 +1,56 @@
+name: Upscale catalog images in Supabase
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  upscale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Upscale and sharpen 881 existing images
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+        run: |
+          set -euo pipefail
+          total=0
+          missing=0
+          failed=0
+          for offset in $(seq 0 10 900); do
+            state=$(curl --fail --silent --show-error --max-time 180 -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=upscale&offset=$offset&limit=10")
+            echo "$state"
+            processed=$(python -c 'import json,sys; print(json.load(sys.stdin)["processed"])' <<< "$state")
+            miss=$(python -c 'import json,sys; print(len(json.load(sys.stdin)["missing"]))' <<< "$state")
+            bad=$(python -c 'import json,sys; print(json.load(sys.stdin)["failedCount"])' <<< "$state")
+            total=$((total + processed))
+            missing=$((missing + miss))
+            failed=$((failed + bad))
+            if [ "$bad" -gt 0 ]; then echo "Supabase image enhancement reported failures"; exit 1; fi
+            echo "UPSCALE CHUNK COMPLETE: offset=$offset processed=$processed missing=$miss"
+          done
+          test "$total" -eq 881
+          test "$failed" -eq 0
+          test "$missing" -eq 27
+          for sample in P0001 P0002 P0908; do
+            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
+          done
+          echo "SUPABASE UPSCALE COMPLETE: processed=$total missing=$missing failed=$failed"
+      - name: Remove one-time workflow
+        if: success()
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo-cleanup
+          cd repo-cleanup
+          rm -f .github/workflows/upscale-catalog-images.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/upscale-catalog-images.yml
+          git commit -m "chore: remove one-time image upscale workflow [skip ci]"
+          git push origin HEAD:main
