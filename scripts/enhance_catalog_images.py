@@ -18,6 +18,7 @@ SOURCE_TEMPLATE = (
 UPLOAD_URL = "https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator?action=upload"
 OUT_DIR = Path("/tmp/azim-image-enhancement-work")
 WORKERS = 4
+EXPECTED_EXISTING_IMAGES = 880
 
 
 def fetch_bytes(url: str) -> bytes:
@@ -106,8 +107,8 @@ def main() -> int:
     missing = sum(r[1] == "missing" for r in results)
     failed = sum(r[1] == "failed" for r in results)
     print(f"SUMMARY ok={ok} missing={missing} failed={failed}")
-    if ok != 881 or missing != 27 or failed != 0:
-        print("Expected exactly 881 processed, 27 missing, 0 failed.")
+    if ok != EXPECTED_EXISTING_IMAGES or missing != (908 - EXPECTED_EXISTING_IMAGES) or failed != 0:
+        print(f"Expected exactly {EXPECTED_EXISTING_IMAGES} processed, {908 - EXPECTED_EXISTING_IMAGES} missing, 0 failed.")
         return 1
     return 0
 
