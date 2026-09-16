@@ -61,7 +61,7 @@ jobs:
             if [ "$count" -eq 0 ]; then break; fi
             echo "SUPABASE CHUNK VERIFIED: offset=$offset count=$count total=$chunk_total"
           done
-          test "$total" -eq 881
+          test "$total" -eq 880
           for sample in P0001 P0002 P0908; do
             curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
@@ -85,7 +85,7 @@ jobs:
           print('REMOTE IMAGES VERIFIED: Supabase URLs for all 908 product IDs')
           PY
 
-      - name: Enhance all 881 existing catalog images
+      - name: Enhance all 880 existing catalog images
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
