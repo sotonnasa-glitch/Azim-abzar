@@ -1,0 +1,55 @@
+name: Upscale catalog images in Supabase
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  upscale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Process all 908 catalog IDs
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+        run: |
+          set -euo pipefail
+          : > /tmp/upscale-results.jsonl
+          for offset in $(seq 0 10 900); do
+            state=$(curl --fail --silent --show-error --max-time 180 -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=upscale&offset=$offset&limit=10")
+            echo "$state" | tee -a /tmp/upscale-results.jsonl
+          done
+          python - <<'PY'
+          import json
+          total=missing=failed=0
+          failed_ids=[]
+          for line in open('/tmp/upscale-results.jsonl', encoding='utf-8'):
+              x=json.loads(line)
+              total += x.get('processed',0)
+              missing += len(x.get('missing',[]))
+              failed += x.get('failedCount',0)
+              for item in x.get('failed',[]): failed_ids.append(item)
+          report={'processed':total,'missing':missing,'failed':failed,'failed_items':failed_ids}
+          open('upscale-failures.json','w',encoding='utf-8').write(json.dumps(report,ensure_ascii=False,indent=2))
+          print(json.dumps(report,ensure_ascii=False))
+          assert total + missing == 908
+          PY
+      - name: Persist report and remove one-time workflow
+        if: always()
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo-cleanup
+          cd repo-cleanup
+          if [ -f ../upscale-failures.json ]; then cp ../upscale-failures.json .; else echo '{"error":"workflow failed before report"}' > upscale-failures.json; fi
+          rm -f .github/workflows/upscale-catalog-images.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: save image enhancement report and remove one-time workflow [skip ci]"
+          git push origin HEAD:main
