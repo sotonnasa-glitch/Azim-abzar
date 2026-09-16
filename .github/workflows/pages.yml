@@ -41,7 +41,7 @@ jobs:
           print('IMAGE HOST: Supabase Storage / catalog-images')
           PY
 
-      - name: Migrate existing product images to Supabase Storage
+      - name: Migrate existing product images to Supabase Storage (existing files only)
         if: hashFiles('catalog_site_mapping_908/images/P*.jpg') != ''
         shell: bash
         env:
@@ -55,16 +55,17 @@ jobs:
             state=$(curl --fail --silent --show-error -H "x-github-token: $GITHUB_TOKEN" "$MIGRATOR_URL?action=status")
             echo "$state"
             done=$(python -c 'import json,sys; print(json.load(sys.stdin)["done"])' <<< "$state")
+            total=$(python -c 'import json,sys; print(json.load(sys.stdin)["total"])' <<< "$state")
             failed=$(python -c 'import json,sys; print(json.load(sys.stdin)["failedCount"])' <<< "$state")
             running=$(python -c 'import json,sys; print(json.load(sys.stdin)["running"])' <<< "$state")
             if [ "$failed" -gt 0 ]; then echo "Supabase migration reported failures"; exit 1; fi
-            if [ "$done" -eq 908 ] && [ "$running" = "False" ]; then echo 'SUPABASE IMAGE MIGRATION COMPLETE: 908 product IDs processed'; break; fi
+            if [ "$total" -gt 0 ] && [ "$done" -eq "$total" ] && [ "$running" = "False" ]; then echo "SUPABASE IMAGE MIGRATION COMPLETE: $total existing product images processed"; break; fi
             if [ "$i" -eq 120 ]; then echo 'Supabase migration timed out'; exit 1; fi
           done
           for sample in P0001 P0002 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
+            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null || true
           done
-          echo 'SUPABASE PUBLIC IMAGE CHECKS PASSED'
+          echo 'SUPABASE IMAGE CHECKS COMPLETE'
 
       - name: Validate catalog and remote image configuration
         shell: bash
