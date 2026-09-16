@@ -16,6 +16,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,6 +85,75 @@ jobs:
           print(f'CATALOG VERIFIED: {len(p)} products')
           print('REMOTE IMAGES VERIFIED: Supabase URLs for all 908 product IDs')
           PY
+
+      - name: Upscale and sharpen 881 catalog images from original source
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+          SOURCE_COMMIT: a873c04bcd2a170c9dd35cc3239bcfb5c171e2d9
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-input Pillow
+          mkdir -p image-work
+          processed=0
+          missing=0
+          failed=0
+          for n in $(seq 1 908); do
+            id=$(printf 'P%04d' "$n")
+            src="https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/${SOURCE_COMMIT}/catalog_site_mapping_908/images/${id}.jpg"
+            input="image-work/${id}.jpg"
+            output="image-work/${id}-up.jpg"
+            if ! curl -L --fail --silent --show-error --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 120 -o "$input" "$src"; then
+              echo "$id MISSING"
+              missing=$((missing+1))
+              continue
+            fi
+            python - "$input" "$output" <<'PY'
+from PIL import Image, ImageOps, ImageFilter
+import sys
+src, dst = sys.argv[1], sys.argv[2]
+with Image.open(src) as im:
+    im = ImageOps.exif_transpose(im).convert('RGB')
+    w, h = im.size
+    nw, nh = int(round(w*2.0)), int(round(h*2.0))
+    max_dim = 1800
+    if max(nw, nh) > max_dim:
+        s = max_dim / max(w, h)
+        nw, nh = max(1, int(round(w*s))), max(1, int(round(h*s)))
+    im = im.resize((nw, nh), Image.Resampling.LANCZOS)
+    im = im.filter(ImageFilter.UnsharpMask(radius=1.15, percent=135, threshold=3))
+    im.save(dst, 'JPEG', quality=90, optimize=True, progressive=True, subsampling=0)
+PY
+            response=$(curl -L --fail --silent --show-error --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 120 -X POST -H "x-github-token: $GITHUB_TOKEN" -H "x-image-id: $id" -H "content-type: image/jpeg" --data-binary "@$output" "$MIGRATOR_URL?action=upload") || {
+              echo "$id UPLOAD_ERROR"
+              failed=$((failed+1))
+              rm -f "$input" "$output"
+              continue
+            }
+            if ! grep -q '"ok":true' <<< "$response"; then
+              echo "$id UPLOAD_ERROR $response"
+              failed=$((failed+1))
+              rm -f "$input" "$output"
+              continue
+            fi
+            processed=$((processed+1))
+            rm -f "$input" "$output"
+            if (( processed % 25 == 0 )); then echo "IMAGE ENHANCEMENT PROGRESS: processed=$processed missing=$missing failed=$failed"; fi
+          done
+          echo "IMAGE ENHANCEMENT SUMMARY: processed=$processed missing=$missing failed=$failed"
+          test "$processed" -eq 881
+          test "$missing" -eq 27
+          test "$failed" -eq 0
+
+      - name: Verify representative enhanced images
+        shell: bash
+        run: |
+          set -euo pipefail
+          for sample in P0001 P0339 P0908; do
+            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
+          done
+          echo 'ENHANCED SUPABASE IMAGES VERIFIED'
 
       - name: Remove heavy image archives and local product-image copies
         shell: bash
