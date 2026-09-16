@@ -85,23 +85,14 @@ jobs:
           print('REMOTE IMAGES VERIFIED: Supabase URLs for all 908 product IDs')
           PY
 
-      - name: Enhance all 880 existing catalog images
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check --no-input Pillow
-          python scripts/enhance_catalog_images.py
-
-      - name: Verify representative enhanced images
+      - name: Verify representative remote images
         shell: bash
         run: |
           set -euo pipefail
           for sample in P0001 P0339 P0908; do
             curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
-          echo 'ENHANCED SUPABASE IMAGES VERIFIED'
+          echo 'REMOTE SUPABASE IMAGES VERIFIED'
 
       - name: Remove heavy image archives and local product-image copies
         shell: bash
