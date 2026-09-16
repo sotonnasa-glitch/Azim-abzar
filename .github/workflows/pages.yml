@@ -41,7 +41,7 @@ jobs:
           print('IMAGE HOST: Supabase Storage / catalog-images')
           PY
 
-      - name: Migrate existing product images to Supabase Storage in chunks
+      - name: Migrate existing product images to Supabase Storage in authenticated chunks
         if: hashFiles('catalog_site_mapping_908/images/P*.jpg') != ''
         shell: bash
         env:
