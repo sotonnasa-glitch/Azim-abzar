@@ -128,6 +128,36 @@ jobs:
           rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='catalog_site_mapping_908/images/' ./ _site/
           test -s _site/products.html
           test -s _site/products-v3.html
+
+      - name: Inject homepage enhancements
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('_site/index.html')
+          html = p.read_text(encoding='utf-8')
+          marker = 'azim-home-copy.js'
+          assert marker not in html
+          injection = '\n'.join([
+              '<script src="azim-motion.js?v=3" defer></script>',
+              '<script src="azim-home-gallery.js?v=3" defer></script>',
+              '<script src="azim-home-copy.js?v=3" defer></script>'
+          ])
+          assert '</body>' in html
+          html = html.replace('</body>', injection + '\n</body>', 1)
+          p.write_text(html, encoding='utf-8')
+          test = p.read_text(encoding='utf-8')
+          assert 'azim-motion.js?v=3' in test
+          assert 'azim-home-gallery.js?v=3' in test
+          assert 'azim-home-copy.js?v=3' in test
+          print('HOMEPAGE ENHANCEMENTS INJECTED: motion + gallery + marketing copy')
+          PY
+
+          test -s _site/azim-home-copy.js
+          test -s _site/azim-home-gallery.js
+          test -s _site/azim-motion.js
+
           python - <<'PY'
           import json
           from pathlib import Path
@@ -138,7 +168,7 @@ jobs:
           assert not list(Path('_site').rglob('azim_abzar_images_part*.zip'))
           assert not list(Path('_site/catalog_site_mapping_908').glob('images/P*.jpg'))
           assert not (Path('_site') / '.image-enhancement-work').exists()
-          print('PAGES ARTIFACT VERIFIED: lightweight catalog with remote images')
+          print('PAGES ARTIFACT VERIFIED: lightweight catalog + homepage enhancements')
           PY
 
       - name: Upload Pages artifact
