@@ -1,147 +1,107 @@
 (() => {
-  if (window.__azimHomeCopyV3) return;
-  window.__azimHomeCopyV3 = true;
+  if (window.__azimHomeCopyV4) return;
+  window.__azimHomeCopyV4 = true;
 
-  const setText = (selector, value) => {
-    const el = document.querySelector(selector);
-    if (el) el.textContent = value;
-  };
+  const text = (el, value) => { if (el) el.textContent = value; };
+  const html = (el, value) => { if (el) el.innerHTML = value; };
 
-  const setHTML = (selector, value) => {
-    const el = document.querySelector(selector);
-    if (el) el.innerHTML = value;
-  };
-
-  function addConversionSection(beforeEl) {
-    if (!beforeEl || document.getElementById('azim-choice-guide')) return;
+  function injectSection(anchor, id, markup, css) {
+    if (!anchor || document.getElementById(id)) return;
     const section = document.createElement('section');
-    section.id = 'azim-choice-guide';
+    section.id = id;
     section.className = 'section reveal';
-    section.innerHTML = `
-      <div class="sectionHead">
-        <div>
-          <div class="eyebrowText">راهنمای انتخاب</div>
-          <h2 class="title">اول کاربردت را مشخص کن؛ بعد ابزار را انتخاب کن.</h2>
-          <p class="lead">برای هر کاری لازم نیست بین صدها گزینه بگردی. از کاربردت شروع کن و با چند قدم ساده به ابزار مناسب برس.</p>
-        </div>
-      </div>
-      <div class="az-choice-grid">
-        <a class="az-choice" href="/products">
-          <span class="az-choice-num">01</span>
-          <strong>می‌دانم چه ابزاری می‌خواهم</strong>
-          <small>مستقیم برو سراغ کاتالوگ و مشخصات محصول را بررسی کن.</small>
-          <b>ورود به کاتالوگ ←</b>
-        </a>
-        <a class="az-choice" href="/products">
-          <span class="az-choice-num">02</span>
-          <strong>بین چند ابزار مرددم</strong>
-          <small>دسته مناسب را پیدا کن و گزینه‌ها را کنار هم ببین.</small>
-          <b>پیدا کردن دسته ←</b>
-        </a>
-        <a class="az-choice" href="/ai">
-          <span class="az-choice-num">03</span>
-          <strong>نمی‌دانم چه ابزاری لازم دارم</strong>
-          <small>کاربردت را برای دستیار هوشمند توضیح بده و از آن کمک بگیر.</small>
-          <b>شروع راهنمایی با AI ←</b>
-        </a>
-      </div>`;
-    beforeEl.parentNode.insertBefore(section, beforeEl);
+    section.innerHTML = markup;
+    anchor.parentNode.insertBefore(section, anchor);
+    if (css) {
+      const style = document.createElement('style');
+      style.textContent = css;
+      document.head.appendChild(style);
+    }
   }
 
   function mount() {
-    document.title = 'عظیم ابزار | ابزار حرفه‌ای برای کار حرفه‌ای';
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'عظیم ابزار؛ کاتالوگ ابزارهای مکانیکی، دستی و تعمیرگاهی با تصویر و مشخصات، به‌همراه دستیار هوشمند برای کمک به انتخاب ابزار مناسب.');
+    document.title = 'عظیم ابزار | ابزار مناسب کارت را پیدا کن';
 
-    setHTML('.hero .eyebrow', '<i class="dot"></i> ابزار مناسب، دقیق‌تر و سریع‌تر پیدا می‌شود');
-    setHTML('.hero h1', 'ابزاری که به کارت می‌آید،<br><span>همین‌جا پیدایش کن.</span>');
-    setText('.hero p', 'برای تعمیر، مونتاژ، کارگاه و پروژه‌های فنی، بین دسته‌های ابزار بگرد، تصویر و مشخصات محصول را ببین و وقتی برای انتخاب مرددی از دستیار هوشمند عظیم ابزار کمک بگیر.');
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'عظیم ابزار؛ کاتالوگ ابزارهای مکانیکی، دستی و تعمیرگاهی با تصویر و مشخصات، همراه با دستیار هوشمند برای کمک به انتخاب ابزار مناسب.');
+
+    html(document.querySelector('.hero .eyebrow'), '<i class="dot"></i> دنبال ابزار خاصی هستی؟ از همین‌جا شروع کن');
+    html(document.querySelector('.hero h1'), 'ابزار مناسب کارت را،<br><span>سریع‌تر پیدا کن.</span>');
+    text(document.querySelector('.hero p'), 'اسم ابزار را می‌دانی؟ مستقیم در کاتالوگ پیدایش کن. کاربردش را می‌دانی ولی اسمش را نه؟ از دستیار هوشمند کمک بگیر تا مسیر انتخابت کوتاه‌تر شود.');
 
     const heroButtons = document.querySelectorAll('.heroActions .btn');
-    if (heroButtons[0]) heroButtons[0].textContent = 'رفتن به کاتالوگ ابزار ←';
-    if (heroButtons[1]) heroButtons[1].textContent = 'از AI برای انتخاب کمک بگیر ←';
+    if (heroButtons[0]) heroButtons[0].textContent = 'جست‌وجوی ابزار در کاتالوگ ←';
+    if (heroButtons[1]) heroButtons[1].textContent = 'نمی‌دانم کدام ابزار را بگیرم ←';
 
     const stats = document.querySelectorAll('.hero .stat span');
-    if (stats[0]) stats[0].textContent = 'جست‌وجوی ابزار بر اساس دسته و کاربرد';
+    if (stats[0]) stats[0].textContent = 'جست‌وجو و بررسی ابزار بر اساس دسته';
     if (stats[1]) stats[1].textContent = 'تصویر و مشخصات برای بررسی محصول';
-    if (stats[2]) stats[2].textContent = 'دستیار هوشمند برای مسیر انتخاب';
+    if (stats[2]) stats[2].textContent = 'کمک هوشمند برای شروع انتخاب';
 
-    const sectionHeads = document.querySelectorAll('.sectionHead');
-    if (sectionHeads[0]) {
-      setText('.sectionHead:nth-of-type(1) .eyebrowText', 'دسته‌بندی ابزار');
-      setText('.sectionHead:nth-of-type(1) .title', 'دنبال چه ابزاری هستی؟ از همین‌جا شروع کن.');
-      setText('.sectionHead:nth-of-type(1) .lead', 'از ابزار دستی و تجهیزات کاربردی تا ابزارهای موردنیاز کارگاه؛ دسته مناسب را انتخاب کن و مستقیم وارد محصولات شو.');
-      const allLink = sectionHeads[0].querySelector('.allLink');
-      if (allLink) allLink.textContent = 'مشاهده همه محصولات ←';
+    const firstHead = document.querySelector('.sectionHead');
+    if (firstHead) {
+      text(firstHead.querySelector('.eyebrowText'), 'از کجا شروع کنم؟');
+      text(firstHead.querySelector('.title'), 'اول نیازت را مشخص کن؛ بعد برو سراغ ابزار.');
+      text(firstHead.querySelector('.lead'), 'برای پیدا کردن ابزار لازم نیست همه محصولات را زیرورو کنی؛ از دسته و کاربرد شروع کن و مسیرت را کوتاه کن.');
+      const all = firstHead.querySelector('.allLink');
+      if (all) all.textContent = 'رفتن به کاتالوگ کامل ←';
     }
 
-    const cats = document.querySelectorAll('.catGrid .cat');
-    const copy = [
-      ['01', 'ابزار کاربردی برای هر روز', 'برای تعمیرات، کارهای فنی و استفاده روزمره؛ سریع‌تر دسته مناسب را پیدا کن.'],
-      ['02', 'ابزار دستی و تعمیراتی', 'برای باز و بست، مونتاژ، تعمیر و کارگاه؛ گزینه‌ها را بررسی و انتخاب کن.'],
-      ['03', 'تجهیزات و ابزار کارگاهی', 'برای پروژه‌های جدی‌تر، دسته مناسب را پیدا کن و مشخصات ابزارها را ببین.']
+    const cards = document.querySelectorAll('.catGrid .cat');
+    const categoryCopy = [
+      ['01', 'برای تعمیر و کارهای فنی', 'ابزارهای مناسب برای کارهای روزمره، تعمیر و پروژه‌های فنی را از دسته مرتبط پیدا کن.'],
+      ['02', 'ابزار دستی برای باز و بست', 'از پیچ‌گوشتی و انبر تا ابزارهای موردنیاز مونتاژ و تعمیر؛ دسته مناسب را انتخاب کن.'],
+      ['03', 'برای کارگاه و پروژه', 'وقتی ابزار جدی‌تری لازم داری، دسته تجهیزات کارگاهی را ببین و مشخصات گزینه‌ها را بررسی کن.']
     ];
-    cats.forEach((cat, i) => {
-      if (!copy[i]) return;
-      setText('.cat small', copy[i][0]);
-      const small = cat.querySelector('small');
-      const h = cat.querySelector('h3');
-      const p = cat.querySelector('p');
-      if (small) small.textContent = copy[i][0];
-      if (h) h.textContent = copy[i][1];
-      if (p) p.textContent = copy[i][2];
+    cards.forEach((card, i) => {
+      const item = categoryCopy[i];
+      if (!item) return;
+      text(card.querySelector('small'), item[0]);
+      text(card.querySelector('h3'), item[1]);
+      text(card.querySelector('p'), item[2]);
     });
 
     const note = document.querySelector('.note');
-    if (note) note.innerHTML = '<strong>فقط اسم ابزار را می‌دانی؟</strong> همان را در کاتالوگ جست‌وجو کن. کاربردش را می‌دانی ولی اسمش را نه؟ از دستیار هوشمند برای شروع انتخاب کمک بگیر.';
+    if (note) html(note, '<strong>دو راه ساده داری:</strong> اسم ابزار را در کاتالوگ جست‌وجو کن، یا فقط کاربردت را برای AI توضیح بده تا از همان‌جا شروع کنی.');
 
     const aiSection = document.querySelector('.ai');
     if (aiSection) {
-      const e = aiSection.querySelector('.eyebrowText');
-      const h = aiSection.querySelector('h2');
-      const p = aiSection.querySelector('p');
-      const btn = aiSection.querySelector('.aiBtns .primary');
+      text(aiSection.querySelector('.eyebrowText'), 'دستیار انتخاب ابزار');
+      text(aiSection.querySelector('h2'), 'فقط کاربردت را بگو؛ ابزار را پیدا کن.');
+      text(aiSection.querySelector('p'), 'مثلاً بگو «برای باز کردن این پیچ چه ابزاری لازم دارم؟» یا اسم قطعه و نوع کارت را توضیح بده. دستیار هوشمند عظیم ابزار کمکت می‌کند گزینه‌های مرتبط را راحت‌تر پیدا کنی.');
+      const primary = aiSection.querySelector('.aiBtns .primary');
       const secondary = aiSection.querySelector('.aiBtns .glass');
-      if (e) e.textContent = 'انتخاب هوشمند ابزار';
-      if (h) h.textContent = 'اسم ابزار را نمی‌دانی؟ کاربردت را بگو.';
-      if (p) p.textContent = 'بگو چه کاری می‌خواهی انجام بدهی، چه قطعه‌ای را تعمیر می‌کنی یا دنبال چه نوع ابزاری هستی؛ دستیار هوشمند عظیم ابزار برای پیدا کردن گزینه‌های مناسب راهنمایت می‌کند.';
-      if (btn) btn.innerHTML = '<span class="btnIcon liveSpin"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg></span>شروع گفتگو با AI ←';
-      if (secondary) secondary.textContent = 'مشاهده کاتالوگ';
+      if (primary) primary.innerHTML = '<span class="btnIcon liveSpin"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg></span>شروع گفتگو با AI ←';
+      if (secondary) secondary.textContent = 'رفتن به کاتالوگ';
     }
 
-    document.querySelectorAll('footer a').forEach((a) => {
-      if (a.textContent.includes('محصولات')) a.textContent = 'کاتالوگ ابزار';
-      if (a.textContent.includes('دستیار')) a.textContent = 'دستیار انتخاب ابزار';
-      if (a.textContent.includes('ارتباط')) a.textContent = 'ارتباط با عظیم ابزار';
-    });
-
-    const ai = document.querySelector('.ai');
-    addConversionSection(ai || document.querySelector('footer'));
-
-    const style = document.createElement('style');
-    style.textContent = `
-      #azim-choice-guide{padding-top:20px}
-      #azim-choice-guide .sectionHead{margin-bottom:22px}
-      .az-choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-      .az-choice{position:relative;min-height:190px;padding:22px;border:1px solid rgba(255,255,255,.09);border-radius:20px;background:linear-gradient(145deg,rgba(18,24,20,.88),rgba(8,11,9,.95));display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;overflow:hidden;transition:.35s ease}
-      .az-choice:before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 75% 20%,rgba(245,185,0,.14),transparent 34%);pointer-events:none}
-      .az-choice:hover{transform:translateY(-8px);border-color:rgba(245,185,0,.45);box-shadow:0 24px 55px rgba(0,0,0,.35)}
-      .az-choice-num{color:#f5b900;font-size:9px;font-weight:900;letter-spacing:.7px}
-      .az-choice strong{font-size:18px;margin-top:14px;line-height:1.5;position:relative}
-      .az-choice small{font-size:9px;line-height:2;color:#8e9791;margin-top:8px;position:relative}
-      .az-choice b{margin-top:auto;padding-top:18px;color:#ffd84f;font-size:9px;position:relative}
-      @media(max-width:800px){.az-choice-grid{grid-template-columns:1fr}.az-choice{min-height:155px}}
-    `;
-    document.head.appendChild(style);
+    const insertionAnchor = document.querySelector('.ai');
+    injectSection(
+      insertionAnchor,
+      'azim-buy-steps',
+      `
+        <div class="sectionHead">
+          <div>
+            <div class="eyebrowText">سه قدم تا انتخاب</div>
+            <h2 class="title">کمتر بگرد، دقیق‌تر انتخاب کن.</h2>
+            <p class="lead">تجربه صفحه را روی نیاز واقعی مشتری چیدیم: پیدا کردن، بررسی کردن، تصمیم گرفتن.</p>
+          </div>
+        </div>
+        <div class="az-step-grid">
+          <div class="az-step"><span>01</span><strong>پیدا کن</strong><p>دسته ابزار یا نام محصول را جست‌وجو کن.</p></div>
+          <div class="az-step"><span>02</span><strong>بررسی کن</strong><p>تصویر و مشخصات محصول را ببین.</p></div>
+          <div class="az-step"><span>03</span><strong>انتخاب کن</strong><p>برای انتخاب متناسب با کارت، از AI کمک بگیر.</p></div>
+        </div>`,
+      `#azim-buy-steps{padding-top:10px;padding-bottom:50px}#azim-buy-steps .sectionHead{margin-bottom:20px}.az-step-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.az-step{padding:22px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:linear-gradient(145deg,rgba(18,23,20,.82),rgba(8,11,9,.92));min-height:150px;transition:.3s}.az-step:hover{transform:translateY(-6px);border-color:rgba(245,185,0,.4);box-shadow:0 20px 50px rgba(0,0,0,.28)}.az-step span{display:block;color:#f5b900;font-size:9px;font-weight:900}.az-step strong{display:block;font-size:19px;margin-top:16px}.az-step p{font-size:9px;color:#929b95;line-height:2;margin:8px 0 0}@media(max-width:800px){.az-step-grid{grid-template-columns:1fr}.az-step{min-height:125px}}`
+    );
 
     document.querySelectorAll('.reveal').forEach((el) => {
-      if (!el.dataset.azimRevealBound) {
-        el.dataset.azimRevealBound = '1';
-        requestAnimationFrame(() => el.classList.add('visible'));
-      }
+      if (el.dataset.azimRevealBound) return;
+      el.dataset.azimRevealBound = '1';
+      requestAnimationFrame(() => el.classList.add('visible'));
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
   else mount();
 })();
