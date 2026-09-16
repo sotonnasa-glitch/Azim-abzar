@@ -1,1 +1,0 @@
-window.AZIM_CATALOG_PARTS=window.AZIM_CATALOG_PARTS||[];
