@@ -1,0 +1,143 @@
+name: Final upscale and sharpen all catalog images
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check --no-input Pillow
+
+      - name: Process original catalog images
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIGRATOR_URL: https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/catalog-image-migrator
+          SOURCE_COMMIT: a873c04bcd2a170c9dd35cc3239bcfb5c171e2d9
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          start=$((SHARD * 227 + 1))
+          end=$((start + 226))
+          if [ "$SHARD" -eq 3 ]; then end=908; fi
+          mkdir -p work
+          : > "report-${SHARD}.txt"
+          processed=0
+          missing=0
+          failed=0
+
+          for n in $(seq "$start" "$end"); do
+            id=$(printf 'P%04d' "$n")
+            src="https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/${SOURCE_COMMIT}/catalog_site_mapping_908/images/${id}.jpg"
+            in="work/${id}.jpg"
+            out="work/${id}-up.jpg"
+
+            if ! curl -L --fail --silent --show-error --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 120 -o "$in" "$src"; then
+              echo "$id MISSING" | tee -a "report-${SHARD}.txt"
+              missing=$((missing+1))
+              continue
+            fi
+
+            if ! python - "$in" "$out" <<'PY'
+from PIL import Image, ImageOps, ImageFilter
+import sys
+src, dst = sys.argv[1], sys.argv[2]
+img = Image.open(src)
+img = ImageOps.exif_transpose(img).convert('RGB')
+w, h = img.size
+scale = 2.0
+nw, nh = int(round(w * scale)), int(round(h * scale))
+max_dim = 1800
+if max(nw, nh) > max_dim:
+    s = max_dim / max(w, h)
+    nw, nh = max(1, int(round(w*s))), max(1, int(round(h*s)))
+img = img.resize((nw, nh), Image.Resampling.LANCZOS)
+img = img.filter(ImageFilter.UnsharpMask(radius=1.15, percent=135, threshold=3))
+img.save(dst, 'JPEG', quality=90, optimize=True, progressive=True, subsampling=0)
+PY
+            then
+              echo "$id PROCESS_ERROR" | tee -a "report-${SHARD}.txt"
+              failed=$((failed+1))
+              continue
+            fi
+
+            if ! curl -L --fail --silent --show-error --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 120 \
+              -X POST \
+              -H "x-github-token: $GITHUB_TOKEN" \
+              -H "x-image-id: $id" \
+              -H "content-type: image/jpeg" \
+              --data-binary "@$out" \
+              "$MIGRATOR_URL?action=upload" >/dev/null; then
+              echo "$id UPLOAD_ERROR" | tee -a "report-${SHARD}.txt"
+              failed=$((failed+1))
+              continue
+            fi
+
+            processed=$((processed+1))
+            echo "$id OK" >> "report-${SHARD}.txt"
+            rm -f "$in" "$out"
+            if (( processed % 25 == 0 )); then
+              echo "SHARD=$SHARD processed=$processed missing=$missing failed=$failed"
+            fi
+          done
+
+          echo "SUMMARY processed=$processed missing=$missing failed=$failed range=$start-$end" | tee -a "report-${SHARD}.txt"
+          test "$failed" -eq 0
+
+      - name: Upload shard report
+        uses: actions/upload-artifact@v4
+        with:
+          name: upscale-report-${{ matrix.shard }}
+          path: report-${{ matrix.shard }}.txt
+          if-no-files-found: error
+
+  verify-and-cleanup:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    needs: process
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: upscale-report-*
+          merge-multiple: true
+          path: reports
+
+      - name: Verify 881 processed images
+        shell: bash
+        run: |
+          set -euo pipefail
+          processed=$(grep -h '^.* OK$' reports/report-*.txt | wc -l)
+          missing=$(grep -h ' MISSING$' reports/report-*.txt | wc -l || true)
+          failed=$(grep -h -E ' (PROCESS_ERROR|UPLOAD_ERROR)$' reports/report-*.txt | wc -l || true)
+          echo "processed=$processed missing=$missing failed=$failed"
+          test "$processed" -eq 881
+          test "$missing" -eq 27
+          test "$failed" -eq 0
+
+      - name: Remove one-time workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo-cleanup
+          cd repo-cleanup
+          rm -f .github/workflows/upscale-catalog-images-final.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: finish full catalog image upscale [skip ci]"
+          git push origin HEAD:main
