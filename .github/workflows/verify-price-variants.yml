@@ -9,29 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate compressed price variants
+      - name: Validate materialized PDF price variants
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, json, re
+          import json
           from pathlib import Path
-          src = Path('catalog_site_mapping_908/price-variants.js').read_text(encoding='utf-8')
-          m = re.search(r"AZIM_PRICE_VARIANTS_B64\s*=\s*['\"]([^'\"]+)['\"]", src)
-          assert m, 'price-variants payload missing'
-          data = json.loads(gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
-          assert isinstance(data, dict) and len(data) == 908
-          assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
-          def variants(pid):
-              d = data[pid]
-              v = d.get('v', []) if isinstance(d, dict) else []
-              return [(str(x[0]), x[1]) for x in v]
-          assert ('4', 2520000) in variants('P0001')
-          assert ('46', 63600000) in variants('P0001')
-          assert ('50', 72000000) in variants('P0001')
-          assert ('6×7', 2640000) in variants('P0002') or ('6*7', 2640000) in variants('P0002')
-          assert ('8×10', 3000000) in variants('P0002') or ('8*10', 3000000) in variants('P0002')
-          assert ('8×10', 4800000) in variants('P0003') or ('8*10', 4800000) in variants('P0003')
+          data = json.loads(Path('catalog_site_mapping_908/price-size-data.json').read_text(encoding='utf-8'))
+          ids = [f'P{i:04d}' for i in range(1,909)]
+          assert isinstance(data, dict) and list(data) == ids
+          def variants(pid): return dict(data[pid].get('v', []))
+          p1,p2,p3 = variants('P0001'),variants('P0002'),variants('P0003')
+          assert p1.get('4') == 2520000 and p1.get('46') == 63600000 and p1.get('50') == 72000000
+          assert p2.get('6*7') == 2640000 and p2.get('8*10') == 3000000 and p2.get('36*41') == 63600000
+          assert p3.get('8*10') == 4800000 and p3.get('17*19') == 8760000
           sized = sum(bool((d or {}).get('v')) for d in data.values())
           rows = sum(len((d or {}).get('v', [])) for d in data.values())
           print(f'VALID PRICE VARIANTS: 908 IDs; {sized} products with size variants; {rows} variant rows')
