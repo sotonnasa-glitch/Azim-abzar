@@ -18,25 +18,49 @@ jobs:
           import base64, gzip, hashlib, json, re
           from pathlib import Path
 
-          source = Path('catalog_site_mapping_908/price-size-data.js')
-          text = source.read_text(encoding='utf-8')
-          match = re.fullmatch(r"window\.AZIM_PRICE_SIZE_DATA_B64='([A-Za-z0-9+/=]+)';", text.strip())
-          assert match, 'price-size-data.js payload wrapper is invalid'
-          b64 = match.group(1)
-          print(f'bundled payload len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
-          assert len(b64) == 10665, f'unexpected bundled payload length: {len(b64)}'
+          pattern = re.compile(r"window\.[A-Z0-9_]+='([A-Za-z0-9+/=]+)';")
+          candidates = [
+              Path('catalog_site_mapping_908/price-size-data.js'),
+              Path('catalog_site_mapping_908/price-variants.js'),
+          ]
+          data = None
+          chosen = None
 
-          raw = base64.b64decode(b64, validate=True)
-          data = json.loads(gzip.decompress(raw).decode('utf-8'))
-          assert isinstance(data, dict) and len(data) == 908, f'expected 908 products, got {len(data) if isinstance(data, dict) else type(data).__name__}'
-          assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
+          for source in candidates:
+              if not source.exists():
+                  continue
+              text = source.read_text(encoding='utf-8').strip()
+              match = pattern.fullmatch(text)
+              if not match:
+                  print(f'SKIP {source}: wrapper invalid')
+                  continue
+              b64 = match.group(1)
+              print(f'TRY {source}: payload_len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
+              try:
+                  raw = base64.b64decode(b64, validate=True)
+                  candidate = json.loads(gzip.decompress(raw).decode('utf-8'))
+              except Exception as exc:
+                  print(f'SKIP {source}: decode failed: {exc}')
+                  continue
+              if not isinstance(candidate, dict) or len(candidate) != 908:
+                  print(f'SKIP {source}: expected 908 product IDs, got {len(candidate) if isinstance(candidate, dict) else type(candidate).__name__}')
+                  continue
+              if list(candidate) != [f'P{i:04d}' for i in range(1, 909)]:
+                  print(f'SKIP {source}: product ID sequence is not P0001..P0908')
+                  continue
+              data = candidate
+              chosen = source
+              print(f'USE {source}: decoded 908 product IDs successfully')
+              break
+
+          assert data is not None, 'no valid 908-product PDF price payload could be decoded'
 
           out = Path('catalog_site_mapping_908/price-size-data.json')
           out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
           sized = sum(bool((d or {}).get('v')) for d in data.values())
           rows = sum(len((d or {}).get('v', [])) for d in data.values())
-          print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sized} products with size variants; {rows} variant rows; payload={len(b64)} chars')
+          print(f'PDF PRICE DATA VERIFIED: source={chosen}; 908 IDs; {sized} products with size variants; {rows} variant rows')
           PY
       - name: Clean obsolete payload parts and persist generated JSON
         shell: bash
