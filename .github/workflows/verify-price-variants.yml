@@ -14,18 +14,24 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json
+          import json,re
           from pathlib import Path
           data = json.loads(Path('catalog_site_mapping_908/price-size-data.json').read_text(encoding='utf-8'))
           ids = [f'P{i:04d}' for i in range(1,909)]
           assert isinstance(data, dict) and list(data) == ids
-          def variants(pid): return dict(data[pid].get('v', []))
+          def variants(pid):
+              out = {}
+              for v in data[pid].get('v', []):
+                  if not isinstance(v, list) or len(v) != 2: continue
+                  key = re.sub(r'\s*\*\s*', '*', str(v[0]).strip())
+                  out[key] = v[1]
+              return out
           p1,p2,p3 = variants('P0001'),variants('P0002'),variants('P0003')
-          assert p1.get('4') == 2520000 and p1.get('46') == 63600000 and p1.get('50') == 72000000
+          assert p1.get('4') == 2520000 and p1.get('6') == 1620000 and p1.get('41') == 55800000 and p1.get('46') == 63600000 and p1.get('50') == 72000000
           assert p2.get('6*7') == 2640000 and p2.get('8*10') == 3000000 and p2.get('36*41') == 63600000
           assert p3.get('8*10') == 4800000 and p3.get('17*19') == 8760000
           sized = sum(bool((d or {}).get('v')) for d in data.values())
           rows = sum(len((d or {}).get('v', [])) for d in data.values())
-          print(f'VALID PRICE VARIANTS: 908 IDs; {sized} products with size variants; {rows} variant rows')
+          print(f'VALID PDF PRICE VARIANTS: 908 IDs; {sized} products with size variants; {rows} variant rows')
           print('P0001/P0002/P0003 representative PDF prices verified')
           PY
