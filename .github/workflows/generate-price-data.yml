@@ -15,20 +15,29 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, hashlib, json
+          import base64, gzip, hashlib, json, re
           from pathlib import Path
           src = ''.join(Path('.github/price-size-source.b64').read_text(encoding='utf-8').split())
           data = json.loads(gzip.decompress(base64.b64decode(src, validate=True)).decode('utf-8'))
           ids = [f'P{i:04d}' for i in range(1,909)]
           assert isinstance(data, dict) and list(data) == ids, 'price source must contain P0001..P0908 in order'
-          for pid in ('P0001','P0002','P0003'):
-              print(pid, data[pid])
-          p1=dict(data['P0001'].get('v',[])); p2=dict(data['P0002'].get('v',[])); p3=dict(data['P0003'].get('v',[]))
-          print('CHECK P0001',p1.get('4'),p1.get('6'),p1.get('41'),p1.get('46'),p1.get('50'))
-          print('CHECK P0002',p2.get('6*7'),p2.get('8*10'),p2.get('36*41'))
-          print('CHECK P0003',p3.get('8*10'),p3.get('19*17'))
+          def variants(pid):
+              out = {}
+              for v in data[pid].get('v', []):
+                  if not isinstance(v, list) or len(v) != 2: continue
+                  key = str(v[0]).strip()
+                  key = re.sub(r'\s*\*\s*', '*', key)
+                  out[key] = v[1]
+              return out
+          p1,p2,p3 = variants('P0001'),variants('P0002'),variants('P0003')
+          assert p1.get('4') == 2520000 and p1.get('6') == 1620000 and p1.get('41') == 55800000 and p1.get('46') == 63600000 and p1.get('50') == 72000000
+          assert p2.get('6*7') == 2640000 and p2.get('8*10') == 3000000 and p2.get('36*41') == 63600000
+          assert p3.get('8*10') == 4800000 and p3.get('17*19') == 8760000
           Path('catalog_site_mapping_908/price-size-data.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',',':')), encoding='utf-8')
-          print('PDF PRICE DATA: 908 IDs; variants=',sum(bool(d.get('v')) for d in data.values()),'rows=',sum(len(d.get('v',[])) for d in data.values()))
+          sized = sum(bool((d or {}).get('v')) for d in data.values())
+          rows = sum(len((d or {}).get('v', [])) for d in data.values())
+          print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sized} products with size variants; {rows} variant rows')
+          print('P0001/P0002/P0003 representative PDF prices verified')
           print('source sha256:', hashlib.sha256(src.encode()).hexdigest())
           PY
       - name: Persist generated data
