@@ -38,6 +38,7 @@ jobs:
               ['1/2 به 3/4 یل', 7800000], ['1/2 به 1 بدیل', 9600000],
               ['3/4 به 1 بدیل', 10800000]
           ]}
+          data['P0838'] = {'p': 17000000, 'v': [['24E', 17000000], ['28E', 19000000]]}
 
           assert data['P0001']['v'][0] == ['46', 63600000]
           assert data['P0002']['v'][2] == ['8 * 10', 3000000]
@@ -49,7 +50,8 @@ jobs:
           assert data['P0487']['p'] == 36000000
           assert data['P0491']['p'] == 86400000
           assert data['P0827']['p'] == 54000000
-          assert [pid for pid,d in data.items() if d.get('p') is None] == ['P0184','P0626','P0631','P0720','P0737','P0838']
+          assert data['P0838']['v'] == [['24E', 17000000], ['28E', 19000000]]
+          assert [pid for pid,d in data.items() if d.get('p') is None] == ['P0184','P0626','P0631','P0720','P0737']
 
           text = json.dumps(data, ensure_ascii=False, separators=(',',':'))
           path.write_text(text, encoding='utf-8')
@@ -69,7 +71,7 @@ jobs:
           nulls = sum((d or {}).get('p') is None for d in data.values())
           print(f'PDF PRICE DATA VERIFIED: {len(data)} IDs; {sized} products with size variants; {rows} variant rows; {nulls} null-base IDs')
           print('final payload sha256:', hashlib.sha256(packed.encode()).hexdigest())
-          print('representative PDF prices verified: P0001/P0002/P0003/P0008/P0460/P0464/P0481/P0487/P0491/P0827')
+          print('representative PDF prices verified: P0001/P0002/P0003/P0008/P0460/P0464/P0481/P0487/P0491/P0827/P0838')
           PY
       - name: Persist generated data
         shell: bash
