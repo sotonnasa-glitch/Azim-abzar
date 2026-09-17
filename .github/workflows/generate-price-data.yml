@@ -1,0 +1,42 @@
+name: Materialize PDF price-size data
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Decode price-size dataset to plain JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, json, re, zlib
+          from pathlib import Path
+          src = Path('catalog_site_mapping_908/price-size-data.js').read_text(encoding='utf-8')
+          m = re.search(r"AZIM_PRICE_SIZE_DATA_B64\s*=\s*['\"]([^'\"]+)['\"]", src)
+          assert m, 'price-size-data.js payload not found'
+          data = json.loads(zlib.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
+          assert isinstance(data, dict) and len(data) == 908
+          assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
+          out = Path('catalog_site_mapping_908/price-size-data.json')
+          out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          print(f'MATERIALIZED PRICE DATA: {len(data)} product IDs')
+          PY
+      - name: Persist generated JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add catalog_site_mapping_908/price-size-data.json
+          if git diff --cached --quiet; then
+            echo "price-size-data.json is already current"
+          else
+            git commit -m "build: materialize PDF price-size JSON [skip ci]"
+            git push origin HEAD:main
+          fi
