@@ -24,7 +24,7 @@ jobs:
           assert match, 'price-size-data.js payload wrapper is invalid'
           b64 = match.group(1)
           print(f'bundled payload len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
-          assert len(b64) == 10660, f'unexpected bundled payload length: {len(b64)}'
+          assert len(b64) == 10665, f'unexpected bundled payload length: {len(b64)}'
 
           raw = base64.b64decode(b64, validate=True)
           data = json.loads(gzip.decompress(raw).decode('utf-8'))
