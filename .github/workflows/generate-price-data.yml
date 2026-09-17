@@ -15,7 +15,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, hashlib, json, re
+          import base64, gzip, hashlib, json
           from pathlib import Path
 
           path = Path('catalog_site_mapping_908/price-size-data.json')
@@ -23,34 +23,24 @@ jobs:
           ids = [f'P{i:04d}' for i in range(1,909)]
           assert isinstance(data, dict) and list(data) == ids, 'price-size JSON must contain P0001..P0908 in order'
 
-          # Corrections confirmed from the attached PDF table where a price-only/base row
-          # is separate from the first sized row.
-          data['P0481'] = {'p': 4320000, 'v': [['1/2 هندلی سته', 18000000]]}
-          data['P0487'] = {'p': 36000000, 'v': [['15 ( 6 فرنی', 4500000]]}
-          data['P0491'] = {'p': 86400000, 'v': [
-              ['1/4 به 3/8 یل', 6000000], ['1/2 به 3/8 یل', 6960000],
-              ['3/8 به 1/2 یل', 8040000], ['3/4 به 1/2 یل', 12960000],
-              ['1/2 به 3/4 یل', 15360000], ['1 به 3/4 بدیل', 19800000],
-              ['3/4 به 1 بدیل', 24000000], ['1/2 به 1 بدیل', 25200000]
-          ]}
-          data['P0827'] = {'p': 54000000, 'v': [
-              ['3/8 به 1/2 یل', 1800000], ['3/4 به 1/2 یل', 6360000],
-              ['1/2 به 3/4 یل', 7800000], ['1/2 به 1 بدیل', 9600000],
-              ['3/4 به 1 بدیل', 10800000]
-          ]}
-          data['P0838'] = {'p': 17000000, 'v': [['24E', 17000000], ['28E', 19000000]]}
-
+          # The JSON is the PDF-derived source of truth. This workflow must not
+          # overwrite variant lists; it only validates and materializes them.
           assert data['P0001']['v'][0] == ['46', 63600000]
           assert data['P0002']['v'][2] == ['8 * 10', 3000000]
           assert data['P0003']['v'][-1] == ['17 * 19', 8760000]
-          assert data['P0008']['p'] == 5040000
-          assert data['P0460']['p'] == 1500000
-          assert data['P0464']['p'] == 40800000
-          assert data['P0481']['p'] == 4320000
-          assert data['P0487']['p'] == 36000000
-          assert data['P0491']['p'] == 86400000
-          assert data['P0827']['p'] == 54000000
-          assert data['P0838']['v'] == [['24E', 17000000], ['28E', 19000000]]
+          assert data['P0008']['v'][-1] == ['E16 * E22', 8040000]
+          assert data['P0460']['v'] == [['5E',1500000],['6E',1500000],['7E',1500000],['8E',1500000],['10E',1500000]]
+          assert data['P0462']['v'] == [['10',6600000],['12',6600000],['14',6600000],['16',6600000],['18',6600000],['20',6600000],['22',6600000]]
+          assert data['P0463']['v'][0] == ['8',8040000]
+          assert ['8',3960000] in data['P0463']['v']
+          assert data['P0464']['v'] == [['24E',40800000]]
+          assert data['P0487']['v'] == [['6" (15 سانتی)',4500000],['8" (20 سانتی)',36000000]]
+          assert data['P0488']['v'] == [['1/4',1260000],['10',3240000]]
+          assert len(data['P0491']['v']) == 10 and data['P0491']['v'][-1] == ['1/2-1 به 1"',144000000]
+          assert data['P0498']['v'] == [['T60',48000000],['T70',48000000],['T80',48000000],['T90',48000000],['T100',48000000]]
+          assert len(data['P0505']['v']) == 8 and data['P0505']['v'][-1] == ['M16',10800000]
+          assert len(data['P0827']['v']) == 7 and data['P0827']['v'][-1] == ['1/2-1 به 1"',60000000]
+          assert data['P0838']['v'] == [['24E',17000000],['28E',19000000]]
           assert [pid for pid,d in data.items() if d.get('p') is None] == ['P0184','P0626','P0631','P0720','P0737']
 
           text = json.dumps(data, ensure_ascii=False, separators=(',',':'))
@@ -67,11 +57,10 @@ jobs:
           )
 
           sized = sum(bool((d or {}).get('v')) for d in data.values())
-          rows = sum(len((d or {}).get('v', [])) for d in data.values())
+          variants = sum(len((d or {}).get('v', [])) for d in data.values())
           nulls = sum((d or {}).get('p') is None for d in data.values())
-          print(f'PDF PRICE DATA VERIFIED: {len(data)} IDs; {sized} products with size variants; {rows} variant rows; {nulls} null-base IDs')
+          print(f'PDF PRICE DATA VERIFIED: {len(data)} IDs; {sized} products with size variants; {variants} variant rows; {nulls} null-base IDs')
           print('final payload sha256:', hashlib.sha256(packed.encode()).hexdigest())
-          print('representative PDF prices verified: P0001/P0002/P0003/P0008/P0460/P0464/P0481/P0487/P0491/P0827/P0838')
           PY
       - name: Persist generated data
         shell: bash
@@ -80,4 +69,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add catalog_site_mapping_908/price-size-data.json catalog_site_mapping_908/price-size-data.js catalog_site_mapping_908/prices.json .github/price-size-source.b64
-          if git diff --cached --quiet; then echo "No generated changes"; else git commit -m "build: materialize verified PDF prices [skip ci]"; git push origin HEAD:main; fi
+          if git diff --cached --quiet; then echo "No generated changes"; else git commit -m "build: materialize verified PDF price variants [skip ci]"; git push origin HEAD:main; fi
