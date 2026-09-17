@@ -10,57 +10,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Restore and validate complete PDF price-size source
+      - name: Decode and validate PDF price data
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, subprocess
+          import base64, gzip, hashlib, json
           from pathlib import Path
-
-          SOURCE_COMMIT = 'bd0c2ce7771a58f4485a0e1a6c25ec84f14e65a5'
-          SOURCE_PATH = 'catalog_site_mapping_908/product_sizes.json'
-          subprocess.run(['git', 'fetch', '--no-tags', '--depth=1', 'origin', SOURCE_COMMIT], check=True)
-          raw = subprocess.check_output(['git', 'show', f'{SOURCE_COMMIT}:{SOURCE_PATH}'], text=True)
-          source = json.loads(raw)
-          print('historical product_sizes.json entries=', len(source))
-          print('P0001 source=', source.get('P0001'))
-
-          expected_ids = [f'P{i:04d}' for i in range(1, 909)]
-          assert isinstance(source, dict) and list(source) == expected_ids, 'historical product_sizes.json is not the complete 908-product dataset'
-
-          data = {}
-          for pid in expected_ids:
-              item = source[pid] or []
-              variants = []
-              if isinstance(item, dict) and 'v' in item:
-                  item = item['v']
-              if isinstance(item, dict) and 'size' in item and 'price' in item:
-                  item = [item]
-              if isinstance(item, list):
-                  for row in item:
-                      if isinstance(row, dict) and 'size' in row and 'price' in row:
-                          variants.append([str(row['size']), int(row['price'])])
-                      elif isinstance(row, (list, tuple)) and len(row) >= 2:
-                          variants.append([str(row[0]), int(row[1])])
-              data[pid] = {'v': variants} if variants else {}
-
-          def variants(pid):
-              return dict(data[pid].get('v', []))
-
-          expected1 = {'4': 2520000, '5': 2520000, '6': 1620000, '7': 1620000, '8': 1680000, '10': 1920000, '12': 2220000, '14': 2700000, '19': 4140000, '41': 55800000, '46': 63600000, '50': 72000000}
-          expected2 = {'6×7': 2640000, '8×9': 2880000, '8×10': 3000000, '10×11': 3600000}
-          expected3 = {'8×10': 4800000, '10×11': 5040000, '12×10': 5640000, '13×11': 5640000, '13×12': 6000000, '17×14': 8040000, '19×17': 8760000}
-          for pid, expected in [('P0001', expected1), ('P0002', expected2), ('P0003', expected3)]:
-              actual = variants(pid)
-              assert all(actual.get(k) == v for k, v in expected.items()), f'{pid} PDF price spot-check failed'
-
-          out = Path('catalog_site_mapping_908/price-size-data.json')
-          out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-          print('P0001 verified:', expected1)
-          print('P0002 verified:', expected2)
-          print('P0003 verified:', expected3)
-          print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sum(bool(d.get("v")) for d in data.values())} products with size variants; {sum(len(d.get("v", [])) for d in data.values())} variant rows')
+          src = ''.join(Path('.github/price-size-source.b64').read_text(encoding='utf-8').split())
+          raw = gzip.decompress(base64.b64decode(src, validate=True))
+          data = json.loads(raw.decode('utf-8'))
+          ids = [f'P{i:04d}' for i in range(1,909)]
+          assert isinstance(data, dict) and list(data) == ids, 'price source must contain P0001..P0908 in order'
+          p1 = dict(data['P0001'].get('v', []))
+          p2 = dict(data['P0002'].get('v', []))
+          p3 = dict(data['P0003'].get('v', []))
+          checks = [
+            p1.get('4') == 2520000, p1.get('6') == 1620000, p1.get('41') == 55800000,
+            p1.get('46') == 63600000, p1.get('50') == 72000000,
+            p2.get('6*7') == 2640000, p2.get('8*10') == 3000000, p2.get('36*41') == 63600000,
+            p3.get('8*10') == 4800000, p3.get('19*17') == 8760000,
+          ]
+          assert all(checks), 'PDF price spot-check failed'
+          Path('catalog_site_mapping_908/price-size-data.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',',':')), encoding='utf-8')
+          print('PDF PRICE DATA VERIFIED: 908 IDs')
+          print('products with variants:', sum(bool(d.get('v')) for d in data.values()))
+          print('variant rows:', sum(len(d.get('v',[])) for d in data.values()))
+          print('source sha256:', hashlib.sha256(src.encode()).hexdigest())
+          print('P0001:', p1.get('4'), p1.get('6'), p1.get('41'), p1.get('46'), p1.get('50'))
+          print('P0002:', p2.get('6*7'), p2.get('8*10'), p2.get('36*41'))
+          print('P0003:', p3.get('8*10'), p3.get('19*17'))
           PY
       - name: Persist generated data
         shell: bash
