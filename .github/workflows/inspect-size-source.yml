@@ -1,0 +1,27 @@
+name: Inspect size source
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect product size payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, json, zlib
+          from pathlib import Path
+          s = Path('catalog_site_mapping_908/product_sizes.deflate.b64').read_text(encoding='utf-8').strip()
+          raw = zlib.decompress(base64.b64decode(s))
+          data = json.loads(raw.decode('utf-8'))
+          print(type(data).__name__, len(data))
+          if isinstance(data, dict):
+              for k in list(data)[:5]: print(k, data[k])
+          elif isinstance(data, list):
+              for x in data[:5]: print(x)
+          PY
