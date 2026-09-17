@@ -1,0 +1,39 @@
+name: Verify PDF price variants
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compressed price variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, gzip, json, re
+          from pathlib import Path
+          src = Path('catalog_site_mapping_908/price-variants.js').read_text(encoding='utf-8')
+          m = re.search(r"AZIM_PRICE_VARIANTS_B64\s*=\s*['\"]([^'\"]+)['\"]", src)
+          assert m, 'price-variants payload missing'
+          data = json.loads(gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
+          assert isinstance(data, dict) and len(data) == 908
+          assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
+          def variants(pid):
+              d = data[pid]
+              v = d.get('v', []) if isinstance(d, dict) else []
+              return [(str(x[0]), x[1]) for x in v]
+          assert ('4', 2520000) in variants('P0001')
+          assert ('46', 63600000) in variants('P0001')
+          assert ('50', 72000000) in variants('P0001')
+          assert ('6×7', 2640000) in variants('P0002') or ('6*7', 2640000) in variants('P0002')
+          assert ('8×10', 3000000) in variants('P0002') or ('8*10', 3000000) in variants('P0002')
+          assert ('8×10', 4800000) in variants('P0003') or ('8*10', 4800000) in variants('P0003')
+          sized = sum(bool((d or {}).get('v')) for d in data.values())
+          rows = sum(len((d or {}).get('v', [])) for d in data.values())
+          print(f'VALID PRICE VARIANTS: 908 IDs; {sized} products with size variants; {rows} variant rows')
+          print('P0001/P0002/P0003 representative PDF prices verified')
+          PY
