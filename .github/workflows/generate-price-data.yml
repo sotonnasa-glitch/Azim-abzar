@@ -15,47 +15,35 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, hashlib, json, subprocess, zlib
+          import json, subprocess
           from pathlib import Path
 
           SOURCE_COMMIT = 'bd0c2ce7771a58f4485a0e1a6c25ec84f14e65a5'
-          SOURCE_PATH = 'catalog_site_mapping_908/product_sizes.deflate.b64'
+          SOURCE_PATH = 'catalog_site_mapping_908/product_sizes.json'
           subprocess.run(['git', 'fetch', '--no-tags', '--depth=1', 'origin', SOURCE_COMMIT], check=True)
-          b64 = ''.join(subprocess.check_output(['git', 'show', f'{SOURCE_COMMIT}:{SOURCE_PATH}'], text=True).split())
-          if len(b64) % 4:
-              b64 += '=' * (4 - len(b64) % 4)
-          print(f'compressed product-size source len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
-
-          raw = base64.b64decode(b64, validate=True)
-          decoded = zlib.decompress(raw)
-          source = json.loads(decoded.decode('utf-8'))
-          print('decoded source type=', type(source).__name__)
-          print('decoded source keys=', len(source) if isinstance(source, dict) else 'n/a')
-          print('P0001 source=', source.get('P0001') if isinstance(source, dict) else None)
+          raw = subprocess.check_output(['git', 'show', f'{SOURCE_COMMIT}:{SOURCE_PATH}'], text=True)
+          source = json.loads(raw)
+          print('historical product_sizes.json entries=', len(source))
+          print('P0001 source=', source.get('P0001'))
 
           expected_ids = [f'P{i:04d}' for i in range(1, 909)]
-          assert isinstance(source, dict) and list(source) == expected_ids, 'compressed source is not the complete 908-product size dataset'
+          assert isinstance(source, dict) and list(source) == expected_ids, 'historical product_sizes.json is not the complete 908-product dataset'
 
-          # Normalize either the historical {size,price} list form or the existing
-          # {v:[[size,price],...]} form into the runtime schema used by products-v4.
           data = {}
           for pid in expected_ids:
-              item = source[pid] or {}
+              item = source[pid] or []
+              variants = []
               if isinstance(item, dict) and 'v' in item:
-                  variants = item.get('v') or []
-                  data[pid] = {'v': [[str(s), int(p)] for s, p in variants]}
-              elif isinstance(item, list):
-                  variants = []
+                  item = item['v']
+              if isinstance(item, dict) and 'size' in item and 'price' in item:
+                  item = [item]
+              if isinstance(item, list):
                   for row in item:
                       if isinstance(row, dict) and 'size' in row and 'price' in row:
                           variants.append([str(row['size']), int(row['price'])])
                       elif isinstance(row, (list, tuple)) and len(row) >= 2:
                           variants.append([str(row[0]), int(row[1])])
-                  data[pid] = {'v': variants} if variants else {}
-              elif isinstance(item, dict) and 'size' in item and 'price' in item:
-                  data[pid] = {'v': [[str(item['size']), int(item['price'])]]}
-              else:
-                  data[pid] = {}
+              data[pid] = {'v': variants} if variants else {}
 
           def variants(pid):
               return dict(data[pid].get('v', []))
