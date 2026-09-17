@@ -10,71 +10,69 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Restore and validate complete PDF price payload
+      - name: Restore and validate complete PDF price-size source
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, hashlib, json, re, subprocess
+          import base64, hashlib, json, subprocess, zlib
           from pathlib import Path
 
           SOURCE_COMMIT = 'bd0c2ce7771a58f4485a0e1a6c25ec84f14e65a5'
-          SOURCE_PATH = 'catalog_site_mapping_908/price-size-data.js'
+          SOURCE_PATH = 'catalog_site_mapping_908/product_sizes.deflate.b64'
           subprocess.run(['git', 'fetch', '--no-tags', '--depth=1', 'origin', SOURCE_COMMIT], check=True)
-          text = subprocess.check_output(['git', 'show', f'{SOURCE_COMMIT}:{SOURCE_PATH}'], text=True).strip()
-          m = re.fullmatch(r"window\.AZIM_PRICE_SIZE_DATA_B64='([A-Za-z0-9+/=]+)';", text)
-          assert m, 'historical PDF price bundle wrapper is invalid'
-          b64 = m.group(1)
-          print(f'historical bundle len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
+          b64 = ''.join(subprocess.check_output(['git', 'show', f'{SOURCE_COMMIT}:{SOURCE_PATH}'], text=True).split())
+          if len(b64) % 4:
+              b64 += '=' * (4 - len(b64) % 4)
+          print(f'compressed product-size source len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
+
+          raw = base64.b64decode(b64, validate=True)
+          decoded = zlib.decompress(raw)
+          source = json.loads(decoded.decode('utf-8'))
+          print('decoded source type=', type(source).__name__)
+          print('decoded source keys=', len(source) if isinstance(source, dict) else 'n/a')
+          print('P0001 source=', source.get('P0001') if isinstance(source, dict) else None)
 
           expected_ids = [f'P{i:04d}' for i in range(1, 909)]
+          assert isinstance(source, dict) and list(source) == expected_ids, 'compressed source is not the complete 908-product size dataset'
+
+          # Normalize either the historical {size,price} list form or the existing
+          # {v:[[size,price],...]} form into the runtime schema used by products-v4.
+          data = {}
+          for pid in expected_ids:
+              item = source[pid] or {}
+              if isinstance(item, dict) and 'v' in item:
+                  variants = item.get('v') or []
+                  data[pid] = {'v': [[str(s), int(p)] for s, p in variants]}
+              elif isinstance(item, list):
+                  variants = []
+                  for row in item:
+                      if isinstance(row, dict) and 'size' in row and 'price' in row:
+                          variants.append([str(row['size']), int(row['price'])])
+                      elif isinstance(row, (list, tuple)) and len(row) >= 2:
+                          variants.append([str(row[0]), int(row[1])])
+                  data[pid] = {'v': variants} if variants else {}
+              elif isinstance(item, dict) and 'size' in item and 'price' in item:
+                  data[pid] = {'v': [[str(item['size']), int(item['price'])]]}
+              else:
+                  data[pid] = {}
+
+          def variants(pid):
+              return dict(data[pid].get('v', []))
+
           expected1 = {'4': 2520000, '5': 2520000, '6': 1620000, '7': 1620000, '8': 1680000, '10': 1920000, '12': 2220000, '14': 2700000, '19': 4140000, '41': 55800000, '46': 63600000, '50': 72000000}
           expected2 = {'6×7': 2640000, '8×9': 2880000, '8×10': 3000000, '10×11': 3600000}
           expected3 = {'8×10': 4800000, '10×11': 5040000, '12×10': 5640000, '13×11': 5640000, '13×12': 6000000, '17×14': 8040000, '19×17': 8760000}
-
-          def validate(candidate):
-              try:
-                  raw = base64.b64decode(candidate, validate=True)
-                  data = json.loads(gzip.decompress(raw).decode('utf-8'))
-              except Exception:
-                  return None
-              if not isinstance(data, dict) or list(data) != expected_ids:
-                  return None
-              for pid, expected in [('P0001', expected1), ('P0002', expected2), ('P0003', expected3)]:
-                  actual = dict((data[pid] or {}).get('v', []))
-                  if any(actual.get(k) != v for k, v in expected.items()):
-                      return None
-              return data
-
-          data = validate(b64)
-          corrected = b64
-
-          # The complete historical bundle is 10665 chars, one char longer than
-          # valid Base64. Find the single extra character by deletion and accept
-          # only the candidate that decodes to the complete 908-product dataset
-          # and passes the PDF price spot-checks above.
-          if data is None and len(b64) % 4 == 1:
-              print('Trying single-character deletion recovery...')
-              for i in range(len(b64)):
-                  candidate = b64[:i] + b64[i+1:]
-                  data = validate(candidate)
-                  if data is not None:
-                      corrected = candidate
-                      print(f'RECOVERED payload by deleting character at offset {i}')
-                      break
-
-          assert data is not None, 'could not reconstruct a valid 908-product PDF price payload'
+          for pid, expected in [('P0001', expected1), ('P0002', expected2), ('P0003', expected3)]:
+              actual = variants(pid)
+              assert all(actual.get(k) == v for k, v in expected.items()), f'{pid} PDF price spot-check failed'
 
           out = Path('catalog_site_mapping_908/price-size-data.json')
           out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-          Path(SOURCE_PATH).write_text("window.AZIM_PRICE_SIZE_DATA_B64='" + corrected + "';\n", encoding='utf-8')
-
-          sized = sum(bool((d or {}).get('v')) for d in data.values())
-          rows = sum(len((d or {}).get('v', [])) for d in data.values())
-          print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sized} products with size variants; {rows} variant rows')
           print('P0001 verified:', expected1)
           print('P0002 verified:', expected2)
           print('P0003 verified:', expected3)
+          print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sum(bool(d.get("v")) for d in data.values())} products with size variants; {sum(len(d.get("v", [])) for d in data.values())} variant rows')
           PY
       - name: Persist generated data
         shell: bash
@@ -82,7 +80,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add catalog_site_mapping_908/price-size-data.json catalog_site_mapping_908/price-size-data.js
+          git add catalog_site_mapping_908/price-size-data.json
           if git diff --cached --quiet; then
             echo "No generated changes"
           else
