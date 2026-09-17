@@ -15,11 +15,16 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, json
+          import base64, gzip, hashlib, json
           from pathlib import Path
           parts = sorted(Path('.github/price-parts').glob('[0-9][0-9]'))
           assert len(parts) == 8, f'expected 8 payload parts, found {len(parts)}'
+          for p in parts:
+              raw = p.read_text(encoding='utf-8')
+              clean = raw.replace('\n','').replace('\r','').strip()
+              print(f'{p.name}: len={len(clean)} sha256={hashlib.sha256(clean.encode()).hexdigest()}')
           b64 = ''.join(p.read_text(encoding='utf-8').replace('\n','').replace('\r','').strip() for p in parts)
+          print('assembled len=', len(b64))
           assert len(b64) == 10672, f'unexpected payload length: {len(b64)}'
           raw = base64.b64decode(b64, validate=True)
           data = json.loads(gzip.decompress(raw).decode('utf-8'))
@@ -27,12 +32,10 @@ jobs:
           assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
           out = Path('catalog_site_mapping_908/price-size-data.json')
           out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-          js = Path('catalog_site_mapping_908/price-size-data.js')
-          js.write_text("window.AZIM_PRICE_SIZE_DATA_B64='" + b64 + "';\n", encoding='utf-8')
+          Path('catalog_site_mapping_908/price-size-data.js').write_text("window.AZIM_PRICE_SIZE_DATA_B64='" + b64 + "';\n", encoding='utf-8')
           sized = sum(bool((d or {}).get('v')) for d in data.values())
           rows = sum(len((d or {}).get('v', [])) for d in data.values())
           print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sized} products with size variants; {rows} variant rows; payload={len(b64)} chars')
-          print('Representative P0001/P0002/P0003 data was already validated during local PDF extraction.')
           PY
       - name: Persist generated data and clean temporary payload parts
         shell: bash
@@ -42,7 +45,7 @@ jobs:
           rm -f .github/workflows/verify-price-variants.yml .github/workflows/inspect-size-source.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add catalog_site_mapping_908/price-size-data.json catalog_site_mapping_908/price-size-data.js .github/price-parts .github/workflows/verify-price-variants.yml .github/workflows/inspect-size-source.yml
+          git add -A
           if git diff --cached --quiet; then
             echo "No generated changes"
           else
