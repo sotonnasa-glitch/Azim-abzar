@@ -25,7 +25,7 @@ jobs:
               print(f'{p.name}: len={len(clean)} sha256={hashlib.sha256(clean.encode()).hexdigest()}')
           b64 = ''.join(p.read_text(encoding='utf-8').replace('\n','').replace('\r','').strip() for p in parts)
           print('assembled len=', len(b64))
-          assert len(b64) == 10672, f'unexpected payload length: {len(b64)}'
+          assert len(b64) == 10660, f'unexpected payload length: {len(b64)}'
           raw = base64.b64decode(b64, validate=True)
           data = json.loads(gzip.decompress(raw).decode('utf-8'))
           assert isinstance(data, dict) and len(data) == 908
