@@ -15,12 +15,12 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, json, re, zlib
+          import base64, gzip, json, re
           from pathlib import Path
           src = Path('catalog_site_mapping_908/price-size-data.js').read_text(encoding='utf-8')
           m = re.search(r"AZIM_PRICE_SIZE_DATA_B64\s*=\s*['\"]([^'\"]+)['\"]", src)
           assert m, 'price-size-data.js payload not found'
-          data = json.loads(zlib.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
+          data = json.loads(gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8'))
           assert isinstance(data, dict) and len(data) == 908
           assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
           out = Path('catalog_site_mapping_908/price-size-data.json')
