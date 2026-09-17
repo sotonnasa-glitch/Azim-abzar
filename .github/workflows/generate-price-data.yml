@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate bundled PDF price payload and materialize JSON
+      - name: Recover and validate PDF price payload
         shell: bash
         run: |
           set -euo pipefail
@@ -19,50 +19,66 @@ jobs:
           from pathlib import Path
 
           pattern = re.compile(r"window\.[A-Z0-9_]+='([A-Za-z0-9+/=]+)';")
-          candidates = [
-              Path('catalog_site_mapping_908/price-size-data.js'),
-              Path('catalog_site_mapping_908/price-variants.js'),
-          ]
-          data = None
-          chosen = None
+          source = Path('catalog_site_mapping_908/price-size-data.js')
+          text = source.read_text(encoding='utf-8').strip()
+          match = pattern.fullmatch(text)
+          assert match, 'price-size-data.js wrapper is invalid'
+          b64 = match.group(1)
+          print(f'original payload len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
 
-          for source in candidates:
-              if not source.exists():
-                  continue
-              text = source.read_text(encoding='utf-8').strip()
-              match = pattern.fullmatch(text)
-              if not match:
-                  print(f'SKIP {source}: wrapper invalid')
-                  continue
-              b64 = match.group(1)
-              print(f'TRY {source}: payload_len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
+          def validate(candidate_b64):
               try:
-                  raw = base64.b64decode(b64, validate=True)
-                  candidate = json.loads(gzip.decompress(raw).decode('utf-8'))
-              except Exception as exc:
-                  print(f'SKIP {source}: decode failed: {exc}')
-                  continue
-              if not isinstance(candidate, dict) or len(candidate) != 908:
-                  print(f'SKIP {source}: expected 908 product IDs, got {len(candidate) if isinstance(candidate, dict) else type(candidate).__name__}')
-                  continue
-              if list(candidate) != [f'P{i:04d}' for i in range(1, 909)]:
-                  print(f'SKIP {source}: product ID sequence is not P0001..P0908')
-                  continue
-              data = candidate
-              chosen = source
-              print(f'USE {source}: decoded 908 product IDs successfully')
-              break
+                  raw = base64.b64decode(candidate_b64, validate=True)
+                  data = json.loads(gzip.decompress(raw).decode('utf-8'))
+              except Exception:
+                  return None
+              if not isinstance(data, dict) or len(data) != 908:
+                  return None
+              if list(data) != [f'P{i:04d}' for i in range(1, 909)]:
+                  return None
+              # Spot-check known PDF values for P0001 before accepting the payload.
+              v = dict(data['P0001'].get('v', []))
+              expected = {
+                  '4': 2520000, '5': 2520000, '6': 1620000, '7': 1620000,
+                  '8': 1680000, '10': 1920000, '12': 2220000, '14': 2700000,
+                  '19': 4140000, '41': 55800000, '46': 63600000, '50': 72000000,
+              }
+              if any(v.get(k) != val for k, val in expected.items()):
+                  return None
+              return data
 
-          assert data is not None, 'no valid 908-product PDF price payload could be decoded'
+          data = None
+          corrected = b64
+
+          # Current payload is 1 character too long for base64. Recover it if one
+          # accidental extra character was inserted anywhere in the string.
+          if len(b64) % 4 == 1:
+              for i in range(len(b64)):
+                  candidate = b64[:i] + b64[i+1:]
+                  data = validate(candidate)
+                  if data is not None:
+                      corrected = candidate
+                      print(f'RECOVERED payload by removing character at offset {i}')
+                      break
+
+          if data is None:
+              data = validate(b64)
+
+          assert data is not None, 'could not recover a valid 908-product PDF price payload'
+
+          if corrected != b64:
+              source.write_text("window.AZIM_PRICE_SIZE_DATA_B64='" + corrected + "';\n", encoding='utf-8')
+              print(f'REPAIRED bundled payload len={len(corrected)} sha256={hashlib.sha256(corrected.encode()).hexdigest()}')
 
           out = Path('catalog_site_mapping_908/price-size-data.json')
           out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
           sized = sum(bool((d or {}).get('v')) for d in data.values())
           rows = sum(len((d or {}).get('v', [])) for d in data.values())
-          print(f'PDF PRICE DATA VERIFIED: source={chosen}; 908 IDs; {sized} products with size variants; {rows} variant rows')
+          print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sized} products with size variants; {rows} variant rows')
+          print('P0001 verified spot-check:', {k: dict(data['P0001']['v'])[k] for k in ['4','5','6','7','8','10','12','14','19','41','46','50']})
           PY
-      - name: Clean obsolete payload parts and persist generated JSON
+      - name: Persist repaired payload and generated JSON
         shell: bash
         run: |
           set -euo pipefail
@@ -74,6 +90,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No generated changes"
           else
-            git commit -m "build: materialize verified PDF price-size JSON [skip ci]"
+            git commit -m "build: recover and materialize verified PDF price-size data [skip ci]"
             git push origin HEAD:main
           fi
