@@ -10,34 +10,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Assemble and validate PDF price payload
+      - name: Validate bundled PDF price payload and materialize JSON
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, gzip, hashlib, json
+          import base64, gzip, hashlib, json, re
           from pathlib import Path
-          parts = sorted(Path('.github/price-parts').glob('[0-9][0-9]'))
-          assert len(parts) == 8, f'expected 8 payload parts, found {len(parts)}'
-          for p in parts:
-              raw = p.read_text(encoding='utf-8')
-              clean = raw.replace('\n','').replace('\r','').strip()
-              print(f'{p.name}: len={len(clean)} sha256={hashlib.sha256(clean.encode()).hexdigest()}')
-          b64 = ''.join(p.read_text(encoding='utf-8').replace('\n','').replace('\r','').strip() for p in parts)
-          print('assembled len=', len(b64))
-          assert len(b64) == 10660, f'unexpected payload length: {len(b64)}'
+
+          source = Path('catalog_site_mapping_908/price-size-data.js')
+          text = source.read_text(encoding='utf-8')
+          match = re.fullmatch(r"window\.AZIM_PRICE_SIZE_DATA_B64='([A-Za-z0-9+/=]+)';", text.strip())
+          assert match, 'price-size-data.js payload wrapper is invalid'
+          b64 = match.group(1)
+          print(f'bundled payload len={len(b64)} sha256={hashlib.sha256(b64.encode()).hexdigest()}')
+          assert len(b64) == 10660, f'unexpected bundled payload length: {len(b64)}'
+
           raw = base64.b64decode(b64, validate=True)
           data = json.loads(gzip.decompress(raw).decode('utf-8'))
-          assert isinstance(data, dict) and len(data) == 908
+          assert isinstance(data, dict) and len(data) == 908, f'expected 908 products, got {len(data) if isinstance(data, dict) else type(data).__name__}'
           assert list(data) == [f'P{i:04d}' for i in range(1, 909)]
+
           out = Path('catalog_site_mapping_908/price-size-data.json')
           out.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-          Path('catalog_site_mapping_908/price-size-data.js').write_text("window.AZIM_PRICE_SIZE_DATA_B64='" + b64 + "';\n", encoding='utf-8')
+
           sized = sum(bool((d or {}).get('v')) for d in data.values())
           rows = sum(len((d or {}).get('v', [])) for d in data.values())
           print(f'PDF PRICE DATA VERIFIED: 908 IDs; {sized} products with size variants; {rows} variant rows; payload={len(b64)} chars')
           PY
-      - name: Persist generated data and clean temporary payload parts
+      - name: Clean obsolete payload parts and persist generated JSON
         shell: bash
         run: |
           set -euo pipefail
@@ -49,6 +50,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No generated changes"
           else
-            git commit -m "build: materialize verified PDF price-size data [skip ci]"
+            git commit -m "build: materialize verified PDF price-size JSON [skip ci]"
             git push origin HEAD:main
           fi
