@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           for sample in P0001 P0002 P0339 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/\${sample}.jpg" >/dev/null
+            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
           echo 'REMOTE SUPABASE IMAGES VERIFIED'
 
