@@ -217,6 +217,12 @@ create policy "Admins insert audit logs" on public.audit_logs for insert to auth
 
 insert into storage.buckets(id,name,public) values ('admin-media','admin-media',true) on conflict(id) do update set public=true;
 
+-- Legacy project helper: keep callable only by server roles, never by the browser.
+revoke all on function public.rls_auto_enable() from public;
+revoke all on function public.rls_auto_enable() from anon;
+revoke all on function public.rls_auto_enable() from authenticated;
+
+
 drop policy if exists "Public can read product images" on storage.objects;
 create policy "Public can read product images" on storage.objects for select using (bucket_id='product-images');
 drop policy if exists "Admins can upload product images" on storage.objects;
