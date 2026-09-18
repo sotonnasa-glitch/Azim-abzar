@@ -1,3 +1,5 @@
+create schema if not exists private;
+
 -- عظیم ابزار: Supabase schema
 -- Run this once in Supabase SQL Editor.
 
@@ -25,7 +27,7 @@ create index if not exists products_name_idx on public.products using gin (to_ts
 alter table public.products enable row level security;
 alter table public.admin_users enable row level security;
 
-create or replace function public.is_azim_admin()
+create or replace function private.is_azim_admin()
 returns boolean
 language sql
 stable
@@ -35,8 +37,8 @@ as $$
   select exists(select 1 from public.admin_users where user_id = auth.uid());
 $$;
 
-revoke all on function public.is_azim_admin() from public;
-grant execute on function public.is_azim_admin() to anon, authenticated;
+revoke all on function private.is_azim_admin() from public;
+grant execute on function private.is_azim_admin() to anon, authenticated;
 
  drop policy if exists "Public can read products" on public.products;
 create policy "Public can read products" on public.products
@@ -44,15 +46,15 @@ for select using (true);
 
 drop policy if exists "Admins can insert products" on public.products;
 create policy "Admins can insert products" on public.products
-for insert to authenticated with check (public.is_azim_admin());
+for insert to authenticated with check (private.is_azim_admin());
 
 drop policy if exists "Admins can update products" on public.products;
 create policy "Admins can update products" on public.products
-for update to authenticated using (public.is_azim_admin()) with check (public.is_azim_admin());
+for update to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
 
 drop policy if exists "Admins can delete products" on public.products;
 create policy "Admins can delete products" on public.products
-for delete to authenticated using (public.is_azim_admin());
+for delete to authenticated using (private.is_azim_admin());
 
 drop policy if exists "Admins can read own admin row" on public.admin_users;
 create policy "Admins can read own admin row" on public.admin_users
@@ -69,15 +71,19 @@ for select using (bucket_id = 'product-images');
 
 drop policy if exists "Admins can upload product images" on storage.objects;
 create policy "Admins can upload product images" on storage.objects
-for insert to authenticated with check (bucket_id = 'product-images' and public.is_azim_admin());
+for insert to authenticated with check (bucket_id = 'product-images' and private.is_azim_admin());
 
 drop policy if exists "Admins can update product images" on storage.objects;
 create policy "Admins can update product images" on storage.objects
-for update to authenticated using (bucket_id = 'product-images' and public.is_azim_admin()) with check (bucket_id = 'product-images' and public.is_azim_admin());
+for update to authenticated using (bucket_id = 'product-images' and private.is_azim_admin()) with check (bucket_id = 'product-images' and private.is_azim_admin());
 
 drop policy if exists "Admins can delete product images" on storage.objects;
 create policy "Admins can delete product images" on storage.objects
-for delete to authenticated using (bucket_id = 'product-images' and public.is_azim_admin());
+for delete to authenticated using (bucket_id = 'product-images' and private.is_azim_admin());
 
 -- After creating the first admin account in Supabase Auth,
 -- run: insert into public.admin_users(user_id) values ('YOUR-AUTH-USER-UUID');
+
+
+-- Legacy public admin helper is intentionally removed; the secure helper lives in the private schema.
+drop function if exists public.is_azim_admin();
