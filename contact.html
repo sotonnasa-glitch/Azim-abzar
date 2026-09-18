@@ -1590,7 +1590,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <span>ارسال فوری پیام و پیش‌فاکتور</span>
+                    <span>باز کردن واتساپ با پیام آماده</span>
                   </button>
                 </div>
               </form>
@@ -1814,34 +1814,55 @@
       item.classList.toggle('open');
     }
 
-    // Interactive Form Submit Handler
-    function handleFormSubmission(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnSubmitForm');
-      const feedback = document.getElementById('formAlert');
+    // Build one reusable message from the form fields.
+    function buildContactMessage() {
+      const name = document.getElementById('frm-fullname').value.trim();
+      const phone = document.getElementById('frm-mobile').value.trim();
+      const subject = document.getElementById('frm-subject').value;
+      const business = document.getElementById('frm-business').value.trim();
+      const details = document.getElementById('frm-details').value.trim();
 
-      btn.disabled = true;
-      btn.style.opacity = '0.6';
-      btn.innerHTML = '<span>در حال ثبت...</span>';
-
-      setTimeout(() => {
-        btn.style.display = 'none';
-        feedback.style.display = 'block';
-        triggerToast('درخواست با موفقیت ثبت شد.');
-      }, 700);
+      return [
+        'سلام و درود، درخواست استعلام از عظیم ابزار:',
+        'نام: ' + (name || 'ذکر نشده'),
+        'شماره همراه: ' + (phone || 'ذکر نشده'),
+        'موضوع: ' + (subject || 'ذکر نشده'),
+        'نوع کارگاه: ' + (business || 'ذکر نشده'),
+        '',
+        'شرح ابزار یا درخواست:',
+        details || 'درخواست استعلام قیمت و موجودی ابزارآلات'
+      ].join('\n');
     }
 
-    // Send Form Data Direct to WhatsApp
-    function sendFormDataToWhatsApp() {
-      const name = document.getElementById('frm-fullname').value.trim() || 'همکار گرامی';
-      const phone = document.getElementById('frm-mobile').value.trim() || 'ذکر نشده';
-      const subject = document.getElementById('frm-subject').value;
-      const business = document.getElementById('frm-business').value.trim() || 'کارگاه / تعمیرگاه';
-      const details = document.getElementById('frm-details').value.trim() || 'درخواست استعلام قیمت و موجودی ابزارآلات';
+    // Open the verified email channel instead of showing a fake success message.
+    function handleFormSubmission(e) {
+      e.preventDefault();
+      const form = document.getElementById('contactForm');
+      if (!form.reportValidity()) return;
 
-      const messageBody = `سلام و درود، درخواست استعلام از عظیم ابزار:\n👤 نام: ${name}\n📞 شماره همراه: ${phone}\n🏷 موضوع: ${subject}\n🏢 نوع کارگاه: ${business}\n\n📝 شرح ابزار یا درخواست:\n${details}`;
-      const waUrl = `https://wa.me/989120000000?text=${encodeURIComponent(messageBody)}`;
-      window.open(waUrl, '_blank');
+      const subject = encodeURIComponent('درخواست استعلام / مشاوره از عظیم ابزار');
+      const body = encodeURIComponent(buildContactMessage());
+      const mailto = 'mailto:info@azimabzar.ir?subject=' + subject + '&body=' + body;
+
+      const btn = document.getElementById('btnSubmitForm');
+      btn.disabled = true;
+      btn.style.opacity = '0.65';
+      btn.innerHTML = '<span>در حال آماده‌سازی ایمیل...</span>';
+
+      window.location.href = mailto;
+
+      setTimeout(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = '<span>ارسال پیام به کارشناسان</span>';
+      }, 1200);
+    }
+
+    // No verified WhatsApp number is configured in the project, so do not use a placeholder recipient.
+    function sendFormDataToWhatsApp() {
+      const messageBody = buildContactMessage();
+      const waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(messageBody);
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
     }
   </script>
 </body>
