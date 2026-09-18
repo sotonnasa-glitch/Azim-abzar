@@ -1253,7 +1253,7 @@
       }
     }
   </style>
-</head>
+<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
 <body>
 
   <!-- Header Navigation with Dedicated Back Button -->
@@ -1834,23 +1834,52 @@
       ].join('\n');
     }
 
-    // Open the verified email channel instead of showing a fake success message.
-    function handleFormSubmission(e) {
+    // Store the request in Supabase, then open the verified email channel.
+    async function handleFormSubmission(e) {
       e.preventDefault();
       const form = document.getElementById('contactForm');
       if (!form.reportValidity()) return;
 
-      const subject = encodeURIComponent('درخواست استعلام / مشاوره از عظیم ابزار');
-      const body = encodeURIComponent(buildContactMessage());
-      const mailto = 'mailto:info@azimabzar.ir?subject=' + subject + '&body=' + body;
-
+      const name = document.getElementById('frm-fullname').value.trim();
+      const phone = document.getElementById('frm-mobile').value.trim();
+      const subject = document.getElementById('frm-subject').value;
+      const business = document.getElementById('frm-business').value.trim();
+      const details = document.getElementById('frm-details').value.trim();
       const btn = document.getElementById('btnSubmitForm');
+
       btn.disabled = true;
       btn.style.opacity = '0.65';
-      btn.innerHTML = '<span>در حال آماده‌سازی ایمیل...</span>';
+      btn.innerHTML = '<span>در حال ثبت درخواست...</span>';
 
-      window.location.href = mailto;
+      let saved = false;
+      try {
+        if (window.supabase && window.AZIM_SUPABASE_URL && window.AZIM_SUPABASE_ANON_KEY) {
+          const client = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
+          const result = await client.from('inquiries').insert({
+            full_name: name,
+            mobile: phone,
+            subject,
+            business: business || null,
+            details
+          });
+          if (result.error) throw result.error;
+          saved = true;
+        }
+      } catch (err) {
+        console.warn('Inquiry save failed; falling back to email.', err);
+      }
 
+      const subjectText = encodeURIComponent('درخواست استعلام / مشاوره از عظیم ابزار');
+      const body = encodeURIComponent(buildContactMessage());
+      window.location.href = 'mailto:info@azimabzar.ir?subject=' + subjectText + '&body=' + body;
+
+      const alert = document.getElementById('formAlert');
+      if (alert) {
+        alert.textContent = saved
+          ? 'درخواست شما در سیستم ثبت شد. ایمیل آماده ارسال است.'
+          : 'ایمیل آماده شده است؛ ارسال درخواست را از برنامه ایمیل خود تکمیل کنید.';
+        alert.style.display = 'block';
+      }
       setTimeout(function() {
         btn.disabled = false;
         btn.style.opacity = '1';
