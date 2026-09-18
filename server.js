@@ -25,6 +25,18 @@ app.get('/products', (req, res) => {
   res.sendFile(path.join(__dirname, 'products-v2.html'));
 });
 
+app.get('/products2', (req, res) => {
+  res.sendFile(path.join(__dirname, 'products2.html'));
+});
+
+app.get('/products/2', (req, res) => {
+  res.redirect('/products?page=2');
+});
+
+app.get('/products/page/:page', (req, res) => {
+  res.redirect(`/products?page=${req.params.page}`);
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -37,7 +49,7 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'contact.html'));
 });
 
-app.get('/', (req, res) => {
+app.get(['/', '/index.html'], (req, res) => {
   const file = path.join(__dirname, 'index.html');
   const html = fs.readFileSync(file, 'utf8');
   const injected = html.replace('</body>', '<script src="/azim-motion.js?v=3" defer></script>\n<script src="/azim-home-gallery.js?v=3" defer></script>\n<script src="/azim-home-copy.js?v=5" defer></script>\n</body>');

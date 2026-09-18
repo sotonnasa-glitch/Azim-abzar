@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="کاتالوگ جامع محصولات عظیم ابزار - ابزارهای مکانیکی، کارگاهی و دستی">
-  <title>محصولات | عظیم ابزار</title>
+  <meta name="description" content="کاتالوگ محصولات عظیم ابزار - صفحه ۲ شامل ابزارهای مکانیکی، کارگاهی و دستی">
+  <title>محصولات - صفحه ۲ | عظیم ابزار</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -71,11 +71,11 @@
       background: #252c28;
       border-color: var(--gold);
     }
-    .page-switch-bar {
+    .page-banner {
       margin: 14px 0 16px;
       padding: 12px 16px;
-      background: #111513;
-      border: 1px solid #2e342f;
+      background: linear-gradient(135deg, rgba(245, 185, 0, 0.12), rgba(21, 25, 23, 0.9));
+      border: 1px solid rgba(245, 185, 0, 0.35);
       border-radius: 12px;
       display: flex;
       justify-content: space-between;
@@ -83,10 +83,14 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-    .page-switch-label {
-      font-size: 13px;
+    .page-banner-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .page-banner-desc {
+      font-size: 12px;
       color: #c9cfcb;
-      font-weight: 600;
     }
     .quick-pages {
       display: flex;
@@ -98,9 +102,9 @@
       background: #1a1f1c;
       border: 1px solid #383f3b;
       color: #e1e5e2;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       text-decoration: none;
@@ -219,7 +223,7 @@
       gap: 6px;
       margin: 32px 0 20px;
     }
-    .pagination button {
+    .pagination button, .pagination a {
       background: #171b19;
       border: 1px solid #3a403c;
       color: #fff;
@@ -228,6 +232,7 @@
       cursor: pointer;
       font: inherit;
       font-size: 12px;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -235,11 +240,11 @@
       height: 38px;
       transition: all 0.15s;
     }
-    .pagination button:hover {
+    .pagination button:hover, .pagination a:hover {
       border-color: var(--gold);
       color: var(--gold);
     }
-    .pagination button.active {
+    .pagination button.active, .pagination a.active {
       background: var(--gold);
       color: #111;
       border-color: var(--gold);
@@ -281,7 +286,7 @@
     @media (max-width: 480px) {
       .grid { grid-template-columns: 1fr; }
       .brand { font-size: 20px; }
-      .page-switch-bar { flex-direction: column; align-items: flex-start; }
+      .page-banner { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -289,34 +294,34 @@
 <main class="wrap">
   <div class="top">
     <div class="brand">
-      <a href="./">عظیم ابزار</a> — کاتالوگ محصولات
+      <a href="./">عظیم ابزار</a> — محصولات <span style="color:var(--gold);font-size:18px;">(صفحه ۲)</span>
     </div>
     <div class="nav-badges">
       <a href="./" class="badge secondary">صفحه اصلی</a>
-      <button class="badge secondary" id="navPage1Btn" onclick="goToPage(1)">صفحه ۱</button>
-      <button class="badge secondary" id="navPage2Btn" onclick="goToPage(2)">صفحه ۲</button>
-      <a href="products2.html" class="badge secondary">لینک مستقیم صفحه ۲</a>
+      <a href="products.html" class="badge secondary">صفحه ۱ محصولات</a>
+      <a href="products.html?page=2" class="badge">صفحه ۲ (جاری)</a>
       <a href="ai.html" class="badge secondary" style="color:var(--gold)">دستیار هوشمند ⚙</a>
-      <a href="contact.html" class="badge secondary">تماس</a>
+      <a href="contact.html" class="badge secondary">تماس با ما</a>
       <div class="badge" id="badge">در حال بارگذاری</div>
     </div>
   </div>
 
-  <!-- Quick Page Switcher -->
-  <div class="page-switch-bar">
-    <div class="page-switch-label">
-      دسته‌بندی صفحات کاتالوگ: <span id="currentStatusHeader" style="color:var(--gold);font-weight:bold">صفحه ۱</span>
+  <div class="page-banner">
+    <div>
+      <div class="page-banner-title">📂 شما در صفحه دوم (۲) کاتالوگ محصولات هستید</div>
+      <div class="page-banner-desc">نمایش محصولات ردیف ۳۷ الی ۷۲ از کاتالوگ ابزارهای تخصصی و کارگاهی عظیم ابزار</div>
     </div>
     <div class="quick-pages">
-      <button type="button" class="quick-btn" id="chipPage1" onclick="goToPage(1)">صفحه ۱ (محصولات ۱ - ۳۶)</button>
-      <button type="button" class="quick-btn" id="chipPage2" onclick="goToPage(2)">صفحه ۲ (محصولات ۳۷ - ۷۲)</button>
-      <button type="button" class="quick-btn" id="chipPage3" onclick="goToPage(3)">صفحه ۳ (محصولات ۷۳ - ۱۰۸)</button>
-      <button type="button" class="quick-btn" id="chipPage4" onclick="goToPage(4)">صفحه ۴</button>
+      <a href="products.html?page=1" class="quick-btn">صفحه ۱</a>
+      <span class="quick-btn active">صفحه ۲</span>
+      <a href="products.html?page=3" class="quick-btn">صفحه ۳</a>
+      <a href="products.html?page=4" class="quick-btn">صفحه ۴</a>
+      <a href="products.html" class="quick-btn">مشاهده همه صفحات ←</a>
     </div>
   </div>
 
   <div class="tools">
-    <input id="q" placeholder="جستجوی نام یا شناسه محصول (P0001 و ...)">
+    <input id="q" placeholder="جستجوی نام یا شناسه محصول در صفحه ۲...">
     <select id="pageSize">
       <option value="36" selected>۳۶ محصول در هر صفحه</option>
       <option value="48">۴۸ محصول در هر صفحه</option>
@@ -324,13 +329,13 @@
     </select>
   </div>
 
-  <div id="status" class="status-bar">در حال آماده‌سازی محصولات...</div>
+  <div id="status" class="status-bar">در حال آماده‌سازی محصولات صفحه ۲...</div>
   <div id="loading" class="loading">در حال بارگذاری کاتالوگ عظیم ابزار...</div>
   <div id="error" class="error" style="display:none"></div>
 
   <div id="grid" class="grid"></div>
 
-  <div id="pages" class="pagination"></div>
+  <div id="paginationTop" class="pagination"></div>
 </main>
 
 <script>
@@ -354,7 +359,8 @@
   let PER = 36;
   let all = [];
   let q = '';
-  let page = 1;
+  // Default to Page 2 for products2.html
+  let page = 2;
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -375,57 +381,6 @@
     return all.filter(x => !z || `${x.id} ${x.name}`.toLocaleLowerCase('fa').includes(z));
   }
 
-  function goToPage(p, updateUrl = true) {
-    page = p;
-    if (updateUrl) {
-      const url = new URL(window.location);
-      if (page > 1) {
-        url.searchParams.set('page', page);
-      } else {
-        url.searchParams.delete('page');
-      }
-      if (q) {
-        url.searchParams.set('q', q);
-      } else {
-        url.searchParams.delete('q');
-      }
-      window.history.pushState({ page, q }, '', url.toString());
-    }
-    render();
-    scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function updateChips() {
-    const currentHeader = document.getElementById('currentStatusHeader');
-    if (currentHeader) currentHeader.textContent = `صفحه ${fmt(page)}`;
-
-    const c1 = document.getElementById('chipPage1');
-    const c2 = document.getElementById('chipPage2');
-    const c3 = document.getElementById('chipPage3');
-    const c4 = document.getElementById('chipPage4');
-    if (c1) c1.classList.toggle('active', page === 1);
-    if (c2) c2.classList.toggle('active', page === 2);
-    if (c3) c3.classList.toggle('active', page === 3);
-    if (c4) c4.classList.toggle('active', page === 4);
-
-    const nav1 = document.getElementById('navPage1Btn');
-    const nav2 = document.getElementById('navPage2Btn');
-    if (nav1) {
-      if (page === 1) {
-        nav1.className = 'badge';
-      } else {
-        nav1.className = 'badge secondary';
-      }
-    }
-    if (nav2) {
-      if (page === 2) {
-        nav2.className = 'badge';
-      } else {
-        nav2.className = 'badge secondary';
-      }
-    }
-  }
-
   function render() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('badge').textContent = fmt(all.length) + ' محصول';
@@ -435,14 +390,12 @@
     if (page > total) page = total;
     if (page < 1) page = 1;
 
-    updateChips();
-
     const startIdx = (page - 1) * PER;
     const rows = a.slice(startIdx, startIdx + PER);
 
     document.getElementById('status').innerHTML = `
       <span>نمایش ردیف <b>${fmt(startIdx + 1)}</b> تا <b>${fmt(startIdx + rows.length)}</b> (صفحه <b>${fmt(page)}</b> از <b>${fmt(total)}</b>)</span>
-      <span>مجموع نتایج: <b>${fmt(a.length)}</b> از <b>${fmt(all.length)}</b> محصول</span>
+      <span>مجموع نتایج: <b>${fmt(a.length)}</b> محصول</span>
     `;
 
     document.getElementById('grid').innerHTML = rows.length ? rows.map(x => {
@@ -464,99 +417,67 @@
   }
 
   function renderPagination(total) {
-    const p = document.getElementById('pages');
+    const p = document.getElementById('paginationTop');
     p.innerHTML = '';
 
-    // First
+    // First page
     const btnFirst = document.createElement('button');
-    btnFirst.innerHTML = '« اول';
+    btnFirst.innerHTML = '« صفحه اول';
     btnFirst.disabled = page === 1;
-    btnFirst.onclick = () => goToPage(1);
+    btnFirst.onclick = () => { page = 1; render(); scrollTo({ top: 0, behavior: 'smooth' }); };
     p.appendChild(btnFirst);
 
     // Prev
     const btnPrev = document.createElement('button');
-    btnPrev.innerHTML = '‹ صفحه قبل';
+    btnPrev.innerHTML = '‹ قبلی';
     btnPrev.disabled = page === 1;
-    btnPrev.onclick = () => goToPage(page - 1);
+    btnPrev.onclick = () => { page--; render(); scrollTo({ top: 0, behavior: 'smooth' }); };
     p.appendChild(btnPrev);
 
-    // Numbered range
-    let start = Math.max(1, page - 2);
-    let end = Math.min(total, page + 2);
-
-    if (start > 1) {
-      const b1 = document.createElement('button');
-      b1.textContent = fmt(1);
-      b1.onclick = () => goToPage(1);
-      p.appendChild(b1);
-      if (start > 2) {
-        const dot = document.createElement('span');
-        dot.textContent = '...';
-        dot.style.color = '#777';
-        dot.style.padding = '0 4px';
-        p.appendChild(dot);
-      }
-    }
+    // Page range
+    let start = Math.max(1, page - 3);
+    let end = Math.min(total, page + 3);
 
     for (let i = start; i <= end; i++) {
       const b = document.createElement('button');
       b.textContent = fmt(i);
       if (i === page) b.className = 'active';
-      b.onclick = () => goToPage(i);
+      b.onclick = () => {
+        page = i;
+        render();
+        scrollTo({ top: 0, behavior: 'smooth' });
+      };
       p.appendChild(b);
-    }
-
-    if (end < total) {
-      if (end < total - 1) {
-        const dot = document.createElement('span');
-        dot.textContent = '...';
-        dot.style.color = '#777';
-        dot.style.padding = '0 4px';
-        p.appendChild(dot);
-      }
-      const bLast = document.createElement('button');
-      bLast.textContent = fmt(total);
-      bLast.onclick = () => goToPage(total);
-      p.appendChild(bLast);
     }
 
     // Next
     const btnNext = document.createElement('button');
-    btnNext.innerHTML = 'صفحه بعد ›';
+    btnNext.innerHTML = 'بعدی ›';
     btnNext.disabled = page === total;
-    btnNext.onclick = () => goToPage(page + 1);
+    btnNext.onclick = () => { page++; render(); scrollTo({ top: 0, behavior: 'smooth' }); };
     p.appendChild(btnNext);
 
     // Last
     const btnLast = document.createElement('button');
-    btnLast.innerHTML = 'آخر »';
+    btnLast.innerHTML = 'صفحه آخر »';
     btnLast.disabled = page === total;
-    btnLast.onclick = () => goToPage(total);
+    btnLast.onclick = () => { page = total; render(); scrollTo({ top: 0, behavior: 'smooth' }); };
     p.appendChild(btnLast);
   }
 
-  function readUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    const p = parseInt(params.get('page'), 10);
-    if (!isNaN(p) && p >= 1) {
-      page = p;
-    }
-    const urlQ = params.get('q');
-    if (urlQ) {
-      q = urlQ;
-      document.getElementById('q').value = q;
-    }
-  }
-
-  window.addEventListener('popstate', () => {
-    readUrlParams();
-    render();
-  });
-
   async function init() {
     try {
-      readUrlParams();
+      // Check query param if present
+      const params = new URLSearchParams(window.location.search);
+      const urlPage = parseInt(params.get('page'), 10);
+      if (!isNaN(urlPage) && urlPage >= 1) {
+        page = urlPage;
+      }
+      const urlQ = params.get('q');
+      if (urlQ) {
+        q = urlQ;
+        document.getElementById('q').value = q;
+      }
 
       let data = null;
       try {

@@ -41,9 +41,9 @@
 {"id": "P0041", "name": "ترمومتر لیزری ( 500 تا 20 - ) سلپرو", "page": 6, "image": "products/P0041.jpg", "card_crop": "cards/P0041.jpg", "header_bbox_pt": [401.08, 645.83, 187.65, 20.99]}
 {"id": "P0042", "name": "ترکمتر های جغجغه ایی ( دسته فلزی )", "page": 7, "image": "products/P0042.jpg", "card_crop": "cards/P0042.jpg", "header_bbox_pt": [28.78, 36.58, 559.95, 20.99]}
 {"id": "P0043", "name": "ترکمتر های جغجغه ایی ( دسته پالستیکی )", "page": 7, "image": "products/P0043.jpg", "card_crop": "cards/P0043.jpg", "header_bbox_pt": [28.78, 253.06, 559.95, 20.39]}
-{"id": "P0044", "name": "ترکمتر 2 / 1 - 1 درایو ( 3000 600 ) نیوتن 000 / 000 / 150 / 2 ترکمترهای تقه ایی و دیجیتال", "page": 7, "image": "products/P0044.jpg", "card_crop": "cards/P0044.jpg", "header_bbox_pt": [28.78, 512.11, 559.95, 20.99]}
-{"id": "P0045", "name": "000 / 000 / 550 ترکمتر 2 / 1 درایو ( 210 – 40 ) نیوتن با سری تعویض شو", "page": 7, "image": "products/P0045.jpg", "card_crop": "cards/P0045.jpg", "header_bbox_pt": [28.78, 663.22, 283.57, 20.99]}
-{"id": "P0046", "name": "ترکمتر 2 / 1 درایو دیجیتال ( 350 - 35 ) نیوتن ترکمتر 2 / 1 درایو ( 210 – 40 ) نیوتن با متعلقات ( 11 عددی )", "page": 7, "image": "products/P0046.jpg", "card_crop": "cards/P0046.jpg", "header_bbox_pt": [313.55, 663.22, 275.18, 20.99]}
+{"id": "P0044", "name": "ترکمترهای تقه ای و دیجیتال", "page": 7, "image": "products/P0044.jpg", "card_crop": "cards/P0044.jpg", "header_bbox_pt": [28.78, 512.11, 559.95, 20.99]}
+{"id": "P0045", "name": "ترکمتر 1/2 درایو ( 210 – 40 ) نیوتن با سری تعویض شو", "page": 7, "image": "products/P0045.jpg", "card_crop": "cards/P0045.jpg", "header_bbox_pt": [28.78, 663.22, 283.57, 20.99]}
+{"id": "P0046", "name": "ترکمتر 1/2 درایو ( 210 – 40 ) نیوتن با متعلقات ( 11 عددی )", "page": 7, "image": "products/P0046.jpg", "card_crop": "cards/P0046.jpg", "header_bbox_pt": [313.55, 663.22, 275.18, 20.99]}
 {"id": "P0047", "name": "جعبه ابزار 7 کشو کامل ( 365 پارچه ) چرخ دار", "page": 8, "image": "products/P0047.jpg", "card_crop": "cards/P0047.jpg", "header_bbox_pt": [28.78, 36.58, 559.95, 20.99]}
 {"id": "P0048", "name": "جعبه بکس 4 / 1 درایو ( 57 عددی )", "page": 9, "image": "products/P0048.jpg", "card_crop": "cards/P0048.jpg", "header_bbox_pt": [28.78, 36.58, 195.44, 20.99]}
 {"id": "P0049", "name": "جعبه بکس 4 / 1 درایو ( 46 عددی )", "page": 9, "image": "products/P0049.jpg", "card_crop": "cards/P0049.jpg", "header_bbox_pt": [224.82, 36.58, 182.25, 20.99]}
@@ -455,11 +455,11 @@
 {"id": "P0455", "name": "لیست بکس های 8 / 3 درایو کوتاه سلپرو", "page": 37, "image": null, "card_crop": "cards/P0455.jpg", "header_bbox_pt": [313.55, 409.57, 275.18, 20.39]}
 {"id": "P0456", "name": "بکس های 2 / 1 درایو بلند سلپرو", "page": 38, "image": null, "card_crop": "cards/P0456.jpg", "header_bbox_pt": [28.78, 36.58, 283.57, 20.99]}
 {"id": "P0457", "name": "بکس های 2 / 1 درایو کوتاه سلپرو", "page": 38, "image": null, "card_crop": "cards/P0457.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
-{"id": "P0458", "name": "32 000 / 300 / 9 بکس شمع مغناطیسی 8 / 3 درایو", "page": 38, "image": "products/P0458.jpg", "card_crop": "cards/P0458.jpg", "header_bbox_pt": [28.78, 598.46, 146.88, 20.99]}
-{"id": "P0459", "name": "32 000 / 300 / 9 بکس شمع", "page": 38, "image": "products/P0459.jpg", "card_crop": "cards/P0459.jpg", "header_bbox_pt": [176.26, 598.46, 136.09, 20.99]}
+{"id": "P0458", "name": "بکس شمع مغناطیسی 3/8 درایو", "page": 38, "image": "products/P0458.jpg", "card_crop": "cards/P0458.jpg", "header_bbox_pt": [28.78, 598.46, 146.88, 20.99]}
+{"id": "P0459", "name": "بکس شمع", "page": 38, "image": "products/P0459.jpg", "card_crop": "cards/P0459.jpg", "header_bbox_pt": [176.26, 598.46, 136.09, 20.99]}
 {"id": "P0460", "name": "بکس های 4 / 1 درایو ستاره ایی کوتاه E5", "page": 39, "image": null, "card_crop": "cards/P0460.jpg", "header_bbox_pt": [28.78, 36.58, 282.97, 20.99]}
 {"id": "P0461", "name": "بکس های 2 / 1 درایو مشکی فشارقوی ( CR-MO )", "page": 39, "image": "images/P0461.jpg", "card_crop": "cards/P0461.jpg", "header_bbox_pt": [312.95, 36.58, 275.78, 20.99]}
-{"id": "P0462", "name": "000 / 250 / 1 بکس های 2 / 1 درایو ستاره ایی کوتاه E8", "page": 39, "image": "products/P0462.jpg", "card_crop": "cards/P0462.jpg", "header_bbox_pt": [28.78, 166.11, 282.97, 20.99]}
+{"id": "P0462", "name": "بکس های 1/2 درایو ستاره ای کوتاه", "page": 39, "image": "products/P0462.jpg", "card_crop": "cards/P0462.jpg", "header_bbox_pt": [28.78, 166.11, 282.97, 20.99]}
 {"id": "P0463", "name": "بکس های 2 / 1 درایو ستاره ایی بلند E10", "page": 39, "image": "images/P0463.jpg", "card_crop": "cards/P0463.jpg", "header_bbox_pt": [28.78, 490.52, 282.97, 20.99]}
 {"id": "P0464", "name": "بکس های 4 / 3 درایو ستاره ایی بلند E24", "page": 39, "image": "products/P0464.jpg", "card_crop": "cards/P0464.jpg", "header_bbox_pt": [312.95, 684.81, 275.78, 20.99]}
 {"id": "P0465", "name": "لیست بکس های 4 / 3 درایو سفید", "page": 40, "image": "products/P0465.jpg", "card_crop": "cards/P0465.jpg", "header_bbox_pt": [28.78, 36.58, 559.95, 20.99]}
@@ -467,7 +467,7 @@
 {"id": "P0467", "name": "بکس 4 / 3 درایو مشکی ( CR-MO )", "page": 41, "image": "products/P0467.jpg", "card_crop": "cards/P0467.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
 {"id": "P0468", "name": "بکس \" 1 درایو مشکی بلند ( CR-MO )", "page": 42, "image": null, "card_crop": "cards/P0468.jpg", "header_bbox_pt": [28.78, 36.58, 283.57, 20.99]}
 {"id": "P0469", "name": "بکس \" 1 درایو مشکی کوتاه ( CR-MO )", "page": 42, "image": "images/P0469.jpg", "card_crop": "cards/P0469.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
-{"id": "P0470", "name": "90 ----- بکس \" 1 درایو مشکی بلند ( 4 گوش ) سلپرو", "page": 42, "image": "products/P0470.jpg", "card_crop": "cards/P0470.jpg", "header_bbox_pt": [28.78, 490.52, 283.57, 20.99]}
+{"id": "P0470", "name": "بکس \"1 درایو مشکی بلند ( 4 گوش ) سلپرو", "page": 42, "image": "products/P0470.jpg", "card_crop": "cards/P0470.jpg", "header_bbox_pt": [28.78, 490.52, 283.57, 20.99]}
 {"id": "P0471", "name": "آچار چرخ سواری", "page": 43, "image": "products/P0471.jpg", "card_crop": "cards/P0471.jpg", "header_bbox_pt": [28.78, 36.58, 277.58, 20.99]}
 {"id": "P0472", "name": "بکس \" 1 درایو سفید 6 پر کوتاه", "page": 43, "image": "images/P0472.jpg", "card_crop": "cards/P0472.jpg", "header_bbox_pt": [306.95, 36.58, 281.77, 20.99]}
 {"id": "P0473", "name": "آچار چرخ 4 طرفه ( 14.17.19.21 ) بهمراه مغزی یدکی 2 / 1", "page": 43, "image": "products/P0473.jpg", "card_crop": "cards/P0473.jpg", "header_bbox_pt": [28.78, 274.64, 277.58, 20.39]}
@@ -519,27 +519,27 @@
 {"id": "P0519", "name": "نوک پیچ گوشتی تقه ایی 6 / 3 سانتی ( S2 ) PH1", "page": 52, "image": "products/P0519.jpg", "card_crop": "cards/P0519.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
 {"id": "P0520", "name": "نوک بیت آلنی بلند 5 / 7 سانتی", "page": 52, "image": null, "card_crop": "cards/P0520.jpg", "header_bbox_pt": [28.78, 296.23, 283.57, 20.99]}
 {"id": "P0521", "name": "نوک بیت آلنی کوتاه 3 سانتی", "page": 52, "image": null, "card_crop": "cards/P0521.jpg", "header_bbox_pt": [313.55, 296.23, 275.18, 20.99]}
-{"id": "P0522", "name": "12 000 / 600 / 1 نوک بیت ستاره ایی بلند 5 / 7 سانتی", "page": 52, "image": "products/P0522.jpg", "card_crop": "cards/P0522.jpg", "header_bbox_pt": [28.78, 469.53, 283.57, 20.39]}
-{"id": "P0523", "name": "12 000 / 000 / 1 نوک بیت ستاره ایی کوتاه 3 سانتی", "page": 52, "image": "products/P0523.jpg", "card_crop": "cards/P0523.jpg", "header_bbox_pt": [313.55, 469.53, 275.18, 20.39]}
+{"id": "P0522", "name": "نوک بیت ستاره ای بلند 7.5 سانتی", "page": 52, "image": "products/P0522.jpg", "card_crop": "cards/P0522.jpg", "header_bbox_pt": [28.78, 469.53, 283.57, 20.39]}
+{"id": "P0523", "name": "نوک بیت ستاره ای کوتاه 3 سانتی", "page": 52, "image": "products/P0523.jpg", "card_crop": "cards/P0523.jpg", "header_bbox_pt": [313.55, 469.53, 275.18, 20.39]}
 {"id": "P0524", "name": "نوک پیچ گوشتی چهارسو 5 / 2 سانتی ( S2 ) PH2", "page": 53, "image": null, "card_crop": "cards/P0524.jpg", "header_bbox_pt": [28.78, 36.58, 283.57, 20.99]}
 {"id": "P0525", "name": "نوک بیت هزارخاری کوتاه 3 سانتی M5", "page": 53, "image": null, "card_crop": "cards/P0525.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
-{"id": "P0526", "name": "000 / 380 نوک پیچ گوشتی چهارسو 5 سانتی ( S2 ) PH00", "page": 53, "image": null, "card_crop": "cards/P0526.jpg", "header_bbox_pt": [28.78, 80.35, 283.57, 20.99]}
-{"id": "P0527", "name": "000 / 100 / 1 نوک بیت هزارخاری بلند 5 / 7 سانتی M5", "page": 53, "image": "images/P0527.jpg", "card_crop": "cards/P0527.jpg", "header_bbox_pt": [313.55, 167.3, 275.18, 20.99]}
-{"id": "P0528", "name": "000 / 850 نوک پیچ گوشتی چهارسو 5 / 6 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0528.jpg", "header_bbox_pt": [28.78, 188.89, 283.57, 20.99]}
-{"id": "P0529", "name": "000 / 900 نوک پیچ گوشتی چهارسو 10 سانتی ( S2 ) PH00", "page": 53, "image": null, "card_crop": "cards/P0529.jpg", "header_bbox_pt": [28.78, 232.67, 283.57, 20.99]}
-{"id": "P0530", "name": "000 / 100 / 1 نوک پیچ گوشتی چهارسو 15 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0530.jpg", "header_bbox_pt": [28.78, 341.21, 283.57, 20.99]}
+{"id": "P0526", "name": "نوک پیچ گوشتی چهارسو 5 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0526.jpg", "header_bbox_pt": [28.78, 80.35, 283.57, 20.99]}
+{"id": "P0527", "name": "نوک بیت هزارخاری بلند 7.5 سانتی M5", "page": 53, "image": "images/P0527.jpg", "card_crop": "cards/P0527.jpg", "header_bbox_pt": [313.55, 167.3, 275.18, 20.99]}
+{"id": "P0528", "name": "نوک پیچ گوشتی چهارسو 6.5 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0528.jpg", "header_bbox_pt": [28.78, 188.89, 283.57, 20.99]}
+{"id": "P0529", "name": "نوک پیچ گوشتی چهارسو 10 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0529.jpg", "header_bbox_pt": [28.78, 232.67, 283.57, 20.99]}
+{"id": "P0530", "name": "نوک پیچ گوشتی چهارسو 15 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0530.jpg", "header_bbox_pt": [28.78, 341.21, 283.57, 20.99]}
 {"id": "P0531", "name": "نوک پیچ گوشتی دوطرفه چهارسو ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0531.jpg", "header_bbox_pt": [313.55, 384.98, 275.18, 20.99]}
-{"id": "P0532", "name": "000 / 500 / 2 نوک پیچ گوشتی چهارسو 20 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0532.jpg", "header_bbox_pt": [28.78, 428.76, 283.57, 20.99]}
-{"id": "P0533", "name": "000 / 800 / 2 نوک پیچ گوشتی چهارسو 25 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0533.jpg", "header_bbox_pt": [28.78, 472.53, 283.57, 20.99]}
-{"id": "P0534", "name": "000 / 800 / 3 نوک پیچ گوشتی چهارسو 30 سانتی ( S2 ) PH2", "page": 53, "image": "images/P0534.jpg", "card_crop": "cards/P0534.jpg", "header_bbox_pt": [28.78, 516.31, 283.57, 20.99]}
-{"id": "P0535", "name": "30 سانتی 000 / 600 / 4 نوک پیچ گوشتی دوسو چهارسو ( S2 )", "page": 53, "image": "images/P0535.jpg", "card_crop": "cards/P0535.jpg", "header_bbox_pt": [313.55, 560.08, 275.18, 20.99]}
+{"id": "P0532", "name": "نوک پیچ گوشتی چهارسو 20 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0532.jpg", "header_bbox_pt": [28.78, 428.76, 283.57, 20.99]}
+{"id": "P0533", "name": "نوک پیچ گوشتی چهارسو 25 سانتی ( S2 )", "page": 53, "image": null, "card_crop": "cards/P0533.jpg", "header_bbox_pt": [28.78, 472.53, 283.57, 20.99]}
+{"id": "P0534", "name": "نوک پیچ گوشتی چهارسو 30 سانتی ( S2 ) PH2", "page": 53, "image": "images/P0534.jpg", "card_crop": "cards/P0534.jpg", "header_bbox_pt": [28.78, 516.31, 283.57, 20.99]}
+{"id": "P0535", "name": "نوک پیچ گوشتی دوسو چهارسو ( S2 )", "page": 53, "image": "images/P0535.jpg", "card_crop": "cards/P0535.jpg", "header_bbox_pt": [313.55, 560.08, 275.18, 20.99]}
 {"id": "P0536", "name": "نوک بیت ستاره ایی کوتاه 5 سانتی فشارقوی", "page": 53, "image": "products/P0536.jpg", "card_crop": "cards/P0536.jpg", "header_bbox_pt": [28.78, 668.62, 283.57, 20.39]}
 {"id": "P0537", "name": "نوک پیچ گوشتی ستاره ایی 5 سانتی ( S2 ) T10", "page": 54, "image": null, "card_crop": "cards/P0537.jpg", "header_bbox_pt": [28.78, 36.58, 283.57, 20.99]}
 {"id": "P0538", "name": "نوک پیچ گوشتی آلنی 5 سانتی ( S2 ) H1/5", "page": 54, "image": null, "card_crop": "cards/P0538.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
-{"id": "P0539", "name": "T40 000 / 850 نوک پیچ گوشتی ستاره ایی 10 سانتی ( S2 ) T10", "page": 54, "image": null, "card_crop": "cards/P0539.jpg", "header_bbox_pt": [28.78, 209.88, 283.57, 21.59]}
-{"id": "P0540", "name": "H6 000 / 850 نوک پیچ گوشتی آلنی 10 سانتی ( S2 ) H1/5", "page": 54, "image": null, "card_crop": "cards/P0540.jpg", "header_bbox_pt": [313.55, 209.88, 275.18, 21.59]}
-{"id": "P0541", "name": "T40 000 / 700 / 1 نوک پیچ گوشتی ستاره ایی 15 سانتی ( S2 ) T10", "page": 54, "image": "products/P0541.jpg", "card_crop": "cards/P0541.jpg", "header_bbox_pt": [28.78, 383.18, 283.57, 21.59]}
-{"id": "P0542", "name": "H6 000 / 700 / 1 نوک پیچ گوشتی آلنی 15 سانتی ( S2 ) H2", "page": 54, "image": "products/P0542.jpg", "card_crop": "cards/P0542.jpg", "header_bbox_pt": [313.55, 383.18, 275.18, 21.59]}
+{"id": "P0539", "name": "نوک پیچ گوشتی ستاره ای 10 سانتی ( S2 )", "page": 54, "image": null, "card_crop": "cards/P0539.jpg", "header_bbox_pt": [28.78, 209.88, 283.57, 21.59]}
+{"id": "P0540", "name": "نوک پیچ گوشتی آلنی 10 سانتی ( S2 )", "page": 54, "image": null, "card_crop": "cards/P0540.jpg", "header_bbox_pt": [313.55, 209.88, 275.18, 21.59]}
+{"id": "P0541", "name": "نوک پیچ گوشتی ستاره ای 15 سانتی ( S2 )", "page": 54, "image": "products/P0541.jpg", "card_crop": "cards/P0541.jpg", "header_bbox_pt": [28.78, 383.18, 283.57, 21.59]}
+{"id": "P0542", "name": "نوک پیچ گوشتی آلنی 15 سانتی ( S2 )", "page": 54, "image": "products/P0542.jpg", "card_crop": "cards/P0542.jpg", "header_bbox_pt": [313.55, 383.18, 275.18, 21.59]}
 {"id": "P0543", "name": "سوهان تکی آهن ساب", "page": 54, "image": "products/P0543.jpg", "card_crop": "cards/P0543.jpg", "header_bbox_pt": [28.78, 643.43, 283.57, 20.39]}
 {"id": "P0544", "name": "کیت سوهان 5 عددی آهن ساب", "page": 54, "image": "products/P0544.jpg", "card_crop": "cards/P0544.jpg", "header_bbox_pt": [313.55, 643.43, 275.18, 20.39]}
 {"id": "P0545", "name": "پیچ گوشتی ضربه خور دوسو ( S2 ) SL5-125", "page": 55, "image": "products/P0545.jpg", "card_crop": "cards/P0545.jpg", "header_bbox_pt": [28.78, 36.58, 283.57, 20.99]}
@@ -549,7 +549,7 @@
 {"id": "P0549", "name": "پیچ گوشتی آلن ( S2 )", "page": 55, "image": "products/P0549.jpg", "card_crop": "cards/P0549.jpg", "header_bbox_pt": [28.78, 596.66, 283.57, 20.99]}
 {"id": "P0550", "name": "آچار آلن دسته T عصایی ( S2 ) H1/5", "page": 56, "image": "images/P0550.jpg", "card_crop": "cards/P0550.jpg", "header_bbox_pt": [28.78, 36.58, 283.57, 20.99]}
 {"id": "P0551", "name": "آچار آلن دسته T کوتاه ( S2 ) H1/5-80MM", "page": 56, "image": null, "card_crop": "cards/P0551.jpg", "header_bbox_pt": [313.55, 36.58, 275.18, 20.99]}
-{"id": "P0552", "name": "H6-170MM 000 / 300 / 7 آچار آلن دسته T بلند ( S2 ) H2-192MM", "page": 56, "image": "images/P0552.jpg", "card_crop": "cards/P0552.jpg", "header_bbox_pt": [313.55, 209.88, 275.18, 21.59]}
+{"id": "P0552", "name": "آچار آلن دسته T بلند ( S2 )", "page": 56, "image": "images/P0552.jpg", "card_crop": "cards/P0552.jpg", "header_bbox_pt": [313.55, 209.88, 275.18, 21.59]}
 {"id": "P0553", "name": "کیت آچار آلن دسته T ( 6 – 5 / 1 )", "page": 56, "image": "products/P0553.jpg", "card_crop": "cards/P0553.jpg", "header_bbox_pt": [124.7, 361.59, 187.65, 21.59]}
 {"id": "P0554", "name": "کیت آچار آلن دسته T عصایی 8 عددی ( 10 – 2 )", "page": 56, "image": "products/P0554.jpg", "card_crop": "cards/P0554.jpg", "header_bbox_pt": [28.78, 500.71, 283.57, 20.39]}
 {"id": "P0555", "name": "کیت آچار آلن دسته T عصایی 9 عددی ( 8 – 5 / 1 )", "page": 56, "image": "products/P0555.jpg", "card_crop": "cards/P0555.jpg", "header_bbox_pt": [313.55, 500.71, 275.18, 20.39]}
@@ -820,7 +820,7 @@
 {"id": "P0820", "name": "پولوس کش فوالدی", "page": 74, "image": "products/P0820.jpg", "card_crop": "cards/P0820.jpg", "header_bbox_pt": [411.87, 641.63, 176.86, 20.99]}
 {"id": "P0821", "name": "آچار آلن های کوتاه ( CR.V.MO )( اس جی تی )", "page": 75, "image": null, "card_crop": "cards/P0821.jpg", "header_bbox_pt": [53.96, 36.58, 267.98, 20.99]}
 {"id": "P0822", "name": "آچار یکسررینگی ( اس جی تی )", "page": 75, "image": "images/P0822.jpg", "card_crop": "cards/P0822.jpg", "header_bbox_pt": [322.54, 36.58, 266.19, 20.99]}
-{"id": "P0823", "name": "19 000 / 500 / 5 آچار آلن های فوق بلند ( CR.V.MO )( اس جی تی )", "page": 75, "image": "products/P0823.jpg", "card_crop": "cards/P0823.jpg", "header_bbox_pt": [53.96, 274.64, 267.98, 20.39]}
+{"id": "P0823", "name": "آچار آلن های فوق بلند ( CR.V.MO ) ( اس جی تی )", "page": 75, "image": "products/P0823.jpg", "card_crop": "cards/P0823.jpg", "header_bbox_pt": [53.96, 274.64, 267.98, 20.39]}
 {"id": "P0824", "name": "آچار تخت چکشی ( اس جی تی )", "page": 76, "image": "products/P0824.jpg", "card_crop": "cards/P0824.jpg", "header_bbox_pt": [53.96, 36.58, 267.98, 20.99]}
 {"id": "P0825", "name": "آچار رینگی چکشی ( اس جی تی )", "page": 76, "image": "products/P0825.jpg", "card_crop": "cards/P0825.jpg", "header_bbox_pt": [322.54, 36.58, 266.19, 20.99]}
 {"id": "P0826", "name": "لغلغه مشکی ( اس جی تی )", "page": 77, "image": "products/P0826.jpg", "card_crop": "cards/P0826.jpg", "header_bbox_pt": [53.96, 36.58, 267.38, 20.99]}
@@ -905,4 +905,4 @@
 {"id": "P0905", "name": "بکس ستاره ایی دینام کوچک", "page": 88, "image": "products/P0905.jpg", "card_crop": "cards/P0905.jpg", "header_bbox_pt": [220.62, 601.46, 183.45, 25.79]}
 {"id": "P0906", "name": "پولی کش کمپرسور کولر", "page": 88, "image": "products/P0906.jpg", "card_crop": "cards/P0906.jpg", "header_bbox_pt": [405.27, 601.46, 183.45, 25.79]}
 {"id": "P0907", "name": "لیست قیمت رینک جمع کن بوشی", "page": 89, "image": "products/P0907.jpg", "card_crop": "cards/P0907.jpg", "header_bbox_pt": [28.78, 36.58, 559.95, 24.59]}
-{"id": "P0908", "name": "ابزار رینگ جمع کن بوشی نیسان + سایپا 000 / 500 / 4 لیست قیمت کاسه نمد جازن های ماشین های ایرانی", "page": 89, "image": "products/P0908.jpg", "card_crop": "cards/P0908.jpg", "header_bbox_pt": [28.78, 363.39, 559.95, 23.99]}
+{"id": "P0908", "name": "لیست قیمت کاسه نمد جازن های خودروهای ایرانی", "page": 89, "image": "products/P0908.jpg", "card_crop": "cards/P0908.jpg", "header_bbox_pt": [28.78, 363.39, 559.95, 23.99]}
