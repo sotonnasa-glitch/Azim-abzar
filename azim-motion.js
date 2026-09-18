@@ -1,191 +1,126 @@
 (() => {
-  if (window.__azimIndustrialMotionV3) return;
-  window.__azimIndustrialMotionV3 = true;
+  if (window.__azimIndustrialMotionV7) return;
+  window.__azimIndustrialMotionV7 = true;
 
   const style = document.createElement('style');
-  style.id = 'azim-enhanced-motion-styles';
+  style.id = 'azim-enhanced-motion-styles-v7';
   style.textContent = `
-    /* === Typography & Highlight Shimmer === */
-    @keyframes azGoldShimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .hero h1 span, .brand strong, .top b, .num {
-      background: linear-gradient(135deg, #ffd84f 0%, #ffffff 30%, #f5b900 65%, #ffd84f 100%);
-      background-size: 250% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: azGoldShimmer 6s ease-in-out infinite;
-      display: inline-block;
+    /* === Floating Ambient Canvas === */
+    #az-ambient-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.65;
     }
 
-    /* === Brand Gear Animation === */
+    /* === Brand Gear Smooth Spin === */
     .brand .mark {
-      transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+      transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
       cursor: pointer;
     }
-    .brand:hover .mark {
-      transform: rotate(180deg) scale(1.08);
-      box-shadow: 0 0 38px rgba(245,185,0,.65);
+    .brand .mark svg {
+      animation: azBrandGearIdle 32s linear infinite;
+      transition: transform 0.4s ease;
+      transform-origin: center center;
+    }
+    .brand:hover .mark svg {
+      animation: none;
+      transform: rotate(180deg) scale(1.1);
+    }
+    @keyframes azBrandGearIdle {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
-    /* === Hero Ambient Glow & Particle Motion === */
+    /* === Hero Ambient Rings & Engineering Grid Overlay === */
     .az-motion-stage {
       position: absolute;
       inset: 0;
       pointer-events: none;
       z-index: 2;
       overflow: hidden;
-      opacity: .96;
-      transition: transform .25s cubic-bezier(.2,.8,.2,1);
-    }
-    .az-motion-stage:before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 75% 40%, rgba(245,185,0,.18), transparent 32%),
-                  radial-gradient(circle at 90% 75%, rgba(255,255,255,.05), transparent 25%);
-      mix-blend-mode: screen;
+      opacity: .8;
     }
     .az-motion-stage .ring {
       position: absolute;
-      border: 1px solid rgba(245,185,0,.22);
+      border: 1px solid rgba(245,185,0,.14);
       border-radius: 50%;
-      box-shadow: inset 0 0 50px rgba(245,185,0,.06), 0 0 30px rgba(245,185,0,.04);
+      box-shadow: inset 0 0 40px rgba(245,185,0,.03);
     }
-    .az-motion-stage .ring:after {
-      content: "";
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--gold2, #ffd84f);
-      box-shadow: 0 0 18px rgba(255,216,79,1);
-      left: 12%;
-      top: 18%;
-      animation: azDot 7s linear infinite;
+    .az-motion-stage .r1 {
+      width: 540px;
+      height: 540px;
+      left: 10px;
+      top: -10%;
+      border-style: dashed;
+      animation: azRingSpinSlow 90s linear infinite;
     }
-    .az-motion-stage .r1 { width: 540px; height: 540px; right: -130px; top: -8%; animation: azFloatRing 14s ease-in-out infinite; }
-    .az-motion-stage .r2 { width: 340px; height: 340px; right: 9%; top: 16%; border-style: dashed; opacity: .65; animation: azSpin 24s linear infinite reverse; }
-    .az-motion-stage .r3 { width: 160px; height: 160px; right: 28%; top: 32%; opacity: .45; animation: azFloatRing 10s ease-in-out infinite reverse; }
-    
-    .az-motion-stage .orbit {
-      position: absolute;
-      width: 450px;
-      height: 160px;
-      right: 3%;
-      top: 30%;
-      border: 1px solid rgba(255,216,79,.2);
-      border-radius: 50%;
-      transform: rotate(-24deg);
-      animation: azOrbit 14s linear infinite;
+    .az-motion-stage .r2 {
+      width: 340px;
+      height: 340px;
+      left: 120px;
+      top: 15%;
+      border: 1px solid rgba(255,216,79,.1);
+      animation: azRingSpinReverse 60s linear infinite;
     }
-    .az-motion-stage .orbit:before {
-      content: "";
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      right: 18%;
-      top: 2px;
-      border-radius: 50%;
-      background: var(--gold2, #ffd84f);
-      box-shadow: 0 0 25px rgba(255,216,79,1);
+    @keyframes azRingSpinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
-    .az-motion-stage .beam {
-      position: absolute;
-      right: -10%;
-      top: 0%;
-      width: 70%;
-      height: 85%;
-      background: linear-gradient(120deg, transparent 0%, rgba(255,216,79,.12) 48%, transparent 56%);
-      filter: blur(4px);
-      animation: azBeam 9s ease-in-out infinite;
+    @keyframes azRingSpinReverse {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
     }
+
+    /* Engineering Coordinates Grid Mask */
     .az-motion-stage .grid {
       position: absolute;
-      right: 0;
+      left: 0;
       top: 0;
-      width: 60%;
+      width: 50%;
       height: 100%;
-      opacity: .14;
+      opacity: .07;
       background-image: linear-gradient(rgba(255,216,79,.25) 1px, transparent 1px),
                         linear-gradient(90deg, rgba(255,216,79,.25) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(circle at 70% 40%, black, transparent 75%);
-      animation: azGrid 20s linear infinite;
+      background-size: 50px 50px;
+      mask-image: radial-gradient(circle at 40% 50%, black, transparent 75%);
     }
-    .az-motion-stage .crosshair {
-      position: absolute;
-      right: 25%;
-      top: 25%;
-      width: 96px;
-      height: 96px;
-      border: 1px solid rgba(255,216,79,.3);
-      border-radius: 50%;
-      animation: azCross 8s ease-in-out infinite;
+
+    /* === Interactive Laser Scanline for Category & Featured Cards === */
+    .az-scanline-card {
+      position: relative;
+      overflow: hidden;
     }
-    .az-motion-stage .crosshair:before, .az-motion-stage .crosshair:after {
+    .az-scanline-card::before {
       content: "";
       position: absolute;
-      background: rgba(255,216,79,.35);
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 35%;
+      background: linear-gradient(180deg, transparent, rgba(245,185,0,.22), rgba(255,216,79,.4), transparent);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity 0.2s ease;
     }
-    .az-motion-stage .crosshair:before { width: 130%; height: 1px; left: -15%; top: 50%; }
-    .az-motion-stage .crosshair:after { height: 130%; width: 1px; top: -15%; left: 50%; }
+    .az-scanline-card:hover::before {
+      opacity: 1;
+      animation: azLaserSweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes azLaserSweep {
+      0% { top: -40%; }
+      100% { top: 120%; }
+    }
 
-    /* Animated Sparks */
-    .az-motion-stage .spark {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: #ffd84f;
-      box-shadow: 0 0 16px #f5b900, 0 0 30px #f5b900;
-      animation: azSpark 4.5s ease-in-out infinite;
-    }
-    .az-motion-stage .s1 { right: 16%; top: 26%; animation-delay: 0s; }
-    .az-motion-stage .s2 { right: 38%; top: 16%; animation-delay: -1.4s; }
-    .az-motion-stage .s3 { right: 22%; bottom: 20%; animation-delay: -2.8s; }
-    .az-motion-stage .s4 { right: 48%; bottom: 28%; animation-delay: -3.5s; }
-    .az-motion-stage .s5 { right: 30%; top: 48%; animation-delay: -2.1s; }
-
-    /* Animated Tech Chips */
-    .az-motion-stage .chip {
-      position: absolute;
-      padding: 7px 14px;
-      border: 1px solid rgba(255,216,79,.3);
-      border-radius: 10px;
-      background: rgba(8,11,9,.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      font: 800 9px/1.2 Vazirmatn, Tahoma, sans-serif;
-      color: rgba(255,216,79,.95);
-      letter-spacing: .08em;
-      box-shadow: 0 10px 25px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.12);
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-    .az-motion-stage .chip .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #ffd84f;
-      box-shadow: 0 0 10px #ffd84f;
-      animation: azPulseGlow 1.5s infinite alternate;
-    }
-    .az-motion-stage .chip.one { right: 9%; top: 11%; animation: azChip 4.6s ease-in-out infinite; }
-    .az-motion-stage .chip.two { right: 36%; bottom: 12%; animation: azChip 5.6s ease-in-out infinite reverse; }
-    .az-motion-stage .chip.three { right: 2%; bottom: 32%; animation: azChip 6.2s ease-in-out infinite 1s; }
-    .az-motion-stage .chip b { color: #fff; }
-
-    /* === Interactive Card 3D & Mouse Glow === */
-    .card, .az-choice, .az-feat-card {
+    /* === Smooth Mouse Glow on Cards === */
+    .card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento {
       position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-                  border-color 0.28s ease,
-                  box-shadow 0.28s ease !important;
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease !important;
     }
     .az-card-glow {
       position: absolute;
@@ -193,90 +128,108 @@
       pointer-events: none;
       border-radius: inherit;
       opacity: 0;
-      transition: opacity 0.35s ease;
-      background: radial-gradient(circle 200px at var(--mx, 50%) var(--my, 50%), rgba(245,185,0,.22), transparent 75%);
-      z-index: 2;
+      transition: opacity 0.3s ease;
+      background: radial-gradient(circle 280px at var(--mx, 50%) var(--my, 50%), rgba(245,185,0,.18), transparent 75%);
+      z-index: 4;
     }
-    .card:hover .az-card-glow, .az-choice:hover .az-card-glow, .az-feat-card:hover .az-card-glow {
+    .card:hover .az-card-glow, 
+    .az-choice:hover .az-card-glow, 
+    .az-feat-card:hover .az-card-glow,
+    .az-showcase-card:hover .az-card-glow,
+    .az-cat-bento:hover .az-card-glow {
       opacity: 1;
     }
 
-    /* === Scroll Reveal & Stagger Animations === */
-    .az-reveal {
+    /* === Smooth Natural Scroll Reveal === */
+    .az-scroll-fade {
       opacity: 0;
-      transform: translateY(28px);
-      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(22px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: opacity, transform;
     }
-    .az-reveal.az-visible {
+    .az-scroll-fade.az-visible {
       opacity: 1;
       transform: translateY(0);
     }
-    .card.az-reveal:nth-child(1) { transition-delay: 0.05s; }
-    .card.az-reveal:nth-child(2) { transition-delay: 0.12s; }
-    .card.az-reveal:nth-child(3) { transition-delay: 0.19s; }
-    .card.az-reveal:nth-child(4) { transition-delay: 0.26s; }
-    .card.az-reveal:nth-child(5) { transition-delay: 0.33s; }
-    .card.az-reveal:nth-child(6) { transition-delay: 0.40s; }
 
-    /* === Keyframe Definitions === */
-    @keyframes azSpin { to { transform: rotate(360deg); } }
-    @keyframes azFloatRing {
-      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-      50% { transform: translate3d(-14px, 16px, 0) rotate(9deg); }
+    @media (max-width: 1040px) {
+      .az-cat-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    @keyframes azDot { to { transform: rotate(360deg) translateX(180px) rotate(-360deg); } }
-    @keyframes azOrbit { to { transform: rotate(336deg); } }
-    @keyframes azBeam {
-      0%, 100% { transform: translateX(35%); opacity: 0; }
-      35% { opacity: 1; }
-      70% { transform: translateX(-30%); opacity: .55; }
-    }
-    @keyframes azGrid { to { transform: translate3d(-60px, 60px, 0); } }
-    @keyframes azCross {
-      0%, 100% { transform: scale(.92) rotate(0); opacity: .25; }
-      50% { transform: scale(1.08) rotate(90deg); opacity: .65; }
-    }
-    @keyframes azSpark {
-      0%, 100% { transform: translate3d(0, 0, 0) scale(.5); opacity: .15; }
-      50% { transform: translate3d(-15px, -22px, 0) scale(1.7); opacity: 1; }
-    }
-    @keyframes azChip {
-      0%, 100% { transform: translate3d(0, 0, 0); opacity: .6; }
-      50% { transform: translate3d(-8px, -10px, 0); opacity: 1; }
-    }
-    @keyframes azPulseGlow {
-      0% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 6px #ffd84f; }
-      100% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 16px #ffd84f; }
-    }
-
-    @media(max-width:700px){
-      .az-motion-stage{opacity:.65;}
-      .az-motion-stage .r1{width:320px;height:320px;right:-120px;top:6%;}
-      .az-motion-stage .r2{width:200px;height:200px;right:4%;top:28%;}
-      .az-motion-stage .r3{width:95px;height:95px;right:22%;top:38%;}
-      .az-motion-stage .orbit{width:260px;height:100px;right:-8%;top:36%;}
-      .az-motion-stage .grid{width:80%;background-size:48px 48px;}
-      .az-motion-stage .crosshair{right:20%;top:30%;width:70px;height:70px;}
-      .az-motion-stage .chip{font-size:7px;padding:5px 8px;}
-      .az-motion-stage .chip.two, .az-motion-stage .chip.three{display:none;}
-    }
-
-    @media(prefers-reduced-motion:reduce){
-      .az-motion-stage *, .card, .btn.primary {
-        animation: none !important;
-        transition: none !important;
-      }
-      .az-reveal {
-        opacity: 1 !important;
-        transform: none !important;
-      }
+    @media (max-width: 640px) {
+      .az-cat-grid { grid-template-columns: 1fr; }
     }
   `;
   document.head.appendChild(style);
 
-  // 1. Mount Hero Interactive Stage
-  function mountHero() {
+  // 1. Mount Canvas for Subtle Floating Metallic Particles & Ember Sparks
+  function mountAmbientCanvas() {
+    if (document.getElementById('az-ambient-canvas')) return;
+    const canvas = document.createElement('canvas');
+    canvas.id = 'az-ambient-canvas';
+    canvas.setAttribute('aria-hidden', 'true');
+    document.body.prepend(canvas);
+
+    const ctx = canvas.getContext('2d');
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }, { passive: true });
+
+    // Particle count: 28 particles (super lightweight, 60fps)
+    const count = 28;
+    const particles = [];
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 1.5 + 0.8,
+        vx: (Math.random() - 0.5) * 0.25 + 0.15, // gentle drift to right
+        vy: (Math.random() - 0.5) * 0.2 - 0.15, // gentle drift up
+        alpha: Math.random() * 0.4 + 0.1,
+        color: Math.random() > 0.4 ? 'rgba(245,185,0,' : 'rgba(255,255,255,'
+      });
+    }
+
+    let isVisible = true;
+    document.addEventListener('visibilitychange', () => {
+      isVisible = !document.hidden;
+    });
+
+    function draw() {
+      if (!isVisible) {
+        requestAnimationFrame(draw);
+        return;
+      }
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < count; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `${p.color}${p.alpha})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#f5b900';
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  }
+
+  // 2. Mount Mechanical Stage in Hero
+  function mountHeroStage() {
     const hero = document.querySelector('.heroBox');
     if (!hero || hero.querySelector('.az-motion-stage')) return;
 
@@ -285,40 +238,112 @@
     stage.setAttribute('aria-hidden', 'true');
     stage.innerHTML = `
       <div class="grid"></div>
-      <div class="beam"></div>
       <div class="ring r1"></div>
       <div class="ring r2"></div>
-      <div class="ring r3"></div>
-      <div class="orbit"></div>
-      <div class="crosshair"></div>
-      <i class="spark s1"></i>
-      <i class="spark s2"></i>
-      <i class="spark s3"></i>
-      <i class="spark s4"></i>
-      <i class="spark s5"></i>
-      <div class="chip one"><span class="dot"></span> <b>PRECISION</b> 908 TOOLS</div>
-      <div class="chip two"><span class="dot"></span> <b>TORQUE</b> 40-210 Nm</div>
-      <div class="chip three"><span class="dot"></span> <b>CR-V</b> ALLOY STEEL</div>
     `;
     hero.appendChild(stage);
-
-    // Interactive 3D tilt on hero box
-    hero.addEventListener('pointermove', e => {
-      if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-      const r = hero.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      stage.style.transform = `translate3d(${x * -14}px, ${y * -9}px, 0)`;
-    }, { passive: true });
-
-    hero.addEventListener('pointerleave', () => {
-      stage.style.transform = '';
-    });
   }
 
-  // 2. Interactive 3D Tilt on Category & Feature Cards with Dynamic Spotlight Glow
-  function setupCardTilt() {
-    const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card');
+  // 3. Interactive Smooth Parallax on Hero HUD
+  function setupHeroParallax() {
+    const heroBox = document.querySelector('.heroBox');
+    const hud = document.querySelector('.az-hero-interactive-hud');
+    if (!heroBox || !hud) return;
+
+    let ticking = false;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    heroBox.addEventListener('pointermove', e => {
+      const rect = heroBox.getBoundingClientRect();
+      const nx = (e.clientX - rect.left) / rect.width - 0.5;
+      const ny = (e.clientY - rect.top) / rect.height - 0.5;
+      targetX = nx * -16;
+      targetY = ny * -16;
+
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(updateHudParallax);
+      }
+    }, { passive: true });
+
+    heroBox.addEventListener('pointerleave', () => {
+      targetX = 0;
+      targetY = 0;
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(updateHudParallax);
+      }
+    });
+
+    function updateHudParallax() {
+      currentX += (targetX - currentX) * 0.1;
+      currentY += (targetY - currentY) * 0.1;
+      hud.style.transform = `translateY(-50%) translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0)`;
+
+      if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
+        requestAnimationFrame(updateHudParallax);
+      } else {
+        ticking = false;
+      }
+    }
+  }
+
+  // 4. Torque Gauge Interactive Needle & Number Count-Up
+  function setupGaugeInteractivity() {
+    const numEl = document.getElementById('az-gauge-num');
+    const needle = document.querySelector('.az-gauge-needle');
+    const hudCard = document.querySelector('.az-hud-card');
+    if (!numEl) return;
+
+    const toPersian = num => String(num).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+    let start = 0;
+    const target = 450;
+    const duration = 1400;
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(eased * target);
+      numEl.textContent = toPersian(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        numEl.textContent = toPersian(target);
+      }
+    }
+    requestAnimationFrame(step);
+
+    if (hudCard && needle) {
+      hudCard.addEventListener('pointerenter', () => {
+        needle.style.animationPlayState = 'paused';
+        needle.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        needle.style.transform = 'rotate(24deg)';
+        numEl.textContent = toPersian(520);
+        numEl.style.color = '#fff';
+      });
+
+      hudCard.addEventListener('pointerleave', () => {
+        needle.style.transition = 'transform 0.5s ease';
+        needle.style.transform = 'rotate(-18deg)';
+        setTimeout(() => {
+          needle.style.animationPlayState = 'running';
+          numEl.textContent = toPersian(450);
+          numEl.style.color = '#ffd84f';
+        }, 500);
+      });
+    }
+  }
+
+  // 5. Card Glow with Mouse Follow
+  function setupCardGlow() {
+    const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-photo-card');
     cards.forEach(card => {
       if (card.querySelector('.az-card-glow')) return;
 
@@ -326,57 +351,108 @@
       glow.className = 'az-card-glow';
       card.appendChild(glow);
 
+      let ticking = false;
       card.addEventListener('pointermove', e => {
-        if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -5.5;
-        const rotateY = ((x - centerX) / centerX) * 5.5;
-
-        card.style.transform = `perspective(850px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-6px)`;
-        card.style.setProperty('--mx', `${x}px`);
-        card.style.setProperty('--my', `${y}px`);
-      });
-
-      card.addEventListener('pointerleave', () => {
-        card.style.transform = '';
-      });
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          card.style.setProperty('--mx', `${x}px`);
+          card.style.setProperty('--my', `${y}px`);
+          ticking = false;
+        });
+      }, { passive: true });
     });
   }
 
-  // 3. Scroll Reveal Observer
+  // 6. Scroll Reveal for Sections and Cards
   function setupScrollReveal() {
-    const targets = document.querySelectorAll('.card, .sectionHead, .az-ticker-section, .note, #azim-choice-guide, #azim-why-us, footer');
-    targets.forEach(el => el.classList.add('az-reveal'));
+    const targets = document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card');
+    if (!targets.length || !('IntersectionObserver' in window)) return;
 
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('az-visible');
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { rootMargin: '0px 0px -40px 0px', threshold: 0.1 });
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('az-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -30px 0px'
+    });
 
-      targets.forEach(el => observer.observe(el));
-    } else {
-      targets.forEach(el => el.classList.add('az-visible'));
+    targets.forEach(el => {
+      el.classList.add('az-scroll-fade');
+      observer.observe(el);
+    });
+  }
+
+  // 7. Interactive Lightbox for Industrial Tool Photo Gallery
+  function setupLightbox() {
+    const lightbox = document.getElementById('az-lightbox');
+    if (!lightbox) return;
+
+    const lbImg = document.getElementById('az-lightbox-img');
+    const lbCaption = document.getElementById('az-lightbox-caption');
+    const closeBtn = document.getElementById('az-lightbox-close');
+    const backdrop = document.getElementById('az-lightbox-backdrop');
+    const photoCards = document.querySelectorAll('.az-photo-card');
+
+    function openLightbox(card) {
+      const fullSrc = card.getAttribute('data-full-src') || card.querySelector('img')?.src;
+      const caption = card.getAttribute('data-caption') || card.querySelector('img')?.alt || '';
+      if (!fullSrc) return;
+
+      lbImg.src = fullSrc;
+      lbImg.alt = caption;
+      lbCaption.textContent = caption;
+      lightbox.classList.add('active');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     }
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        if (!lightbox.classList.contains('active')) {
+          lbImg.src = '';
+        }
+      }, 300);
+    }
+
+    photoCards.forEach(card => {
+      card.addEventListener('click', () => openLightbox(card));
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openLightbox(card);
+        }
+      });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+    if (backdrop) backdrop.addEventListener('click', closeLightbox);
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
   }
 
   function init() {
-    mountHero();
-    setupCardTilt();
+    mountAmbientCanvas();
+    mountHeroStage();
+    setupHeroParallax();
+    setupGaugeInteractivity();
+    setupCardGlow();
     setupScrollReveal();
-
-    setTimeout(() => {
-      setupCardTilt();
-      setupScrollReveal();
-    }, 600);
+    setupLightbox();
   }
 
   if (document.readyState === 'loading') {
