@@ -87,6 +87,24 @@ jobs:
           test -s _site/products.html
           test -s _site/products-v3.html
 
+      - name: Validate admin panel runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('_site/admin.html').read_text(encoding='utf-8')
+          assert 'پنل مدیریت' in html
+          match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
+          Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
+          cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
+          assert 'service_role' not in cfg and 'sb_publishable_' in cfg
+          print('ADMIN PANEL VERIFIED: file + inline JS + publishable Supabase config')
+          PY
+          node --check /tmp/admin-inline.js
+
       - name: Validate homepage runtime scripts
         shell: bash
         run: |
