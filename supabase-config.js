@@ -1,5 +1,3 @@
-// Public Supabase client configuration.
-// Fill these two values with your project's URL and ANON/PUBLISHABLE key.
-// Never put a Supabase service_role/secret key here.
-window.AZIM_SUPABASE_URL = '';
-window.AZIM_SUPABASE_ANON_KEY = '';
+// Public Supabase configuration. Never put service_role/secret keys in browser code.
+window.AZIM_SUPABASE_URL='https://lzkrwtnylkordkwkdyzp.supabase.co';
+window.AZIM_SUPABASE_ANON_KEY='sb_publishable_jnrMEKAW7prmIKcnFG_ANQ_s6VFrm_3';
