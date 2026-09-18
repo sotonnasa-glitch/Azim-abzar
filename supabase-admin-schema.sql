@@ -173,7 +173,7 @@ create policy "Admins manage admin users" on public.admin_users for all to authe
 
 drop policy if exists "Public can read products" on public.products;
 drop policy if exists "Public can read active products" on public.products;
-create policy "Public can read active products" on public.products for select using (coalesce(is_active,true) or private.is_azim_admin());
+create policy "Public can read active products" on public.products for select to anon using (coalesce(is_active,true) or private.is_azim_admin());
 drop policy if exists "Admins can insert products" on public.products;
 create policy "Admins can insert products" on public.products for insert to authenticated with check (private.is_azim_admin());
 drop policy if exists "Admins can update products" on public.products;
@@ -182,17 +182,17 @@ drop policy if exists "Admins can delete products" on public.products;
 create policy "Admins can delete products" on public.products for delete to authenticated using (private.is_azim_admin());
 
 drop policy if exists "Public can read active categories" on public.categories;
-create policy "Public can read active categories" on public.categories for select using (is_active=true or private.is_azim_admin());
+create policy "Public can read active categories" on public.categories for select to anon using (is_active=true or private.is_azim_admin());
 drop policy if exists "Admins manage categories" on public.categories;
 create policy "Admins manage categories" on public.categories for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
 
 drop policy if exists "Public can read active brands" on public.brands;
-create policy "Public can read active brands" on public.brands for select using (is_active=true or private.is_azim_admin());
+create policy "Public can read active brands" on public.brands for select to anon using (is_active=true or private.is_azim_admin());
 drop policy if exists "Admins manage brands" on public.brands;
 create policy "Admins manage brands" on public.brands for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
 
 drop policy if exists "Public can create inquiries" on public.inquiries;
-create policy "Public can create inquiries" on public.inquiries for insert to anon,authenticated with check (true);
+create policy "Public can create inquiries" on public.inquiries for insert to anon with check (true);
 drop policy if exists "Admins manage inquiries" on public.inquiries;
 create policy "Admins manage inquiries" on public.inquiries for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
 
@@ -206,7 +206,7 @@ drop policy if exists "Admins manage media assets" on public.media_assets;
 create policy "Admins manage media assets" on public.media_assets for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
 
 drop policy if exists "Public can read active site content" on public.site_content;
-create policy "Public can read active site content" on public.site_content for select using (is_active=true or private.is_azim_admin());
+create policy "Public can read active site content" on public.site_content for select to anon using (is_active=true or private.is_azim_admin());
 drop policy if exists "Admins manage site content" on public.site_content;
 create policy "Admins manage site content" on public.site_content for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
 
@@ -216,6 +216,14 @@ drop policy if exists "Admins insert audit logs" on public.audit_logs;
 create policy "Admins insert audit logs" on public.audit_logs for insert to authenticated with check (private.is_azim_admin());
 
 insert into storage.buckets(id,name,public) values ('admin-media','admin-media',true) on conflict(id) do update set public=true;
+
+create index if not exists inquiries_handled_by_idx on public.inquiries(handled_by);
+create index if not exists inquiries_product_id_idx on public.inquiries(product_id);
+create index if not exists media_assets_uploaded_by_idx on public.media_assets(uploaded_by);
+create index if not exists order_items_product_id_idx on public.order_items(product_id);
+create index if not exists orders_customer_id_idx on public.orders(customer_id);
+create index if not exists site_content_updated_by_idx on public.site_content(updated_by);
+create index if not exists audit_logs_actor_id_idx on public.audit_logs(actor_id);
 
 -- Legacy project helper: keep callable only by server roles, never by the browser.
 revoke all on function public.rls_auto_enable() from public;
