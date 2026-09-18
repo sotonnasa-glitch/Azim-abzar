@@ -9,19 +9,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect product size payload
+      - name: Inspect generated product size payload
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, json, zlib
+          import json
           from pathlib import Path
-          s = Path('catalog_site_mapping_908/product_sizes.deflate.b64').read_text(encoding='utf-8').strip()
-          raw = zlib.decompress(base64.b64decode(s))
-          data = json.loads(raw.decode('utf-8'))
-          print(type(data).__name__, len(data))
-          if isinstance(data, dict):
-              for k in list(data)[:5]: print(k, data[k])
-          elif isinstance(data, list):
-              for x in data[:5]: print(x)
+
+          data = json.loads(Path('catalog_site_mapping_908/price-size-data.json').read_text(encoding='utf-8'))
+          ids = [f'P{i:04d}' for i in range(1, 909)]
+
+          assert isinstance(data, dict)
+          assert list(data) == ids
+          assert [pid for pid,d in data.items() if d.get('p') is None] == ['P0184','P0626','P0631','P0720','P0737']
+          assert data['P0462']['v'] == [['10',6600000],['12',6600000],['14',6600000],['16',6600000],['18',6600000],['20',6600000],['22',6600000]]
+          assert data['P0463']['v'][0] == ['8',8040000]
+          assert ['8',3960000] in data['P0463']['v']
+          assert data['P0487']['v'] == [['6" (15 سانتی)',4500000],['8" (20 سانتی)',36000000]]
+          assert len(data['P0491']['v']) == 10 and data['P0491']['v'][-1] == ['1/2-1 به 1"',144000000]
+          assert len(data['P0827']['v']) == 7 and data['P0827']['v'][-1] == ['1/2-1 به 1"',60000000]
+          assert data['P0838']['v'] == [['24E',17000000],['28E',19000000]]
+
+          print('SIZE/PRICE DATA VERIFIED:', len(data), 'products')
           PY
