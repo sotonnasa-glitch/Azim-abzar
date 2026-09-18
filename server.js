@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import chatHandler from './api/chat.js';
 
@@ -22,11 +21,11 @@ app.all('/api/chat', (req, res) => {
 
 app.get('/products', (req, res) => {
   res.set('Cache-Control', 'no-store, max-age=0');
-  res.sendFile(path.join(__dirname, 'products-v2.html'));
+  res.sendFile(path.join(__dirname, 'products-v4.html'));
 });
 
 app.get('/products2', (req, res) => {
-  res.sendFile(path.join(__dirname, 'products2.html'));
+  res.redirect('/products?page=2');
 });
 
 app.get('/products/2', (req, res) => {
@@ -50,15 +49,10 @@ app.get('/contact', (req, res) => {
 });
 
 app.get(['/', '/index.html'], (req, res) => {
-  const file = path.join(__dirname, 'index.html');
-  let html = fs.readFileSync(file, 'utf8');
-  if (!html.includes('azim-motion.js')) {
-    html = html.replace('</body>', '<script src="/azim-motion.js?v=4" defer></script>\n<script src="/azim-home-gallery.js?v=4" defer></script>\n<script src="/azim-home-copy.js?v=6" defer></script>\n</body>');
-  }
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
-  res.type('html').send(html);
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.use(express.static(__dirname, {
