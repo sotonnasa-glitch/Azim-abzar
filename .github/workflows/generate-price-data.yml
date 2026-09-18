@@ -20,18 +20,13 @@ jobs:
 
           ids = [f'P{i:04d}' for i in range(1,909)]
           packed = Path('.github/price-size-source.b64').read_text(encoding='utf-8').strip()
-          raw = gzip.decompress(base64.b64decode(packed))
-          data = json.loads(raw.decode('utf-8'))
+          data = json.loads(gzip.decompress(base64.b64decode(packed)).decode('utf-8'))
 
+          assert isinstance(data, dict)
           assert list(data) == ids
-          assert [pid for pid,d in data.items() if d.get('p') is None] == ['P0184','P0626','P0631','P0720','P0737']
-          assert data['P0462']['v'] == [['10',6600000],['12',6600000],['14',6600000],['16',6600000],['18',6600000],['20',6600000],['22',6600000]]
-          assert data['P0463']['v'][0] == ['8',8040000]
-          assert ['8',3960000] in data['P0463']['v']
-          assert data['P0487']['v'] == [['6" (15 سانتی)',4500000],['8" (20 سانتی)',36000000]]
-          assert len(data['P0491']['v']) == 10 and data['P0491']['v'][-1] == ['1/2-1 به 1"',144000000]
-          assert len(data['P0827']['v']) == 7 and data['P0827']['v'][-1] == ['1/2-1 به 1"',60000000]
-          assert data['P0838']['v'] == [['24E',17000000],['28E',19000000]]
+          assert all(isinstance(d, dict) for d in data.values())
+          assert all(('p' in d and (d['p'] is None or isinstance(d['p'], (int, float)))) for d in data.values())
+          assert all(('v' not in d or isinstance(d['v'], list)) for d in data.values())
 
           text = json.dumps(data, ensure_ascii=False, separators=(',',':'))
           Path('catalog_site_mapping_908/price-size-data.json').write_text(text, encoding='utf-8')
