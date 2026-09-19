@@ -670,23 +670,43 @@
       position: absolute;
       top: 18px;
       left: 18px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #fff;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      background: linear-gradient(145deg, rgba(255, 122, 0, 0.16), rgba(217, 74, 0, 0.28));
+      border: 1.5px solid #ff7a00;
+      color: #ff8c1a;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
       display: grid;
       place-items: center;
       cursor: pointer;
-      transition: all 0.2s ease;
-      z-index: 5;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(255, 102, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .modal-close-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: #ff9933;
+      stroke-width: 2.8;
+      transition: transform 0.22s ease, stroke 0.22s ease;
     }
 
     .modal-close-btn:hover {
-      background: rgba(245, 185, 0, 0.2);
-      border-color: var(--gold);
-      color: var(--gold-light);
+      background: linear-gradient(145deg, #ff7a00, #e65100);
+      border-color: #ffa040;
+      color: #ffffff;
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 8px 24px rgba(255, 102, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .modal-close-btn:hover svg {
+      stroke: #ffffff;
+      transform: rotate(90deg);
+    }
+
+    .modal-close-btn:active {
+      transform: scale(0.95);
     }
 
     .modal-grid {
@@ -981,6 +1001,8 @@
       .brand small { display: none; }
       .az-nav-btn { padding: 7px 12px; font-size: 12px; border-radius: 9px; gap: 6px; }
       .az-nav-btn svg { width: 14px; height: 14px; }
+      .modal-box { padding: 20px 16px; border-radius: 20px; }
+      .modal-close-btn { top: 14px; left: 14px; width: 38px; height: 38px; }
       .modal-specs-grid { grid-template-columns: 1fr; }
       .footer-inner { flex-direction: column; text-align: center; }
     }
