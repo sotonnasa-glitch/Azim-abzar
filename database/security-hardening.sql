@@ -161,3 +161,46 @@ alter default privileges for role postgres in schema public
   revoke all on tables from anon, authenticated;
 alter default privileges for role postgres in schema public
   revoke execute on functions from anon, authenticated;
+
+
+-- Performance hardening for admin_users RLS:
+-- Re-evaluate auth helpers once per statement instead of once per row,
+-- and avoid overlapping SELECT policies.
+drop policy if exists "Owner admin manage admin users" on public.admin_users;
+drop policy if exists "Authenticated users can read own admin profile" on public.admin_users;
+
+create policy "Admin users select own or manage"
+on public.admin_users
+for select
+to authenticated
+using (
+  user_id = (select auth.uid())
+  or (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
+);
+
+create policy "Owner admin insert admin users"
+on public.admin_users
+for insert
+to authenticated
+with check (
+  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
+);
+
+create policy "Owner admin update admin users"
+on public.admin_users
+for update
+to authenticated
+using (
+  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
+)
+with check (
+  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
+);
+
+create policy "Owner admin delete admin users"
+on public.admin_users
+for delete
+to authenticated
+using (
+  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
+);
