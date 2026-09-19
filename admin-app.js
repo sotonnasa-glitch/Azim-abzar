@@ -29,7 +29,6 @@
     customers: ['مشتریان', 'اطلاعات تماس و سوابق مشتریان'],
     media: ['رسانه', 'آپلود، مشاهده و حذف تصاویر سایت'],
     content: ['محتوای سایت', 'مدیریت متن‌های واقعی صفحه اصلی و ارتباط با ما'],
-    ai: ['دستیار AI', 'کنترل، متن، مدل و تست دستیار هوشمند'],
     admins: ['کاربران مدیر', 'نقش‌ها و سطح دسترسی'],
     audit: ['گزارش فعالیت', 'ردپای تغییرات پنل']
   };
@@ -324,7 +323,6 @@
       customers:['owner','admin','sales'],
       media:['owner','admin','editor'],
       content:['owner','admin','editor'],
-      ai:['owner','admin','editor'],
       admins:['owner','admin'],
       audit:['owner','admin']
     };
@@ -349,7 +347,6 @@
       ['customers','مشتریان','اطلاعات مشتریان'],
       ['media','رسانه','تصاویر و فایل‌ها'],
       ['content','محتوای سایت','CMS'],
-      ['ai','دستیار AI','کنترل هوش مصنوعی'],
       ['admins','کاربران مدیر','نقش‌ها'],
       ['audit','گزارش فعالیت','Audit Log']
     ];
@@ -390,7 +387,7 @@
       };
       addGroup('فروش و مشتری', 'orders');
       addGroup('کاتالوگ', 'products');
-      addGroup('محتوا و هوش', 'content');
+      addGroup('محتوا', 'content');
       addGroup('سیستم', 'admins');
     }
 
@@ -400,14 +397,6 @@
       btn.innerHTML = '🎟️ تخفیف و پروموشن';
       const ordersBtn = nav.querySelector('[data-view="orders"]');
       nav.insertBefore(btn, ordersBtn || null);
-    }
-
-    if (nav && !nav.querySelector('[data-view="ai"]')) {
-      const btn = document.createElement('button');
-      btn.dataset.view = 'ai';
-      btn.textContent = '__AZICON_SPARK__ دستیار AI';
-      const adminsBtn = nav.querySelector('[data-view="admins"]');
-      nav.insertBefore(btn, adminsBtn || null);
     }
 
     const main = document.querySelector('.main');
@@ -551,7 +540,6 @@
       customers: ['owner', 'admin', 'sales'],
       media: ['owner', 'admin', 'editor'],
       content: ['owner', 'admin', 'editor'],
-      ai: ['owner', 'admin', 'editor'],
       admins: ['owner', 'admin'],
       audit: ['owner', 'admin']
     };
@@ -600,7 +588,7 @@
     const skeletons = {
       products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
       inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
-      media: 'mediaTable', content: 'contentTable', ai: 'aiEditor', admins: 'adminsTable', audit: 'auditTable'
+      media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
     };
     if (skeletons[name]) showSkeleton(skeletons[name]);
     try {
@@ -2090,7 +2078,6 @@
         ['description', 'توضیحات', 'textarea'],
         ['trust_badges', 'مزیت‌ها (هر خط یک مورد)', 'lines'],
         ['primary_cta', 'دکمه کاتالوگ', 'input'],
-        ['secondary_ai_cta', 'دکمه دستیار AI', 'input'],
         ['contact_cta', 'دکمه ارتباط', 'input']
       ]
     },
@@ -2246,9 +2233,9 @@
     return {
       home: {
         meta:{title:'',description:''},
-        header:{brand:'',tagline:'',nav_home:'',nav_products:'',nav_ai:'',nav_contact:''},
+        header:{brand:'',tagline:'',nav_home:'',nav_products:'',nav_contact:''},
         topbar:[],
-        hero:{eyebrow:'',title:'',highlight:'',description:'',trust:[],primary_cta:'',secondary_ai_cta:'',contact_cta:''},
+        hero:{eyebrow:'',title:'',highlight:'',description:'',trust:[],primary_cta:'',contact_cta:''},
         hud:{label:'',badge:'',value:'',unit:'',specs:[],chips:[['',''],['','']]},
         ticker:[],
         choice:{eyebrow:'',title:'',lead:'',cards:[['','','',''],['','','',''],['','','','']]},
@@ -2282,7 +2269,7 @@
     ['home.topbar','نوار بالای صفحه','lines'],['home.hero.eyebrow','برچسب بالای هیرو'],
     ['home.hero.title','عنوان اصلی هیرو'],['home.hero.highlight','خط برجسته هیرو'],
     ['home.hero.description','توضیحات هیرو','textarea'],['home.hero.trust','۴ مزیت هیرو','lines'],
-    ['home.hero.primary_cta','دکمه کاتالوگ'],['home.hero.secondary_ai_cta','دکمه دستیار AI'],['home.hero.contact_cta','دکمه ارتباط'],
+    ['home.hero.primary_cta','دکمه کاتالوگ'],['home.hero.contact_cta','دکمه ارتباط'],
     ['home.hud.label','عنوان HUD'],['home.hud.badge','نشان HUD'],['home.hud.value','عدد HUD'],
     ['home.hud.unit','واحد HUD'],['home.hud.specs','مشخصات HUD','lines'],
     ['home.hud.chips.0.0','چیپ شناور اول — عنوان'],['home.hud.chips.0.1','چیپ شناور اول — توضیح'],
@@ -2449,7 +2436,7 @@
         const h = copy.home || {};
         const compat = [
           ['home_meta',{title:copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی',description:copyGet(h,'meta.description') || copyGet(h,'hero.description')}],
-          ['home_hero',{eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),secondary_ai_cta:copyGet(h,'hero.secondary_ai_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
+          ['home_hero',{eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),,contact_cta:copyGet(h,'hero.contact_cta')}],
           ['home_choice',{eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
           ['home_why',{eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}]
         ];
@@ -2515,7 +2502,7 @@
       const c = copyPayload.contact || {};
       const compat = [
         ['home_meta', {title: copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی', description: copyGet(h,'meta.description') || copyGet(h,'hero.description') || ''}],
-        ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),secondary_ai_cta:copyGet(h,'hero.secondary_ai_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
+        ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),,contact_cta:copyGet(h,'hero.contact_cta')}],
         ['home_choice', {eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
         ['home_why', {eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}],
         ['contact_page', {title:copyGet(c,'meta.title') || copyGet(c,'hero.title'),description:copyGet(c,'meta.description') || copyGet(c,'hero.description'),email:copyGet(c,'email.value')}]
