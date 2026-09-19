@@ -556,3 +556,49 @@ body{min-height:100vh;overflow-x:hidden;background:
 .az-cat-stats{display:flex;gap:16px;margin-top:18px;color:#66736b;font-size:8px}.az-cat-stats b{color:#c5cec8;font-size:10px;margin-right:3px}
 .az-category-progress{height:4px;border-radius:999px;background:#17201b;overflow:hidden;margin-top:10px}.az-category-progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#39d98a,#f5b900)}
 @media(max-width:820px){.az-category-overview{grid-template-columns:1fr 1fr}.az-category-overview>button{grid-column:1/-1}}
+
+/* V26 — no emoji in admin UI; semantic CSS icons with motion */
+.az-animated-icon{display:inline-grid;place-items:center;width:1.2em;height:1.2em;min-width:1.2em;vertical-align:-.18em;position:relative;flex:0 0 auto;color:currentColor;line-height:1}
+.az-animated-icon::before{display:block;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.98em;font-weight:900;line-height:1}
+.az-animated-icon-wave::before{content:"↝"}.az-animated-icon-lock::before{content:"▣"}.az-animated-icon-mail::before{content:"✉"}
+.az-animated-icon-user::before,.az-animated-icon-admin::before{content:"◉"}.az-animated-icon-menu::before{content:"≡"}
+.az-animated-icon-edit::before{content:"↗"}.az-animated-icon-globe::before{content:"◎"}.az-animated-icon-home::before{content:"⌂"}
+.az-animated-icon-phone::before{content:"◌"}.az-animated-icon-spark::before{content:"✦"}.az-animated-icon-block::before{content:"⊘"}
+.az-animated-icon-error::before{content:"×"}.az-animated-icon-success::before{content:"✓"}.az-animated-icon-target::before{content:"◎"}
+.az-animated-icon-gear::before{content:"⚙"}.az-animated-icon-compass::before{content:"⊕"}.az-animated-icon-tools::before{content:"⌁"}
+.az-animated-icon-down::before{content:"⌄"}.az-animated-icon-invoice::before{content:"▤"}.az-animated-icon-clock::before{content:"◷"}
+.az-animated-icon-note::before{content:"≋"}.az-animated-icon-question::before{content:"?"}.az-animated-icon-pin::before{content:"◆"}
+.az-animated-icon-save::before{content:"↓"}.az-animated-icon-warning::before{content:"!"}
+
+.az-animated-icon-wave{animation:azIconWave 1.5s ease-in-out infinite}.az-animated-icon-lock{animation:azIconPulse 1.8s ease-in-out infinite}
+.az-animated-icon-mail{animation:azIconFloat 2.2s ease-in-out infinite}.az-animated-icon-user,.az-animated-icon-admin{animation:azIconBob 2s ease-in-out infinite}
+.az-animated-icon-menu{animation:azIconMenu 1.6s ease-in-out infinite}.az-animated-icon-edit{animation:azIconEdit 1.8s ease-in-out infinite}
+.az-animated-icon-globe{animation:azIconSpin 3.4s linear infinite}.az-animated-icon-home{animation:azIconPulse 2s ease-in-out infinite}
+.az-animated-icon-phone{animation:azIconRing 1.6s ease-in-out infinite}.az-animated-icon-spark{animation:azIconTwinkle 1.35s ease-in-out infinite}
+.az-animated-icon-block,.az-animated-icon-error{animation:azIconShake 1.55s ease-in-out infinite}.az-animated-icon-success{animation:azIconPop 1.8s ease-in-out infinite}
+.az-animated-icon-target{animation:azIconTarget 1.8s ease-in-out infinite}.az-animated-icon-gear{animation:azIconSpin 4.8s linear infinite}
+.az-animated-icon-compass{animation:azIconSpin 5.4s linear infinite}.az-animated-icon-tools{animation:azIconSwing 1.8s ease-in-out infinite}
+.az-animated-icon-down{animation:azIconDown 1.4s ease-in-out infinite}.az-animated-icon-invoice{animation:azIconFloat 2s ease-in-out infinite}
+.az-animated-icon-clock{animation:azIconSpin 5s linear infinite}.az-animated-icon-note{animation:azIconWrite 1.8s ease-in-out infinite}
+.az-animated-icon-question{animation:azIconPop 1.8s ease-in-out infinite}.az-animated-icon-pin{animation:azIconBounce 1.65s ease-in-out infinite}
+.az-animated-icon-save{animation:azIconSave 1.65s ease-in-out infinite}.az-animated-icon-warning{animation:azIconPulse 1.25s ease-in-out infinite}
+
+@keyframes azIconWave{0%,100%{transform:rotate(0)}25%{transform:rotate(-18deg)}50%{transform:rotate(18deg)}75%{transform:rotate(-8deg)}}
+@keyframes azIconPulse{0%,100%{transform:scale(1);opacity:.82}50%{transform:scale(1.14);opacity:1}}
+@keyframes azIconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes azIconBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes azIconMenu{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.12)}}
+@keyframes azIconEdit{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(-7deg) translateY(-1px)}}
+@keyframes azIconSpin{to{transform:rotate(360deg)}}
+@keyframes azIconRing{0%,100%{transform:rotate(0)}15%{transform:rotate(-12deg)}30%{transform:rotate(10deg)}45%{transform:rotate(-7deg)}60%{transform:rotate(4deg)}}
+@keyframes azIconTwinkle{0%,100%{transform:scale(.82);opacity:.55}50%{transform:scale(1.2);opacity:1}}
+@keyframes azIconShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}50%{transform:translateX(2px)}75%{transform:translateX(-1px)}}
+@keyframes azIconPop{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes azIconTarget{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.13);opacity:1}}
+@keyframes azIconSwing{0%,100%{transform:rotate(0)}50%{transform:rotate(10deg)}}
+@keyframes azIconDown{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+@keyframes azIconWrite{0%,100%{transform:rotate(0)}50%{transform:rotate(-5deg) translateX(1px)}}
+@keyframes azIconBounce{0%,100%{transform:translateY(0)}45%{transform:translateY(-4px)}65%{transform:translateY(1px)}}
+@keyframes azIconSave{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}
+}
+@media(prefers-reduced-motion:reduce){.az-animated-icon{animation:none!important}}
