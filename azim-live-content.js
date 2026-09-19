@@ -90,6 +90,16 @@
     if (desc && p.description) desc.setAttribute('content', p.description);
     const emailEls = document.querySelectorAll('[data-contact-email]');
     emailEls.forEach(el => setText(el, p.email));
+    if (p.email) {
+      const card = document.querySelector('#card-channel-email');
+      if (card) {
+        const value = card.querySelector('.channel-value');
+        setText(value, p.email);
+        card.querySelectorAll('a[href^="mailto:"]').forEach(a => a.setAttribute('href', 'mailto:' + p.email));
+        const copy = card.querySelector('button[onclick*="copyValue"]');
+        if (copy) copy.setAttribute('onclick', "copyValue('" + String(p.email).replace(/'/g, "\\'") + "', 'ایمیل فروشگاه کپی شد')");
+      }
+    }
   }
 
   function applyAI(c) {
