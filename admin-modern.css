@@ -420,3 +420,9 @@ html,body{background:
   .az-variant-row{grid-template-columns:minmax(88px,1fr) minmax(100px,1fr) auto!important}
   .az-variant-row .btn{width:auto!important}
 }
+
+.az-menu-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.az-menu-password{border:1px solid rgba(245,185,0,.35);background:rgba(245,185,0,.08);color:#ffd84f;border-radius:10px;padding:8px 12px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.az-menu-password:hover{background:rgba(245,185,0,.16);border-color:rgba(245,185,0,.55)}
+.az-password-intro{grid-column:1/-1;padding:12px 14px;border:1px solid rgba(245,185,0,.22);border-radius:14px;background:rgba(245,185,0,.06)}
+.az-password-intro strong{display:block;color:var(--az-text);font-size:14px}.az-password-intro small{display:block;color:var(--az-muted);margin-top:4px}
