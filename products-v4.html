@@ -1007,7 +1007,7 @@
       .footer-inner { flex-direction: column; text-align: center; }
     }
   </style>
-</head>
+<style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style></head>
 <body>
 
   <!-- Header with Glassmorphic Blur -->
@@ -1237,9 +1237,11 @@
 
     const fmt = n => new Intl.NumberFormat('fa-IR').format(Number(n) || 0);
 
-    const priceHtml = n => Number(n) > 0 
-      ? `${fmt(n)} <small>تومان</small>` 
-      : '<span class="price-no-val">قیمت در لیست درج نشده</span>';
+    const priceHtml = (n, compare) => {
+      if (!(Number(n) > 0)) return '<span class="price-no-val">قیمت در لیست درج نشده</span>';
+      if (Number(compare) > Number(n)) return `<del class="price-old">${fmt(compare)}</del> ${fmt(n)} <small>تومان</small>`;
+      return `${fmt(n)} <small>تومان</small>`;
+    };
 
     function showToast(msg) {
       const t = document.getElementById('azToast');
@@ -1266,7 +1268,7 @@
     async function loadLiveVariants() {
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return {};
       try {
-        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=code,price,variants,is_active&is_active=eq.true&variants=not.is.null&limit=1000';
+        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=code,price,variants,is_active,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&is_active=eq.true&limit=1000';
         const r = await fetch(u, {
           headers: {
             apikey: window.AZIM_SUPABASE_ANON_KEY,
@@ -1289,7 +1291,32 @@
       const vs = Array.isArray(x?.variants) 
         ? x.variants.map(v => [String(v?.size ?? v?.label ?? v?.name ?? '').trim(), v?.price == null ? null : Number(v.price)]).filter(v => v[0])
         : [];
-      return { p: x?.price ?? null, v: vs };
+      return {
+        p: x?.price ?? null,
+        v: vs,
+        discount_type: x?.discount_type || null,
+        discount_value: x?.discount_value == null ? null : Number(x.discount_value),
+        discount_is_active: !!x?.discount_is_active,
+        discount_starts_at: x?.discount_starts_at || null,
+        discount_ends_at: x?.discount_ends_at || null
+      };
+    }
+
+    function directDiscountIsLive(d) {
+      if (!d?.discount_is_active || !d?.discount_type || !(Number(d.discount_value) > 0)) return false;
+      const now = Date.now();
+      const start = d.discount_starts_at ? new Date(d.discount_starts_at).getTime() : -Infinity;
+      const end = d.discount_ends_at ? new Date(d.discount_ends_at).getTime() : Infinity;
+      return now >= start && now <= end;
+    }
+
+    function discountedPrice(base, d) {
+      const n = Number(base || 0);
+      if (!(n > 0) || !directDiscountIsLive(d)) return n;
+      const value = Number(d.discount_value || 0);
+      return d.discount_type === 'percentage'
+        ? Math.max(0, Math.floor(n * (100 - value) / 100))
+        : Math.max(0, n - value);
     }
 
     function getData(id) {
@@ -1297,28 +1324,33 @@
       let vs = Array.isArray(d.v) ? d.v : [];
       if (id === 'P0008' && !vs.length) vs = P0008;
       const fallback = basePrices[id] ?? null;
-      return { vs, base: (d.p != null ? d.p : fallback) };
+      return { vs, base: (d.p != null ? d.p : fallback), discount: d.discount_type ? d : {} };
     }
 
     function getProductPriceValue(id) {
       const d = getData(id);
       const nums = d.vs.map(v => Number(v[1])).filter(n => Number.isFinite(n) && n > 0);
       if (nums.length) return Math.min(...nums);
-      if (d.base != null && Number(d.base) > 0) return Number(d.base);
+      if (d.base != null && Number(d.base) > 0) return discountedPrice(Number(d.base), d.discount);
       return 0;
     }
 
 
 
-    function optionLabel(v) {
-      return v[1] == null ? `${v[0]} — قیمت درج نشده` : `${v[0]} — ${fmt(v[1])} تومان`;
+    function optionLabel(v, d) {
+      if (v[1] == null) return `${v[0]} — قیمت درج نشده`;
+      const net = discountedPrice(v[1], d.discount);
+      return net < Number(v[1]) ? `${v[0]} — ${fmt(net)} تومان · تخفیف` : `${v[0]} — ${fmt(v[1])} تومان`;
     }
 
     function card(x) {
       const d = getData(x.id);
       const vs = d.vs;
       const nums = vs.map(v => Number(v[1])).filter(n => Number.isFinite(n) && n > 0);
-      const shown = nums.length ? `از ${priceHtml(Math.min(...nums))}` : priceHtml(d.base);
+      const shownBase = nums.length ? Math.min(...nums) : Number(d.base || 0);
+      const shownNet = discountedPrice(shownBase, d.discount);
+      const shown = nums.length ? `از ${priceHtml(shownNet, shownBase)}` : priceHtml(shownNet, d.base);
+      const discountBadge = shownNet < shownBase ? '<span class="badge-discount">تخفیف</span>' : '';
       const cat = categoriesMap[x.id] || 'ابزار تخصصی';
 
       const variantBadge = vs.length ? `<span class="badge-variant">${fmt(vs.length)} سایز</span>` : '';
@@ -1327,7 +1359,7 @@
         ? `<div class="sizebox">
             <label>انتخاب سایز / مدل (${fmt(vs.length)} گزینه)</label>
             <select data-id="${esc(x.id)}">
-              ${vs.map((v, i) => `<option value="${i}">${esc(optionLabel(v))}</option>`).join('')}
+              ${vs.map((v, i) => `<option value="${i}">${esc(optionLabel(v, d))}</option>`).join('')}
             </select>
           </div>`
         : '';
@@ -1336,6 +1368,7 @@
         <article class="card" id="card-${esc(x.id)}">
           <div class="photo-wrap" onclick="openQuickView('${esc(x.id)}')">
             <span class="badge-code">کد: ${esc(x.id)}</span>
+            ${discountBadge}
             ${variantBadge}
             <img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=missing>تصویر ${esc(x.id)} در دسترس نیست</div>'">
             <div class="photo-overlay-btn">
@@ -1371,7 +1404,9 @@
           
           const priceEl = document.querySelector(`[data-price="${id}"]`);
           if (priceEl && v) {
-            priceEl.innerHTML = priceHtml(v[1]);
+            const d = getData(id);
+            const net = discountedPrice(v[1], d.discount);
+            priceEl.innerHTML = priceHtml(net, v[1]);
           }
         });
       });
@@ -1407,19 +1442,21 @@
         varList.innerHTML = vs.map((v, i) => `
           <div class="modal-variant-row ${i === 0 ? 'selected' : ''}" onclick="selectModalVariant(${i})">
             <span><strong>${esc(v[0])}</strong></span>
-            <span>${v[1] != null && v[1] > 0 ? fmt(v[1]) + ' تومان' : 'قیمت در لیست درج نشده'}</span>
+            <span>${v[1] != null && v[1] > 0 ? (discountedPrice(v[1], d.discount) < Number(v[1]) ? '<del class="price-old">' + fmt(v[1]) + '</del> ' + fmt(discountedPrice(v[1], d.discount)) + ' تومان' : fmt(v[1]) + ' تومان') : 'قیمت در لیست درج نشده'}</span>
           </div>
         `).join('');
 
         const pVal = vs[0][1];
-        priceEl.innerHTML = priceHtml(pVal);
+        const net = discountedPrice(pVal, d.discount);
+        priceEl.innerHTML = priceHtml(net, pVal);
         if (orderBtn) {
           orderBtn.href = `contact.html?product=${encodeURIComponent(item.name)}&code=${encodeURIComponent(item.id)}&size=${encodeURIComponent(vs[0][0])}`;
         }
       } else {
         varWrap.style.display = 'none';
         const pVal = d.base;
-        priceEl.innerHTML = priceHtml(pVal);
+        const net = discountedPrice(pVal, d.discount);
+        priceEl.innerHTML = priceHtml(net, pVal);
         if (orderBtn) {
           orderBtn.href = `contact.html?product=${encodeURIComponent(item.name)}&code=${encodeURIComponent(item.id)}`;
         }
@@ -1442,7 +1479,8 @@
         el.classList.toggle('selected', i === idx);
       });
 
-      document.getElementById('modalPrice').innerHTML = priceHtml(v[1]);
+      const net = discountedPrice(v[1], d.discount);
+      document.getElementById('modalPrice').innerHTML = priceHtml(net, v[1]);
       const orderBtn = document.getElementById('modalOrderBtn');
       if (orderBtn) {
         orderBtn.href = `contact.html?product=${encodeURIComponent(activeModalItem.name)}&code=${encodeURIComponent(activeModalItem.id)}&size=${encodeURIComponent(v[0])}`;
