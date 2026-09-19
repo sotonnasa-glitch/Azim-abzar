@@ -655,3 +655,45 @@ body{min-height:100vh;overflow-x:hidden;background:
 @keyframes azAiDot{0%,100%{transform:scale(.8);opacity:.6}50%{transform:scale(1.15);opacity:1}}
 @media(max-width:900px){.az-ai-grid{grid-template-columns:1fr}.az-ai-hero{align-items:flex-start;flex-direction:column}.az-ai-hero h2{font-size:23px}}
 @media(max-width:560px){.az-ai-card{padding:14px}.az-ai-chat-messages{min-height:220px}.az-ai-metrics{grid-template-columns:1fr 1fr}.az-ai-catalog{grid-template-columns:1fr 1fr 1fr}.az-ai-chat-form{grid-template-columns:1fr}.az-ai-chat-form .btn{width:100%}}
+
+/* AI MOBILE PASS — phone-first admin experience */
+#view-ai{max-width:100%;overflow-x:clip}
+@media(max-width:720px){
+  #view-ai .az-ai-shell{gap:12px}
+  #view-ai .az-ai-hero{padding:16px;border-radius:18px;gap:13px}
+  #view-ai .az-ai-hero h2{font-size:21px;line-height:1.45}
+  #view-ai .az-ai-hero p{font-size:10px;line-height:1.9}
+  #view-ai .az-ai-hero-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  #view-ai .az-ai-hero-actions .btn{width:100%;min-height:44px}
+  #view-ai .az-ai-grid{grid-template-columns:1fr;gap:12px}
+  #view-ai .az-ai-main,#view-ai .az-ai-side{gap:12px}
+  #view-ai .az-ai-card{padding:13px;border-radius:17px}
+  #view-ai .az-ai-card-head{gap:9px;margin-bottom:11px}
+  #view-ai .az-ai-card-head strong{font-size:14px}
+  #view-ai .az-ai-card-head small{font-size:10px;line-height:1.7}
+  #view-ai .az-ai-chat-messages{height:50vh;min-height:290px;max-height:none;padding:7px;border-radius:14px;-webkit-overflow-scrolling:touch}
+  #view-ai .az-ai-message{max-width:94%;padding:9px 10px;border-radius:13px;font-size:11px;line-height:1.85}
+  #view-ai .az-ai-message b{font-size:9px;display:block;margin-bottom:1px}
+  #view-ai .az-ai-quick-row{padding:7px 0 4px;gap:6px;-webkit-overflow-scrolling:touch}
+  #view-ai .az-ai-prompt{min-height:42px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;padding:8px 11px}
+  #view-ai .az-ai-chat-form{grid-template-columns:minmax(0,1fr) 76px;gap:7px;margin-top:6px;position:sticky;bottom:0;padding-top:7px;background:linear-gradient(180deg,rgba(10,14,12,.86),rgba(10,14,12,1) 28%);z-index:2}
+  #view-ai .az-ai-chat-form .input{width:100%;min-width:0;min-height:48px;font-size:12px}
+  #view-ai .az-ai-chat-form .btn{width:100%;min-height:48px}
+  #view-ai .az-ai-enable{min-height:58px;align-items:flex-start}
+  #view-ai .az-ai-enable span{min-width:0}
+  #view-ai .az-ai-metrics{grid-template-columns:1fr 1fr}
+  #view-ai .az-ai-catalog{grid-template-columns:1fr 1fr 1fr}
+  #view-ai .az-ai-catalog>div{padding:11px 5px}
+  #view-ai .az-ai-catalog b{font-size:18px}
+  #view-ai .az-ai-catalog span{font-size:9px}
+  #view-ai .az-ai-log{grid-template-columns:8px minmax(0,1fr) auto;gap:7px}
+  #view-ai .tools{width:100%}
+  #view-ai #aiForm .tools .btn{min-height:44px}
+}
+@media(max-width:390px){
+  #view-ai .az-ai-hero-actions{grid-template-columns:1fr}
+  #view-ai .az-ai-chat-messages{height:46vh;min-height:270px}
+  #view-ai .az-ai-metrics{grid-template-columns:1fr}
+  #view-ai .az-ai-catalog{grid-template-columns:1fr}
+  #view-ai .az-ai-catalog>div{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:right}
+}
