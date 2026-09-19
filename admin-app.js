@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V27 = true;
+  window.__AZIM_ADMIN_V28 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -697,7 +697,7 @@
     if ($('productMetaVariant')) $('productMetaVariant').textContent = variantCount.toLocaleString('fa-IR') + ' محصول سایزبندی‌دار';
 
     $('productsTable').innerHTML =
-      (can.edit() ? '<div class="az-product-tools"><div class="az-tool-badge"><span class="az-dot"></span> مدیریت زنده</div><button class="btn secondary" id="quickEditProducts">__AZICON_EDIT__ ویرایش سریع</button><button class="btn ghost" id="openSiteFromProducts">__AZICON_GLOBE__ مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">⬇️ بکاپ</button></div>' : '') +
+      (can.edit() ? '<div class="az-product-tools"><div class="az-tool-badge"><span class="az-dot"></span> مدیریت زنده</div><button class="btn secondary" id="quickEditProducts">__AZICON_EDIT__ ویرایش سریع</button><button class="btn ghost" id="openSiteFromProducts">__AZICON_GLOBE__ مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">__AZICON_SAVE__ بکاپ</button></div>' : '') +
       renderProductTable(state.products, false);
     wireProductBulk();
   }
@@ -1865,7 +1865,7 @@
       '<details class="az-copy-group"><summary>__AZICON_DOWN__ صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — هدر و SEO</summary><div class="grid2">' + fieldHtml('contact.meta') + fieldHtml('contact.header') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_INVOICE__ ارتباط با ما — معرفی صفحه</summary><div class="grid2">' + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
-      '<details class="az-copy-group"><summary>__AZICON_PHONE__️ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_CLOCK__ ارتباط با ما — ساعات کاری</summary><div class="grid2">' + fieldHtml('contact.hours') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_NOTE__ ارتباط با ما — فرم استعلام</summary><div class="grid2">' + fieldHtml('contact.form') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_SUCCESS__ ارتباط با ما — مزیت‌ها و اعتماد</summary><div class="grid2">' + fieldHtml('contact.trust') + '</div></details>' +
@@ -1887,7 +1887,7 @@
     contact: [
       ['__AZICON_PHONE__ هدر و SEO','contact.meta,contact.header'],
       ['__AZICON_INVOICE__ معرفی صفحه','contact.hero,contact.channels_head'],
-      ['__AZICON_PHONE__️ تلفن، پشتیبانی، ایمیل و آدرس','contact.phone,contact.support,contact.email,contact.address'],
+      ['__AZICON_PHONE__ تلفن، پشتیبانی، ایمیل و آدرس','contact.phone,contact.support,contact.email,contact.address'],
       ['__AZICON_CLOCK__ ساعات کاری','contact.hours'],
       ['__AZICON_NOTE__ فرم استعلام و پیام','contact.form'],
       ['__AZICON_SUCCESS__ مزیت‌های اعتماد','contact.trust'],
