@@ -108,7 +108,7 @@ jobs:
           node --check /tmp/admin-inline.js
           node --check _site/admin-app.js
           node --check _site/azim-live-content.js
-          node --check _site/api/chat.js
+          node --input-type=module --check < _site/api/chat.js
 
       - name: Validate homepage runtime scripts
         shell: bash
