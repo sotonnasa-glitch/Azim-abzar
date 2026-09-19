@@ -424,7 +424,7 @@
     if (!document.getElementById('az-discount-inline-style')) {
       const st = document.createElement('style');
       st.id = 'az-discount-inline-style';
-      st.textContent = \`
+      st.textContent = `
         .az-discount-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:22px;border:1px solid #3a3320;border-radius:18px;background:radial-gradient(circle at 85% 15%,rgba(245,185,0,.13),transparent 34%),linear-gradient(135deg,#121510,#0d100e);margin-bottom:14px}
         .az-discount-hero h2{margin:4px 0 5px;font-size:24px}
         .az-discount-hero p{margin:0;color:#8f978f;font-size:11px}
@@ -437,7 +437,7 @@
         .discount-target-search{width:100%;margin-bottom:2px}
         code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#161c18;padding:3px 6px;border-radius:6px}
         @media(max-width:720px){.az-discount-hero{align-items:flex-start;flex-direction:column}.discount-target-list{grid-template-columns:1fr}}
-      \`;
+      `;
       document.head.appendChild(st);
     }
 
@@ -1371,7 +1371,7 @@
 
   async function loadOrders() {
     const r = await state.db.from('orders')
-      .select('id,order_code,customer_id,status,payment_status,shipping_status,subtotal,discount,shipping_cost,total,tracking_code,notes,created_at')
+      .select('id,order_code,customer_id,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,notes,created_at')
       .order('created_at', { ascending: false }).limit(200);
     if (r.error) return showSectionError('ordersTable', r.error);
     if (!r.data?.length) {
@@ -1887,8 +1887,9 @@
 
   async function calculateAdminDiscount(code, customerId, items, subtotal) {
     const normalized = String(code || '').trim().toUpperCase();
-    if (!normalized) return { discount:0, row:null, reason:'' };
-    const r = await state.db.from('discounts').select('*').ilike('code',normalized).maybeSingle();
+    const r = normalized
+      ? await state.db.from('discounts').select('*').eq('code',normalized).maybeSingle()
+      : await state.db.from('discounts').select('*').eq('auto_apply',true).eq('is_active',true).order('priority',{ascending:false}).order('created_at',{ascending:false}).limit(1).maybeSingle();
     if (r.error) throw r.error;
     const x = r.data;
     if (!x) return {discount:0,row:null,reason:'کد تخفیف پیدا نشد.'};
@@ -1904,7 +1905,8 @@
       const customerUses = (used.data||[]).filter(v=>v.customer_id===customerId).length;
       if (customerUses >= Number(x.per_customer_limit || 1)) return {discount:0,row:x,reason:'این مشتری قبلاً بیش از حد مجاز از کد استفاده کرده است.'};
     }
-    if (x.first_order_only && customerId) {
+    if (x.first_order_only) {
+      if (!customerId) return {discount:0,row:x,reason:'این تخفیف فقط برای مشتریِ ثبت‌شده و اولین خرید است.'};
       const ord = await state.db.from('orders').select('id').eq('customer_id',customerId).limit(1);
       if (ord.error) throw ord.error;
       if ((ord.data||[]).length) return {discount:0,row:x,reason:'این تخفیف فقط برای اولین خرید است.'};
