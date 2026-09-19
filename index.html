@@ -358,57 +358,6 @@
       animation: azRatchetStroke 0.7s ease-in-out infinite;
     }
 
-    /* 3. Animation for Smart AI Assistant (دستیار هوشمند - پالسار کریستالی و مدارهای کوانتومی) */
-    .az-anim-ai svg {
-      width: 19px;
-      height: 19px;
-      overflow: visible;
-    }
-    .az-ai-pulsar {
-      transform-origin: 12px 12px;
-      animation: azPulsarBreathe 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
-    @keyframes azPulsarBreathe {
-      0%, 100% { transform: scale(0.92) rotate(0deg); filter: drop-shadow(0 0 3px rgba(245,185,0,0.6)); }
-      50% { transform: scale(1.18) rotate(35deg); filter: drop-shadow(0 0 9px #ffd84f) drop-shadow(0 0 16px rgba(245,185,0,0.8)); }
-    }
-    .az-ai-orbit-a {
-      transform-origin: 12px 12px;
-      animation: azOrbitLoopA 4s linear infinite;
-    }
-    @keyframes azOrbitLoopA {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .az-ai-orbit-b {
-      transform-origin: 12px 12px;
-      animation: azOrbitLoopB 3s linear infinite;
-    }
-    @keyframes azOrbitLoopB {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(-360deg); }
-    }
-    .az-ai-core {
-      animation: azCoreFlash 1.6s ease-in-out infinite;
-    }
-    @keyframes azCoreFlash {
-      0%, 100% { r: 2px; fill: #ffd84f; opacity: 0.9; }
-      50% { r: 3.2px; fill: #ffffff; opacity: 1; filter: drop-shadow(0 0 6px #ffd84f); }
-    }
-    .az-nav-btn-ai {
-      background: linear-gradient(135deg, rgba(245,185,0,0.09) 0%, rgba(20,28,24,0.85) 100%);
-      border-color: rgba(245, 185, 0, 0.38);
-    }
-    .az-nav-btn-ai:hover .az-ai-pulsar {
-      animation: azPulsarBreathe 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
-    .az-nav-btn-ai:hover .az-ai-orbit-a {
-      animation: azOrbitLoopA 1.2s linear infinite;
-    }
-    .az-nav-btn-ai:hover .az-ai-orbit-b {
-      animation: azOrbitLoopB 0.9s linear infinite;
-    }
-
     /* 4. Animation for Contact (ارتباط و سفارش - فرستنده صوتی رادیویی و گوشی تلفن) */
     .az-anim-contact svg {
       width: 19px;
@@ -1359,33 +1308,7 @@
         </a>
 
         <!-- دکمه ۳: دستیار هوشمند با پالسار نئونی هوش مصنوعی و مدارهای کوانتومی متقاطع -->
-        <a class="az-nav-btn az-nav-btn-ai" href="ai.html" id="nav-btn-ai">
-          <span class="az-anim-icon-wrap az-anim-ai" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <defs>
-                <linearGradient id="azAiPulsarGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#ffffff"/>
-                  <stop offset="35%" stop-color="#ffe175"/>
-                  <stop offset="70%" stop-color="#f5b900"/>
-                  <stop offset="100%" stop-color="#cc8200"/>
-                </linearGradient>
-              </defs>
-              <g class="az-ai-orbit-a">
-                <ellipse cx="12" cy="12" rx="9" ry="3.8" stroke="rgba(245,185,0,0.4)" stroke-width="1.2" stroke-dasharray="2 2" transform="rotate(-35 12 12)"/>
-                <circle cx="19.2" cy="7.2" r="1.4" fill="#ffd84f"/>
-              </g>
-              <g class="az-ai-orbit-b">
-                <ellipse cx="12" cy="12" rx="9" ry="3.8" stroke="rgba(255,234,167,0.3)" stroke-width="1" stroke-dasharray="1.5 2" transform="rotate(45 12 12)"/>
-                <circle cx="5" cy="7.5" r="1.2" fill="#ffffff"/>
-              </g>
-              <path class="az-ai-pulsar" d="M12 2.5L14 9L20.5 11L15 13.5L16.5 20.5L12 16L7.5 20.5L9 13.5L3.5 11L10 9Z" fill="url(#azAiPulsarGrad)" stroke="#ffd84f" stroke-width="1.2" stroke-linejoin="round"/>
-              <circle class="az-ai-core" cx="12" cy="12" r="2.2" fill="#ffffff"/>
-            </svg>
-          </span>
-          <span>دستیار هوشمند</span>
-        </a>
-
-        <!-- دکمه ۴: ارتباط و سفارش با گوشی تلفن و امواج رادیویی مخابراتی -->
+<!-- دکمه ۴: ارتباط و سفارش با گوشی تلفن و امواج رادیویی مخابراتی -->
         <a class="az-nav-btn az-nav-btn-contact" href="contact.html" id="nav-btn-contact">
           <span class="az-anim-icon-wrap az-anim-contact" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
@@ -1473,21 +1396,7 @@
                   <span>مشاهده کاتالوگ و قیمت‌های بروز</span>
                   <span class="az-arrow">←</span>
                 </a>
-                <a class="btn secondary" href="ai.html">
-                  <span class="az-anim-icon-wrap az-anim-ai" style="width:22px;height:22px;background:transparent;border:none;" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <g class="az-ai-orbit-a">
-                        <ellipse cx="12" cy="12" rx="9" ry="3.8" stroke="rgba(245,185,0,0.5)" stroke-width="1.2" stroke-dasharray="2 2" transform="rotate(-35 12 12)"/>
-                        <circle cx="19.2" cy="7.2" r="1.4" fill="#ffd84f"/>
-                      </g>
-                      <path class="az-ai-pulsar" d="M12 2.5L14 9L20.5 11L15 13.5L16.5 20.5L12 16L7.5 20.5L9 13.5L3.5 11L10 9Z" fill="#ffd84f" stroke="#ffeaa7" stroke-width="1.2" stroke-linejoin="round"/>
-                      <circle class="az-ai-core" cx="12" cy="12" r="2.2" fill="#ffffff"/>
-                    </svg>
-                  </span>
-                  <span>دستیار هوشمند انتخاب ابزار (AI)</span>
-                  <span class="az-arrow">←</span>
-                </a>
-                <a class="btn secondary" href="contact.html">
+<a class="btn secondary" href="contact.html">
                   <span class="az-anim-icon-wrap az-anim-contact" style="width:22px;height:22px;background:transparent;border:none;" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none">
                       <path class="az-contact-phone" d="M19 15.5v2.8a1.7 1.7 0 0 1-1.85 1.7 17 17 0 0 1-7.4-2.6 16.8 16.8 0 0 1-5.1-5.1A17 17 0 0 1 2 4.85 1.7 1.7 0 0 1 3.7 3h2.8a1.7 1.7 0 0 1 1.7 1.5 11 11 0 0 0 .6 2.4 1.7 1.7 0 0 1-.4 1.8l-1.2 1.2a13.7 13.7 0 0 0 5.1 5.1l1.2-1.2a1.7 1.7 0 0 1 1.8-.4c.8.2 1.6.4 2.4.6a1.7 1.7 0 0 1 1.5 1.7z" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="rgba(245,185,0,0.12)"/>
@@ -1683,7 +1592,6 @@
       <span>© عظیم ابزار · مرجع تخصصی ابزارهای مکانیکی، صنعتی و کارگاهی</span>
       <div style="display:flex;gap:18px">
         <a href="products-v4.html" style="color:var(--g)">کاتالوگ محصولات</a>
-        <a href="ai.html">دستیار هوشمند</a>
         <a href="contact.html">ارتباط با ما</a>
       </div>
     </div>
