@@ -1239,6 +1239,22 @@
       return `${fmt(n)} <small>تومان</small>`;
     };
 
+    function catalogImageFallback(img, id) {
+      if (!img) return;
+      if (img.dataset.fallbackTried === '1') {
+        img.style.display = 'none';
+        if (img.parentElement) img.parentElement.innerHTML = '<div class="missing">تصویر ' + esc(id) + ' در دسترس نیست</div>';
+        return;
+      }
+      img.dataset.fallbackTried = '1';
+      img.src = './catalog_site_mapping_908/images/' + encodeURIComponent(String(id)) + '.jpg';
+      img.style.display = '';
+      img.onerror = () => {
+        img.style.display = 'none';
+        if (img.parentElement) img.parentElement.innerHTML = '<div class="missing">تصویر ' + esc(id) + ' در دسترس نیست</div>';
+      };
+    }
+
     function showToast(msg) {
       const t = document.getElementById('azToast');
       t.textContent = msg;
@@ -1388,7 +1404,7 @@
             <span class="badge-code">کد: ${esc(x.id)}</span>
             ${discountBadge}
             ${variantBadge}
-            <img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=missing>تصویر ${esc(x.id)} در دسترس نیست</div>'">
+            <img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy" onerror="catalogImageFallback(this,'${esc(x.id)}')">
             <div class="photo-overlay-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
               <span>صفحه بزرگ‌تر و مشخصات</span>
@@ -1447,6 +1463,8 @@
       document.getElementById('modalCat').textContent = 'دسته‌بندی اصلی: ' + cat;
       
       const modalImg = document.getElementById('modalImg');
+      modalImg.dataset.fallbackTried = '0';
+      modalImg.onerror = () => catalogImageFallback(modalImg, id);
       modalImg.src = item.image;
       modalImg.alt = item.name;
       const modalSpecCategory = document.getElementById('modalSpecCategory');
