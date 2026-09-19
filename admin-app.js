@@ -452,18 +452,49 @@
       const st = document.createElement('style');
       st.id = 'az-discount-inline-style';
       st.textContent = `
-        .az-discount-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:22px;border:1px solid #3a3320;border-radius:18px;background:radial-gradient(circle at 85% 15%,rgba(245,185,0,.13),transparent 34%),linear-gradient(135deg,#121510,#0d100e);margin-bottom:14px}
-        .az-discount-hero h2{margin:4px 0 5px;font-size:24px}
-        .az-discount-hero p{margin:0;color:#8f978f;font-size:11px}
-        .az-discount-stats{margin-bottom:10px}
-        .discount-target-wrap{border:1px solid #2f3933;border-radius:12px;padding:12px;background:#0c100e}
-        .discount-target-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-        .discount-target-list{max-height:300px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
-        .discount-target-item{display:flex;gap:8px;align-items:flex-start;padding:8px 9px;border:1px solid #232b27;border-radius:8px;background:#111613;font-size:9px}
-        .discount-target-item:hover{border-color:#4f5e54}
-        .discount-target-search{width:100%;margin-bottom:2px}
+        .az-discount-shell{display:grid;gap:14px}
+        .az-discount-hero{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:22px;padding:26px;border:1px solid rgba(245,185,0,.28);border-radius:22px;background:radial-gradient(circle at 86% 10%,rgba(245,185,0,.18),transparent 31%),radial-gradient(circle at 10% 120%,rgba(46,213,115,.08),transparent 35%),linear-gradient(135deg,#151a16,#0d110f 72%);box-shadow:0 18px 50px rgba(0,0,0,.2)}
+        .az-discount-hero:after{content:"";position:absolute;right:-10%;bottom:-55%;width:48%;height:180px;background:radial-gradient(circle,rgba(245,185,0,.10),transparent 65%);pointer-events:none}
+        .az-discount-hero h2{margin:5px 0 6px;font-size:clamp(22px,3vw,30px);letter-spacing:-.4px}
+        .az-discount-hero p{margin:0;max-width:760px;color:#9aa39c;font-size:12px;line-height:1.9}
+        .az-discount-stats{margin-bottom:0}
+        .az-discount-stats .card{min-height:100px;display:flex;flex-direction:column;justify-content:center}
+        .az-discount-stats .v{font-size:25px}
+        .discount-target-wrap{border:1px solid #313c35;border-radius:16px;padding:14px;background:linear-gradient(180deg,#101510,#0b0f0c)}
+        .discount-target-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+        .discount-target-list{max-height:320px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+        .discount-target-item{display:flex;gap:8px;align-items:flex-start;padding:10px 11px;border:1px solid #232d27;border-radius:11px;background:#111613;font-size:10px;transition:.18s ease}
+        .discount-target-item:hover{border-color:#5a674f;transform:translateY(-1px)}
+        .az-coupon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .az-coupon-card{position:relative;overflow:hidden;padding:16px;border:1px solid #29342e;border-radius:18px;background:linear-gradient(160deg,#131814,#0e1210);box-shadow:0 12px 34px rgba(0,0,0,.16);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+        .az-coupon-card:before{content:"";position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,rgba(245,185,0,.9),rgba(245,185,0,.05))}
+        .az-coupon-card:hover{transform:translateY(-3px);border-color:#4a564d;box-shadow:0 18px 42px rgba(0,0,0,.24)}
+        .az-coupon-top,.az-coupon-main,.az-coupon-meta,.az-coupon-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+        .az-coupon-top{margin-bottom:12px}
+        .az-coupon-code{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px dashed #6b5822;border-radius:10px;background:#17160e;color:#f5c51c;font:800 13px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.7px}
+        .az-coupon-title{margin:8px 0 0;font-size:14px}
+        .az-coupon-sub{margin:4px 0 0;color:#808980;font-size:10px;line-height:1.7}
+        .az-coupon-main{padding:13px 0;border-top:1px solid #202823;border-bottom:1px solid #202823}
+        .az-coupon-value{font-size:21px;font-weight:950;color:#f3f5ef}
+        .az-coupon-scope{font-size:10px;color:#abb5ad;text-align:left}
+        .az-coupon-meta{align-items:flex-start;flex-wrap:wrap;padding-top:12px}
+        .az-coupon-meta > div{min-width:120px}
+        .az-coupon-label{display:block;color:#69736b;font-size:9px;margin-bottom:2px}
+        .az-coupon-number{font-size:11px;font-weight:800}
+        .az-coupon-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+        .az-coupon-actions{justify-content:flex-start;margin-top:13px;flex-wrap:wrap}
+        .az-coupon-actions .btn{min-height:34px}
+        .az-coupon-empty{padding:34px 20px;text-align:center;border:1px dashed #334038;border-radius:18px;background:#0d120f}
+        .az-coupon-code-row{display:flex;gap:8px;align-items:stretch}
+        .az-coupon-code-row .input{flex:1}
+        .az-coupon-code-row .btn{white-space:nowrap}
+        .az-product-coupon-cta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:12px 13px;border:1px dashed #5a4c23;border-radius:12px;background:rgba(245,185,0,.035)}
+        .az-product-coupon-cta div{display:grid;gap:3px}
+        .az-product-coupon-cta strong{font-size:11px}
+        .az-product-coupon-cta small{color:#777f79;font-size:9px;line-height:1.7}
         code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#161c18;padding:3px 6px;border-radius:6px}
-        @media(max-width:720px){.az-discount-hero{align-items:flex-start;flex-direction:column}.discount-target-list{grid-template-columns:1fr}}
+        @media(max-width:900px){.az-coupon-grid{grid-template-columns:1fr}}
+        @media(max-width:720px){.az-discount-hero{align-items:flex-start;flex-direction:column}.discount-target-list{grid-template-columns:1fr}.az-product-coupon-cta{align-items:flex-start;flex-direction:column}.az-coupon-meta > div{min-width:46%}.az-coupon-actions .btn{flex:1}}
       `;
       document.head.appendChild(st);
     }
@@ -716,10 +747,13 @@
       const siteButton = !compact && p.code
         ? '<button class="btn ghost" data-open-product-site="' + esc(p.code) + '">مشاهده سایت</button>'
         : '';
+      const couponButton = (!compact && can.all())
+        ? '<button class="btn ghost" data-new-discount-product="' + p.id + '">🏷️ کد تخفیف</button> '
+        : '';
       const actions = compact ? '' :
         '<td>' + (can.edit() ? '<button class="btn secondary" data-edit-product="' + p.id + '">ویرایش</button> ' +
         '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button> ' : 'فقط مشاهده') +
-        siteButton + '</td>';
+        couponButton + siteButton + '</td>';
       return '<tr><td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
         '<td>' + esc(p.name) + '</td><td>' + esc(p.code || '—') + '</td><td>' + esc(p.brand || '—') + '</td>' +
         '<td>' + (isDirectProductDiscountLive(p) && Number(p.price) > 0
@@ -872,6 +906,7 @@
             '<label class="az-simple-field"><span>پایان</span><input class="input" name="discount_ends_at" type="datetime-local" value="' + esc(localDateTimeValue(p?.discount_ends_at)) + '"></label>' +
           '</div>' +
           '<div id="productDiscountPreview" class="az-product-discount-preview"></div>' +
+          (isEdit && can.all() ? '<div class="az-product-coupon-cta"><div><strong>کد تخفیف این محصول</strong><small>این کد به‌عنوان کوپن سفارش استفاده می‌شود؛ تخفیف مستقیم قیمت محصول از آن جداست.</small></div><button type="button" class="btn secondary" id="openProductCouponBtn">🏷️ ساخت کد برای این محصول</button></div>' : '') +
         '</div>' +
         productVariantsEditor(p?.variants) +
         '<div class="az-simple-section">' +
@@ -921,6 +956,7 @@
     ['price','original_price','discount_value','discount_type','discount_is_active'].forEach(name => discountForm?.elements?.[name]?.addEventListener('input', () => updateProductDiscountPreview(discountForm)));
     ['discount_type','discount_is_active'].forEach(name => discountForm?.elements?.[name]?.addEventListener('change', () => updateProductDiscountPreview(discountForm)));
     updateProductDiscountPreview(discountForm);
+    $('openProductCouponBtn')?.addEventListener('click', () => openDiscountEditor(null, null, true, id));
     const del = $('deleteProductBtn');
     if (del) del.onclick = () => deleteProduct(id);
   }
@@ -1601,53 +1637,57 @@
   async function saveOrder(e, id) {
     e.preventDefault();
     const s = e.target.elements;
+    const status = $('orderStatus');
     try {
       const items = readOrderItems();
-      const calculatedSubtotal = items.reduce((sum, it) => sum + it.line_total, 0);
       const customerId = s.customer_id.value || null;
       const discountCode = s.discount_code?.value.trim() || '';
-      const discountResult = await calculateAdminDiscount(discountCode, customerId, items, calculatedSubtotal);
-      if (discountCode && discountResult.reason !== 'کد تخفیف معتبر است.') throw new Error(discountResult.reason);
-      const discountAmount = Number(discountResult.discount || 0);
-      const shipping = Number(s.shipping_cost.value || 0);
-      const finalTotal = Math.max(0, calculatedSubtotal + shipping - discountAmount);
-      const p = {
-        order_code: s.order_code.value.trim(),
-        customer_id: customerId,
-        status: s.status.value,
-        payment_status: s.payment_status.value,
-        shipping_status: s.shipping_status.value,
-        subtotal: calculatedSubtotal,
-        discount: discountAmount,
-        discount_id: discountResult.row?.id || null,
-        discount_code: discountResult.row?.code || (discountCode || null),
-        shipping_cost: shipping,
-        total: finalTotal,
-        tracking_code: s.tracking_code.value.trim() || null,
-        notes: s.notes.value.trim() || null
-      };
-      const r = id ? await state.db.from('orders').update(p).eq('id', id) : await state.db.from('orders').insert(p).select('id').single();
-      if (r.error) throw r.error;
-      const orderId = id || r.data.id;
+      if (!s.order_code.value.trim()) throw new Error('کد سفارش الزامی است.');
+      if (!items.length) throw new Error('حداقل یک قلم برای سفارش لازم است.');
 
-      await state.db.from('order_items').delete().eq('order_id', orderId);
-      if (items.length) {
-        const ins = await state.db.from('order_items').insert(items.map((it) => ({ ...it, order_id: orderId })));
-        if (ins.error) throw ins.error;
+      // Client-side preview is only UX; the database function is authoritative.
+      const preview = await calculateAdminDiscount(discountCode, customerId, items, items.reduce((sum, it) => sum + it.line_total, 0));
+      if (discountCode && preview.reason !== 'کد تخفیف معتبر است.') throw new Error(preview.reason);
+
+      const rpc = await state.db.rpc('azim_save_order_with_discount', {
+        p_order_id: id || null,
+        p_order_code: s.order_code.value.trim(),
+        p_customer_id: customerId,
+        p_status: s.status.value,
+        p_payment_status: s.payment_status.value,
+        p_shipping_status: s.shipping_status.value,
+        p_shipping_cost: Number(s.shipping_cost.value || 0),
+        p_tracking_code: s.tracking_code.value.trim() || null,
+        p_notes: s.notes.value.trim() || null,
+        p_discount_code: discountCode || null,
+        p_items: items
+      });
+      if (rpc.error) throw rpc.error;
+
+      const saved = rpc.data || {};
+      if ($('orderDiscountStatus')) {
+        $('orderDiscountStatus').textContent = saved.discount
+          ? 'تخفیف نهایی تأیید شد • ' + money(saved.discount)
+          : (discountCode ? 'کد معتبر بود اما مبلغ تخفیف صفر شد.' : 'بدون کد تخفیف');
       }
-      await redeemOrderDiscount(orderId, discountResult, customerId, p.order_code);
-      await audit(id ? 'update' : 'create', 'orders', orderId, { order_code: p.order_code, total: p.total, discount: p.discount, discount_id: p.discount_id, items: items.length });
+      await audit(id ? 'update' : 'create', 'orders', saved.order_id || id || 'new', {
+        order_code: s.order_code.value.trim(),
+        total: Number(saved.total || 0),
+        discount: Number(saved.discount || 0),
+        discount_id: saved.discount_id || null,
+        discount_code: saved.discount_code || null,
+        items: items.length
+      });
       closeModal();
-      toast('__AZICON_SUCCESS__ سفارش ذخیره شد');
+      toast('__AZICON_SUCCESS__ سفارش با محاسبه نهایی تخفیف ذخیره شد');
       await Promise.all([loadOrders(), loadDashboard()]);
     } catch (err) {
-      $('orderStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
+      if (status) status.textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
-
   // ===== DISCOUNT / PROMOTION ENGINE =====
-  const discountState = { rows: [], products: [], categories: [], brands: [], customers: [], selectedCustomerId: null };
+  const discountState = { rows: [], products: [], categories: [], brands: [], customers: [], selectedCustomerId: null, stats: {} };
 
   function discountBadge(x) {
     const now = Date.now(), start = new Date(x.starts_at).getTime(), end = x.ends_at ? new Date(x.ends_at).getTime() : Infinity;
@@ -1679,19 +1719,30 @@
     discountState.customers = cu.data || [];
   }
 
+  async function fetchDiscountData() {
+    const [d,s] = await Promise.all([
+      state.db.from('discounts').select('*').order('priority',{ascending:false}).order('created_at',{ascending:false}).limit(500),
+      state.db.rpc('azim_discount_stats')
+    ]);
+    if (d.error) throw d.error;
+    if (s.error) throw s.error;
+    const stats = {};
+    (s.data || []).forEach(x => { stats[x.discount_id] = x; });
+    discountState.stats = stats;
+    discountState.rows = (d.data || []).map(x => ({
+      ...x,
+      used_count: Number(stats[x.id]?.used_count || 0),
+      total_discount: Number(stats[x.id]?.total_discount || 0),
+      last_used_at: stats[x.id]?.last_used_at || null
+    }));
+    return discountState.rows;
+  }
+
   async function loadDiscounts() {
     const box = $('discountsTable');
     if (!box) return;
     try {
-      const [d,r] = await Promise.all([
-        state.db.from('discounts').select('*').order('priority',{ascending:false}).order('created_at',{ascending:false}).limit(500),
-        state.db.from('discount_redemptions').select('discount_id').limit(5000)
-      ]);
-      if (d.error) throw d.error;
-      if (r.error) throw r.error;
-      const counts = {};
-      (r.data || []).forEach(x => { counts[x.discount_id] = (counts[x.discount_id] || 0) + 1; });
-      discountState.rows = (d.data || []).map(x => ({...x, used_count: counts[x.id] || 0}));
+      await fetchDiscountData();
       const active = discountState.rows.filter(x => x.is_active).length;
       const codes = discountState.rows.filter(x => x.code).length;
       const auto = discountState.rows.filter(x => x.auto_apply).length;
@@ -1742,17 +1793,18 @@
       '<div class="table-wrap"><table class="table"><thead><tr><th>نام</th><th>کد</th><th>ارزش</th><th>اعمال</th><th>مصرف</th><th>وضعیت</th><th>بازه</th><th>عملیات</th></tr></thead><tbody>' + body + '</tbody></table></div>';
   }
 
-  function discountForm(x, presetCustomerId = null) {
+  function discountForm(x, presetCustomerId = null, presetProductId = null) {
     const isEdit = !!x;
     const current = x || {};
-    const scope = current.applies_to || (presetCustomerId ? 'customers' : 'all');
+    const scope = current.applies_to || (presetProductId ? 'products' : (presetCustomerId ? 'customers' : 'all'));
     const values = current.value ?? 10;
     const starts = current.starts_at ? new Date(current.starts_at).toISOString().slice(0,16) : new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
     const ends = current.ends_at ? new Date(current.ends_at).toISOString().slice(0,16) : '';
     const customerName = presetCustomerId ? (discountState.customers.find(c=>c.id===presetCustomerId)?.full_name || '') : '';
+    const productName = presetProductId ? (discountState.products.find(p=>p.id===presetProductId)?.name || '') : '';
     return '<form id="discountForm" class="grid2">' +
       '<div class="field full"><label>عنوان تخفیف *</label><input class="input" name="name" required value="' + esc(current.name) + '" placeholder="مثلاً تخفیف تابستانه"></div>' +
-      '<div class="field"><label>کد تخفیف</label><input class="input" name="code" dir="ltr" value="' + esc(current.code || '') + '" placeholder="مثلاً AZIM20" autocomplete="off"></div>' +
+      '<div class="field"><label>کد تخفیف</label><div class="az-coupon-code-row"><input class="input" name="code" dir="ltr" value="' + esc(current.code || '') + '" placeholder="مثلاً AZIM20" autocomplete="off"><button type="button" class="btn secondary" id="generateDiscountCodeBtn">⚡ تولید کد</button></div><small class="field-hint">کد با حروف بزرگ ذخیره می‌شود و تکراری بودن آن در دیتابیس کنترل می‌شود.</small></div>' +
       '<div class="field"><label>نوع تخفیف *</label><select class="select" name="discount_type"><option value="percentage" ' + (current.discount_type !== 'fixed' ? 'selected' : '') + '>درصدی</option><option value="fixed" ' + (current.discount_type === 'fixed' ? 'selected' : '') + '>مبلغ ثابت</option></select></div>' +
       '<div class="field"><label>مقدار *</label><input class="input" name="value" type="number" min="1" step="1" required value="' + esc(values) + '"><small class="field-hint">برای درصد: ۱ تا ۱۰۰ / برای مبلغ: تومان</small></div>' +
       '<div class="field"><label>سقف تخفیف (تومان)</label><input class="input" name="max_discount" type="number" min="0" value="' + esc(current.max_discount ?? '') + '"></div>' +
@@ -1769,11 +1821,12 @@
       '<div class="field full"><label>یادداشت داخلی</label><textarea class="textarea" name="notes">' + esc(current.notes || '') + '</textarea></div>' +
       '<label class="check field full"><input name="is_active" type="checkbox" ' + (current.is_active === false ? '' : 'checked') + '> فعال</label>' +
       (presetCustomerId ? '<div class="field full"><div class="badge ok">🎁 تخفیف اختصاصی برای: ' + esc(customerName) + '</div></div>' : '') +
+      (presetProductId ? '<div class="field full"><div class="badge ok">🏷️ محصول انتخاب‌شده: ' + esc(productName || 'محصول') + '</div></div>' : '') +
       '<div class="field full"><div class="tools"><button class="btn" type="submit">ذخیره تخفیف</button><button class="btn secondary" type="button" id="discountPreviewBtn">پیش‌نمایش منطق</button></div></div><div id="discountStatus" class="status field full"></div>' +
       '</form>';
   }
 
-  async function loadDiscountTargets(x, presetCustomerId = null) {
+  async function loadDiscountTargets(x, presetCustomerId = null, presetProductId = null) {
     const form = $('discountForm');
     const box = $('discountTargetBox');
     if (!form || !box) return;
@@ -1786,6 +1839,7 @@
       selected = new Set((r.data || []).map(v => v.product_id || v.category_id || v.brand_id || v.customer_id));
     }
     if (presetCustomerId) selected.add(presetCustomerId);
+    if (presetProductId && scope === 'products') selected.add(presetProductId);
 
     if (scope === 'all') {
       box.innerHTML = '<div class="empty">این تخفیف روی همه محصولات اعمال می‌شود؛ انتخاب دیگری لازم نیست.</div>';
@@ -1825,7 +1879,7 @@
     if ($('discountTargetCount')) $('discountTargetCount').textContent = n.toLocaleString('fa-IR') + ' انتخاب';
   }
 
-  async function openDiscountEditor(id, presetCustomerId = null, codeOnly = false) {
+  async function openDiscountEditor(id, presetCustomerId = null, codeOnly = false, presetProductId = null) {
     if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند تخفیف بسازد.');
     await loadDiscountReferenceData();
     const x = id ? discountState.rows.find(r => r.id === id) : null;
@@ -1833,13 +1887,24 @@
       const r = await state.db.from('discounts').select('*').eq('id', id).single();
       if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     }
-    openModal(id ? 'ویرایش تخفیف' : (presetCustomerId ? 'تخفیف اختصاصی مشتری' : 'ساخت تخفیف جدید'), discountForm(x || null, presetCustomerId));
+    const title = id ? 'ویرایش تخفیف' : (presetProductId ? 'کد تخفیف محصول' : (presetCustomerId ? 'تخفیف اختصاصی مشتری' : (codeOnly ? 'ساخت کد تخفیف' : 'ساخت تخفیف جدید')));
+    openModal(title, discountForm(x || null, presetCustomerId, presetProductId));
     const form = $('discountForm');
-    if (codeOnly) form.dataset.codeRequired = '1';
-    form.onsubmit = (e) => saveDiscount(e, id, presetCustomerId);
-    form.elements.applies_to.onchange = () => loadDiscountTargets(x || null, presetCustomerId);
+    if (codeOnly || presetProductId) form.dataset.codeRequired = '1';
+    form.onsubmit = (e) => saveDiscount(e, id, presetCustomerId, presetProductId);
+    form.elements.applies_to.onchange = () => loadDiscountTargets(x || null, presetCustomerId, presetProductId);
     $('discountPreviewBtn').onclick = () => previewDiscountLogic(form);
-    await loadDiscountTargets(x || null, presetCustomerId);
+    $('generateDiscountCodeBtn')?.addEventListener('click', () => {
+      form.elements.code.value = generateDiscountCode();
+      form.elements.code.dispatchEvent(new Event('input', {bubbles:true}));
+      form.elements.code.focus();
+    });
+    form.elements.code?.addEventListener('input', () => {
+      const at = form.elements.code.selectionStart;
+      form.elements.code.value = form.elements.code.value.toUpperCase().replace(/\s+/g,'');
+      try { form.elements.code.setSelectionRange(at, at); } catch (_) {}
+    });
+    await loadDiscountTargets(x || null, presetCustomerId, presetProductId);
   }
 
   function previewDiscountLogic(form) {
@@ -1855,7 +1920,7 @@
     $('discountStatus').textContent = 'نمونه روی سفارش ' + money(exampleBase) + ': تخفیف ' + money(d) + ' ← مبلغ پس از تخفیف ' + money(remaining);
   }
 
-  async function saveDiscount(e, id, presetCustomerId = null) {
+  async function saveDiscount(e, id, presetCustomerId = null, presetProductId = null) {
     e.preventDefault();
     if (!can.all()) return;
     const s = e.target.elements;
@@ -1876,6 +1941,11 @@
       if (e.target.dataset.codeRequired === '1' && !code) throw new Error('کد تخفیف برای این بخش الزامی است.');
       if (type === 'percentage' && (value < 1 || value > 100)) throw new Error('درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.');
       if (type === 'fixed' && value < 1) throw new Error('مبلغ تخفیف باید بیشتر از صفر باشد.');
+      if (min < 0) throw new Error('حداقل مبلغ سفارش نمی‌تواند منفی باشد.');
+      if (max != null && max < 0) throw new Error('سقف تخفیف نمی‌تواند منفی باشد.');
+      if (usage != null && usage < 1) throw new Error('سقف استفاده باید حداقل ۱ باشد.');
+      if (per < 1) throw new Error('حداکثر استفاده هر مشتری باید حداقل ۱ باشد.');
+      if (scope !== 'all' && !checked.length) throw new Error('برای این دامنه حداقل یک مورد را انتخاب کن.');
       if (ends && new Date(ends) <= new Date(starts)) throw new Error('پایان باید بعد از شروع باشد.');
       const payload = {
         name, code: code || null, discount_type:type, value,
@@ -2057,6 +2127,7 @@
     main.appendChild(sec);
     $('newDiscountBtn').onclick = () => openDiscountEditor(null);
     $('discountSearch').oninput = renderDiscounts;
+    $('newDiscountBtn').style.display = can.all() ? '' : 'none';
     $('discountFilterStatus').onchange = renderDiscounts;
     $('discountFilterType').onchange = renderDiscounts;
   }
@@ -2069,34 +2140,35 @@
     sec.className = 'view';
     sec.innerHTML =
       '<div class="az-discount-shell">' +
-        '<div class="az-discount-hero"><div><span class="az-section-kicker">CUSTOMER COUPON CENTER</span><h2>کدهای تخفیف</h2><p>کدهای قابل ورود توسط مشتری را جدا از کمپین‌های خودکار مدیریت کن.</p></div><div class="tools"><button id="newDiscountCodeBtn" class="btn">＋ ساخت کد تخفیف</button></div></div>' +
+        '<div class="az-discount-hero"><div><span class="az-section-kicker">CUSTOMER COUPON CENTER</span><h2>مرکز کدهای تخفیف</h2><p>کدهای عمومی، اولین‌خرید، حداقل‌سبد، محدود به محصول/دسته/برند یا اختصاصی برای مشتری؛ با قوانین قابل کنترل.</p></div><div class="tools"><button id="newDiscountCodeBtn" class="btn">＋ ساخت کد تخفیف</button></div></div>' +
         '<div class="cards az-discount-stats">' +
-          '<div class="card"><div class="k">همه کدها</div><div id="discountCodeStatTotal" class="v">—</div><div class="s">کدهای ثبت‌شده</div></div>' +
-          '<div class="card"><div class="k">فعال</div><div id="discountCodeStatActive" class="v">—</div><div class="s">قابل استفاده</div></div>' +
-          '<div class="card"><div class="k">خاموش</div><div id="discountCodeStatOff" class="v">—</div><div class="s">غیرفعال</div></div>' +
-          '<div class="card"><div class="k">ورود مشتری</div><div class="v">کد</div><div class="s">محل استفاده در سفارش</div></div>' +
+          '<div class="card"><div class="k">کدهای فعال</div><div id="discountCodeStatActive" class="v">—</div><div class="s">قابل استفاده</div></div>' +
+          '<div class="card"><div class="k">کل کدها</div><div id="discountCodeStatTotal" class="v">—</div><div class="s">کدهای ثبت‌شده</div></div>' +
+          '<div class="card"><div class="k">تعداد استفاده</div><div id="discountCodeStatUses" class="v">—</div><div class="s">مصرف ثبت‌شده</div></div>' +
+          '<div class="card"><div class="k">ارزش تخفیف</div><div id="discountCodeStatValue" class="v">—</div><div class="s">جمع مبلغ تخفیف</div></div>' +
         '</div>' +
-        '<div class="panel"><div class="panel-head"><h2>لیست کدهای تخفیف</h2><div class="tools"><input id="discountCodeSearch" class="input" placeholder="جستجو در نام یا کد…"><select id="discountCodeFilter" class="select"><option value="">همه</option><option value="active">فعال</option><option value="off">خاموش</option></select></div></div><div id="discountCodesTable" class="table-wrap"></div></div>' +
+        '<div class="panel"><div class="panel-head"><h2>کوپن‌ها</h2><div class="tools"><input id="discountCodeSearch" class="input" placeholder="جستجو در نام یا کد…"><select id="discountCodeFilter" class="select"><option value="">همه وضعیت‌ها</option><option value="active">فعال</option><option value="scheduled">زمان‌بندی شده</option><option value="expired">منقضی</option><option value="off">خاموش</option></select></div></div><div id="discountCodesTable" class="table-wrap"></div></div>' +
       '</div>';
     main.appendChild(sec);
     $('newDiscountCodeBtn').onclick = () => openDiscountCodeEditor(null);
     $('discountCodeSearch').oninput = renderDiscountCodes;
     $('discountCodeFilter').onchange = renderDiscountCodes;
+    $('newDiscountCodeBtn').style.display = can.all() ? '' : 'none';
   }
 
   async function loadDiscountCodes() {
     const box = $('discountCodesTable');
     if (!box) return;
     try {
-      const r = await state.db.from('discounts').select('*').not('code','is',null).order('created_at',{ascending:false}).limit(500);
-      if (r.error) throw r.error;
-      const rows = (r.data || []).filter(x => String(x.code || '').trim());
-      discountState.rows = Array.isArray(discountState.rows) ? discountState.rows.filter(x => !x.code) .concat(rows) : rows;
-      const active = rows.filter(x => x.is_active).length;
-      const off = rows.length - active;
+      await fetchDiscountData();
+      const rows = discountState.rows.filter(x => String(x.code || '').trim());
+      const active = rows.filter(x => x.is_active && new Date(x.starts_at).getTime() <= Date.now() && (!x.ends_at || new Date(x.ends_at).getTime() >= Date.now()) && !(x.usage_limit != null && Number(x.used_count||0) >= Number(x.usage_limit))).length;
+      const uses = rows.reduce((sum,x)=>sum+Number(x.used_count||0),0);
+      const value = rows.reduce((sum,x)=>sum+Number(x.total_discount||0),0);
       if ($('discountCodeStatTotal')) $('discountCodeStatTotal').textContent = rows.length.toLocaleString('fa-IR');
       if ($('discountCodeStatActive')) $('discountCodeStatActive').textContent = active.toLocaleString('fa-IR');
-      if ($('discountCodeStatOff')) $('discountCodeStatOff').textContent = off.toLocaleString('fa-IR');
+      if ($('discountCodeStatUses')) $('discountCodeStatUses').textContent = uses.toLocaleString('fa-IR');
+      if ($('discountCodeStatValue')) $('discountCodeStatValue').textContent = money(value);
       renderDiscountCodes();
     } catch (err) {
       showSectionError('discountCodesTable', err);
@@ -2108,29 +2180,47 @@
     if (!box) return;
     const term = ($('discountCodeSearch')?.value || '').trim().toLocaleLowerCase('fa');
     const filter = $('discountCodeFilter')?.value || '';
+    const now = Date.now();
     const rows = (discountState.rows || []).filter(x => {
       if (!String(x.code || '').trim()) return false;
       const hay = (String(x.name || '') + ' ' + String(x.code || '')).toLocaleLowerCase('fa');
       if (term && !hay.includes(term)) return false;
-      if (filter === 'active' && !x.is_active) return false;
-      if (filter === 'off' && x.is_active) return false;
+      const stateName = !x.is_active ? 'off' :
+        (new Date(x.starts_at).getTime() > now ? 'scheduled' :
+        (x.ends_at && new Date(x.ends_at).getTime() < now ? 'expired' :
+        (x.usage_limit != null && Number(x.used_count||0) >= Number(x.usage_limit) ? 'expired' : 'active')));
+      if (filter && stateName !== filter) return false;
       return true;
     });
     if (!rows.length) {
-      box.innerHTML = '<div class="empty">هنوز کد تخفیفی ثبت نشده است.</div>';
+      box.innerHTML = '<div class="az-coupon-empty"><div style="font-size:28px">🏷️</div><strong>هنوز کد تخفیفی مطابق فیلتر ثبت نشده</strong><div class="muted" style="margin-top:6px">کد را می‌توان برای کل سبد، محصول، دسته، برند یا مشتری ساخت.</div></div>';
       return;
     }
+    const scopeText = x => x.applies_to === 'all' ? 'کل سبد' :
+      x.applies_to === 'products' ? 'محصولات انتخابی' :
+      x.applies_to === 'categories' ? 'دسته‌های انتخابی' :
+      x.applies_to === 'brands' ? 'برندهای انتخابی' : 'مشتری‌های انتخابی';
     const body = rows.map(x => {
-      const value = x.discount_type === 'percentage' ? Number(x.value || 0) + '%' : money(x.value);
-      const start = x.starts_at ? dateFa(x.starts_at,false) : 'همین حالا';
-      const end = x.ends_at ? dateFa(x.ends_at,false) : 'بدون پایان';
-      return '<tr><td><code dir="ltr">' + esc(x.code) + '</code></td><td>' + esc(x.name || '—') + '</td><td>' + esc(value) + '</td><td>' +
-        '<span class="badge ' + (x.is_active ? 'ok' : 'red') + '">' + (x.is_active ? 'فعال' : 'خاموش') + '</span></td><td>' +
-        esc(start + ' تا ' + end) + '</td><td>' +
-        (can.all() ? '<button class="btn secondary" data-edit-discount="' + x.id + '">ویرایش</button> <button class="btn ghost" data-toggle-discount="' + x.id + '">' + (x.is_active ? 'خاموش' : 'روشن') + '</button> <button class="btn ghost" data-delete-discount="' + x.id + '">حذف</button>' : '') +
-        '</td></tr>';
+      const used = Number(x.used_count || 0);
+      const limit = x.usage_limit == null ? '∞' : Number(x.usage_limit).toLocaleString('fa-IR');
+      const remaining = x.usage_limit == null ? 'نامحدود' : Math.max(0, Number(x.usage_limit)-used).toLocaleString('fa-IR');
+      const value = x.discount_type === 'percentage' ? Number(x.value||0).toLocaleString('fa-IR') + '٪' : money(x.value);
+      const tags = [
+        '<span class="badge">' + esc(scopeText(x)) + '</span>',
+        x.first_order_only ? '<span class="badge warn">اولین خرید</span>' : '',
+        x.auto_apply ? '<span class="badge warn">خودکار</span>' : '',
+        x.min_order_amount ? '<span class="badge">حداقل ' + esc(money(x.min_order_amount)) + '</span>' : ''
+      ].join('');
+      return '<article class="az-coupon-card">' +
+        '<div class="az-coupon-top"><div><div class="az-coupon-code" dir="ltr">' + esc(x.code) + '</div><h3 class="az-coupon-title">' + esc(x.name || 'کد تخفیف') + '</h3><p class="az-coupon-sub">' + esc(x.notes || 'کوپن فروش') + '</p></div>' + discountBadge(x) + '</div>' +
+        '<div class="az-coupon-main"><div><div class="az-coupon-label">مقدار تخفیف</div><div class="az-coupon-value">' + esc(value) + '</div>' + (x.max_discount ? '<div class="muted">سقف: ' + money(x.max_discount) + '</div>' : '') + '</div><div class="az-coupon-scope"><div class="az-coupon-label">دامنه</div><strong>' + esc(scopeText(x)) + '</strong></div></div>' +
+        '<div class="az-coupon-meta"><div><span class="az-coupon-label">استفاده</span><span class="az-coupon-number">' + used.toLocaleString('fa-IR') + ' / ' + limit + '</span></div><div><span class="az-coupon-label">باقی‌مانده</span><span class="az-coupon-number">' + remaining + '</span></div><div><span class="az-coupon-label">اعتبار تا</span><span class="az-coupon-number">' + esc(x.ends_at ? dateFa(x.ends_at,false) : 'بدون پایان') + '</span></div><div><span class="az-coupon-label">ارزش مصرف‌شده</span><span class="az-coupon-number">' + esc(money(x.total_discount || 0)) + '</span></div></div>' +
+        '<div class="az-coupon-tags">' + tags + '</div>' +
+        '<div class="az-coupon-actions"><button class="btn secondary" data-edit-discount="' + x.id + '">ویرایش</button><button class="btn ghost" data-copy-discount="' + esc(x.code) + '">کپی کد</button>' +
+        (can.all() ? '<button class="btn ghost" data-toggle-discount="' + x.id + '">' + (x.is_active ? 'خاموش' : 'روشن') + '</button><button class="btn ghost" data-delete-discount="' + x.id + '">حذف</button>' : '') +
+        '</div></article>';
     }).join('');
-    box.innerHTML = '<table class="table"><thead><tr><th>کد</th><th>عنوان</th><th>مقدار</th><th>وضعیت</th><th>بازه</th><th>عملیات</th></tr></thead><tbody>' + body + '</tbody></table>';
+    box.innerHTML = '<div class="az-coupon-grid">' + body + '</div>';
   }
 
   async function openDiscountCodeEditor(id) {
@@ -2151,11 +2241,39 @@
     if (ins.error) throw ins.error;
   }
 
+  function generateDiscountCode() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = new Uint8Array(7);
+    if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+    else for (let i=0;i<bytes.length;i++) bytes[i] = Math.floor(Math.random()*256);
+    let suffix = '';
+    bytes.forEach(b => suffix += alphabet[b % alphabet.length]);
+    return 'AZIM-' + suffix;
+  }
+
+  async function copyDiscountCode(code) {
+    const value = String(code || '').trim();
+    if (!value) return;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(value);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = value; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      toast('__AZICON_SUCCESS__ کد کپی شد');
+    } catch (_) {
+      toast('__AZICON_ERROR__ کپی کد ممکن نشد؛ خود کد را انتخاب کن.');
+    }
+  }
+
   document.addEventListener('click', (e) => {
     const d = e.target.closest('[data-edit-discount]'); if (d) openDiscountEditor(d.dataset.editDiscount);
     const dt = e.target.closest('[data-toggle-discount]'); if (dt) toggleDiscount(dt.dataset.toggleDiscount);
     const dd = e.target.closest('[data-delete-discount]'); if (dd) deleteDiscount(dd.dataset.deleteDiscount);
     const dc = e.target.closest('[data-new-discount-customer]'); if (dc) openDiscountEditor(null, dc.dataset.newDiscountCustomer);
+    const dp = e.target.closest('[data-new-discount-product]'); if (dp) openDiscountEditor(null, null, true, dp.dataset.newDiscountProduct);
+    const cp = e.target.closest('[data-copy-discount]'); if (cp) copyDiscountCode(cp.dataset.copyDiscount);
   });
 
   async function loadMedia() {
