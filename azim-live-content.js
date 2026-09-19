@@ -136,7 +136,7 @@
   ready(async () => {
     const c = await loadContent();
     if (document.querySelector('#home')) applyHome(c);
-    if (document.querySelector('#card-channel-phone') || document.querySelector('meta[name="description"]')) applyContact(c);
+    if (document.querySelector('#card-channel-phone')) applyContact(c);
     if (document.querySelector('#chat') && document.querySelector('#form')) applyAI(c);
   });
 })();
