@@ -146,7 +146,71 @@
     $('app').classList.remove('hidden');
 
     applyRoleUI();
+    markAdminMenu();
+    if ($('azMenuUser')) $('azMenuUser').innerHTML = esc(u.email) + '<br>نقش: ' + esc(labels[state.me.role] || state.me.role);
     return true;
+  }
+
+  function initAdminMenu() {
+    const overlay = $('azMenuOverlay');
+    const trigger = $('azMenuTrigger');
+    const closeBtn = $('azMenuClose');
+    if (!overlay || !trigger) return;
+
+    const close = () => {
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+      trigger.classList.remove('active');
+      trigger.setAttribute('aria-expanded','false');
+    };
+    const open = () => {
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      trigger.classList.add('active');
+      trigger.setAttribute('aria-expanded','true');
+      markAdminMenu();
+    };
+
+    trigger.onclick = () => overlay.classList.contains('show') ? close() : open();
+    closeBtn?.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('show')) close();
+    });
+    document.querySelectorAll('[data-menu-view]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const view = btn.dataset.menuView;
+        close();
+        setView(view);
+      });
+    });
+
+    window.__azCloseMenu = close;
+  }
+
+  function markAdminMenu() {
+    const current = activeView();
+    document.querySelectorAll('[data-menu-view]').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.menuView === current);
+    });
+    const role = state.me?.role;
+    const allowed = {
+      dashboard:['owner','admin','editor','sales'],
+      products:['owner','admin','editor','sales'],
+      categories:['owner','admin','editor'],
+      brands:['owner','admin','editor'],
+      inquiries:['owner','admin','sales'],
+      orders:['owner','admin','sales'],
+      customers:['owner','admin','sales'],
+      media:['owner','admin','editor'],
+      content:['owner','admin','editor'],
+      ai:['owner','admin','editor'],
+      admins:['owner','admin'],
+      audit:['owner','admin']
+    };
+    document.querySelectorAll('[data-menu-view]').forEach((btn) => {
+      btn.style.display = (allowed[btn.dataset.menuView] || []).includes(role) ? '' : 'none';
+    });
   }
 
   function initCommandPalette() {
@@ -277,6 +341,10 @@
       await state.db.auth.signOut();
       location.reload();
     };
+    $('azMenuLogout')?.addEventListener('click', async () => {
+      await state.db.auth.signOut();
+      location.reload();
+    });
 
     const productTools = document.querySelector('#view-products .tools');
     if (productTools && !$('productCategoryFilter')) {
@@ -340,6 +408,7 @@
       $('pageTitle').textContent = viewInfo[name][0];
       $('pageSub').textContent = viewInfo[name][1];
     }
+    markAdminMenu();
     await loadSection(name);
   }
 
@@ -1451,6 +1520,7 @@
       return;
     }
     ensureExtraUI();
+    initAdminMenu();
     initCommandPalette();
     state.db = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
     $('loginBtn').onclick = async () => {
