@@ -146,11 +146,11 @@ drop policy if exists "Sales can read discount redemptions" on public.discount_r
 create policy "Discount redemptions select" on public.discount_redemptions for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
 create policy "Discount redemptions insert" on public.discount_redemptions for insert to authenticated
-with check (private.has_azim_role(array['owner','admin']));
+with check (private.has_azim_role(array['owner','admin','sales']));
 create policy "Discount redemptions update" on public.discount_redemptions for update to authenticated
 using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
 create policy "Discount redemptions delete" on public.discount_redemptions for delete to authenticated
-using (private.has_azim_role(array['owner','admin']));
+using (private.has_azim_role(array['owner','admin','sales']));
 
 create index if not exists discounts_created_by_idx on public.discounts(created_by);
 create index if not exists discount_redemptions_created_by_idx on public.discount_redemptions(created_by);
