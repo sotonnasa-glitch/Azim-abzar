@@ -282,6 +282,57 @@ create index if not exists orders_customer_id_idx on public.orders(customer_id);
 create index if not exists site_content_updated_by_idx on public.site_content(updated_by);
 create index if not exists audit_logs_actor_id_idx on public.audit_logs(actor_id);
 
+-- Initial catalog categories and a neutral default brand.
+insert into public.categories(name,slug,sort_order,is_active) values
+  ('آچار و بکس','cat-1',1,true),
+  ('ابزار دستی','cat-2',2,true),
+  ('اندازه‌گیری','cat-3',3,true),
+  ('برقی / بادی','cat-4',4,true),
+  ('تعمیرگاهی','cat-5',5,true)
+on conflict (slug) do update set name=excluded.name,sort_order=excluded.sort_order,is_active=true;
+
+insert into public.brands(name,slug,description,sort_order,is_active)
+values ('بدون برند','default','محصولاتی که برند آن‌ها در داده فعلی کاتالوگ ثبت نشده است.',0,true)
+on conflict (name) do update set is_active=true;
+
+insert into public.site_content(section_key,title,payload,is_active) values
+('home_meta','متای صفحه اصلی',jsonb_build_object(
+  'title','عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی',
+  'description','خرید تخصصی ابزارهای مکانیکی، گاراژی و کارگاهی با آلیاژ سخت‌کاری‌شده، تضمین اصالت، قیمت دست‌اول بازار و کاتالوگ کامل ۹۰۸ محصول به همراه استعلام آنی و ارسال به سراسر کشور.'
+),true),
+('home_hero','هیرو صفحه اصلی',jsonb_build_object(
+  'eyebrow','تأمین مستقیم و بی‌واسطه ابزار صنعتی',
+  'title','تجهیزات صنعتی و ابزار تخصصی مکانیکی؛',
+  'highlight','قدرت، دقت و دوام برای حرفه‌ای‌ها',
+  'description','بزرگ‌ترین مرجع تأمین بیش از ۹۰۸ قلم ابزار گاراژی، تعمیرگاهی و صنعتی با آلیاژ سخت‌کاری‌شده کروم وانادیوم (Cr-V). تضمین اصالت فیزیکی کالا، قیمت دست‌اول بازار، سایزبندی کامل و ارسال فوری به سراسر کشور.',
+  'trust_badges',jsonb_build_array('فولاد کروم وانادیوم سخت‌کاری‌شده','قیمت دست اول و رقابتی بازار','ارسال سریع و مطمئن')
+),true),
+('home_choice','مسیرهای خرید',jsonb_build_object(
+  'eyebrow','مسیر آسان و مطمئن خرید',
+  'title','چگونه بهترین ابزار را سریع و مطمئن انتخاب کنیم؟',
+  'lead','چه نام و کد فنی ابزار را بدانید و چه فقط شرح کار مکانیکی را داشته باشید، عظیم ابزار مسیر را برای شما هموار کرده است:'
+),true),
+('home_why','مزیت‌های فروشگاه',jsonb_build_object(
+  'eyebrow','مزیت رقابتی عظیم ابزار',
+  'title','چرا استادکاران و تعمیرگاه‌ها به عظیم ابزار اعتماد می‌کنند؟',
+  'lead','خرید ابزار یعنی سرمایه‌گذاری برای دقت و درآمد کار شما؛ تعهد ما ارائه بالاترین کیفیت با قیمت بی‌واسطه است.'
+),true),
+('ai_settings','کنترل دستیار هوشمند',jsonb_build_object(
+  'enabled',true,
+  'provider','gemini',
+  'model','gemini-3.6-flash',
+  'fallback_model','gpt-4o-mini',
+  'greeting','سلام 👋 من دستیار هوشمند عظیم ابزارم. بگو چه کاری انجام می‌دی یا چه ابزاری لازم داری تا راهنمایی‌ات کنم.',
+  'system_instruction','تو دستیار هوشمند فروشگاه عظیم ابزار هستی. به زبان فارسی روان، کوتاه و کاربردی پاسخ بده. به مشتریان برای انتخاب و آشنایی با انواع ابزارهای مکانیکی، تعمیرگاهی، کارگاهی و ابزار دستی کمک کن. اگر اطلاعات درخواست شده کافی نیست، مؤدبانه سوال بپرس. قیمت یا موجودی قطعی را بدون اطلاعات واقعی فروشگاه حدس نزن.',
+  'quick_prompts',jsonb_build_array('برای تعمیرگاه خودرو چه ابزارهایی پیشنهاد می‌کنی؟','برای خرید آچار چه نکاتی مهم است؟','یک ست ابزار اقتصادی پیشنهاد بده')
+),true),
+('contact_page','صفحه ارتباط و سفارش',jsonb_build_object(
+  'title','ارتباط و سفارش مستقیم | عظیم ابزار',
+  'description','ارتباط مستقیم با عظیم ابزار؛ مشاوره فنی ابزارهای مکانیکی و گاراژی، استعلام قیمت و صدور پیش‌فاکتور',
+  'email','info@azimabzar.ir'
+),true)
+on conflict (section_key) do update set title=excluded.title,payload=excluded.payload,is_active=true;
+
 -- Legacy project helper: keep callable only by server roles, never by the browser.
 revoke all on function public.rls_auto_enable() from public;
 revoke all on function public.rls_auto_enable() from anon;
