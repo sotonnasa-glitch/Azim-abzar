@@ -96,7 +96,7 @@ jobs:
           from pathlib import Path
           html = Path('_site/admin.html').read_text(encoding='utf-8')
           assert 'پنل مدیریت' in html
-          assert 'admin-app.js?v=38' in html
+          assert 'admin-app.js?v=39' in html
           match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
           assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
           Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
