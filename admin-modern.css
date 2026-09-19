@@ -560,11 +560,11 @@ body{min-height:100vh;overflow-x:hidden;background:
 /* V27 — no emoji in admin UI; semantic CSS icons with motion */
 .az-animated-icon{display:inline-grid;place-items:center;width:1.2em;height:1.2em;min-width:1.2em;vertical-align:-.18em;position:relative;flex:0 0 auto;color:currentColor;line-height:1}
 .az-animated-icon::before{display:block;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.98em;font-weight:900;line-height:1}
-.az-animated-icon-wave::before{content:"↝"}.az-animated-icon-lock::before{content:"▣"}.az-animated-icon-mail::before{content:"✉"}
+.az-animated-icon-wave::before{content:"↝"}.az-animated-icon-lock::before{content:"▣"} .az-animated-icon-mail::before{content:"@"}
 .az-animated-icon-user::before,.az-animated-icon-admin::before{content:"◉"}.az-animated-icon-menu::before{content:"≡"}
 .az-animated-icon-edit::before{content:"↗"}.az-animated-icon-globe::before{content:"◎"}.az-animated-icon-home::before{content:"⌂"}
-.az-animated-icon-phone::before{content:"◌"}.az-animated-icon-spark::before{content:"✦"}.az-animated-icon-block::before{content:"⊘"}
-.az-animated-icon-error::before{content:"×"}.az-animated-icon-success::before{content:"✓"}.az-animated-icon-target::before{content:"◎"}
+.az-animated-icon-phone::before{content:"◌"}.az-animated-icon-spark::before{content:"*" }.az-animated-icon-block::before{content:"⊘"}
+.az-animated-icon-error::before{content:"×"}.az-animated-icon-success::before{content:"+"}.az-animated-icon-target::before{content:"◎"}
 .az-animated-icon-gear::before{content:"G"}.az-animated-icon-compass::before{content:"⊕"}.az-animated-icon-tools::before{content:"⌁"}
 .az-animated-icon-down::before{content:"⌄"}.az-animated-icon-invoice::before{content:"▤"}.az-animated-icon-clock::before{content:"◷"}
 .az-animated-icon-note::before{content:"≋"}.az-animated-icon-question::before{content:"?"}.az-animated-icon-pin::before{content:"◆"}
