@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V23 = true;
+  window.__AZIM_ADMIN_V24 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -437,8 +437,11 @@
     $('changePasswordBtn')?.addEventListener('click', () => openPasswordChange(false));
     $('newOrderBtn').onclick = () => newOrder();
     $('newCustomerBtn').onclick = () => newCustomer();
-    $('productSearch').oninput = () => loadProducts();
+    $('productSearch').oninput = () => { clearTimeout(productSearchTimer); productSearchTimer = setTimeout(() => loadProducts(), 240); };
     $('productStatus').onchange = () => loadProducts();
+    $('productCategoryFilter').onchange = () => loadProducts();
+    $('productVariantFilter').onchange = () => loadProducts();
+    $('dashboardOpenSite')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
     $('inquiryFilter').onchange = () => loadInquiries();
   }
 
@@ -607,7 +610,10 @@
       (compact ? '' : '<th>عملیات</th>') + '</tr></thead><tbody>' + body + '</tbody></table>';
   }
 
+  let productSearchTimer = null;
+
   async function loadProducts() {
+    await ensureCaches();
     let q = state.db.from('products')
       .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,updated_at,created_at')
       .order('code', { ascending: true }).order('updated_at', { ascending: false }).limit(1000);
@@ -622,8 +628,19 @@
     }
     const r = await q;
     if (r.error) return showSectionError('productsTable', r.error);
-    state.products = r.data || [];
-    $('productsTable').innerHTML = (can.edit() ? '<div class="az-product-tools"><span class="az-product-count">' + state.products.length.toLocaleString('fa-IR') + ' محصول در این نتیجه</span><button class="btn secondary" id="quickEditProducts">✎ ویرایش سریع چند محصول</button><button class="btn ghost" id="openSiteFromProducts">🌐 مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">⬇️ بکاپ</button></div>' : '') + renderProductTable(state.products, false);
+    let rows = r.data || [];
+    const variantFilter = $('productVariantFilter')?.value || '';
+    if (variantFilter === 'with') rows = rows.filter(p => Array.isArray(p.variants) && p.variants.length > 0);
+    if (variantFilter === 'without') rows = rows.filter(p => !Array.isArray(p.variants) || !p.variants.length);
+    state.products = rows;
+
+    const variantCount = rows.filter(p => Array.isArray(p.variants) && p.variants.length > 0).length;
+    if ($('productMetaCount')) $('productMetaCount').textContent = rows.length.toLocaleString('fa-IR') + ' محصول در نتیجه';
+    if ($('productMetaVariant')) $('productMetaVariant').textContent = variantCount.toLocaleString('fa-IR') + ' محصول سایزبندی‌دار';
+
+    $('productsTable').innerHTML =
+      (can.edit() ? '<div class="az-product-tools"><div class="az-tool-badge"><span class="az-dot"></span> مدیریت زنده</div><button class="btn secondary" id="quickEditProducts">✎ ویرایش سریع</button><button class="btn ghost" id="openSiteFromProducts">🌐 مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">⬇️ بکاپ</button></div>' : '') +
+      renderProductTable(state.products, false);
     wireProductBulk();
   }
 
