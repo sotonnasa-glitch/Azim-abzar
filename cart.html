@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="سبد سفارش آنلاین عظیم ابزار؛ مدیریت محصولات، اعمال کد تخفیف و ثبت درخواست سفارش.">
+  <title>سبد سفارش | عظیم ابزار</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070908;--surface:#0f1310;--panel:#131815;--line:#28312b;--text:#f6f7f5;--muted:#939d96;--gold:#f5b900;--gold2:#ffd84f;--green:#2ed573;--red:#ff7777;--shadow:0 24px 70px rgba(0,0,0,.48)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 85% 0,rgba(245,185,0,.10),transparent 33%),radial-gradient(circle at 5% 70%,rgba(46,213,115,.045),transparent 28%),linear-gradient(180deg,#070908,#0b100d 48%,#070908);color:var(--text);font-family:Vazirmatn,system-ui,sans-serif}
+    a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}
+    header{position:sticky;top:0;z-index:50;background:rgba(7,9,8,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(245,185,0,.15)}
+    .head{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.mark{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#ffd84f,#c78600);color:#111;box-shadow:0 0 22px rgba(245,185,0,.25)}.brand strong{display:block;font-size:17px;font-weight:900}.brand small{display:block;color:#89928c;font-size:9px;margin-top:1px}
+    .nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.nav a{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);font-size:11px;font-weight:800;color:#d7ded9}.nav a.primary{background:linear-gradient(135deg,#ffd84f,#f5b900);color:#111;border-color:rgba(255,255,255,.25)}
+    main{padding:28px 0 60px}.hero{padding:24px;border:1px solid rgba(245,185,0,.24);border-radius:24px;background:radial-gradient(circle at 85% 10%,rgba(245,185,0,.15),transparent 30%),linear-gradient(135deg,#131815,#0c100e);box-shadow:var(--shadow);margin-bottom:16px}.kicker{font-size:10px;letter-spacing:1.7px;color:#d6ac2d;font-weight:900}.hero h1{margin:4px 0 7px;font-size:clamp(24px,4vw,36px)}.hero p{margin:0;color:#99a29c;font-size:12px;line-height:1.9}
+    .layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);gap:16px;align-items:start}.panel{border:1px solid var(--line);background:linear-gradient(160deg,#121713,#0d110f);border-radius:20px;box-shadow:0 14px 45px rgba(0,0,0,.25)}.panel-head{padding:16px 18px;border-bottom:1px solid #202822;display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-head h2{font-size:15px;margin:0}.panel-body{padding:14px 18px}
+    .cart-row{display:grid;grid-template-columns:92px 1fr auto;gap:14px;padding:14px 0;border-bottom:1px solid #202721;align-items:center}.cart-row:last-child{border-bottom:0}.cart-img{width:92px;height:78px;border-radius:13px;background:#fff;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(255,255,255,.12)}.cart-img img{width:100%;height:100%;object-fit:contain;padding:7px}.cart-name{font-size:13px;font-weight:900;line-height:1.6}.cart-code{color:#828c85;font-size:10px;margin-top:2px}.cart-variant{display:inline-flex;margin-top:5px;padding:4px 7px;border-radius:7px;background:rgba(245,185,0,.08);border:1px solid rgba(245,185,0,.2);font-size:9px;color:#ffe27d}.cart-price{font-size:13px;font-weight:900;color:#f7cd42;margin-top:7px}.cart-old{opacity:.45;text-decoration:line-through;margin-left:4px;color:#aaa}.qty{display:flex;align-items:center;gap:7px}.qty button{width:31px;height:31px;border:1px solid #354038;background:#111613;color:#fff;border-radius:9px;font:900 14px Vazirmatn;cursor:pointer}.qty button:hover{border-color:#f5b900;color:#ffd84f}.qty span{min-width:22px;text-align:center;font-weight:900}.row-total{text-align:left;font-size:12px;font-weight:900}.row-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:9px}.ghost{border:0;background:none;color:#9aa49d;cursor:pointer;font:800 10px Vazirmatn}.ghost:hover{color:#fff}.unavailable{padding:6px 8px;background:rgba(255,119,119,.08);border:1px solid rgba(255,119,119,.22);color:#ff9999;border-radius:8px;font-size:9px;margin-top:6px}
+    .empty{padding:48px 18px;text-align:center;color:#8f9992}.empty-icon{font-size:34px}.empty h3{margin:9px 0 5px;color:#fff;font-size:15px}.empty p{margin:0;line-height:1.8;font-size:11px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:11px;border:1px solid rgba(245,185,0,.38);background:linear-gradient(145deg,#ffd84f,#f5b900);color:#111;font:900 11px Vazirmatn;cursor:pointer}.btn.secondary{background:#151b17;color:#f1f4f1;border-color:#364139}.btn.secondary:hover{border-color:#6b766d}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .summary{position:sticky;top:90px}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed #242c27;font-size:11px;color:#aab2ad}.summary-line strong{color:#fff}.summary-line.discount strong{color:#69e69a}.summary-total{display:flex;justify-content:space-between;gap:10px;padding:15px 0 8px;font-size:15px;font-weight:950}.summary-total strong{color:#ffd84f;font-size:19px}
+    .coupon{padding:15px 18px;border-bottom:1px solid #202822}.coupon label{display:block;font-size:11px;font-weight:900;margin-bottom:7px}.coupon-row{display:grid;grid-template-columns:1fr auto;gap:7px}.input,.textarea{width:100%;border:1px solid #323d35;background:#090d0b;color:#fff;border-radius:10px;padding:10px 11px;font:700 11px Vazirmatn;outline:none}.input:focus,.textarea:focus{border-color:#f5b900;box-shadow:0 0 0 3px rgba(245,185,0,.09)}.coupon-status{margin-top:7px;font-size:10px;color:#8f9a92;line-height:1.7}.coupon-status.ok{color:#6fe59b}.coupon-status.err{color:#ff8c8c}
+    .form{padding:18px}.form h3{margin:0 0 11px;font-size:13px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field label{display:block;font-size:10px;color:#aab2ac;margin-bottom:4px}.field.full{grid-column:1/-1}.field .required{color:#ffd84f}.submit{width:100%;margin-top:12px}.notice{margin-top:9px;color:#7f8982;font-size:9px;line-height:1.8}.success{padding:24px;text-align:center}.success .order-code{display:inline-block;margin:12px 0;padding:9px 13px;border:1px dashed #80671f;background:#17150c;color:#ffd84f;border-radius:10px;font:900 15px ui-monospace,monospace;direction:ltr}.success h2{font-size:20px;margin:0}.success p{font-size:11px;color:#9aa39c;line-height:1.9}.success .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    .trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.trust>div{padding:9px;border:1px solid #27312b;border-radius:10px;background:#0e130f;text-align:center;color:#929b95;font-size:9px}.trust b{display:block;color:#f2f4f1;font-size:10px;margin-bottom:2px}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.summary{position:static}.trust{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.wrap{width:min(100% - 18px,1180px)}.head{min-height:64px}.brand small{display:none}.nav a span{display:none}.nav a{padding:8px 10px}.layout{gap:11px}.cart-row{grid-template-columns:68px 1fr}.cart-img{width:68px;height:64px}.row-total{grid-column:2;text-align:right}.row-actions{justify-content:flex-start}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.hero{padding:18px}.panel-body,.panel-head,.coupon,.form{padding:13px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap head">
+      <a class="brand" href="index.html">
+        <span class="mark">⚙</span><span><strong>عظیم ابزار</strong><small>سبد سفارش و ثبت درخواست</small></span>
+      </a>
+      <nav class="nav">
+        <a href="index.html"><span>⌂</span>صفحه اصلی</a>
+        <a href="products-v4.html"><span>▣</span>محصولات</a>
+        <a href="cart.html" class="primary"><span>🛒</span>سبد سفارش <b data-cart-count hidden>۰</b></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="kicker">AZIM ABZAR · ORDER CART</div>
+      <h1>سبد سفارش</h1>
+      <p>محصولات را جمع کن، کد تخفیف را اعمال کن و درخواست سفارش را ثبت کن. قیمت‌ها هنگام ثبت نهایی دوباره از کاتالوگ فروشگاه بررسی می‌شوند.</p>
+    </section>
+
+    <div id="cartSuccess" class="panel" hidden></div>
+
+    <div id="cartWorkspace" class="layout">
+      <section class="panel">
+        <div class="panel-head"><h2>اقلام سبد</h2><button class="ghost" id="clearCartBtn" type="button">پاک کردن سبد</button></div>
+        <div class="panel-body" id="cartItems"></div>
+      </section>
+
+      <aside class="panel summary">
+        <div class="panel-head"><h2>خلاصه سفارش</h2><span id="cartCountLabel" class="coupon-status">۰ قلم</span></div>
+        <div class="coupon">
+          <label for="couponInput">🏷️ کد تخفیف</label>
+          <div class="coupon-row"><input id="couponInput" class="input" dir="ltr" autocomplete="off" placeholder="مثلاً AZIM20"><button id="applyCouponBtn" class="btn secondary" type="button">اعمال</button></div>
+          <div id="couponStatus" class="coupon-status">کد تخفیف برای کل سبد، محصول، دسته، برند یا مشتری مشخص قابل تعریف است.</div>
+        </div>
+        <div class="panel-body">
+          <div class="summary-line"><span>جمع کالاها</span><strong id="subtotal">۰ تومان</strong></div>
+          <div class="summary-line discount"><span>تخفیف</span><strong id="discount">۰ تومان</strong></div>
+          <div class="summary-line"><span>ارسال</span><strong>هماهنگی با فروشگاه</strong></div>
+          <div class="summary-total"><span>مبلغ فعلی</span><strong id="total">۰ تومان</strong></div>
+          <button id="startCheckoutBtn" class="btn submit" type="button">ادامه و ثبت سفارش</button>
+          <div class="trust"><div><b>قیمت زنده</b>بررسی مجدد هنگام ثبت</div><div><b>کد تخفیف</b>محاسبه سمت سرور</div><div><b>پرداخت</b>در حال حاضر آنلاین نیست</div></div>
+        </div>
+        <div id="checkoutBox" class="form" hidden>
+          <h3>اطلاعات تماس و ثبت سفارش</h3>
+          <form id="checkoutForm">
+            <div class="fields">
+              <div class="field"><label>نام و نام خانوادگی <span class="required">*</span></label><input id="fullName" class="input" required maxlength="120"></div>
+              <div class="field"><label>موبایل <span class="required">*</span></label><input id="mobile" class="input" required inputmode="tel" maxlength="20" dir="ltr" placeholder="0912..."></div>
+              <div class="field"><label>ایمیل</label><input id="email" class="input" type="email" maxlength="180" dir="ltr"></div>
+              <div class="field"><label>شهر</label><input id="city" class="input" maxlength="80"></div>
+              <div class="field full"><label>آدرس / توضیحات تحویل</label><textarea id="address" class="textarea" rows="3" maxlength="600"></textarea></div>
+            </div>
+            <button id="submitOrderBtn" class="btn submit" type="submit">ثبت درخواست سفارش</button>
+            <div class="notice">با ثبت این فرم، یک سفارش با وضعیت «در انتظار تأیید» در پنل فروشگاه ثبت می‌شود. پرداخت و شرایط ارسال بعد از هماهنگی با فروشگاه انجام خواهد شد.</div>
+            <div id="checkoutStatus" class="coupon-status"></div>
+          </form>
+        </div>
+      </aside>
+    </div>
+
+    <div class="trust" style="margin-top:16px">
+      <div><b>سبد در گوشی هم حفظ می‌شود</b>تا وقتی حافظه مرورگر پاک نشده باشد.</div>
+      <div><b>قیمت و موجودی دوباره کنترل می‌شود</b>تا قیمت قدیمی وارد سفارش نشود.</div>
+      <div><b>محدودیت و اعتبار کد تخفیف سمت سرور است</b>نه فقط ظاهر مرورگر.</div>
+    </div>
+  </main>
+
+  <script src="./supabase-config.js"></script>
+  <script src="./azim-cart.js?v=1"></script>
+  <script>
+  (function(){
+    const C=window.AZIM_CART;
+    if(!C) return;
+    const $=id=>document.getElementById(id);
+    const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
+    const money=n=>fmt(n)+' تومان';
+    let coupon=null;
+
+    function render(){
+      const items=C.items();
+      const box=$('cartItems');
+      $('cartCountLabel').textContent=items.reduce((s,x)=>s+x.qty,0).toLocaleString('fa-IR')+' قلم';
+      if(!items.length){
+        box.innerHTML='<div class="empty"><div class="empty-icon">🛒</div><h3>سبد سفارش خالی است</h3><p>از کاتالوگ محصولات، ابزار موردنظرت را به سبد اضافه کن.</p><a href="products-v4.html" class="btn" style="margin-top:12px">مشاهده محصولات</a></div>';
+        $('startCheckoutBtn').disabled=true;
+      }else{
+        box.innerHTML=items.map(x=>{
+          const total=x.unit_price*x.qty;
+          const image=x.img?'<img src="'+escapeHtml(x.img)+'" alt="'+escapeHtml(x.name)+'">':'<span>⚙️</span>';
+          return '<article class="cart-row"><div class="cart-img">'+image+'</div><div><div class="cart-name">'+escapeHtml(x.name)+'</div><div class="cart-code">'+escapeHtml(x.code||x.product_id)+'</div>'+(x.variant_label?'<div class="cart-variant">مدل / سایز: '+escapeHtml(x.variant_label)+'</div>':'')+'<div class="cart-price">'+money(x.unit_price)+'</div><div class="row-actions"><div class="qty"><button type="button" data-qty="-1" data-key="'+escapeHtml(x.key)+'">−</button><span>'+fmt(x.qty)+'</span><button type="button" data-qty="1" data-key="'+escapeHtml(x.key)+'">+</button></div><button class="ghost" type="button" data-remove="'+escapeHtml(x.key)+'">حذف</button></div></div><div class="row-total">'+money(total)+'</div></article>';
+        }).join('');
+        $('startCheckoutBtn').disabled=false;
+      }
+      const sub=C.subtotal();
+      $('subtotal').textContent=money(sub);
+      const d=Number(coupon?.discount||0);
+      $('discount').textContent='− '+money(d);
+      $('total').textContent=money(Math.max(0,sub-d));
+      $('couponInput').value=C.raw.couponCode||'';
+    }
+
+    function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]||m));}
+
+    async function applyCoupon(){
+      const code=$('couponInput').value.trim().toUpperCase().replace(/\s+/g,'');
+      const mobile=$('mobile').value.trim();
+      const status=$('couponStatus');
+      if(!code){ coupon=null; C.raw.couponCode=''; status.textContent='کد تخفیف وارد نشده است.'; status.className='coupon-status'; render(); return; }
+      if(!C.items().length){ status.textContent='ابتدا محصولی به سبد اضافه کن.'; status.className='coupon-status err'; return; }
+      status.textContent='در حال بررسی کد…'; status.className='coupon-status';
+      try{
+        coupon=await C.previewCoupon(code,mobile);
+        status.textContent=(coupon?.message||'کد تخفیف معتبر است.')+' • تخفیف: '+money(coupon?.discount||0);
+        status.className='coupon-status ok';
+      }catch(err){
+        coupon=null; C.raw.couponCode=code;
+        status.textContent=err.message||'کد تخفیف معتبر نیست.';
+        status.className='coupon-status err';
+      }
+      render();
+    }
+
+    $('cartItems').addEventListener('click',e=>{
+      const q=e.target.closest('[data-qty]');
+      const rm=e.target.closest('[data-remove]');
+      if(q){
+        const x=C.items().find(v=>v.key===q.dataset.key);
+        if(x) C.update(q.dataset.key,x.qty+Number(q.dataset.qty||0));
+        coupon=null;
+        render();
+      }
+      if(rm){ C.remove(rm.dataset.remove); coupon=null; render(); }
+    });
+
+    $('clearCartBtn').onclick=()=>{ if(confirm('کل سبد سفارش پاک شود؟')){C.clear();coupon=null;render();} };
+    $('applyCouponBtn').onclick=applyCoupon;
+    $('couponInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCoupon();}});
+    $('mobile').addEventListener('change',()=>{if($('couponInput').value.trim()) applyCoupon();});
+
+    $('startCheckoutBtn').onclick=()=>{ $('checkoutBox').hidden=false; $('checkoutBox').scrollIntoView({behavior:'smooth',block:'nearest'}); $('fullName').focus(); };
+
+    $('checkoutForm').onsubmit=async e=>{
+      e.preventDefault();
+      const items=C.items();
+      if(!items.length) return;
+      const btn=$('submitOrderBtn'), status=$('checkoutStatus');
+      btn.disabled=true; btn.textContent='در حال ثبت سفارش…'; status.textContent='';
+      try{
+        const data=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_cart_checkout',{
+          method:'POST',
+          headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+          body:JSON.stringify({
+            p_mode:'submit',
+            p_full_name:$('fullName').value.trim(),
+            p_mobile:$('mobile').value.trim(),
+            p_email:$('email').value.trim()||null,
+            p_address:$('address').value.trim()||null,
+            p_city:$('city').value.trim()||null,
+            p_discount_code:$('couponInput').value.trim().toUpperCase().replace(/\s+/g,'')||null,
+            p_items:items.map(x=>({product_id:x.product_id,variant_label:x.variant_label||null,quantity:x.qty}))
+          })
+        }).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d?.message||d?.hint||'ثبت سفارش ناموفق بود.');return d;});
+        C.clear();
+        coupon=null;
+        $('cartWorkspace').hidden=true;
+        $('cartSuccess').hidden=false;
+        $('cartSuccess').innerHTML='<div class="success"><div style="font-size:34px">✅</div><h2>درخواست سفارش ثبت شد</h2><p>سفارش شما با موفقیت در سیستم عظیم ابزار ثبت شد. برای هماهنگی نهایی با شما تماس گرفته می‌شود.</p><div class="order-code">'+escapeHtml(data.order_code||'AZ-ORDER')+'</div><p>مبلغ فعلی سفارش: <strong>'+money(data.total||0)+'</strong></p><div class="actions"><a class="btn" href="products-v4.html">بازگشت به محصولات</a><a class="btn secondary" href="index.html">صفحه اصلی</a></div></div>';
+        window.scrollTo({top:0,behavior:'smooth'});
+      }catch(err){
+        status.textContent=err.message||'خطا در ثبت سفارش.';
+        status.className='coupon-status err';
+      }finally{
+        btn.disabled=false; btn.textContent='ثبت درخواست سفارش';
+      }
+    };
+
+    C.syncPrices().finally(render);
+    render();
+  })();
+  </script>
+</body>
+</html>
