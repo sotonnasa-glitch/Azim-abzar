@@ -85,74 +85,73 @@ create index if not exists discount_redemptions_customer_idx on public.discount_
 create index if not exists orders_discount_idx on public.orders(discount_id);
 
 alter table public.discounts enable row level security;
-alter table public.discount_products enable row level security;
-alter table public.discount_categories enable row level security;
-alter table public.discount_brands enable row level security;
-alter table public.discount_customers enable row level security;
-alter table public.discount_redemptions enable row level security;
 
 drop policy if exists "Admins manage discounts" on public.discounts;
-create policy "Admins manage discounts" on public.discounts
-for all to authenticated
-using (private.has_azim_role(array['owner','admin']))
-with check (private.has_azim_role(array['owner','admin']));
-
 drop policy if exists "Sales can read discounts" on public.discounts;
-create policy "Sales can read discounts" on public.discounts
-for select to authenticated
+create policy "Discounts select" on public.discounts for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discounts insert" on public.discounts for insert to authenticated
+with check (private.has_azim_role(array['owner','admin']));
+create policy "Discounts update" on public.discounts for update to authenticated
+using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
+create policy "Discounts delete" on public.discounts for delete to authenticated
+using (private.has_azim_role(array['owner','admin']));
 
 drop policy if exists "Admins manage discount products" on public.discount_products;
-create policy "Admins manage discount products" on public.discount_products
-for all to authenticated
-using (private.has_azim_role(array['owner','admin']))
-with check (private.has_azim_role(array['owner','admin']));
-
 drop policy if exists "Sales can read discount products" on public.discount_products;
-create policy "Sales can read discount products" on public.discount_products
-for select to authenticated
+create policy "Discount products select" on public.discount_products for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discount products insert" on public.discount_products for insert to authenticated
+with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount products update" on public.discount_products for update to authenticated
+using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount products delete" on public.discount_products for delete to authenticated
+using (private.has_azim_role(array['owner','admin']));
 
 drop policy if exists "Admins manage discount categories" on public.discount_categories;
-create policy "Admins manage discount categories" on public.discount_categories
-for all to authenticated
-using (private.has_azim_role(array['owner','admin']))
-with check (private.has_azim_role(array['owner','admin']));
-
 drop policy if exists "Sales can read discount categories" on public.discount_categories;
-create policy "Sales can read discount categories" on public.discount_categories
-for select to authenticated
+create policy "Discount categories select" on public.discount_categories for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discount categories insert" on public.discount_categories for insert to authenticated
+with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount categories update" on public.discount_categories for update to authenticated
+using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount categories delete" on public.discount_categories for delete to authenticated
+using (private.has_azim_role(array['owner','admin']));
 
 drop policy if exists "Admins manage discount brands" on public.discount_brands;
-create policy "Admins manage discount brands" on public.discount_brands
-for all to authenticated
-using (private.has_azim_role(array['owner','admin']))
-with check (private.has_azim_role(array['owner','admin']));
-
 drop policy if exists "Sales can read discount brands" on public.discount_brands;
-create policy "Sales can read discount brands" on public.discount_brands
-for select to authenticated
+create policy "Discount brands select" on public.discount_brands for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discount brands insert" on public.discount_brands for insert to authenticated
+with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount brands update" on public.discount_brands for update to authenticated
+using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount brands delete" on public.discount_brands for delete to authenticated
+using (private.has_azim_role(array['owner','admin']));
 
 drop policy if exists "Admins manage discount customers" on public.discount_customers;
-create policy "Admins manage discount customers" on public.discount_customers
-for all to authenticated
-using (private.has_azim_role(array['owner','admin']))
-with check (private.has_azim_role(array['owner','admin']));
-
 drop policy if exists "Sales can read discount customers" on public.discount_customers;
-create policy "Sales can read discount customers" on public.discount_customers
-for select to authenticated
+create policy "Discount customers select" on public.discount_customers for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discount customers insert" on public.discount_customers for insert to authenticated
+with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount customers update" on public.discount_customers for update to authenticated
+using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount customers delete" on public.discount_customers for delete to authenticated
+using (private.has_azim_role(array['owner','admin']));
 
 drop policy if exists "Admins manage discount redemptions" on public.discount_redemptions;
-create policy "Admins manage discount redemptions" on public.discount_redemptions
-for all to authenticated
-using (private.has_azim_role(array['owner','admin']))
-with check (private.has_azim_role(array['owner','admin']));
-
 drop policy if exists "Sales can read discount redemptions" on public.discount_redemptions;
-create policy "Sales can read discount redemptions" on public.discount_redemptions
-for select to authenticated
+create policy "Discount redemptions select" on public.discount_redemptions for select to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discount redemptions insert" on public.discount_redemptions for insert to authenticated
+with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount redemptions update" on public.discount_redemptions for update to authenticated
+using (private.has_azim_role(array['owner','admin'])) with check (private.has_azim_role(array['owner','admin']));
+create policy "Discount redemptions delete" on public.discount_redemptions for delete to authenticated
+using (private.has_azim_role(array['owner','admin']));
+
+create index if not exists discounts_created_by_idx on public.discounts(created_by);
+create index if not exists discount_redemptions_created_by_idx on public.discount_redemptions(created_by);
+create index if not exists discount_redemptions_order_idx on public.discount_redemptions(order_id);
