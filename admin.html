@@ -13,7 +13,11 @@
 </style></head><body>
 <div id="loginScreen" class="login-wrap hidden"><div class="login-card"><h1><b style="color:var(--gold)">عظیم ابزار</b> · پنل مدیریت</h1><p>ورود با Supabase Auth؛ فقط مدیران فعال دسترسی دارند.</p><div class="field"><label>ایمیل مدیر</label><input id="loginEmail" class="input" type="email" autocomplete="username"></div><div class="field"><label>رمز عبور</label><input id="loginPassword" class="input" type="password" autocomplete="current-password"></div><button id="loginBtn" class="btn">ورود امن</button><div id="loginStatus" class="status"></div></div></div>
 <div id="app" class="layout hidden"><aside class="sidebar"><div class="brand"><strong><b>عظیم ابزار</b> · Admin</strong><span>مدیریت فروشگاه و کاتالوگ</span></div><nav class="nav"><button class="active" data-view="dashboard">◈ داشبورد</button><button data-view="products">▣ محصولات</button><button data-view="categories">▤ دسته‌بندی‌ها</button><button data-view="brands">◇ برندها</button><button data-view="inquiries">✉ درخواست‌ها</button><button data-view="orders">◫ سفارش‌ها</button><button data-view="customers">♙ مشتریان</button><button data-view="media">▧ رسانه</button><button data-view="content">⌘ محتوای سایت</button><button data-view="admins">♟ کاربران مدیر</button><button data-view="audit">⌁ گزارش فعالیت</button></nav><div class="side-bottom"><div id="userBox" class="userbox"></div><button id="logoutBtn" class="logout">خروج</button></div></aside>
-<main class="main"><div class="topbar"><div><div id="pageTitle" class="page-title">داشبورد</div><div id="pageSub" class="page-sub">نمای کلی وضعیت فروشگاه و کاتالوگ</div></div><button class="btn secondary" id="refreshBtn">↻ بروزرسانی</button></div>
+<main class="main"><div class="topbar">
+  <button id="azMenuTrigger" class="az-menu-trigger" type="button" aria-label="منوی مدیریت" aria-expanded="false">☰</button>
+  <div><div id="pageTitle" class="page-title">داشبورد</div><div id="pageSub" class="page-sub">نمای کلی وضعیت فروشگاه و کاتالوگ</div></div>
+  <div class="az-top-actions"><span class="az-top-chip"><i></i> سیستم متصل</span><button class="btn secondary" id="refreshBtn">↻ بروزرسانی</button></div>
+</div>
 <section id="view-dashboard" class="view active"><div class="cards"><div class="card"><div class="k">همه محصولات</div><div id="statProducts" class="v">—</div><div class="s">رکوردهای دیتابیس</div></div><div class="card"><div class="k">محصولات فعال</div><div id="statActive" class="v">—</div><div class="s">قابل نمایش</div></div><div class="card"><div class="k">درخواست جدید</div><div id="statInquiries" class="v">—</div><div class="s">نیازمند پیگیری</div></div><div class="card"><div class="k">سفارش‌ها</div><div id="statOrders" class="v">—</div><div class="s">ثبت‌شده</div></div></div><div class="panel"><div class="panel-head"><h2>آخرین درخواست‌ها</h2><button class="btn ghost" data-go="inquiries">مشاهده همه</button></div><div id="dashboardInquiries" class="table-wrap"></div></div><div class="panel"><div class="panel-head"><h2>محصولات اخیر</h2><button class="btn ghost" data-go="products">مدیریت محصولات</button></div><div id="dashboardProducts" class="table-wrap"></div></div></section>
 <section id="view-products" class="view"><div class="panel"><div class="panel-head"><h2>محصولات</h2><div class="tools"><input id="productSearch" class="input" placeholder="نام، کد، برند یا دسته…"><select id="productStatus" class="select"><option value="">همه</option><option value="true">فعال</option><option value="false">غیرفعال</option></select><button id="newProductBtn" class="btn">＋ محصول جدید</button></div></div><div id="productsTable" class="table-wrap"></div></div></section>
 <section id="view-categories" class="view"><div class="panel"><div class="panel-head"><h2>دسته‌بندی‌ها</h2><button id="newCategoryBtn" class="btn">＋ دسته جدید</button></div><div id="categoriesTable" class="table-wrap"></div></div></section>
@@ -22,7 +26,40 @@
 <section id="view-orders" class="view"><div class="panel"><div class="panel-head"><h2>سفارش‌ها</h2></div><div id="ordersTable" class="table-wrap"></div></div></section><section id="view-customers" class="view"><div class="panel"><div class="panel-head"><h2>مشتریان</h2></div><div id="customersTable" class="table-wrap"></div></div></section>
 <section id="view-media" class="view"><div class="panel"><div class="panel-head"><h2>رسانه</h2><div class="tools"><select id="mediaFolder" class="select"><option value="general">عمومی</option><option value="products">محصولات</option><option value="home">صفحه اصلی</option><option value="brands">برندها</option><option value="categories">دسته‌بندی‌ها</option></select><input id="mediaFile" class="input" type="file" accept="image/*"><button id="uploadMediaBtn" class="btn">آپلود</button></div></div><div id="mediaTable" class="table-wrap"></div></div></section>
 <section id="view-content" class="view"><div class="panel"><div class="panel-head"><h2>محتوای سایت</h2><button id="newContentBtn" class="btn">＋ بخش جدید</button></div><div id="contentTable" class="table-wrap"></div></div></section><section id="view-admins" class="view"><div class="panel"><div class="panel-head"><h2>کاربران مدیر</h2><span class="muted" style="font-size:9px">حساب از Supabase Auth ساخته می‌شود.</span></div><div id="adminsTable" class="table-wrap"></div></div></section><section id="view-audit" class="view"><div class="panel"><div class="panel-head"><h2>گزارش فعالیت</h2></div><div id="auditTable" class="table-wrap"></div></div></section>
-</main></div><div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><strong id="modalTitle"></strong><button class="x" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div><div id="commandPalette" class="az-command" aria-hidden="true">
+</main></div><div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><strong id="modalTitle"></strong><button class="x" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
+<div id="azMenuOverlay" class="az-menu-overlay" aria-hidden="true">
+  <div class="az-menu-card" role="dialog" aria-label="منوی مدیریت عظیم ابزار">
+    <div class="az-menu-head">
+      <div class="az-menu-brand">
+        <div class="az-menu-logo">AZ</div>
+        <div><div class="az-menu-title">مرکز مدیریت عظیم ابزار</div><div class="az-menu-sub">تمام بخش‌ها در یک منوی سریع و ردیفی</div></div>
+      </div>
+      <button id="azMenuClose" class="az-menu-close" type="button">بستن ×</button>
+    </div>
+    <div class="az-menu-grid">
+      <div class="az-menu-group">فروش و مشتری</div>
+      <button class="az-menu-item" data-menu-view="dashboard"><span class="az-menu-icon">◈</span><span class="az-menu-copy"><strong>داشبورد</strong><small>نمای کلی و سلامت</small></span></button>
+      <button class="az-menu-item" data-menu-view="orders"><span class="az-menu-icon">◫</span><span class="az-menu-copy"><strong>سفارش‌ها</strong><small>پرداخت و ارسال</small></span></button>
+      <button class="az-menu-item" data-menu-view="customers"><span class="az-menu-icon">♙</span><span class="az-menu-copy"><strong>مشتریان</strong><small>اطلاعات مشتری</small></span></button>
+      <button class="az-menu-item" data-menu-view="inquiries"><span class="az-menu-icon">✉</span><span class="az-menu-copy"><strong>درخواست‌ها</strong><small>استعلام و پیگیری</small></span></button>
+      <div class="az-menu-group">کاتالوگ</div>
+      <button class="az-menu-item" data-menu-view="products"><span class="az-menu-icon">▣</span><span class="az-menu-copy"><strong>محصولات</strong><small>ویرایش و قیمت</small></span></button>
+      <button class="az-menu-item" data-menu-view="categories"><span class="az-menu-icon">▤</span><span class="az-menu-copy"><strong>دسته‌بندی‌ها</strong><small>گروه‌بندی</small></span></button>
+      <button class="az-menu-item" data-menu-view="brands"><span class="az-menu-icon">◇</span><span class="az-menu-copy"><strong>برندها</strong><small>برندهای کاتالوگ</small></span></button>
+      <button class="az-menu-item" data-menu-view="media"><span class="az-menu-icon">▧</span><span class="az-menu-copy"><strong>رسانه</strong><small>تصویر و فایل</small></span></button>
+      <div class="az-menu-group">محتوا و هوش</div>
+      <button class="az-menu-item" data-menu-view="content"><span class="az-menu-icon">⌘</span><span class="az-menu-copy"><strong>محتوای سایت</strong><small>CMS و متن‌ها</small></span></button>
+      <button class="az-menu-item" data-menu-view="ai"><span class="az-menu-icon">✦</span><span class="az-menu-copy"><strong>دستیار AI</strong><small>مدل و تنظیمات</small></span></button>
+      <div class="az-menu-group">سیستم</div>
+      <button class="az-menu-item" data-menu-view="admins"><span class="az-menu-icon">♟</span><span class="az-menu-copy"><strong>کاربران مدیر</strong><small>نقش و دسترسی</small></span></button>
+      <button class="az-menu-item" data-menu-view="audit"><span class="az-menu-icon">⌁</span><span class="az-menu-copy"><strong>گزارش فعالیت</strong><small>Audit Log</small></span></button>
+    </div>
+    <div class="az-menu-foot">
+      <div id="azMenuUser" class="az-menu-user"></div>
+      <div class="az-menu-actions"><button id="azMenuLogout" class="az-menu-logout" type="button">خروج از حساب</button></div>
+    </div>
+  </div>
+</div><div id="commandPalette" class="az-command" aria-hidden="true">
   <div class="az-command-box" role="dialog" aria-label="جستجوی سریع">
     <div class="az-command-head"><span style="font-size:18px">⌘</span><input id="commandInput" type="search" placeholder="جستجو در منو، محصول یا سفارش..." autocomplete="off"><button class="x" id="commandClose" type="button">×</button></div>
     <div class="az-command-hint">Ctrl / ⌘ + K برای باز کردن · Esc برای بستن</div>
