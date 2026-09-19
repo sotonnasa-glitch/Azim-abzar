@@ -423,6 +423,27 @@ as $$
   );
 $$;
 
+-- Backward-compatible preview overload for older cart clients that send only items + coupon code.
+-- Keep it anonymous-only; it delegates to the hardened 8-argument public wrapper.
+create or replace function public.azim_cart_checkout(
+  p_items jsonb,
+  p_discount_code text
+)
+returns jsonb
+language sql
+security invoker
+set search_path to ''
+as $
+  select public.azim_cart_checkout(
+    'preview'::text, null::text, null::text, null::text,
+    null::text, null::text, p_discount_code, p_items
+  );
+$;
+
+revoke all on function public.azim_cart_checkout(jsonb,text) from public;
+grant execute on function public.azim_cart_checkout(jsonb,text) to anon;
+revoke execute on function public.azim_cart_checkout(jsonb,text) from authenticated;
+
 revoke all on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from public;
 grant execute on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) to anon;
 revoke execute on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from authenticated;
