@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V15 = true;
+  window.__AZIM_ADMIN_V16 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -651,6 +651,8 @@
         const parsed = JSON.parse(advanced.value || '[]');
         if (!Array.isArray(parsed)) throw new Error('فرمت باید آرایه باشد.');
         rows.innerHTML = variantRows(parsed);
+        const hidden = form.querySelector('[name="variants"]');
+        if (hidden) hidden.value = JSON.stringify(collectVariantsFromEditor(form));
       } catch (_) {}
     });
     const hidden = form.querySelector('[name="variants"]');
