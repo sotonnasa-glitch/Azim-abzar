@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V24 = true;
+  window.__AZIM_ADMIN_V25 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -994,27 +994,34 @@
   async function loadCategories() {
     const r = await fetchCategoriesCache();
     if (r.error) return showSectionError('categoriesTable', r.error);
-    const rows = await Promise.all(state.categories.map(async (c) => {
-      const n = await countTable('products', (q) => q.eq('category_name', c.name));
-      return { ...c, productCount: n };
+    const rows = await Promise.all(state.categories.map(async (cat) => {
+      const n = await countTable('products', (q) => q.eq('category_name', cat.name));
+      const active = await countTable('products', (q) => q.eq('category_name', cat.name).eq('is_active', true));
+      return { ...cat, productCount: n, activeCount: active };
     }));
+    const total = rows.reduce((s, x) => s + x.productCount, 0);
+    const activeTotal = rows.reduce((s, x) => s + x.activeCount, 0);
     const body = rows.map((c) =>
-      '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.slug) + '</td><td>' + c.productCount.toLocaleString('fa-IR') +
-      '</td><td>' + c.sort_order + '</td><td><span class="badge ' + (c.is_active ? 'ok' : 'red') + '">' +
-      (c.is_active ? 'فعال' : 'غیرفعال') + '</span></td><td>' +
-      (can.edit() ? '<button class="btn secondary" data-edit-category="' + c.id + '">ویرایش</button> <button class="btn ghost" data-toggle-category="' + c.id + '">' + (c.is_active ? 'غیرفعال' : 'فعال') + '</button>' : '') +
-      '</td></tr>'
-    ).join('');
-    $('categoriesTable').innerHTML = rows.length ?
-      '<div class="az-category-grid">' + rows.map((c) =>
-        '<article class="az-category-card"><div class="az-cat-top"><div><h3>' + esc(c.name) + '</h3><div class="az-cat-meta">' + esc(c.slug) + ' · ترتیب ' + c.sort_order + '</div></div>' +
+      '<article class="az-category-card">' +
+        '<div class="az-cat-top"><div><span class="az-cat-index">CAT · ' + String(c.sort_order + 1).padStart(2,'0') + '</span><h3>' + esc(c.name) + '</h3><div class="az-cat-meta">' + esc(c.slug) + '</div></div>' +
         '<div class="az-cat-count">' + c.productCount.toLocaleString('fa-IR') + '</div></div>' +
-        '<div class="az-cat-meta">محصول مرتبط</div><div class="az-cat-actions">' +
-        (can.edit() ? '<button class="btn secondary" data-edit-category="' + c.id + '">ویرایش</button><button class="btn ghost" data-toggle-category="' + c.id + '">' + (c.is_active ? 'غیرفعال' : 'فعال') + '</button>' : '<span class="badge">فقط مشاهده</span>') +
-        '<button class="btn ghost" data-filter-category="' + esc(c.name) + '">مشاهده محصولات</button></div></article>'
-      ).join('') + '</div>' :
-      '<div class="empty">دسته‌ای ثبت نشده.</div>';
+        '<div class="az-cat-stats"><span>فعال <b>' + c.activeCount.toLocaleString('fa-IR') + '</b></span><span>کل <b>' + c.productCount.toLocaleString('fa-IR') + '</b></span></div>' +
+        '<div class="az-category-progress"><i style="width:' + (c.productCount ? Math.min(100, (c.activeCount / c.productCount) * 100) : 0) + '%"></i></div>' +
+        '<div class="az-cat-actions">' +
+          (can.edit() ? '<button class="btn secondary" data-edit-category="' + c.id + '">ویرایش</button><button class="btn ghost" data-toggle-category="' + c.id + '">' + (c.is_active ? 'غیرفعال کردن' : 'فعال کردن') + '</button>' : '<span class="badge">فقط مشاهده</span>') +
+          '<button class="btn ghost" data-filter-category="' + esc(c.name) + '">مشاهده محصولات ←</button>' +
+        '</div>' +
+      '</article>'
+    ).join('');
+    const summary = '<div class="az-category-overview">' +
+      '<div><span>دسته‌های واقعی کاتالوگ</span><strong>' + rows.length.toLocaleString('fa-IR') + '</strong></div>' +
+      '<div><span>محصولات دسته‌بندی‌شده</span><strong>' + total.toLocaleString('fa-IR') + '</strong></div>' +
+      '<div><span>محصولات فعال</span><strong>' + activeTotal.toLocaleString('fa-IR') + '</strong></div>' +
+      '<button class="btn secondary" data-filter-category="">همه ۹۰۸ محصول ←</button>' +
+    '</div>';
+    $('categoriesTable').innerHTML = rows.length ? summary + '<div class="az-category-grid">' + body + '</div>' : '<div class="empty">دسته‌ای ثبت نشده.</div>';
   }
+
 
   function categoryForm(c) {
     return '<form id="categoryForm" class="grid2">' +
