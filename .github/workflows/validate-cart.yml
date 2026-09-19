@@ -54,3 +54,5 @@ jobs:
           grep -q 'azim_cart_checkout' database/public-cart.sql
           grep -q 'SECURITY DEFINER' database/public-cart.sql
           grep -q 'grant execute' database/public-cart.sql
+          grep -qF 'as $$' database/public-cart.sql
+          grep -qF '$$;' database/public-cart.sql
