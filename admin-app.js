@@ -411,8 +411,11 @@
       sec.id = 'view-ai';
       sec.className = 'view';
       sec.innerHTML =
-        '<div class="panel">' +
-          '<div class="panel-head"><h2>کنترل دستیار هوشمند</h2><div class="tools"><span id="aiHealth" class="badge">در حال بررسی</span></div></div>' +
+        '<div class="az-ai-shell">' +
+          '<div class="az-ai-hero">' +
+            '<div><div class="az-section-kicker">AI CONTROL CENTER</div><h2>مرکز کنترل دستیار هوشمند</h2><p>تنظیم، تست و کنترل دستیار فروش عظیم ابزار؛ متصل به کاتالوگ محصولات.</p></div>' +
+            '<div class="az-ai-hero-actions"><span id="aiHealth" class="badge">در حال بررسی</span><button id="aiTestTop" class="btn secondary" type="button">تست اتصال</button></div>' +
+          '</div>' +
           '<div id="aiEditor"></div>' +
         '</div>';
       main.appendChild(sec);
@@ -558,7 +561,7 @@
     const skeletons = {
       products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
       inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
-      media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
+      media: 'mediaTable', content: 'contentTable', ai: 'aiEditor', admins: 'adminsTable', audit: 'auditTable'
     };
     if (skeletons[name]) showSkeleton(skeletons[name]);
     try {
@@ -2044,31 +2047,89 @@
 
   function aiForm(x) {
     const p = x?.payload || {};
-    const prompts = Array.isArray(p.quick_prompts) ? p.quick_prompts.join('\\n') : '';
-    return '<form id="aiForm" class="grid2">' +
-      '<label class="check field full"><input name="enabled" type="checkbox" ' + (p.enabled === false ? '' : 'checked') + '> دستیار روی سایت فعال باشد</label>' +
-      '<div class="field"><label>Provider</label><select class="select" name="provider"><option value="gemini" ' + (p.provider === 'gemini' ? 'selected' : '') + '>Gemini</option><option value="openai" ' + (p.provider === 'openai' ? 'selected' : '') + '>OpenAI</option></select></div>' +
-      '<div class="field"><label>مدل اصلی</label><input class="input" name="model" value="' + esc(p.model || 'gemini-3.6-flash') + '"></div>' +
-      '<div class="field"><label>مدل پشتیبان</label><input class="input" name="fallback_model" value="' + esc(p.fallback_model || 'gpt-4o-mini') + '"></div>' +
-      '<div class="field full"><label>پیام خوشامد</label><textarea class="textarea" name="greeting">' + esc(p.greeting || '') + '</textarea></div>' +
-      '<div class="field full"><label>دستور سیستم</label><textarea class="textarea" name="system_instruction" style="min-height:180px">' + esc(p.system_instruction || '') + '</textarea></div>' +
-      '<div class="field full"><label>دکمه‌های سریع</label><textarea class="textarea" name="quick_prompts" placeholder="هر مورد در یک خط">' + esc(prompts) + '</textarea></div>' +
-      '<div class="field full"><div class="tools"><button class="btn">ذخیره تنظیمات AI</button><button type="button" id="testAIButton" class="btn secondary">تست اتصال AI</button></div></div>' +
-      '<div id="aiStatus" class="status field full"></div></form>';
+    const prompts = Array.isArray(p.quick_prompts) ? p.quick_prompts : [];
+    const enabled = p.enabled !== false;
+    return '<div class="az-ai-grid">' +
+      '<div class="az-ai-main">' +
+        '<div class="az-ai-card az-ai-chat-card">' +
+          '<div class="az-ai-card-head"><div><strong>تست زنده دستیار</strong><small>قبل از تحویل، دقیقاً ببین AI چه پاسخی به مشتری می‌دهد.</small></div><span class="az-ai-live">LIVE</span></div>' +
+          '<div id="aiChatMessages" class="az-ai-chat-messages"><div class="az-ai-message ai"><b>دستیار</b><span>' + esc(p.greeting || 'سلام، چطور می‌توانم برای انتخاب ابزار کمکتان کنم؟') + '</span></div></div>' +
+          '<div id="aiQuickPromptRow" class="az-ai-quick-row">' + prompts.slice(0,8).map((q,i) => '<button type="button" class="az-ai-prompt" data-ai-prompt="' + esc(q) + '">' + esc(q) + '</button>').join('') + '</div>' +
+          '<form id="aiChatForm" class="az-ai-chat-form"><input id="aiChatInput" class="input" autocomplete="off" placeholder="مثلاً: برای آچار ۱۰×۱۱ چه گزینه‌ای داریم؟"><button class="btn" type="submit">ارسال</button></form>' +
+          '<div id="aiChatStatus" class="status"></div>' +
+        '</div>' +
+        '<div class="az-ai-card">' +
+          '<div class="az-ai-card-head"><div><strong>تنظیمات مدل و رفتار</strong><small>کنترل کامل Provider، مدل و دستورالعمل دستیار.</small></div></div>' +
+          '<form id="aiForm" class="grid2">' +
+            '<label class="check field full az-ai-enable"><input name="enabled" type="checkbox" ' + (enabled ? 'checked' : '') + '> <span><b>دستیار روی سایت فعال باشد</b><small>وقتی خاموش است، API باید وضعیت غیرفعال را مدیریت کند.</small></span></label>' +
+            '<div class="field"><label>Provider اصلی</label><select class="select" name="provider"><option value="gemini" ' + (p.provider === 'gemini' ? 'selected' : '') + '>Gemini</option><option value="openai" ' + (p.provider === 'openai' ? 'selected' : '') + '>OpenAI</option></select></div>' +
+            '<div class="field"><label>مدل اصلی</label><input class="input" name="model" value="' + esc(p.model || 'gemini-3.6-flash') + '"></div>' +
+            '<div class="field"><label>مدل پشتیبان</label><input class="input" name="fallback_model" value="' + esc(p.fallback_model || 'gpt-4o-mini') + '"></div>' +
+            '<div class="field"><label>حداکثر تعداد دکمه سریع</label><input class="input" value="' + Math.min(prompts.length || 0,8) + '" disabled></div>' +
+            '<div class="field full"><label>پیام خوشامد</label><textarea class="textarea" name="greeting">' + esc(p.greeting || '') + '</textarea></div>' +
+            '<div class="field full"><label>دستور سیستم</label><textarea class="textarea az-ai-system-prompt" name="system_instruction">' + esc(p.system_instruction || '') + '</textarea></div>' +
+            '<div class="field full"><label>دکمه‌های سریع</label><textarea class="textarea" name="quick_prompts" placeholder="هر مورد در یک خط">' + esc(prompts.join('\\n')) + '</textarea><small class="field-hint">این موارد مستقیماً به‌عنوان پیشنهاد سؤال در چت نمایش داده می‌شوند.</small></div>' +
+            '<div class="field full"><div class="tools"><button class="btn" type="submit">ذخیره تنظیمات</button><button type="button" id="testAIButton" class="btn secondary">تست API</button></div></div>' +
+            '<div id="aiStatus" class="status field full"></div>' +
+          '</form>' +
+        '</div>' +
+      '</div>' +
+      '<div class="az-ai-side">' +
+        '<div class="az-ai-card az-ai-status-card"><div class="az-ai-card-head"><div><strong>وضعیت سرویس</strong><small>نمای لحظه‌ای پیکربندی فعلی</small></div></div><div class="az-ai-metrics"><div><span>وضعیت</span><b id="aiMetricStatus">' + (enabled ? 'فعال' : 'خاموش') + '</b></div><div><span>Provider</span><b id="aiMetricProvider">' + esc(p.provider || '—') + '</b></div><div><span>مدل اصلی</span><b id="aiMetricModel" dir="ltr">' + esc(p.model || '—') + '</b></div><div><span>Fallback</span><b id="aiMetricFallback" dir="ltr">' + esc(p.fallback_model || '—') + '</b></div></div></div>' +
+        '<div class="az-ai-card"><div class="az-ai-card-head"><div><strong>اتصال به کاتالوگ</strong><small>منبع اطلاعات محصول برای پاسخ‌گویی.</small></div><span class="az-ai-catalog-dot"></span></div><div class="az-ai-catalog"><div><b id="aiCatalogProducts">—</b><span>محصول</span></div><div><b id="aiCatalogCategories">—</b><span>دسته</span></div><div><b id="aiCatalogVariants">—</b><span>محصول دارای واریانت</span></div></div><div id="aiCatalogStatus" class="status"></div></div>' +
+        '<div class="az-ai-card"><div class="az-ai-card-head"><div><strong>آخرین فعالیت‌های AI</strong><small>تست‌ها و تغییرات ثبت‌شده در Audit Log.</small></div></div><div id="aiLogs" class="az-ai-logs"><div class="az-ai-log-empty">در حال بارگذاری…</div></div></div>' +
+        '<div class="az-ai-card az-ai-rules"><strong>قواعد پیشنهادی فروش</strong><ul><li>قیمت و مشخصات فقط از داده واقعی کاتالوگ خوانده شود.</li><li>برای محصول ناموجود، گزینه جایگزین پیشنهاد شود؛ اطلاعات ساختگی نه.</li><li>اگر سؤال مبهم بود، قبل از پیشنهاد قطعی سؤال روشن‌کننده بپرسد.</li></ul></div>' +
+      '</div>' +
+    '</div>';
   }
 
   async function loadAI() {
     const r = await state.db.from('site_content').select('*').eq('section_key', 'ai_settings').maybeSingle();
     const row = r.data || null;
-    if (r.error) $('aiEditor').innerHTML = '<div class="empty">__AZICON_ERROR__ ' + esc(errorText(r.error)) + '</div>';
-    else {
-      $('aiEditor').innerHTML = aiForm(row);
-      const enabled = row?.payload?.enabled !== false;
-      $('aiHealth').textContent = enabled ? '● فعال' : '● خاموش';
-      $('aiHealth').className = 'badge ' + (enabled ? 'ok' : 'red');
-      $('aiForm').onsubmit = (e) => saveAI(e, row);
-      $('testAIButton').onclick = () => testAI();
+    if (r.error) {
+      $('aiEditor').innerHTML = '<div class="empty">__AZICON_ERROR__ ' + esc(errorText(r.error)) + '</div>';
+      return;
     }
+    $('aiEditor').innerHTML = aiForm(row);
+    const p = row?.payload || {};
+    const enabled = p.enabled !== false;
+    $('aiHealth').textContent = enabled ? '● فعال' : '● خاموش';
+    $('aiHealth').className = 'badge ' + (enabled ? 'ok' : 'red');
+    $('aiForm').onsubmit = (e) => saveAI(e, row);
+    $('testAIButton').onclick = () => testAI();
+    $('aiTestTop').onclick = () => testAI();
+    $('aiChatForm').onsubmit = (e) => sendAIChat(e);
+    document.querySelectorAll('[data-ai-prompt]').forEach((b) => {
+      b.onclick = () => {
+        $('aiChatInput').value = b.dataset.aiPrompt || '';
+        $('aiChatInput').focus();
+      };
+    });
+    await loadAICatalogStats();
+    await loadAILogs();
+  }
+
+  async function loadAICatalogStats() {
+    const [products, categories, variants] = await Promise.all([
+      countTable('products'),
+      countTable('categories'),
+      countTable('products', q => q.not('variants', 'is', null))
+    ]);
+    if ($('aiCatalogProducts')) $('aiCatalogProducts').textContent = Number(products || 0).toLocaleString('fa-IR');
+    if ($('aiCatalogCategories')) $('aiCatalogCategories').textContent = Number(categories || 0).toLocaleString('fa-IR');
+    if ($('aiCatalogVariants')) $('aiCatalogVariants').textContent = Number(variants || 0).toLocaleString('fa-IR');
+    if ($('aiCatalogStatus')) $('aiCatalogStatus').textContent = 'داده‌ها از دیتابیس فروشگاه خوانده می‌شوند.';
+  }
+
+  async function loadAILogs() {
+    const el = $('aiLogs');
+    if (!el) return;
+    const r = await state.db.from('audit_logs').select('action,entity,entity_id,metadata,created_at').order('created_at', { ascending: false }).limit(80);
+    if (r.error) { el.innerHTML = '<div class="az-ai-log-empty">ثبت فعالیت در دسترس نیست.</div>'; return; }
+    const rows = (r.data || []).filter(x => x.entity === 'site_content' && (x.metadata?.section_key === 'ai_settings' || x.action === 'ai_test')).slice(0,8);
+    el.innerHTML = rows.length ? rows.map(x =>
+      '<div class="az-ai-log"><span class="az-ai-log-dot"></span><div><b>' + esc(x.action === 'ai_test' ? 'تست دستیار' : 'تغییر تنظیمات') + '</b><small>' + dateFa(x.created_at) + '</small></div><em>' + esc(x.metadata?.provider || x.metadata?.result || 'ثبت شد') + '</em></div>'
+    ).join('') : '<div class="az-ai-log-empty">هنوز فعالیت AI ثبت نشده.</div>';
   }
 
   async function saveAI(e, row) {
@@ -2095,18 +2156,58 @@
   }
 
   async function testAI() {
-    $('aiStatus').textContent = 'در حال تست...';
+    const status = $('aiStatus');
+    const top = $('aiTestTop');
+    if (status) status.textContent = 'در حال تست اتصال به /api/chat…';
+    if (top) top.disabled = true;
     try {
       const r = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'یک پاسخ خیلی کوتاه بده: برای آچار چه چیزی مهم است؟' })
+        body: JSON.stringify({ message: 'یک پاسخ خیلی کوتاه بده: برای انتخاب آچار چه چیزی مهم است؟' })
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
-      $('aiStatus').textContent = '__AZICON_SUCCESS__ پاسخ دریافت شد: ' + String(data.reply || '').slice(0, 260);
+      const reply = String(data.reply || '').trim();
+      if (status) status.textContent = '__AZICON_SUCCESS__ پاسخ دریافت شد: ' + reply.slice(0, 320);
+      await audit('ai_test', 'site_content', 'ai_settings', { section_key: 'ai_settings', result: 'success', provider: data.provider || 'api' });
+      await loadAILogs();
     } catch (e) {
-      $('aiStatus').textContent = '__AZICON_ERROR__ تست AI ناموفق: ' + errorText(e);
+      if (status) status.textContent = '__AZICON_ERROR__ تست AI ناموفق: ' + errorText(e);
+      await audit('ai_test', 'site_content', 'ai_settings', { section_key: 'ai_settings', result: 'error' });
+      await loadAILogs();
+    } finally {
+      if (top) top.disabled = false;
+    }
+  }
+
+  async function sendAIChat(e) {
+    e.preventDefault();
+    const input = $('aiChatInput');
+    const box = $('aiChatMessages');
+    const status = $('aiChatStatus');
+    const message = input?.value.trim();
+    if (!message || !box) return;
+    const userRow = document.createElement('div');
+    userRow.className = 'az-ai-message user';
+    userRow.innerHTML = '<b>مشتری</b><span>' + esc(message) + '</span>';
+    box.appendChild(userRow);
+    input.value = '';
+    status.textContent = 'در حال دریافت پاسخ…';
+    try {
+      const r = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message}) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+      const aiRow = document.createElement('div');
+      aiRow.className = 'az-ai-message ai';
+      aiRow.innerHTML = '<b>دستیار</b><span>' + esc(String(data.reply || 'پاسخی دریافت نشد.')) + '</span>';
+      box.appendChild(aiRow);
+      box.scrollTop = box.scrollHeight;
+      status.textContent = '__AZICON_SUCCESS__ پاسخ دریافت شد';
+      await audit('ai_test', 'site_content', 'ai_settings', { section_key:'ai_settings', result:'chat_success' });
+      await loadAILogs();
+    } catch (err) {
+      status.textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
