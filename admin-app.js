@@ -89,6 +89,68 @@
 
   window.closeModal = closeModal;
 
+
+  function passwordForm(required = false) {
+    return '<form id="passwordForm" class="grid2">' +
+      '<div class="az-password-intro">' +
+        '<strong>' + (required ? '🔐 تغییر رمز عبور الزامی است' : '🔐 تغییر رمز عبور') + '</strong>' +
+        '<small>رمز جدید فقط در Supabase Auth ثبت می‌شود و داخل پنل ذخیره نمی‌شود.</small>' +
+      '</div>' +
+      '<div class="field full"><label>رمز فعلی *</label><input class="input" name="currentPassword" type="password" autocomplete="current-password" required></div>' +
+      '<div class="field"><label>رمز جدید *</label><input class="input" name="newPassword" type="password" minlength="8" autocomplete="new-password" required></div>' +
+      '<div class="field"><label>تکرار رمز جدید *</label><input class="input" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required></div>' +
+      '<div class="field full"><button class="btn" type="submit">ذخیره رمز جدید و ورود مجدد</button></div>' +
+      '<div id="passwordStatus" class="status field full"></div>' +
+    '</form>';
+  }
+
+  function openPasswordChange(required = false) {
+    openModal(required ? 'تغییر رمز قبل از ادامه' : 'تغییر رمز عبور', passwordForm(required));
+    const close = document.querySelector('#modal .modal-head .x');
+    if (close) close.style.display = required ? 'none' : '';
+    $('passwordForm').onsubmit = (e) => changeOwnPassword(e, required);
+  }
+
+  async function changeOwnPassword(e, required) {
+    e.preventDefault();
+    const s = e.target.elements;
+    const current = s.currentPassword.value;
+    const next = s.newPassword.value;
+    const confirm = s.confirmPassword.value;
+    const status = $('passwordStatus');
+    if (next.length < 8) {
+      status.textContent = '❌ رمز جدید باید حداقل ۸ کاراکتر باشد.';
+      return;
+    }
+    if (next !== confirm) {
+      status.textContent = '❌ تکرار رمز جدید یکسان نیست.';
+      return;
+    }
+    if (next === current) {
+      status.textContent = '❌ رمز جدید باید با رمز فعلی متفاوت باشد.';
+      return;
+    }
+    status.textContent = 'در حال بررسی رمز فعلی…';
+    try {
+      const authCheck = await state.db.auth.signInWithPassword({ email: state.user.email, password: current });
+      if (authCheck.error || !authCheck.data?.user || authCheck.data.user.id !== state.user.id) {
+        status.textContent = '❌ رمز فعلی صحیح نیست.';
+        return;
+      }
+      status.textContent = 'در حال ثبت رمز جدید…';
+      const updated = await state.db.auth.updateUser({ password: next });
+      if (updated.error) throw updated.error;
+      const cleared = await state.db.rpc('azim_self_clear_password_change_required');
+      if (cleared.error) throw cleared.error;
+      await audit('password_change', 'admin_users', state.user.id, { required: !!required });
+      status.textContent = '✅ رمز تغییر کرد؛ در حال خروج امن…';
+      await state.db.auth.signOut();
+      setTimeout(() => location.reload(), 350);
+    } catch (err) {
+      status.textContent = '❌ ' + errorText(err);
+    }
+  }
+
   async function audit(action, entity, id, metadata = {}) {
     try {
       await state.db.from('audit_logs').insert({
@@ -128,7 +190,7 @@
 
     const r = await state.db
       .from('admin_users')
-      .select('user_id,role,is_active,created_at')
+      .select('user_id,role,is_active,password_change_required,created_at')
       .eq('user_id', u.id)
       .maybeSingle();
 
@@ -147,6 +209,7 @@
 
     applyRoleUI();
     markAdminMenu();
+    if (state.me.password_change_required) setTimeout(() => openPasswordChange(true), 80);
     if ($('azMenuUser')) $('azMenuUser').innerHTML = esc(u.email) + '<br>نقش: ' + esc(labels[state.me.role] || state.me.role);
     return true;
   }
@@ -370,6 +433,7 @@
     $('newBrandBtn').onclick = () => newBrand();
     $('newContentBtn').onclick = () => newContent();
     $('unifiedSiteBtn')?.addEventListener('click', () => openUnifiedSiteEditor());
+    $('changePasswordBtn')?.addEventListener('click', () => openPasswordChange(false));
     $('newOrderBtn').onclick = () => newOrder();
     $('newCustomerBtn').onclick = () => newCustomer();
     $('productSearch').oninput = () => loadProducts();
