@@ -399,5 +399,5 @@ begin
 end;
 $$;
 
-revoke all on function public.azim_self_clear_password_change_required() from public;
+revoke execute on function public.azim_self_clear_password_change_required() from public, anon, service_role;
 grant execute on function public.azim_self_clear_password_change_required() to authenticated;
