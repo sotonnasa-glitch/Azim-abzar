@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V13 = true;
+  window.__AZIM_ADMIN_V14 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -325,6 +325,15 @@
     });
 
     $('refreshBtn').onclick = () => loadSection(activeView());
+    if (topbar && !$('azOpenSiteBtn')) {
+      const siteBtn = document.createElement('button');
+      siteBtn.id = 'azOpenSiteBtn';
+      siteBtn.className = 'btn secondary';
+      siteBtn.type = 'button';
+      siteBtn.textContent = '🌐 مشاهده سایت';
+      siteBtn.onclick = () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener');
+      topbar.appendChild(siteBtn);
+    }
     const topbar = document.querySelector('.topbar');
     if (topbar && !document.querySelector('.az-topbar-search')) {
       const tools = document.createElement('div');
@@ -510,14 +519,12 @@
         '<td>' + (can.edit() ? '<button class="btn secondary" data-edit-product="' + p.id + '">ویرایش</button> ' +
         '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button>' : 'فقط مشاهده') +
         '</td>';
-      const check = compact ? '' : '<td><input class="az-check product-check" type="checkbox" data-product-id="' + p.id + '"></td>';
-      return '<tr>' + check + '<td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
+      return '<tr><td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
         '<td>' + esc(p.name) + '</td><td>' + esc(p.code || '—') + '</td><td>' + esc(p.brand || '—') + '</td>' +
         '<td>' + money(p.price) + '</td><td><span class="badge ' + (p.is_active ? 'ok' : 'red') + '">' +
         (p.is_active ? 'فعال' : 'غیرفعال') + '</span></td>' + actions + '</tr>';
     }).join('');
-    return '<table class="table"><thead><tr>' + (compact ? '' : '<th><input id="productSelectAll" class="az-check" type="checkbox"></th>') +
-      '<th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>وضعیت</th>' +
+    return '<table class="table"><thead><tr><th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>وضعیت</th>' +
       (compact ? '' : '<th>عملیات</th>') + '</tr></thead><tbody>' + body.replace(/<tr>/g, '<tr>') + '</tbody></table>';
   }
 
@@ -550,7 +557,7 @@
     const r = await q;
     if (r.error) return showSectionError('productsTable', r.error);
     state.products = r.data || [];
-    $('productsTable').innerHTML = (can.edit() ? '<div id="productBulkBar" class="az-bulkbar"><span id="selectedProductCount">۰ انتخاب</span><button class="btn ghost" id="bulkActivate">فعال‌سازی</button><button class="btn ghost" id="bulkDeactivate">غیرفعال‌سازی</button><button class="btn ghost" id="bulkClear">پاک کردن انتخاب</button></div>' : '') + renderProductTable(state.products, false);
+    $('productsTable').innerHTML = (can.edit() ? '<div class="az-product-tools"><span class="az-product-count">' + state.products.length.toLocaleString('fa-IR') + ' محصول در این نتیجه</span><button class="btn secondary" id="quickEditProducts">✎ ویرایش سریع چند محصول</button><button class="btn ghost" id="openSiteFromProducts">🌐 مشاهده سایت</button></div>' : '') + renderProductTable(state.products, false);
     wireProductBulk();
   }
 
@@ -581,15 +588,11 @@
     const categoryOptions = state.categories.map((c) =>
       '<option value="' + esc(c.name) + '" ' + (c.name === (p?.category_name || p?.cat || '') ? 'selected' : '') + '>' + esc(c.name) + '</option>'
     ).join('');
-    let brandRows = state.brands.slice();
-    const currentBrand = p?.brand || 'بدون برند';
-    if (currentBrand && !brandRows.some((b) => b.name === currentBrand)) brandRows = [{ name: currentBrand }, ...brandRows];
-    const brandOptions = brandRows.map((b) =>
-      '<option value="' + esc(b.name) + '" ' + (b.name === currentBrand ? 'selected' : '') + '>' + esc(b.name) + '</option>'
-    ).join('');
+    const currentBrand = p?.brand || '';
     return '<form id="productForm" class="grid2">' +
       '<div class="field"><label>نام محصول *</label><input class="input" name="name" required value="' + esc(p?.name) + '"></div>' +
-      '<div class="field"><label>برند</label><select class="select" name="brand">' + brandOptions + '</select></div>' +
+      '<div class="field"><label>برند</label><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="نام برند را آزادانه بنویس">' +
+      '<datalist id="productBrandSuggestions">' + state.brands.map((b) => '<option value="' + esc(b.name) + '"></option>').join('') + '</datalist></div>' +
       '<div class="field"><label>دسته‌بندی</label><select class="select" name="category_name"><option value="">بدون دسته</option>' + categoryOptions + '</select></div>' +
       '<div class="field"><label>کد / SKU</label><input class="input" name="code" value="' + esc(p?.code) + '"></div>' +
       '<div class="field"><label>قیمت اصلی</label><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '"></div>' +
@@ -678,38 +681,77 @@
     await Promise.all([loadProducts(), loadDashboard()]);
   }
 
-  function selectedProductIds() {
-    return Array.from(document.querySelectorAll('[data-product-select]:checked')).map(x => x.dataset.productSelect);
-  }
-
-  async function bulkSetProducts(active) {
-    if (!can.edit()) return;
-    const ids = selectedProductIds();
-    if (!ids.length) return toast('ابتدا محصولی را انتخاب کن.');
-    const r = await state.db.from('products').update({ is_active: active }).in('id', ids);
-    if (r.error) return toast('❌ ' + errorText(r.error));
-    await audit('bulk_toggle', 'products', ids.join(','), { ids, is_active: active });
-    toast('✅ ' + ids.length + ' محصول بروزرسانی شد');
-    await loadProducts();
-    await loadDashboard();
-  }
-
   function wireProductBulk() {
-    const checks = document.querySelectorAll('[data-product-select]');
-    const all = $('productSelectAll');
-    const bar = $('productBulkBar');
-    const count = $('selectedProductCount');
-    const sync = () => {
-      const n = selectedProductIds().length;
-      if (bar) bar.classList.toggle('show', n > 0);
-      if (count) count.textContent = n.toLocaleString('fa-IR') + ' انتخاب';
-      if (all) all.checked = n > 0 && n === checks.length;
-    };
-    checks.forEach(c => c.addEventListener('change', sync));
-    if (all) all.onchange = () => { checks.forEach(c => c.checked = all.checked); sync(); };
-    $('bulkActivate')?.addEventListener('click', () => bulkSetProducts(true));
-    $('bulkDeactivate')?.addEventListener('click', () => bulkSetProducts(false));
-    $('bulkClear')?.addEventListener('click', () => { checks.forEach(c => c.checked = false); sync(); });
+    $('quickEditProducts')?.addEventListener('click', () => openQuickProductEditor());
+    $('openSiteFromProducts')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
+  }
+
+  function openQuickProductEditor() {
+    if (!can.edit()) return toast('⛔ این نقش اجازه ویرایش محصول ندارد.');
+    const rows = state.products || [];
+    if (!rows.length) return toast('محصولی برای ویرایش وجود ندارد.');
+
+    const items = rows.map((p) =>
+      '<div class="az-quick-product" data-quick-product="' + esc(p.id) + '">' +
+        '<div class="az-quick-product-info"><strong>' + esc(p.name) + '</strong><small>' + esc(p.code || 'بدون کد') + '</small></div>' +
+        '<input class="input" data-q-name value="' + esc(p.name) + '" aria-label="نام محصول">' +
+        '<input class="input" data-q-brand value="' + esc(p.brand || '') + '" placeholder="برند را خودت بنویس" aria-label="برند">' +
+        '<input class="input" data-q-price inputmode="numeric" value="' + esc(p.price ?? '') + '" placeholder="قیمت" aria-label="قیمت">' +
+        '<label class="az-quick-active"><input data-q-active type="checkbox" ' + (p.is_active ? 'checked' : '') + '> فعال</label>' +
+      '</div>'
+    ).join('');
+
+    openModal('ویرایش سریع محصولات (' + rows.length.toLocaleString('fa-IR') + ' مورد)', 
+      '<div class="az-quick-editor">' +
+        '<div class="az-quick-head"><span>فیلدها را تغییر بده و در پایان همه را یکجا ذخیره کن.</span><button type="button" class="btn ghost" id="quickSiteBtn">🌐 سایت</button></div>' +
+        '<div class="az-quick-list">' + items + '</div>' +
+        '<div class="az-quick-actions"><button type="button" class="btn" id="saveQuickProducts">ذخیره تغییرات همه</button><span id="quickProductStatus" class="status"></span></div>' +
+      '</div>'
+    );
+
+    $('quickSiteBtn')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
+    $('saveQuickProducts')?.addEventListener('click', saveQuickProducts);
+  }
+
+  async function saveQuickProducts() {
+    if (!can.edit()) return;
+    const rows = Array.from(document.querySelectorAll('[data-quick-product]'));
+    const status = $('quickProductStatus');
+    const button = $('saveQuickProducts');
+    if (!rows.length) return;
+
+    button.disabled = true;
+    status.textContent = 'در حال ذخیره…';
+    try {
+      for (const row of rows) {
+        const id = row.dataset.quickProduct;
+        const original = state.products.find((p) => String(p.id) === String(id));
+        if (!original) continue;
+        const name = row.querySelector('[data-q-name]').value.trim();
+        const brand = row.querySelector('[data-q-brand]').value.trim() || 'بدون برند';
+        const priceValue = row.querySelector('[data-q-price]').value.trim();
+        const active = row.querySelector('[data-q-active]').checked;
+        if (!name) throw new Error('نام محصول نمی‌تواند خالی باشد.');
+        const price = priceValue === '' ? null : Number(priceValue);
+        if (priceValue !== '' && !Number.isFinite(price)) throw new Error('قیمت نامعتبر برای «' + name + '».');
+
+        const patch = {
+          name,
+          brand,
+          price,
+          is_active: active
+        };
+        const r = await state.db.from('products').update(patch).eq('id', id);
+        if (r.error) throw r.error;
+        await audit('quick_update', 'products', id, patch);
+      }
+      closeModal();
+      toast('✅ ' + rows.length.toLocaleString('fa-IR') + ' محصول بروزرسانی شد');
+      await Promise.all([loadProducts(), loadDashboard()]);
+    } catch (err) {
+      status.textContent = '❌ ' + errorText(err);
+      button.disabled = false;
+    }
   }
 
   async function toggleProduct(id) {
