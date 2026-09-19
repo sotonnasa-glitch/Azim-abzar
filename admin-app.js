@@ -328,18 +328,37 @@
         'کد امنیتی مدیر را وارد کنید',
         '<p>برای ورود به پنل، کد ۶ رقمی برنامه Authenticator را وارد کنید.</p>' +
         '<input id="mfaChallengeCode" class="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">' +
+        '<div class="mfa-actions">' +
+          '<button type="button" id="mfaChallengeVerifyBtn" class="btn">تأیید کد</button>' +
+          '<button type="button" id="mfaChallengeLogoutBtn" class="btn secondary">خروج از حساب</button>' +
+        '</div>' +
         '<div class="mfa-help">Google Authenticator، Microsoft Authenticator، 1Password یا برنامه TOTP مشابه قابل استفاده است.</div>'
       );
       const input = $('mfaChallengeCode');
-      input?.focus();
-      input?.addEventListener('keydown', async (e) => {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
+      const verifyBtn = $('mfaChallengeVerifyBtn');
+      const finish = async () => {
         const ok = await verifyAdminMFA(verified.id, input.value);
         if (ok) {
           hideMfaGate();
           await loadDashboard();
         }
+      };
+      input?.focus();
+      verifyBtn?.addEventListener('click', finish);
+      input?.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '').slice(0, 6);
+        if (input.value.length === 6) verifyBtn?.focus();
+      });
+      input?.addEventListener('keydown', async (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        await finish();
+      });
+      $('mfaChallengeLogoutBtn')?.addEventListener('click', async () => {
+        await state.db.auth.signOut();
+        $('mfaScreen')?.classList.add('hidden');
+        $('loginScreen')?.classList.remove('hidden');
+        $('loginStatus')?.textContent = '';
       });
       return false;
     }
