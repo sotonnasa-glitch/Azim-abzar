@@ -557,7 +557,7 @@ body{min-height:100vh;overflow-x:hidden;background:
 .az-category-progress{height:4px;border-radius:999px;background:#17201b;overflow:hidden;margin-top:10px}.az-category-progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#39d98a,#f5b900)}
 @media(max-width:820px){.az-category-overview{grid-template-columns:1fr 1fr}.az-category-overview>button{grid-column:1/-1}}
 
-/* V26 — no emoji in admin UI; semantic CSS icons with motion */
+/* V27 — no emoji in admin UI; semantic CSS icons with motion */
 .az-animated-icon{display:inline-grid;place-items:center;width:1.2em;height:1.2em;min-width:1.2em;vertical-align:-.18em;position:relative;flex:0 0 auto;color:currentColor;line-height:1}
 .az-animated-icon::before{display:block;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.98em;font-weight:900;line-height:1}
 .az-animated-icon-wave::before{content:"↝"}.az-animated-icon-lock::before{content:"▣"}.az-animated-icon-mail::before{content:"✉"}
@@ -565,7 +565,7 @@ body{min-height:100vh;overflow-x:hidden;background:
 .az-animated-icon-edit::before{content:"↗"}.az-animated-icon-globe::before{content:"◎"}.az-animated-icon-home::before{content:"⌂"}
 .az-animated-icon-phone::before{content:"◌"}.az-animated-icon-spark::before{content:"✦"}.az-animated-icon-block::before{content:"⊘"}
 .az-animated-icon-error::before{content:"×"}.az-animated-icon-success::before{content:"✓"}.az-animated-icon-target::before{content:"◎"}
-.az-animated-icon-gear::before{content:"⚙"}.az-animated-icon-compass::before{content:"⊕"}.az-animated-icon-tools::before{content:"⌁"}
+.az-animated-icon-gear::before{content:"G"}.az-animated-icon-compass::before{content:"⊕"}.az-animated-icon-tools::before{content:"⌁"}
 .az-animated-icon-down::before{content:"⌄"}.az-animated-icon-invoice::before{content:"▤"}.az-animated-icon-clock::before{content:"◷"}
 .az-animated-icon-note::before{content:"≋"}.az-animated-icon-question::before{content:"?"}.az-animated-icon-pin::before{content:"◆"}
 .az-animated-icon-save::before{content:"↓"}.az-animated-icon-warning::before{content:"!"}
