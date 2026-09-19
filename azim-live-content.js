@@ -67,7 +67,7 @@
         }
       });
       const links = heroRoot.querySelectorAll('.actions a.btn');
-      [hero.primary_cta,hero.secondary_ai_cta,hero.contact_cta].forEach((v,i) => {
+      [hero.primary_cta,hero.contact_cta].forEach((v,i) => {
         if (links[i] && v) {
           const target = links[i].querySelector('.az-arrow')?.previousSibling?.previousSibling || links[i].querySelector('span:nth-of-type(2)');
           setText(target, v);
@@ -101,7 +101,7 @@
     setText(document.querySelector('.brand strong'), header.brand);
     setText(document.querySelector('.brand small'), header.tagline);
     const navMap = [
-      ['#nav-btn-home',header.nav_home],['#nav-btn-catalog',header.nav_products],['#nav-btn-ai',header.nav_ai],['#nav-btn-contact',header.nav_contact]
+      ['#nav-btn-home',header.nav_home],['#nav-btn-catalog',header.nav_products],['#nav-btn-contact',header.nav_contact]
     ];
     navMap.forEach(([sel,v]) => { const a=document.querySelector(sel); if (a && v) setText(a.querySelector(':scope > span:last-child'),v); });
 
@@ -132,7 +132,7 @@
         }
       });
       const links=heroRoot.querySelectorAll('.actions a.btn');
-      [hero.primary_cta,hero.secondary_ai_cta,hero.contact_cta].forEach((v,i)=>{
+      [hero.primary_cta,hero.contact_cta].forEach((v,i)=>{
         if(links[i] && v){
           const target=links[i].querySelector('.az-arrow')?.previousSibling?.previousSibling || links[i].querySelector('span:nth-of-type(2)');
           setText(target,v);
@@ -151,7 +151,7 @@
       if(pair){setText(el.querySelector('strong'),pair[0]);setText(el.querySelector('small'),pair[1]);}
     });
 
-    const ticker=h.ticker||[];
+    const ticker=(h.ticker||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v)));
     if(ticker.length){
       document.querySelectorAll('.az-ticker-track .az-ticker-item').forEach((el,i)=>setText(el,ticker[i%ticker.length],true));
     }
@@ -163,7 +163,7 @@
       setText(cr.querySelector('.sectionHead .title'),choice.title);
       setText(cr.querySelector('.sectionHead .lead'),choice.lead);
       const cards=cr.querySelectorAll('.az-choice');
-      (choice.cards||[]).forEach((v,i)=>{
+      (choice.cards||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(JSON.stringify(v))).forEach((v,i)=>{
         const card=cards[i]; if(!card||!v) return;
         setText(card.querySelector('.az-choice-num'),v[0]);
         setText(card.querySelector('strong'),v[1]);
@@ -187,7 +187,7 @@
     const homeFooter=document.querySelector('#home ~ footer, body > footer');
     if(homeFooter){
       setText(homeFooter.querySelector('.wrap > span'),ft.text);
-      homeFooter.querySelectorAll('div a').forEach((a,i)=>{if(ft.links?.[i]) setText(a,ft.links[i]);});
+      const homeFooterLinks=(ft.links||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v))); homeFooter.querySelectorAll('div a').forEach((a,i)=>{if(homeFooterLinks[i]) setText(a,homeFooterLinks[i]);});
     }
 
     const metaTitle=legacyMeta.title || document.title;
@@ -269,7 +269,7 @@
     if(br){setText(br.querySelector('.store-address-title'),bottom.title);setText(br.querySelector('.store-address-badge'),bottom.badge);setText(br.querySelector('.store-address-text'),bottom.address);const ms=br.querySelectorAll('.store-address-meta > span:not(.sep)');[bottom.meta1,bottom.meta2,bottom.phone].forEach((v,i)=>{if(ms[i]) setText(ms[i],v)});setText(br.querySelector('.store-address-btn span'),bottom.map);}
     const ft=p.footer||{};
     const f=document.querySelector('.footer');
-    if(f){setText(f.querySelector('.footer-inner > span'),ft.text);f.querySelectorAll('.footer-links a').forEach((a,i)=>{if(ft.links?.[i]) setText(a,ft.links[i]);});}
+    if(f){setText(f.querySelector('.footer-inner > span'),ft.text);const footerLinks=(ft.links||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v))); f.querySelectorAll('.footer-links a').forEach((a,i)=>{if(footerLinks[i]) setText(a,footerLinks[i]);});}
   }
 
   function applyAI(c) {
