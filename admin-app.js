@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V16 = true;
+  window.__AZIM_ADMIN_V17 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -369,6 +369,7 @@
     $('newCategoryBtn').onclick = () => newCategory();
     $('newBrandBtn').onclick = () => newBrand();
     $('newContentBtn').onclick = () => newContent();
+    $('unifiedSiteBtn')?.addEventListener('click', () => openUnifiedSiteEditor());
     $('newOrderBtn').onclick = () => newOrder();
     $('newCustomerBtn').onclick = () => newCustomer();
     $('productSearch').oninput = () => loadProducts();
@@ -544,7 +545,7 @@
   async function loadProducts() {
     let q = state.db.from('products')
       .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,updated_at,created_at')
-      .order('updated_at', { ascending: false }).limit(1000);
+      .order('code', { ascending: true }).order('updated_at', { ascending: false }).limit(1000);
     const search = $('productSearch').value.trim();
     const status = $('productStatus').value;
     const category = $('productCategoryFilter')?.value || '';
@@ -1501,6 +1502,219 @@
       await loadContent();
     } catch (err) {
       $('contentStatus').textContent = '❌ ' + errorText(err);
+    }
+  }
+
+
+  function copyField(name, label, value, kind = 'input', wide = false) {
+    const cls = wide ? 'field full' : 'field';
+    if (kind === 'lines') {
+      return '<div class="' + cls + '"><label>' + esc(label) + '</label><textarea class="textarea az-copy-textarea" name="' + name + '" placeholder="هر مورد در یک خط">' + esc(Array.isArray(value) ? value.join('\\n') : '') + '</textarea></div>';
+    }
+    return '<div class="' + cls + '"><label>' + esc(label) + '</label>' +
+      (kind === 'textarea'
+        ? '<textarea class="textarea az-copy-textarea" name="' + name + '">' + esc(value || '') + '</textarea>'
+        : '<input class="input" name="' + name + '" value="' + esc(value || '') + '">') +
+      '</div>';
+  }
+
+  function copyGet(obj, path, fallback = '') {
+    return path.split('.').reduce((v, k) => v == null ? undefined : v[k], obj) ?? fallback;
+  }
+
+  function copySet(obj, path, value) {
+    const parts = path.split('.');
+    let cur = obj;
+    parts.forEach((part, i) => {
+      const last = i === parts.length - 1;
+      const next = parts[i + 1];
+      if (last) {
+        cur[part] = value;
+      } else {
+        if (cur[part] == null) cur[part] = /^\d+$/.test(next) ? [] : {};
+        cur = cur[part];
+      }
+    });
+  }
+
+  function siteCopyDefaults() {
+    return {
+      home: {
+        header:{brand:'',tagline:'',nav_home:'',nav_products:'',nav_ai:'',nav_contact:''},
+        topbar:[],
+        hero:{eyebrow:'',title:'',highlight:'',description:'',trust:[],primary_cta:'',secondary_ai_cta:'',contact_cta:''},
+        hud:{label:'',badge:'',value:'',unit:'',specs:[],chips:[['',''],['','']]},
+        ticker:[],
+        choice:{eyebrow:'',title:'',lead:'',cards:[['','','',''],['','','',''],['','','','']]},
+        why:{eyebrow:'',title:'',lead:'',items:[['',''],['',''],['',''],['','']]},
+        footer:{text:'',links:[]}
+      },
+      contact:{
+        header:{brand:'',tagline:'',back:''},
+        hero:{title:'',description:'',call_cta:'',form_cta:''},
+        channels_head:{title:'',description:''},
+        phone:{title:'',pill:'',value:'',sub:'',copy:'',call:''},
+        support:{title:'',pill:'',value:'',sub:'',button:''},
+        email:{title:'',pill:'',value:'',sub:'',copy:'',send:''},
+        address:{title:'',pill:'',value:'',sub:'',button:''},
+        hours:{title:'',status:'',rows:[['',''],['',''],['','']]},
+        form:{title:'',description:'',topicsLabel:'',topics:[],fullnameLabel:'',fullnamePlaceholder:'',mobileLabel:'',mobilePlaceholder:'',subjectLabel:'',subjectOptions:[],businessLabel:'',businessPlaceholder:'',detailsLabel:'',detailsPlaceholder:'',submit:'',whatsapp:''},
+        trust:[['',''],['',''],['',''],['','']],
+        faq:{title:'',items:[['',''],['',''],['','']]},
+        bottom:{title:'',badge:'',address:'',meta1:'',meta2:'',phone:'',map:''},
+        footer:{text:'',links:[]}
+      }
+    };
+  }
+
+  const unifiedSiteFields = [
+    ['home.header.brand','نام برند'],['home.header.tagline','شعار زیر برند'],
+    ['home.header.nav_home','منوی صفحه اصلی'],['home.header.nav_products','منوی کاتالوگ محصولات'],
+    ['home.header.nav_ai','منوی دستیار هوشمند'],['home.header.nav_contact','منوی ارتباط و سفارش'],
+    ['home.topbar','نوار بالای صفحه','lines'],['home.hero.eyebrow','برچسب بالای هیرو'],
+    ['home.hero.title','عنوان اصلی هیرو'],['home.hero.highlight','خط برجسته هیرو'],
+    ['home.hero.description','توضیحات هیرو','textarea'],['home.hero.trust','۴ مزیت هیرو','lines'],
+    ['home.hero.primary_cta','دکمه کاتالوگ'],['home.hero.secondary_ai_cta','دکمه دستیار AI'],['home.hero.contact_cta','دکمه ارتباط'],
+    ['home.hud.label','عنوان HUD'],['home.hud.badge','نشان HUD'],['home.hud.value','عدد HUD'],
+    ['home.hud.unit','واحد HUD'],['home.hud.specs','مشخصات HUD','lines'],
+    ['home.hud.chips.0.0','چیپ شناور اول — عنوان'],['home.hud.chips.0.1','چیپ شناور اول — توضیح'],
+    ['home.hud.chips.1.0','چیپ شناور دوم — عنوان'],['home.hud.chips.1.1','چیپ شناور دوم — توضیح'],
+    ['home.ticker','متن‌های نوار متحرک','lines'],
+    ['home.choice.eyebrow','مسیرها — برچسب'],['home.choice.title','مسیرها — عنوان'],
+    ['home.choice.lead','مسیرها — توضیح','textarea'],
+    ['home.choice.cards.0.0','مسیر اول — برچسب'],['home.choice.cards.0.1','مسیر اول — عنوان'],
+    ['home.choice.cards.0.2','مسیر اول — توضیح','textarea'],['home.choice.cards.0.3','مسیر اول — دکمه'],
+    ['home.choice.cards.1.0','مسیر دوم — برچسب'],['home.choice.cards.1.1','مسیر دوم — عنوان'],
+    ['home.choice.cards.1.2','مسیر دوم — توضیح','textarea'],['home.choice.cards.1.3','مسیر دوم — دکمه'],
+    ['home.choice.cards.2.0','مسیر سوم — برچسب'],['home.choice.cards.2.1','مسیر سوم — عنوان'],
+    ['home.choice.cards.2.2','مسیر سوم — توضیح','textarea'],['home.choice.cards.2.3','مسیر سوم — دکمه'],
+    ['home.why.eyebrow','مزایا — برچسب'],['home.why.title','مزایا — عنوان'],['home.why.lead','مزایا — توضیح','textarea'],
+    ['home.why.items.0.0','مزیت ۱ — عنوان'],['home.why.items.0.1','مزیت ۱ — توضیح','textarea'],
+    ['home.why.items.1.0','مزیت ۲ — عنوان'],['home.why.items.1.1','مزیت ۲ — توضیح','textarea'],
+    ['home.why.items.2.0','مزیت ۳ — عنوان'],['home.why.items.2.1','مزیت ۳ — توضیح','textarea'],
+    ['home.why.items.3.0','مزیت ۴ — عنوان'],['home.why.items.3.1','مزیت ۴ — توضیح','textarea'],
+    ['home.footer.text','متن فوتر'],['home.footer.links','لینک‌های فوتر','lines'],
+
+    ['contact.header.brand','ارتباط — نام برند'],['contact.header.tagline','ارتباط — شعار زیر برند'],['contact.header.back','متن بازگشت'],
+    ['contact.hero.title','ارتباط — عنوان','textarea'],['contact.hero.description','ارتباط — توضیحات','textarea'],
+    ['contact.hero.call_cta','دکمه تماس'],['contact.hero.form_cta','دکمه فرم'],
+    ['contact.channels_head.title','بخش راه‌های ارتباط — عنوان'],['contact.channels_head.description','بخش راه‌های ارتباط — توضیح','textarea'],
+    ['contact.phone.title','تلفن — عنوان'],['contact.phone.pill','تلفن — برچسب'],['contact.phone.value','تلفن — شماره'],
+    ['contact.phone.sub','تلفن — توضیح','textarea'],['contact.phone.copy','تلفن — دکمه کپی'],['contact.phone.call','تلفن — دکمه تماس'],
+    ['contact.support.title','پشتیبانی — عنوان'],['contact.support.pill','پشتیبانی — برچسب'],
+    ['contact.support.value','پشتیبانی — متن اصلی','textarea'],['contact.support.sub','پشتیبانی — توضیح','textarea'],['contact.support.button','پشتیبانی — دکمه'],
+    ['contact.email.title','ایمیل — عنوان'],['contact.email.pill','ایمیل — برچسب'],['contact.email.value','ایمیل'],
+    ['contact.email.sub','ایمیل — توضیح','textarea'],['contact.email.copy','ایمیل — دکمه کپی'],['contact.email.send','ایمیل — دکمه ارسال'],
+    ['contact.address.title','آدرس — عنوان'],['contact.address.pill','آدرس — برچسب'],['contact.address.value','آدرس','textarea'],
+    ['contact.address.sub','آدرس — توضیح','textarea'],['contact.address.button','آدرس — دکمه'],
+    ['contact.hours.title','ساعات — عنوان'],['contact.hours.status','ساعات — وضعیت'],
+    ['contact.hours.rows.0.0','شنبه تا چهارشنبه — برچسب'],['contact.hours.rows.0.1','شنبه تا چهارشنبه — ساعت'],
+    ['contact.hours.rows.1.0','پنجشنبه — برچسب'],['contact.hours.rows.1.1','پنجشنبه — ساعت'],
+    ['contact.hours.rows.2.0','جمعه و تعطیلات — برچسب'],['contact.hours.rows.2.1','جمعه و تعطیلات — توضیح'],
+    ['contact.form.title','فرم — عنوان'],['contact.form.description','فرم — توضیح','textarea'],
+    ['contact.form.topicsLabel','فرم — عنوان موضوعات'],['contact.form.topics','فرم — موضوعات سریع','lines'],
+    ['contact.form.fullnameLabel','فرم — نام'],['contact.form.fullnamePlaceholder','فرم — جای‌خالی نام'],
+    ['contact.form.mobileLabel','فرم — موبایل'],['contact.form.mobilePlaceholder','فرم — جای‌خالی موبایل'],
+    ['contact.form.subjectLabel','فرم — دسته‌بندی'],['contact.form.subjectOptions','فرم — گزینه‌های دسته‌بندی','lines'],
+    ['contact.form.businessLabel','فرم — کارگاه'],['contact.form.businessPlaceholder','فرم — جای‌خالی کارگاه'],
+    ['contact.form.detailsLabel','فرم — شرح درخواست','textarea'],['contact.form.detailsPlaceholder','فرم — جای‌خالی شرح','textarea'],
+    ['contact.form.submit','فرم — دکمه ارسال'],['contact.form.whatsapp','فرم — دکمه پیام‌رسان'],
+    ['contact.trust.0.0','اعتماد ۱ — عنوان'],['contact.trust.0.1','اعتماد ۱ — توضیح'],
+    ['contact.trust.1.0','اعتماد ۲ — عنوان'],['contact.trust.1.1','اعتماد ۲ — توضیح'],
+    ['contact.trust.2.0','اعتماد ۳ — عنوان'],['contact.trust.2.1','اعتماد ۳ — توضیح'],
+    ['contact.trust.3.0','اعتماد ۴ — عنوان'],['contact.trust.3.1','اعتماد ۴ — توضیح'],
+    ['contact.faq.title','سؤالات متداول — عنوان'],
+    ['contact.faq.items.0.0','سؤال ۱'],['contact.faq.items.0.1','پاسخ ۱','textarea'],
+    ['contact.faq.items.1.0','سؤال ۲'],['contact.faq.items.1.1','پاسخ ۲','textarea'],
+    ['contact.faq.items.2.0','سؤال ۳'],['contact.faq.items.2.1','پاسخ ۳','textarea'],
+    ['contact.bottom.title','پایین صفحه — عنوان آدرس'],['contact.bottom.badge','پایین صفحه — برچسب'],
+    ['contact.bottom.address','پایین صفحه — آدرس','textarea'],['contact.bottom.meta1','پایین صفحه — توضیح اول'],
+    ['contact.bottom.meta2','پایین صفحه — توضیح دوم'],['contact.bottom.phone','پایین صفحه — تلفن'],
+    ['contact.bottom.map','پایین صفحه — دکمه نقشه'],['contact.footer.text','فوتر ارتباط','textarea'],['contact.footer.links','فوتر ارتباط — لینک‌ها','lines']
+  ];
+
+  function siteCopyForm(copy) {
+    const p = Object.assign(siteCopyDefaults(), copy || {});
+    const fieldHtml = (prefix) => unifiedSiteFields.filter(f => f[0].startsWith(prefix + '.')).map(f => {
+      const kind = f[2] || 'input';
+      return copyField('sc_' + f[0], f[1], copyGet(p, f[0], kind === 'lines' ? [] : ''), kind, kind === 'textarea' || kind === 'lines');
+    }).join('');
+    return '<form id="unifiedSiteForm" class="az-unified-form">' +
+      '<div class="az-copy-intro"><strong>ویرایش یکجای نوشته‌های سایت</strong><small>از همین صفحه متن‌های قابل مشاهده صفحه اصلی و «ارتباط با ما» را تغییر بده. دکمه‌ها و ساختار صفحه دست‌نخورده می‌مانند.</small></div>' +
+      '<details class="az-copy-group" open><summary>🏠 صفحه اصلی — هدر و هیرو</summary><div class="grid2">' + fieldHtml('home.header') + fieldHtml('home.topbar') + fieldHtml('home.hero') + '</div></details>' +
+      '<details class="az-copy-group"><summary>⚙️ صفحه اصلی — HUD و نوار متحرک</summary><div class="grid2">' + fieldHtml('home.hud') + fieldHtml('home.ticker') + '</div></details>' +
+      '<details class="az-copy-group"><summary>🧭 صفحه اصلی — مسیرهای خرید</summary><div class="grid2">' + fieldHtml('home.choice') + '</div></details>' +
+      '<details class="az-copy-group"><summary>🛠️ صفحه اصلی — مزیت‌ها</summary><div class="grid2">' + fieldHtml('home.why') + '</div></details>' +
+      '<details class="az-copy-group"><summary>🔻 صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
+      '<details class="az-copy-group"><summary>📞 ارتباط با ما — هدر و معرفی</summary><div class="grid2">' + fieldHtml('contact.header') + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
+      '<details class="az-copy-group"><summary>☎️ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
+      '<details class="az-copy-group"><summary>🕘 ارتباط با ما — ساعات کاری</summary><div class="grid2">' + fieldHtml('contact.hours') + '</div></details>' +
+      '<details class="az-copy-group"><summary>📝 ارتباط با ما — فرم استعلام</summary><div class="grid2">' + fieldHtml('contact.form') + '</div></details>' +
+      '<details class="az-copy-group"><summary>✅ ارتباط با ما — مزیت‌ها و اعتماد</summary><div class="grid2">' + fieldHtml('contact.trust') + '</div></details>' +
+      '<details class="az-copy-group"><summary>❓ ارتباط با ما — پرسش‌های متداول</summary><div class="grid2">' + fieldHtml('contact.faq') + '</div></details>' +
+      '<details class="az-copy-group"><summary>📍 ارتباط با ما — آدرس پایین صفحه و فوتر</summary><div class="grid2">' + fieldHtml('contact.bottom') + fieldHtml('contact.footer') + '</div></details>' +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">💾 ذخیره همه نوشته‌ها</button><span id="unifiedSiteStatus" class="status"></span></div>' +
+      '</form>';
+  }
+
+  async function openUnifiedSiteEditor() {
+    if (!can.edit()) return toast('⛔ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
+    const r = await state.db.from('site_content').select('id,section_key,title,payload,is_active').eq('section_key','site_copy').maybeSingle();
+    if (r.error) return toast('❌ ' + errorText(r.error));
+    openModal('ویرایش یکجای سایت', siteCopyForm(r.data?.payload || {}));
+    $('unifiedSiteForm').onsubmit = (e) => saveUnifiedSiteContent(e, r.data?.id || null);
+  }
+
+  async function saveUnifiedSiteContent(e, rowId) {
+    e.preventDefault();
+    if (!can.edit()) return;
+    const status = $('unifiedSiteStatus');
+    try {
+      const base = siteCopyDefaults();
+      const allRows = await state.db.from('site_content').select('section_key,payload').in('section_key',['site_copy','home_meta','home_hero','home_choice','home_why','contact_page']);
+      if (allRows.error) throw allRows.error;
+      const existing = allRows.data || [];
+      const source = existing.find(x => x.section_key === 'site_copy')?.payload || {};
+      const copy = Object.assign(siteCopyDefaults(), source);
+      unifiedSiteFields.forEach((f) => {
+        const el = e.target.elements['sc_' + f[0]];
+        if (!el) return;
+        copySet(copy, f[0], (f[2] === 'lines' ? el.value.split('\\n').map(x => x.trim()).filter(Boolean) : el.value.trim()));
+      });
+      const copyPayload = { ...base, ...copy };
+      const up = {
+        section_key:'site_copy',
+        title:'ویرایش یکجای متن سایت',
+        payload:copyPayload,
+        is_active:true,
+        updated_by:state.user.id
+      };
+      const r = rowId
+        ? await state.db.from('site_content').update(up).eq('id',rowId)
+        : await state.db.from('site_content').insert(up);
+      if (r.error) throw r.error;
+
+      const h = copyPayload.home || {};
+      const c = copyPayload.contact || {};
+      const compat = [
+        ['home_meta', {title: copyGet(h,'header.brand') || 'عظیم ابزار', description: copyGet(h,'hero.description') || ''}],
+        ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),secondary_ai_cta:copyGet(h,'hero.secondary_ai_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
+        ['home_choice', {eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
+        ['home_why', {eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}],
+        ['contact_page', {title:copyGet(c,'hero.title'),description:copyGet(c,'hero.description'),email:copyGet(c,'email.value')}]
+      ];
+      for (const [key,payload] of compat) {
+        const row = existing.find(x => x.section_key === key);
+        if (!row) continue;
+        const rr = await state.db.from('site_content').update({payload,updated_by:state.user.id}).eq('section_key',key);
+        if (rr.error) throw rr.error;
+      }
+      await audit('update','site_content',rowId || 'site_copy',{section_key:'site_copy',scope:'home+contact'});
+      if (status) status.textContent='✅ همه نوشته‌ها ذخیره شد';
+      toast('✅ نوشته‌های صفحه اصلی و ارتباط با ما ذخیره شد');
+      await loadContent();
+    } catch (err) {
+      if (status) status.textContent='❌ ' + errorText(err);
     }
   }
 
