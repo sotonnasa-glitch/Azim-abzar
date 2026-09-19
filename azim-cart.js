@@ -206,8 +206,12 @@
     return data;
   }
 
+  function cartIconSvg(){
+    return '<svg class="az-cart-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg>';
+  }
+
   function cartNavHtml(){
-    return '<a href="cart.html" class="az-cart-link" data-cart-link aria-label="سبد سفارش"><span class="az-cart-icon">🛒</span><span>سبد سفارش</span><b class="az-cart-badge" data-cart-count hidden>۰</b></a>';
+    return '<a href="cart.html" class="az-cart-link" data-cart-link aria-label="سبد سفارش"><span class="az-cart-icon">'+cartIconSvg()+'</span><span>سبد سفارش</span><b class="az-cart-badge" data-cart-count hidden>۰</b></a>';
   }
 
   function injectFloatingCart(){
@@ -216,7 +220,7 @@
     a.href='cart.html';
     a.className='az-floating-cart';
     a.setAttribute('aria-label','سبد سفارش');
-    a.innerHTML='<span class="az-floating-cart-icon">🛒</span><span>سبد سفارش</span><b data-cart-count hidden>۰</b>';
+    a.innerHTML='<span class="az-floating-cart-icon">'+cartIconSvg()+'</span><span>سبد سفارش</span><b data-cart-count hidden>۰</b>';
     document.body.appendChild(a);
   }
 
@@ -227,11 +231,18 @@
     s.textContent=[
       '.az-cart-link{position:relative;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid rgba(245,185,0,.28);border-radius:11px;background:rgba(245,185,0,.07);color:#ffe585;font:800 12px Vazirmatn,system-ui,sans-serif;white-space:nowrap;transition:.2s ease}',
       '.az-cart-link:hover{border-color:rgba(245,185,0,.65);background:rgba(245,185,0,.14);transform:translateY(-1px)}',
-      '.az-cart-icon{font-size:15px;line-height:1}',
+.az-cart-icon{display:inline-grid;place-items:center;width:18px;height:18px;flex:0 0 18px;color:currentColor},
+      .az-cart-svg{width:18px;height:18px;overflow:visible;animation:azCartFloat 2.6s ease-in-out infinite;transform-origin:50% 76%},
+      .az-cart-svg .az-cart-track{stroke-dasharray:42 160;animation:azCartTrail 2.6s ease-in-out infinite},
+      .az-cart-icon:hover .az-cart-svg,.az-floating-cart-icon:hover .az-cart-svg{animation:azCartHover .55s ease-in-out both},
+      @keyframes azCartFloat{0%,100%{transform:translateY(0) rotate(0deg)}48%{transform:translateY(-1px) rotate(-2deg)}58%{transform:translateY(0) rotate(1.5deg)}},
+      @keyframes azCartTrail{0%,100%{stroke-dashoffset:0;opacity:.9}45%{stroke-dashoffset:-28;opacity:1}70%{stroke-dashoffset:-8;opacity:.9}},
+      @keyframes azCartHover{0%{transform:rotate(0) scale(1)}35%{transform:rotate(-9deg) scale(1.08)}70%{transform:rotate(7deg) scale(1.08)}100%{transform:rotate(0) scale(1)}},
+      @media (prefers-reduced-motion:reduce){.az-cart-svg{animation:none!important}.az-cart-svg .az-cart-track{animation:none!important}}
       '.az-cart-badge{min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px;border-radius:999px;background:#f5b900;color:#111;font-size:10px;line-height:18px}',
       '.az-floating-cart{position:fixed;left:16px;bottom:18px;z-index:90;display:inline-flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid rgba(245,185,0,.45);border-radius:14px;background:rgba(12,16,13,.94);box-shadow:0 14px 34px rgba(0,0,0,.42);color:#fff;text-decoration:none;font:800 12px Vazirmatn,system-ui,sans-serif;backdrop-filter:blur(12px)}',
       '.az-floating-cart:hover{border-color:#ffd84f;box-shadow:0 16px 38px rgba(0,0,0,.48),0 0 18px rgba(245,185,0,.16)}',
-      '.az-floating-cart-icon{font-size:16px}.az-floating-cart b{min-width:20px;height:20px;display:grid;place-items:center;border-radius:999px;background:#f5b900;color:#111;font-size:10px}',
+      '.az-floating-cart-icon{display:inline-grid;place-items:center;width:18px;height:18px}.az-floating-cart b{min-width:20px;height:20px;display:grid;place-items:center;border-radius:999px;background:#f5b900;color:#111;font-size:10px}',
       '.az-cart-toast{position:fixed;right:50%;bottom:24px;transform:translate(50%,120px);opacity:0;z-index:200;padding:11px 16px;border:1px solid rgba(245,185,0,.46);border-radius:12px;background:#121713;color:#fff;box-shadow:0 16px 40px rgba(0,0,0,.5);font:800 12px Vazirmatn,system-ui,sans-serif;transition:.28s ease}.az-cart-toast.show{transform:translate(50%,0);opacity:1}'
     ].join('');
     document.head.appendChild(s);
