@@ -1605,19 +1605,64 @@
       .select('id,order_code,customer_id,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,notes,created_at')
       .order('created_at', { ascending: false }).limit(200);
     if (r.error) return showSectionError('ordersTable', r.error);
-    if (!r.data?.length) {
+    const rows = r.data || [];
+    if (!rows.length) {
       $('ordersTable').innerHTML = '<div class="empty">هنوز سفارشی ثبت نشده؛ از «＋ سفارش جدید» استفاده کن.</div>';
       return;
     }
-    const body = r.data.map((x) =>
-      '<tr><td>' + esc(x.order_code) + '</td><td>' + esc(labels[x.status] || x.status) + '</td><td>' +
-      esc(labels[x.payment_status] || x.payment_status) + '</td><td>' + esc(labels[x.shipping_status] || x.shipping_status) +
-      '</td><td>' + money(x.subtotal) + '</td><td>' + (x.discount ? '<span class="badge ok">− ' + money(x.discount) + '</span>' : '—') + '</td><td>' + money(x.total) + '</td><td>' + esc(x.discount_code || '—') + '</td><td>' + esc(x.tracking_code || '—') + '</td><td>' + dateFa(x.created_at) + '</td><td>' +
-      (can.sales() ? '<button class="btn secondary" data-edit-order="' + x.id + '">مدیریت</button>' : '') + '</td></tr>'
-    ).join('');
+
+    const totalValue = rows.reduce((sum, x) => sum + Number(x.total || 0), 0);
+    const unpaidCount = rows.filter(x => x.payment_status !== 'paid').length;
+    const pendingCount = rows.filter(x => ['pending','confirmed','processing'].includes(x.status)).length;
+
+    const stat = (label, value, sub) =>
+      '<div class="az-order-stat"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong><small>' + esc(sub) + '</small></div>';
+
+    const statusTone = (value) => {
+      if (value === 'paid' || value === 'delivered') return 'ok';
+      if (value === 'cancelled' || value === 'refunded') return 'red';
+      return 'warn';
+    };
+
+    const body = rows.map((x) => {
+      const status = labels[x.status] || x.status || '—';
+      const payment = labels[x.payment_status] || x.payment_status || '—';
+      const shipping = labels[x.shipping_status] || x.shipping_status || '—';
+      const discount = Number(x.discount || 0);
+
+      return '<article class="az-order-card">' +
+        '<div class="az-order-card-head">' +
+          '<div class="az-order-code"><span>سفارش</span><strong dir="ltr">' + esc(x.order_code || '—') + '</strong><small>' + dateFa(x.created_at) + '</small></div>' +
+          '<div class="az-order-statuses">' +
+            '<span class="az-order-pill ' + statusTone(x.status) + '">' + esc(status) + '</span>' +
+            '<span class="az-order-pill ' + statusTone(x.payment_status) + '">' + esc(payment) + '</span>' +
+            '<span class="az-order-pill ' + statusTone(x.shipping_status) + '">' + esc(shipping) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="az-order-card-body">' +
+          '<div class="az-order-total"><span>مبلغ نهایی</span><strong>' + money(x.total) + '</strong>' + (discount ? '<small>پس از ' + money(discount) + ' تخفیف</small>' : '<small>بدون تخفیف</small>') + '</div>' +
+          '<div class="az-order-meta">' +
+            '<div><span>قبل تخفیف</span><b>' + money(x.subtotal) + '</b></div>' +
+            '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'رایگان') + '</b></div>' +
+            '<div><span>کد تخفیف</span><b dir="ltr">' + esc(x.discount_code || '—') + '</b></div>' +
+            '<div><span>رهگیری</span><b dir="ltr">' + esc(x.tracking_code || '—') + '</b></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="az-order-card-foot">' +
+          '<span class="az-order-foot-note">' + (x.customer_id ? 'مشتری ثبت‌شده' : 'بدون پرونده مشتری') + '</span>' +
+          (can.sales() ? '<button class="btn secondary az-order-manage" data-edit-order="' + x.id + '">مدیریت سفارش <span>←</span></button>' : '') +
+        '</div>' +
+      '</article>';
+    }).join('');
+
     $('ordersTable').innerHTML =
-      '<table class="table"><thead><tr><th>کد</th><th>وضعیت</th><th>پرداخت</th><th>ارسال</th><th>قبل تخفیف</th><th>تخفیف</th><th>نهایی</th><th>کد تخفیف</th><th>رهگیری</th><th>تاریخ</th><th>عملیات</th></tr></thead><tbody>' +
-      body + '</tbody></table>';
+      '<div class="az-order-overview">' +
+        stat('کل سفارش‌ها', rows.length.toLocaleString('fa-IR'), 'ثبت‌شده در پنل') +
+        stat('در حال پیگیری', pendingCount.toLocaleString('fa-IR'), 'در چرخه پردازش') +
+        stat('نیازمند پرداخت', unpaidCount.toLocaleString('fa-IR'), 'پرداخت نهایی نشده') +
+        stat('ارزش سفارش‌ها', money(totalValue), 'جمع مبلغ نهایی') +
+      '</div>' +
+      '<div class="az-orders-list">' + body + '</div>';
   }
 
   async function loadCustomersForOrder() {
