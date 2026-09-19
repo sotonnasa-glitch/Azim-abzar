@@ -238,6 +238,11 @@
       const allowed = !map[v] || map[v].includes(role);
       b.style.display = allowed ? '' : 'none';
     });
+    if ($('newProductBtn')) $('newProductBtn').style.display = can.edit() ? '' : 'none';
+    if ($('newCategoryBtn')) $('newCategoryBtn').style.display = can.edit() ? '' : 'none';
+    if ($('newBrandBtn')) $('newBrandBtn').style.display = can.edit() ? '' : 'none';
+    if ($('newContentBtn')) $('newContentBtn').style.display = can.edit() ? '' : 'none';
+    if ($('uploadMediaBtn')) $('uploadMediaBtn').style.display = can.edit() ? '' : 'none';
   }
 
   function activeView() {
@@ -512,7 +517,7 @@
       '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.slug) + '</td><td>' + c.productCount.toLocaleString('fa-IR') +
       '</td><td>' + c.sort_order + '</td><td><span class="badge ' + (c.is_active ? 'ok' : 'red') + '">' +
       (c.is_active ? 'فعال' : 'غیرفعال') + '</span></td><td>' +
-      (can.edit() ? '<button class="btn secondary" data-edit-category="' + c.id + '">ویرایش</button>' : '') +
+      (can.edit() ? '<button class="btn secondary" data-edit-category="' + c.id + '">ویرایش</button> <button class="btn ghost" data-toggle-category="' + c.id + '">' + (c.is_active ? 'غیرفعال' : 'فعال') + '</button>' : '') +
       '</td></tr>'
     ).join('');
     $('categoriesTable').innerHTML = rows.length ?
@@ -529,6 +534,16 @@
       '<div class="field full"><label>تصویر دسته</label><input class="input" name="image_file" type="file" accept="image/*"></div>' +
       '<div class="field full"><label>توضیحات</label><textarea class="textarea" name="description">' + esc(c?.description) + '</textarea></div>' +
       '<div class="field full"><button class="btn">ذخیره دسته</button></div><div id="categoryStatus" class="status field full"></div></form>';
+  }
+
+  async function toggleCategory(id) {
+    if (!can.edit()) return toast('⛔ دسترسی تغییر وضعیت دسته وجود ندارد.');
+    const c = state.categories.find((x) => x.id === id);
+    if (!c) return;
+    const r = await state.db.from('categories').update({ is_active: !c.is_active }).eq('id', id);
+    if (r.error) return toast('❌ ' + errorText(r.error));
+    await audit('toggle', 'categories', id, { is_active: !c.is_active });
+    await loadCategories();
   }
 
   function editCategory(id) {
@@ -580,7 +595,7 @@
       '<tr><td>' + esc(b.name) + '</td><td>' + esc(b.slug) + '</td><td>' + b.productCount.toLocaleString('fa-IR') +
       '</td><td>' + b.sort_order + '</td><td><span class="badge ' + (b.is_active ? 'ok' : 'red') + '">' +
       (b.is_active ? 'فعال' : 'غیرفعال') + '</span></td><td>' +
-      (can.edit() ? '<button class="btn secondary" data-edit-brand="' + b.id + '">ویرایش</button>' : '') +
+      (can.edit() ? '<button class="btn secondary" data-edit-brand="' + b.id + '">ویرایش</button> <button class="btn ghost" data-toggle-brand="' + b.id + '">' + (b.is_active ? 'غیرفعال' : 'فعال') + '</button>' : '') +
       '</td></tr>'
     ).join('');
     $('brandsTable').innerHTML = rows.length ?
@@ -597,6 +612,16 @@
       '<div class="field full"><label>لوگو</label><input class="input" name="logo_file" type="file" accept="image/*"></div>' +
       '<div class="field full"><label>توضیحات</label><textarea class="textarea" name="description">' + esc(b?.description) + '</textarea></div>' +
       '<div class="field full"><button class="btn">ذخیره برند</button></div><div id="brandStatus" class="status field full"></div></form>';
+  }
+
+  async function toggleBrand(id) {
+    if (!can.edit()) return toast('⛔ دسترسی تغییر وضعیت برند وجود ندارد.');
+    const b = state.brands.find((x) => x.id === id);
+    if (!b) return;
+    const r = await state.db.from('brands').update({ is_active: !b.is_active }).eq('id', id);
+    if (r.error) return toast('❌ ' + errorText(r.error));
+    await audit('toggle', 'brands', id, { is_active: !b.is_active });
+    await loadBrands();
   }
 
   function editBrand(id) {
