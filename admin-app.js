@@ -575,6 +575,8 @@
       brands: ['owner', 'admin', 'editor'],
       inquiries: ['owner', 'admin', 'sales'],
       orders: ['owner', 'admin', 'sales'],
+      discounts: ['owner', 'admin', 'sales'],
+      'discount-codes': ['owner', 'admin', 'sales'],
       customers: ['owner', 'admin', 'sales'],
       media: ['owner', 'admin', 'editor'],
       content: ['owner', 'admin', 'editor'],
