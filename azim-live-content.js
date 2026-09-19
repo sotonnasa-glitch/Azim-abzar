@@ -90,6 +90,9 @@
 
   function applyHomeCopy(copy, fallback) {
     const h = copy.home || {};
+    if (h.meta?.title) document.title = h.meta.title;
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta && h.meta?.description) descMeta.setAttribute('content', h.meta.description);
     const legacyMeta = fallback.home_meta || {};
     const legacyHero = fallback.home_hero || {};
     const header = h.header || {};
@@ -191,13 +194,17 @@
 
   function applyContactCopy(copy, fallback) {
     const p=copy.contact||{};
+    if (p.meta?.title) document.title = p.meta.title;
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta && p.meta?.description) descMeta.setAttribute('content', p.meta.description);
     const header=p.header||{};
     setText(document.querySelector('#header-brand strong'),header.brand);
     setText(document.querySelector('#header-brand small'),header.tagline);
     setText(document.querySelector('#btn-back-prev span:last-child'),header.back);
 
     const hero=p.hero||fallback.contact_page||{};
-    setText(document.querySelector('.hero-title'),hero.title);
+    const contactH1=document.querySelector('.hero-title');
+    if(contactH1 && hero.title){const brand='عظیم ابزار', idx=String(hero.title).lastIndexOf(brand), gold=contactH1.querySelector('span'); if(gold && idx>=0){contactH1.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=''}); if(contactH1.firstChild)contactH1.firstChild.textContent=String(hero.title).slice(0,idx).trimEnd()+' '; else contactH1.insertBefore(document.createTextNode(String(hero.title).slice(0,idx).trimEnd()+' '),gold); gold.textContent=brand;} else contactH1.textContent=String(hero.title);}
     setText(document.querySelector('.hero-desc'),hero.description);
     setText(document.querySelector('.hero-action-phone span'),hero.call_cta);
     setText(document.querySelector('.hero-action-online span'),hero.form_cta);
