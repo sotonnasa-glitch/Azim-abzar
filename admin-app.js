@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V18 = true;
+  window.__AZIM_ADMIN_V19 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -622,7 +622,7 @@
     const r = await q;
     if (r.error) return showSectionError('productsTable', r.error);
     state.products = r.data || [];
-    $('productsTable').innerHTML = (can.edit() ? '<div class="az-product-tools"><span class="az-product-count">' + state.products.length.toLocaleString('fa-IR') + ' محصول در این نتیجه</span><button class="btn secondary" id="quickEditProducts">✎ ویرایش سریع چند محصول</button><button class="btn ghost" id="openSiteFromProducts">🌐 مشاهده سایت</button></div>' : '') + renderProductTable(state.products, false);
+    $('productsTable').innerHTML = (can.edit() ? '<div class="az-product-tools"><span class="az-product-count">' + state.products.length.toLocaleString('fa-IR') + ' محصول در این نتیجه</span><button class="btn secondary" id="quickEditProducts">✎ ویرایش سریع چند محصول</button><button class="btn ghost" id="openSiteFromProducts">🌐 مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">⬇️ بکاپ</button></div>' : '') + renderProductTable(state.products, false);
     wireProductBulk();
   }
 
@@ -853,9 +853,46 @@
     await Promise.all([loadProducts(), loadDashboard()]);
   }
 
+  async function exportStoreBackup() {
+    if (!state.user) return;
+    try {
+      const [content, categories, brands] = await Promise.all([
+        state.db.from('site_content').select('section_key,title,payload,is_active,updated_at'),
+        state.db.from('categories').select('*').order('sort_order').order('name'),
+        state.db.from('brands').select('*').order('sort_order').order('name')
+      ]);
+      if (content.error) throw content.error;
+      if (categories.error) throw categories.error;
+      if (brands.error) throw brands.error;
+      const backup = {
+        exported_at: new Date().toISOString(),
+        version: 'azim-abzar-admin-backup-v1',
+        products: state.products || [],
+        categories: categories.data || [],
+        brands: brands.data || [],
+        site_content: content.data || []
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0,10);
+      a.href = url;
+      a.download = 'azim-abzar-backup-' + stamp + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      await audit('export', 'store_backup', stamp, { products: backup.products.length, site_content: backup.site_content.length });
+      toast('✅ فایل پشتیبان آماده شد');
+    } catch (err) {
+      toast('❌ ' + errorText(err));
+    }
+  }
+
   function wireProductBulk() {
     $('quickEditProducts')?.addEventListener('click', () => openQuickProductEditor());
     $('openSiteFromProducts')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
+    $('exportStoreBackup')?.addEventListener('click', () => exportStoreBackup());
   }
 
   function openQuickProductEditor() {
