@@ -128,3 +128,8 @@ body{background:
   .az-health-grid,.az-stat-strip{grid-template-columns:1fr}
   .nav button{font-size:8px;padding:8px 9px}
 }
+
+.az-nav-group-label{font-size:8px;color:#657169;font-weight:900;letter-spacing:.08em;padding:10px 10px 3px;opacity:.9}
+.az-topbar-search{display:flex;align-items:center;gap:7px}
+.az-topbar-search .btn{display:flex;align-items:center;gap:6px}
+@media(max-width:720px){.az-nav-group-label{display:none}.az-topbar-search{display:none}}
