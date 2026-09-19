@@ -96,14 +96,19 @@ jobs:
           from pathlib import Path
           html = Path('_site/admin.html').read_text(encoding='utf-8')
           assert 'پنل مدیریت' in html
+          assert 'admin-app.js?v=10' in html
           match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
           assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
           Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
+          assert Path('_site/admin-app.js').is_file() and Path('_site/admin-app.js').stat().st_size > 1000
           cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
           assert 'service_role' not in cfg and 'sb_publishable_' in cfg
-          print('ADMIN PANEL VERIFIED: file + inline JS + publishable Supabase config')
+          print('ADMIN PANEL VERIFIED: shell + external runtime + publishable config')
           PY
           node --check /tmp/admin-inline.js
+          node --check _site/admin-app.js
+          node --check _site/azim-live-content.js
+          node --check _site/api/chat.js
 
       - name: Validate homepage runtime scripts
         shell: bash
@@ -114,6 +119,7 @@ jobs:
           html = Path('_site/index.html').read_text(encoding='utf-8')
           assert '<script src="./azim-motion.js?v=7" defer></script>' in html
           assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
+          assert 'azim-live-content.js?v=1' in html
           assert 'azim-home-gallery.js' not in html
           print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
           PY
