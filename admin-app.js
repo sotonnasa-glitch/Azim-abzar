@@ -2479,7 +2479,7 @@
         const h = copy.home || {};
         const compat = [
           ['home_meta',{title:copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی',description:copyGet(h,'meta.description') || copyGet(h,'hero.description')}],
-          ['home_hero',{eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),,contact_cta:copyGet(h,'hero.contact_cta')}],
+          ['home_hero',{eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
           ['home_choice',{eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
           ['home_why',{eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}]
         ];
@@ -2545,7 +2545,7 @@
       const c = copyPayload.contact || {};
       const compat = [
         ['home_meta', {title: copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی', description: copyGet(h,'meta.description') || copyGet(h,'hero.description') || ''}],
-        ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),,contact_cta:copyGet(h,'hero.contact_cta')}],
+        ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
         ['home_choice', {eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
         ['home_why', {eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}],
         ['contact_page', {title:copyGet(c,'meta.title') || copyGet(c,'hero.title'),description:copyGet(c,'meta.description') || copyGet(c,'hero.description'),email:copyGet(c,'email.value')}]
