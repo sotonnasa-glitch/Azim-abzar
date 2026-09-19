@@ -288,20 +288,37 @@ revoke all on function public.rls_auto_enable() from anon;
 revoke all on function public.rls_auto_enable() from authenticated;
 
 
+insert into storage.buckets(id,name,public) values ('product-images','product-images',true) on conflict(id) do update set public=true;
+insert into storage.buckets(id,name,public) values ('admin-media','admin-media',true) on conflict(id) do update set public=true;
+
 drop policy if exists "Public can read product images" on storage.objects;
 create policy "Public can read product images" on storage.objects for select using (bucket_id='product-images');
 drop policy if exists "Admins can upload product images" on storage.objects;
-create policy "Admins can upload product images" on storage.objects for insert to authenticated with check (bucket_id='product-images' and private.is_azim_admin());
+drop policy if exists "Editors can upload product images" on storage.objects;
+create policy "Editors can upload product images" on storage.objects for insert to authenticated
+with check (bucket_id='product-images' and private.has_azim_role(array['owner','admin','editor']));
 drop policy if exists "Admins can update product images" on storage.objects;
-create policy "Admins can update product images" on storage.objects for update to authenticated using (bucket_id='product-images' and private.is_azim_admin()) with check (bucket_id='product-images' and private.is_azim_admin());
+drop policy if exists "Editors can update product images" on storage.objects;
+create policy "Editors can update product images" on storage.objects for update to authenticated
+using (bucket_id='product-images' and private.has_azim_role(array['owner','admin','editor']))
+with check (bucket_id='product-images' and private.has_azim_role(array['owner','admin','editor']));
 drop policy if exists "Admins can delete product images" on storage.objects;
-create policy "Admins can delete product images" on storage.objects for delete to authenticated using (bucket_id='product-images' and private.is_azim_admin());
+drop policy if exists "Editors can delete product images" on storage.objects;
+create policy "Editors can delete product images" on storage.objects for delete to authenticated
+using (bucket_id='product-images' and private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Public can read admin media" on storage.objects;
 create policy "Public can read admin media" on storage.objects for select using (bucket_id='admin-media');
 drop policy if exists "Admins can upload admin media" on storage.objects;
-create policy "Admins can upload admin media" on storage.objects for insert to authenticated with check (bucket_id='admin-media' and private.is_azim_admin());
+drop policy if exists "Editors can upload admin media" on storage.objects;
+create policy "Editors can upload admin media" on storage.objects for insert to authenticated
+with check (bucket_id='admin-media' and private.has_azim_role(array['owner','admin','editor']));
 drop policy if exists "Admins can update admin media" on storage.objects;
-create policy "Admins can update admin media" on storage.objects for update to authenticated using (bucket_id='admin-media' and private.is_azim_admin()) with check (bucket_id='admin-media' and private.is_azim_admin());
+drop policy if exists "Editors can update admin media" on storage.objects;
+create policy "Editors can update admin media" on storage.objects for update to authenticated
+using (bucket_id='admin-media' and private.has_azim_role(array['owner','admin','editor']))
+with check (bucket_id='admin-media' and private.has_azim_role(array['owner','admin','editor']));
 drop policy if exists "Admins can delete admin media" on storage.objects;
-create policy "Admins can delete admin media" on storage.objects for delete to authenticated using (bucket_id='admin-media' and private.is_azim_admin());
+drop policy if exists "Editors can delete admin media" on storage.objects;
+create policy "Editors can delete admin media" on storage.objects for delete to authenticated
+using (bucket_id='admin-media' and private.has_azim_role(array['owner','admin','editor']));
