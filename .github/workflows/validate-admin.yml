@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: |
           grep -q 'data-menu-view="discount-codes"' admin.html
-          grep -q 'admin-app.js?v=45' admin.html
+          grep -q 'admin-app.js?v=47' admin.html
           grep -q 'azim_save_order_with_discount' admin-app.js
           grep -q 'az-coupon-card' admin-app.js
           grep -q 'data-new-discount-product' admin-app.js
