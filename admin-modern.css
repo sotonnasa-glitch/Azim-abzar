@@ -436,3 +436,13 @@ html,body{background:
 .az-image-actions{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
 .az-clear-image{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#ffb0b0;white-space:nowrap}
 @media(max-width:700px){.az-image-actions{grid-template-columns:1fr}.az-clear-image{white-space:normal}}
+
+.az-page-edit-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 16px}
+.az-page-edit-card{display:flex;align-items:center;gap:12px;text-align:right;padding:16px;border:1px solid rgba(245,185,0,.18);border-radius:18px;background:linear-gradient(135deg,rgba(245,185,0,.07),rgba(255,255,255,.02));color:var(--az-text);cursor:pointer;transition:.18s ease;direction:rtl}
+.az-page-edit-card:hover{transform:translateY(-1px);border-color:rgba(245,185,0,.42);box-shadow:0 14px 30px rgba(0,0,0,.16)}
+.az-page-edit-card .az-page-edit-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:rgba(245,185,0,.12);font-size:20px;flex:none}
+.az-page-edit-card span:not(.az-page-edit-icon){display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.az-page-edit-card strong{font-size:13px}
+.az-page-edit-card small{font-size:9px;color:var(--az-muted);line-height:1.8}
+.az-page-edit-card b{font-size:10px;color:#ffd84f;white-space:nowrap}
+@media(max-width:700px){.az-page-edit-cards{grid-template-columns:1fr}.az-page-edit-card{padding:13px}}
