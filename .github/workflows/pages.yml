@@ -96,11 +96,12 @@ jobs:
           from pathlib import Path
           html = Path('_site/admin.html').read_text(encoding='utf-8')
           assert 'پنل مدیریت' in html
-          assert 'admin-app.js?v=10' in html
+          assert 'admin-app.js?v=11' in html
           match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
           assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
           Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
           assert Path('_site/admin-app.js').is_file() and Path('_site/admin-app.js').stat().st_size > 1000
+          assert Path('_site/admin-modern.css').is_file() and Path('_site/admin-modern.css').stat().st_size > 5000
           cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
           assert 'service_role' not in cfg and 'sb_publishable_' in cfg
           print('ADMIN PANEL VERIFIED: shell + external runtime + publishable config')
