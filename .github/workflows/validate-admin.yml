@@ -1,0 +1,40 @@
+name: Validate admin panel
+
+on:
+  push:
+    paths:
+      - 'admin-app.js'
+      - 'admin.html'
+      - 'database/discount-engine-hardening.sql'
+      - '.github/workflows/validate-admin.yml'
+  pull_request:
+    paths:
+      - 'admin-app.js'
+      - 'admin.html'
+      - 'database/discount-engine-hardening.sql'
+      - '.github/workflows/validate-admin.yml'
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check admin JavaScript
+        run: node --check admin-app.js
+      - name: Verify coupon UI hooks
+        shell: bash
+        run: |
+          grep -q 'data-menu-view="discount-codes"' admin.html
+          grep -q 'admin-app.js?v=44' admin.html
+          grep -q 'azim_save_order_with_discount' admin-app.js
+          grep -q 'az-coupon-card' admin-app.js
+          grep -q 'data-new-discount-product' admin-app.js
+      - name: Verify discount SQL
+        shell: bash
+        run: |
+          grep -q 'discounts_code_upper_uniq' database/discount-engine-hardening.sql
+          grep -q 'azim_save_order_with_discount' database/discount-engine-hardening.sql
+          grep -q 'security invoker' database/discount-engine-hardening.sql
