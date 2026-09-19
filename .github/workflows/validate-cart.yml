@@ -1,0 +1,49 @@
+name: Validate cart
+
+on:
+  push:
+    paths:
+      - 'cart.html'
+      - 'azim-cart.js'
+      - 'products-v4.html'
+      - 'index.html'
+      - 'contact.html'
+      - 'database/public-cart.sql'
+      - '.github/workflows/validate-cart.yml'
+  pull_request:
+    paths:
+      - 'cart.html'
+      - 'azim-cart.js'
+      - 'products-v4.html'
+      - 'index.html'
+      - 'contact.html'
+      - 'database/public-cart.sql'
+      - '.github/workflows/validate-cart.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check shared cart JavaScript
+        run: node --check azim-cart.js
+      - name: Verify cart wiring
+        shell: bash
+        run: |
+          test -f cart.html
+          grep -q 'azim-cart.js' cart.html
+          grep -q 'azim-cart.js' products-v4.html
+          grep -q 'azim-cart.js' index.html
+          grep -q 'azim-cart.js' contact.html
+          grep -q 'addCatalogItemToCart' products-v4.html
+          grep -q 'azim_cart_checkout' cart.html
+          grep -q 'data-cart-link' products-v4.html
+      - name: Check public cart SQL
+        shell: bash
+        run: |
+          grep -q 'azim_cart_checkout' database/public-cart.sql
+          grep -q 'SECURITY DEFINER' database/public-cart.sql
+          grep -q 'grant execute' database/public-cart.sql
