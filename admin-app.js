@@ -125,6 +125,30 @@
     } catch (_) { return '—'; }
   }
 
+  function localDateTimeValue(v) {
+    if (!v) return '';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = n => String(n).padStart(2,'0');
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  function isDirectProductDiscountLive(p) {
+    if (!p?.discount_is_active || !p.discount_type || p.discount_value == null) return false;
+    const now = Date.now();
+    const start = p.discount_starts_at ? new Date(p.discount_starts_at).getTime() : -Infinity;
+    const end = p.discount_ends_at ? new Date(p.discount_ends_at).getTime() : Infinity;
+    return now >= start && now <= end;
+  }
+
+  function directProductDiscountPrice(base, p) {
+    const n = Number(base || 0);
+    if (!(n > 0) || !isDirectProductDiscountLive(p)) return Math.max(0,n);
+    const value = Number(p.discount_value || 0);
+    const out = p.discount_type === 'percentage' ? Math.floor(n * (100 - value) / 100) : n - value;
+    return Math.max(0, out);
+  }
+
   function toast(msg) {
     const el = $('toast');
     if (!el) return;
@@ -718,7 +742,7 @@
   async function loadProducts() {
     await ensureCaches();
     let q = state.db.from('products')
-      .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,updated_at,created_at')
+      .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
       .order('code', { ascending: true }).order('updated_at', { ascending: false }).limit(1000);
     const search = $('productSearch').value.trim();
     const status = $('productStatus').value;
@@ -795,8 +819,8 @@
 
   function productForm(p) {
     const isEdit = !!p;
-    const categoryOptions = state.categories.map((c) =>
-      '<option value="' + esc(c.name) + '" ' + (c.name === (p?.category_name || p?.cat || '') ? 'selected' : '') + '>' + esc(c.name) + '</option>'
+    const categoryOptions = state.categories.map((cat) =>
+      '<option value="' + esc(cat.name) + '" ' + (cat.name === (p?.category_name || p?.cat || '') ? 'selected' : '') + '>' + esc(cat.name) + '</option>'
     ).join('');
     const currentBrand = p?.brand || '';
     const image = p?.img || '';
@@ -819,7 +843,7 @@
           '<div class="az-simple-section-head"><strong>اطلاعات محصول</strong></div>' +
           '<div class="az-simple-fields">' +
             '<label class="az-simple-field az-simple-wide"><span>نام محصول *</span><input class="input" name="name" required value="' + esc(p?.name) + '" placeholder="نام محصول"></label>' +
-            '<label class="az-simple-field"><span>برند</span><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="برند"><datalist id="productBrandSuggestions">' + state.brands.map((b) => '<option value="' + esc(b.name) + '"></option>').join('') + '</datalist></label>' +
+            '<label class="az-simple-field"><span>برند</span><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="برند"><datalist id="productBrandSuggestions">' + state.brands.map((brand) => '<option value="' + esc(brand.name) + '"></option>').join('') + '</datalist></label>' +
             '<label class="az-simple-field"><span>دسته‌بندی</span><select class="select" name="category_name"><option value="">بدون دسته</option>' + categoryOptions + '</select></label>' +
             '<label class="az-simple-field"><span>کد / SKU</span><input class="input" name="code" value="' + esc(p?.code) + '" placeholder="کد محصول" dir="ltr"></label>' +
             '<label class="az-simple-field"><span>برچسب</span><input class="input" name="badge" value="' + esc(p?.badge) + '" placeholder="مثلاً جدید"></label>' +
@@ -829,8 +853,18 @@
           '<div class="az-simple-section-head"><strong>قیمت</strong></div>' +
           '<div class="az-simple-price-row">' +
             '<label class="az-simple-field"><span>قیمت اصلی</span><div class="az-simple-price"><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
-            '<label class="az-simple-field"><span>قیمت فروش</span><div class="az-simple-price primary"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
+            '<label class="az-simple-field"><span>قیمت فعلی</span><div class="az-simple-price primary"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
           '</div>' +
+        '</div>' +
+        '<div class="az-simple-section az-product-direct-discount">' +
+          '<div class="az-simple-section-head"><strong>تخفیف مستقیم این محصول</strong><label class="az-discount-toggle"><input name="discount_is_active" type="checkbox" ' + (p?.discount_is_active ? 'checked' : '') + '><span>فعال</span></label></div>' +
+          '<div class="az-simple-fields az-discount-fields">' +
+            '<label class="az-simple-field"><span>نوع تخفیف</span><select class="select" name="discount_type"><option value="percentage" ' + (p?.discount_type !== 'fixed' ? 'selected' : '') + '>درصدی</option><option value="fixed" ' + (p?.discount_type === 'fixed' ? 'selected' : '') + '>مبلغ ثابت</option></select></label>' +
+            '<label class="az-simple-field"><span>مقدار تخفیف</span><input class="input" name="discount_value" type="number" min="1" step="1" value="' + esc(p?.discount_value ?? '') + '" placeholder="مثلاً 15"></label>' +
+            '<label class="az-simple-field"><span>شروع</span><input class="input" name="discount_starts_at" type="datetime-local" value="' + esc(localDateTimeValue(p?.discount_starts_at)) + '"></label>' +
+            '<label class="az-simple-field"><span>پایان</span><input class="input" name="discount_ends_at" type="datetime-local" value="' + esc(localDateTimeValue(p?.discount_ends_at)) + '"></label>' +
+          '</div>' +
+          '<div id="productDiscountPreview" class="az-product-discount-preview"></div>' +
         '</div>' +
         productVariantsEditor(p?.variants) +
         '<div class="az-simple-section">' +
@@ -849,6 +883,24 @@
     '</form>';
   }
 
+  function updateProductDiscountPreview(form) {
+    const out = $('productDiscountPreview');
+    if (!out || !form) return;
+    const base = Number(form.elements.price?.value || form.elements.original_price?.value || 0);
+    const active = !!form.elements.discount_is_active?.checked;
+    const type = form.elements.discount_type?.value || 'percentage';
+    const value = Number(form.elements.discount_value?.value || 0);
+    if (!active || !base || !value) {
+      out.textContent = 'تخفیف مستقیم خاموش است؛ قیمت فعلی بدون تغییر نمایش داده می‌شود.';
+      out.className = 'az-product-discount-preview muted';
+      return;
+    }
+    const safe = type === 'percentage' ? Math.min(100, Math.max(1, value)) : Math.max(0, value);
+    const discounted = type === 'percentage' ? Math.floor(base * (100 - safe) / 100) : Math.max(0, base - safe);
+    out.innerHTML = 'نمونه: <b>' + money(base) + '</b> ← <strong>' + money(discounted) + '</strong>';
+    out.className = 'az-product-discount-preview active';
+  }
+
   async function editProduct(id) {
     if (!can.edit()) return toast('__AZICON_BLOCK__ این نقش اجازه ویرایش محصول ندارد.');
     await ensureCaches();
@@ -858,6 +910,10 @@
     $('productForm').onsubmit = (e) => saveProduct(e, id);
     initVariantEditor($('productForm'), p.variants);
     initProductImageEditor($('productForm'));
+    const discountForm = $('productForm');
+    ['price','original_price','discount_value','discount_type','discount_is_active'].forEach(name => discountForm?.elements?.[name]?.addEventListener('input', () => updateProductDiscountPreview(discountForm)));
+    ['discount_type','discount_is_active'].forEach(name => discountForm?.elements?.[name]?.addEventListener('change', () => updateProductDiscountPreview(discountForm)));
+    updateProductDiscountPreview(discountForm);
     const del = $('deleteProductBtn');
     if (del) del.onclick = () => deleteProduct(id);
   }
@@ -869,6 +925,10 @@
     $('productForm').onsubmit = (e) => saveProduct(e, null);
     initVariantEditor($('productForm'), null);
     initProductImageEditor($('productForm'));
+    const discountForm = $('productForm');
+    ['price','original_price','discount_value','discount_type','discount_is_active'].forEach(name => discountForm?.elements?.[name]?.addEventListener('input', () => updateProductDiscountPreview(discountForm)));
+    ['discount_type','discount_is_active'].forEach(name => discountForm?.elements?.[name]?.addEventListener('change', () => updateProductDiscountPreview(discountForm)));
+    updateProductDiscountPreview(discountForm);
   }
 
   async function saveProduct(e, id) {
@@ -894,6 +954,14 @@
       if (variantText) variants = JSON.parse(variantText);
       else if (advancedVariantText) variants = JSON.parse(advancedVariantText);
       const category = s.category_name.value || '';
+      const discountActive = !!s.discount_is_active?.checked;
+      const discountType = s.discount_type?.value || null;
+      const discountValue = s.discount_value?.value === '' ? null : Number(s.discount_value.value);
+      const discountStarts = s.discount_starts_at?.value ? new Date(s.discount_starts_at.value).toISOString() : null;
+      const discountEnds = s.discount_ends_at?.value ? new Date(s.discount_ends_at.value).toISOString() : null;
+      if (discountActive && (!discountValue || !Number.isFinite(discountValue) || discountValue < 1)) throw new Error('مقدار تخفیف الزامی است.');
+      if (discountActive && discountType === 'percentage' && discountValue > 100) throw new Error('درصد تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد.');
+      if (discountStarts && discountEnds && new Date(discountEnds) <= new Date(discountStarts)) throw new Error('پایان تخفیف باید بعد از شروع باشد.');
       const p = {
         name: s.name.value.trim(),
         brand: s.brand.value.trim() || 'بدون برند',
@@ -906,6 +974,11 @@
         price: s.price.value ? Number(s.price.value) : null,
         img,
         is_active: s.is_active.checked,
+        discount_type: discountType,
+        discount_value: Number.isFinite(discountValue) ? discountValue : null,
+        discount_is_active: discountActive,
+        discount_starts_at: discountStarts,
+        discount_ends_at: discountEnds,
         variants
       };
       if (!p.name) throw new Error('نام محصول الزامی است.');
@@ -1355,7 +1428,7 @@
 
   async function loadProductsForOrder() {
     if (state.productCacheLoaded) return state.products;
-    const r = await state.db.from('products').select('id,name,code,price,is_active').order('name').limit(1000);
+    const r = await state.db.from('products').select('id,name,code,price,is_active,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at').order('name').limit(1000);
     if (!r.error) { state.products = r.data || []; state.productCacheLoaded = true; }
     return state.products;
   }
@@ -1484,7 +1557,7 @@
         const row = e.target.closest('.order-item-row');
         const p = state.products.find((x) => x.id === e.target.value);
         const price = row.querySelector('.item-price');
-        if (p && price && !Number(price.value)) price.value = p.price || 0;
+        if (p && price && !Number(price.value)) price.value = directProductDiscountPrice(p.price || 0, p);
         updateOrderItemTotals();
       }
     });
