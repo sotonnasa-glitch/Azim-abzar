@@ -376,28 +376,3 @@ drop policy if exists "Admins can delete admin media" on storage.objects;
 drop policy if exists "Editors can delete admin media" on storage.objects;
 create policy "Editors can delete admin media" on storage.objects for delete to authenticated
 using (bucket_id='admin-media' and private.has_azim_role(array['owner','admin','editor']));
-
-
--- Admin handoff password rotation
-alter table public.admin_users
-  add column if not exists password_change_required boolean not null default false;
-
-comment on column public.admin_users.password_change_required is 'When true, the admin UI requires the signed-in user to change their password before continuing.';
-
-create or replace function public.azim_self_clear_password_change_required()
-returns boolean
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  update public.admin_users
-     set password_change_required = false
-   where user_id = auth.uid()
-     and is_active = true;
-  return found;
-end;
-$$;
-
-revoke execute on function public.azim_self_clear_password_change_required() from public, anon, service_role;
-grant execute on function public.azim_self_clear_password_change_required() to authenticated;
