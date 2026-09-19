@@ -137,19 +137,31 @@
       const map = new Map(rows.map(x=>[String(x.id),x]));
       const byCode = new Map(rows.map(x=>[String(x.code || '').trim().toUpperCase(),x]).filter(([k])=>k));
       for(const item of state.items){
-        const p = map.get(item.product_id) || byCode.get(String(item.code || '').trim().toUpperCase());
-        if(!p) { item.unavailable = true; continue; }
-        if(!item.product_id && p.id) item.product_id = String(p.id);
+        const p = map.get(String(item.product_id || '')) || byCode.get(String(item.code || '').trim().toUpperCase());
+        if(!p) {
+          // Never delete a cart item because of a temporary catalog/API miss.
+          // Keep the item locally so the user does not lose the cart.
+          item.unavailable = true;
+          continue;
+        }
+
+        // Migrate legacy carts that stored the product code instead of the UUID.
+        if(p.id) item.product_id = String(p.id);
+
         item.unavailable = p.is_active === false;
         item.name = p.name || item.name;
         item.code = p.code || item.code;
         item.img = p.img || item.img;
+
         let unit = Number(p.price || 0);
         if(item.variant_label){
           const vs = Array.isArray(p.variants) ? p.variants : [];
-          const v = vs.find(v => String(v?.size ?? v?.label ?? v?.name ?? '').trim() === item.variant_label);
-          if(!v){ item.unavailable=true; continue; }
-          if(v.price != null && Number(v.price)>0) unit = Number(v.price);
+          const v = vs.find(v => String(v?.size ?? v?.label ?? v?.name ?? '').trim() === String(item.variant_label).trim());
+          if(!v){
+            item.unavailable = true;
+          } else if(v.price != null && Number(v.price)>0) {
+            unit = Number(v.price);
+          }
         }
         const now=Date.now();
         const ds= p.discount_starts_at ? new Date(p.discount_starts_at).getTime() : -Infinity;
@@ -160,7 +172,8 @@
         }
         if(unit>0) item.unit_price=unit;
       }
-      state.items = state.items.filter(x=>!x.unavailable);
+      // Keep unavailable items visible instead of silently deleting the cart.
+      // They can be re-validated on the next sync/submit.
       write();
     }catch(_){}
     finally{ state.syncing=false; }
