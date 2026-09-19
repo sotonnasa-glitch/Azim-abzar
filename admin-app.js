@@ -1257,7 +1257,9 @@
     const p = e.target.closest('[data-edit-product]'); if (p) editProduct(p.dataset.editProduct);
     const t = e.target.closest('[data-toggle-product]'); if (t) toggleProduct(t.dataset.toggleProduct);
     const c = e.target.closest('[data-edit-category]'); if (c) editCategory(c.dataset.editCategory);
+    const ct = e.target.closest('[data-toggle-category]'); if (ct) toggleCategory(ct.dataset.toggleCategory);
     const b = e.target.closest('[data-edit-brand]'); if (b) editBrand(b.dataset.editBrand);
+    const bt = e.target.closest('[data-toggle-brand]'); if (bt) toggleBrand(bt.dataset.toggleBrand);
     const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
     const o = e.target.closest('[data-edit-order]'); if (o) openOrder(o.dataset.editOrder);
