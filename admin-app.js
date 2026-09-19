@@ -136,13 +136,16 @@
   function openModal(title, body) {
     $('modalTitle').textContent = title;
     $('modalBody').innerHTML = body;
-    $('modal').classList.toggle('drawer-mode', /محصول|سفارش|محتوا|AI/.test(title));
-    $('modal').classList.add('show');
+    const modal = $('modal');
+    modal.classList.toggle('drawer-mode', /محصول|سفارش|محتوا|AI/.test(title));
+    modal.classList.toggle('product-editor-modal', /محصول/.test(title));
+    modal.classList.add('show');
   }
 
   function closeModal() {
     $('modal').classList.remove('show');
     $('modal').classList.remove('drawer-mode');
+    $('modal').classList.remove('product-editor-modal');
   }
 
   window.closeModal = closeModal;
@@ -831,31 +834,71 @@
   }
 
   function productForm(p) {
+    const isEdit = !!p;
     const categoryOptions = state.categories.map((c) =>
       '<option value="' + esc(c.name) + '" ' + (c.name === (p?.category_name || p?.cat || '') ? 'selected' : '') + '>' + esc(c.name) + '</option>'
     ).join('');
     const currentBrand = p?.brand || '';
     const imageBlock = p?.img
-      ? '<div class="az-product-image-preview"><img id="productImagePreview" src="' + esc(p.img) + '" alt=""><div><strong>تصویر فعلی</strong><small>برای جایگزینی فایل جدید انتخاب کن.</small></div></div>'
-      : '<div class="az-product-image-preview empty"><div><strong>تصویری ثبت نشده</strong><small>یک تصویر برای محصول انتخاب کن.</small></div></div>';
-    return '<form id="productForm" class="grid2">' +
-      '<div class="field"><label>نام محصول *</label><input class="input" name="name" required value="' + esc(p?.name) + '"></div>' +
-      '<div class="field"><label>برند</label><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="نام برند را آزادانه بنویس">' +
-      '<datalist id="productBrandSuggestions">' + state.brands.map((b) => '<option value="' + esc(b.name) + '"></option>').join('') + '</datalist></div>' +
-      '<div class="field"><label>دسته‌بندی</label><select class="select" name="category_name"><option value="">بدون دسته</option>' + categoryOptions + '</select></div>' +
-      '<div class="field"><label>کد / SKU</label><input class="input" name="code" value="' + esc(p?.code) + '"></div>' +
-      '<div class="field"><label>قیمت اصلی</label><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '"></div>' +
-      '<div class="field"><label>قیمت فروش</label><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '"></div>' +
-      '<div class="field"><label>برچسب</label><input class="input" name="badge" value="' + esc(p?.badge) + '"></div>' +
-      '<div class="field full"><label>مدیریت تصویر</label><div class="az-image-manager">' + imageBlock +
-        '<div class="az-image-actions"><input class="input" name="file" type="file" accept="image/*"><label class="az-clear-image"><input name="clearImage" type="checkbox"> حذف تصویر فعلی</label></div>' +
-      '</div></div>' +
-      '<div class="field full"><label>توضیحات</label><textarea class="textarea" name="description">' + esc(p?.description || '') + '</textarea></div>' +
-      '<label class="check field full"><input name="is_active" type="checkbox" ' + (p?.is_active === false ? '' : 'checked') + '> نمایش محصول در سایت</label>' +
-      productVariantsEditor(p?.variants) +
-      '<div class="field full"><div class="tools"><button class="btn">ذخیره محصول</button>' +
-      (p && can.edit() ? '<button type="button" class="btn ghost" id="deleteProductBtn">حذف محصول</button>' : '') +
-      '</div></div><div id="productStatus" class="status field full"></div></form>';
+      ? '<div class="az-product-image-preview"><img id="productImagePreview" src="' + esc(p.img) + '" alt="' + esc(p?.name || 'محصول') + '"><div class="az-image-preview-copy"><strong>تصویر فعلی محصول</strong><small>برای جایگزینی، فایل جدید را انتخاب کن.</small><span class="az-image-state">تصویر ثبت‌شده</span></div></div>'
+      : '<div class="az-product-image-preview empty"><div class="az-image-placeholder">＋</div><div class="az-image-preview-copy"><strong>تصویری ثبت نشده</strong><small>برای این محصول هنوز تصویری انتخاب نشده است.</small><span class="az-image-state">بدون تصویر</span></div></div>';
+
+    return '<form id="productForm" class="az-product-editor-form">' +
+      '<div class="az-product-editor-top">' +
+        '<div class="az-product-editor-identity">' +
+          '<div class="az-product-editor-icon">▣</div>' +
+          '<div><span class="az-editor-kicker">' + (isEdit ? 'PRODUCT EDITOR' : 'NEW PRODUCT') + '</span><h2>' + (isEdit ? 'ویرایش محصول' : 'افزودن محصول جدید') + '</h2><p>اطلاعات اصلی، قیمت، تصویر و سایزبندی محصول را یکجا مدیریت کن.</p></div>' +
+        '</div>' +
+        '<div class="az-product-editor-meta">' +
+          (isEdit ? '<span class="az-product-id">شناسه <b dir="ltr">' + esc(p?.id || '—') + '</b></span>' : '<span class="az-product-id">رکورد جدید</span>') +
+          '<label class="az-status-switch"><input name="is_active" type="checkbox" ' + (p?.is_active === false ? '' : 'checked') + '><span></span><b>نمایش در سایت</b></label>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="az-editor-grid">' +
+        '<section class="az-editor-card az-editor-image-card">' +
+          '<div class="az-editor-card-head"><div><span>01</span><div><strong>تصویر محصول</strong><small>عکس اصلی کاتالوگ</small></div></div></div>' +
+          imageBlock +
+          '<div class="az-image-actions"><label class="az-file-button"><span>＋ انتخاب تصویر جدید</span><input name="file" type="file" accept="image/*"></label>' +
+            '<label class="az-clear-image"><input name="clearImage" type="checkbox"> حذف تصویر ثبت‌شده</label></div>' +
+        '</section>' +
+
+        '<section class="az-editor-card">' +
+          '<div class="az-editor-card-head"><div><span>02</span><div><strong>اطلاعات پایه</strong><small>مشخصات اصلی محصول</small></div></div></div>' +
+          '<div class="az-editor-fields">' +
+            '<div class="field az-field-wide"><label>نام محصول <em>*</em></label><input class="input" name="name" required value="' + esc(p?.name) + '" placeholder="مثلاً: آچار یکسر تخت ۱۲ میلی‌متر"></div>' +
+            '<div class="field"><label>برند</label><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="نام برند"><datalist id="productBrandSuggestions">' + state.brands.map((b) => '<option value="' + esc(b.name) + '"></option>').join('') + '</datalist></div>' +
+            '<div class="field"><label>دسته‌بندی</label><select class="select" name="category_name"><option value="">بدون دسته</option>' + categoryOptions + '</select></div>' +
+            '<div class="field"><label>کد / SKU</label><input class="input" name="code" value="' + esc(p?.code) + '" placeholder="کد محصول" dir="ltr"></div>' +
+            '<div class="field"><label>برچسب</label><input class="input" name="badge" value="' + esc(p?.badge) + '" placeholder="مثلاً جدید"></div>' +
+          '</div>' +
+        '</section>' +
+
+        '<section class="az-editor-card az-editor-price-card">' +
+          '<div class="az-editor-card-head"><div><span>03</span><div><strong>قیمت‌گذاری</strong><small>قیمت اصلی و قیمت فروش</small></div></div><div class="az-price-note">اعداد را بدون جداکننده وارد کن</div></div>' +
+          '<div class="az-price-grid">' +
+            '<div class="az-price-field"><label>قیمت اصلی</label><div class="az-input-prefix"><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '" placeholder="0"><span>تومان</span></div></div>' +
+            '<div class="az-price-field az-price-primary"><label>قیمت فروش</label><div class="az-input-prefix"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><span>تومان</span></div></div>' +
+          '</div>' +
+        '</section>' +
+
+        productVariantsEditor(p?.variants) +
+
+        '<section class="az-editor-card az-editor-desc-card">' +
+          '<div class="az-editor-card-head"><div><span>05</span><div><strong>توضیحات محصول</strong><small>توضیح کوتاه و کاربردی برای مشتری</small></div></div></div>' +
+          '<div class="field"><textarea class="textarea az-product-description" name="description" placeholder="مشخصات، کاربرد و توضیحات محصول را وارد کن…">' + esc(p?.description || '') + '</textarea></div>' +
+        '</section>' +
+      '</div>' +
+
+      '<div class="az-product-editor-footer">' +
+        '<div class="az-editor-save-state"><span class="az-save-dot"></span><span id="productStatus" class="status">تغییرات پس از فشردن «ذخیره تغییرات» ثبت می‌شوند.</span></div>' +
+        '<div class="az-editor-actions">' +
+          (isEdit && can.edit() ? '<button type="button" class="btn az-danger-action" id="deleteProductBtn">حذف محصول</button>' : '') +
+          '<button type="button" class="btn secondary az-cancel-action" onclick="closeModal()">لغو</button>' +
+          '<button class="btn az-save-action" type="submit">✓ ذخیره تغییرات</button>' +
+        '</div>' +
+      '</div>' +
+    '</form>';
   }
 
   function initProductImageEditor(form) {
