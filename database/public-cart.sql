@@ -433,12 +433,12 @@ returns jsonb
 language sql
 security invoker
 set search_path to ''
-as $
+as $$
   select public.azim_cart_checkout(
     'preview'::text, null::text, null::text, null::text,
     null::text, null::text, p_discount_code, p_items
   );
-$;
+$$;
 
 revoke all on function public.azim_cart_checkout(jsonb,text) from public;
 grant execute on function public.azim_cart_checkout(jsonb,text) to anon;
