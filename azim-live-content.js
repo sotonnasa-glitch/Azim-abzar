@@ -235,7 +235,18 @@
     }
     const address=p.address||{};
     const ac=document.querySelector('#card-channel-address');
-    if(ac){setText(ac.querySelector('.channel-title'),address.title);setText(ac.querySelector('.channel-pill'),address.pill);setText(ac.querySelector('.channel-value'),address.value);setText(ac.querySelector('.channel-sub'),address.sub);setText(ac.querySelector('.channel-actions span'),address.button);}
+    if(ac){
+      setText(ac.querySelector('.channel-title'),address.title);
+      setText(ac.querySelector('.channel-pill'),address.pill);
+      setText(ac.querySelector('.channel-value'),address.value);
+      setText(ac.querySelector('.channel-sub'),address.sub);
+      setText(ac.querySelector('.channel-actions .location-primary span'),address.neshan_url ? 'مسیریابی با نشان' : address.button);
+      setText(ac.querySelector('.channel-actions .location-secondary span'),address.balad_url ? 'مسیریابی با بلد' : 'بلد');
+      const n=ac.querySelector('.location-primary'); const bl=ac.querySelector('.location-secondary');
+      if(n && address.neshan_url) n.href=address.neshan_url;
+      if(bl && address.balad_url) bl.href=address.balad_url;
+      if(bl && !address.balad_url) bl.style.display='none';
+    }
     
     const hours=p.hours||{};
     const hc=document.querySelector('.hours-card');
