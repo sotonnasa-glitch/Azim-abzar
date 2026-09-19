@@ -1,7 +1,8 @@
 (() => {
   'use strict';
 
-  if (window.__AZIM_ADMIN_V34) return;
+  if (window.__AZIM_ADMIN_V35) return;
+  window.__AZIM_ADMIN_V35 = true;
   window.__AZIM_ADMIN_V34 = true;
 
   const $ = (id) => document.getElementById(id);
@@ -260,6 +261,122 @@
     const r = await query;
     if (r.error) showSectionError(targetId, r.error);
     return r;
+  }
+
+  function hideMfaGate() {
+    const el = $('mfaScreen');
+    if (el) el.classList.add('hidden');
+    $('app')?.classList.remove('hidden');
+  }
+
+  function showMfaGate(title, html) {
+    const el = $('mfaScreen');
+    if (!el) return;
+    el.innerHTML =
+      '<div class="mfa-card">' +
+        '<div class="mfa-badge">__AZICON_LOCK__ امنیت حساب مدیر</div>' +
+        '<h2>' + esc(title) + '</h2>' +
+        html +
+        '<button type="button" id="mfaLogoutBtn" class="btn secondary" style="width:100%;margin-top:8px">خروج از حساب</button>' +
+        '<div id="mfaStatus" class="mfa-status"></div>' +
+      '</div>';
+    el.classList.remove('hidden');
+    $('app')?.classList.add('hidden');
+    $('mfaLogoutBtn')?.addEventListener('click', async () => {
+      await state.db.auth.signOut();
+      el.classList.add('hidden');
+      $('loginScreen').classList.remove('hidden');
+      $('loginStatus').textContent = '';
+    });
+  }
+
+  async function verifyAdminMFA(factorId, code) {
+    const status = $('mfaStatus');
+    if (status) { status.className = 'mfa-status'; status.textContent = 'در حال بررسی کد…'; }
+    const clean = String(code || '').replace(/\\D/g,'').slice(0,6);
+    if (clean.length !== 6) {
+      if (status) { status.className='mfa-status error'; status.textContent='کد ۶ رقمی برنامه احراز هویت را وارد کنید.'; }
+      return false;
+    }
+    const r = await state.db.auth.mfa.challengeAndVerify({ factorId, code: clean });
+    if (r.error) {
+      if (status) { status.className='mfa-status error'; status.textContent='کد امنیتی صحیح نیست یا منقضی شده است.'; }
+      return false;
+    }
+    return true;
+  }
+
+  async function requireAdminMFA() {
+    if (!state.db || !state.user) return false;
+    const aal = await state.db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal.error) {
+      showMfaGate('بررسی امنیتی ناموفق بود.', '<p>وضعیت امنیتی نشست قابل بررسی نیست. دوباره وارد شوید.</p>');
+      return false;
+    }
+    if (aal.data?.currentLevel === 'aal2') return true;
+
+    const factors = await state.db.auth.mfa.listFactors();
+    if (factors.error) {
+      showMfaGate('احراز هویت دومرحله‌ای در دسترس نیست.', '<p>مدیریت فروشگاه بدون تأیید دومرحله‌ای اجازه ادامه نمی‌دهد.</p>');
+      return false;
+    }
+
+    const verified = (factors.data?.totp || []).find(f => f.status === 'verified');
+    if (verified) {
+      showMfaGate(
+        'کد امنیتی مدیر را وارد کنید',
+        '<p>برای ورود به پنل، کد ۶ رقمی برنامه Authenticator را وارد کنید.</p>' +
+        '<input id="mfaChallengeCode" class="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">' +
+        '<div class="mfa-help">Google Authenticator، Microsoft Authenticator، 1Password یا برنامه TOTP مشابه قابل استفاده است.</div>'
+      );
+      const input = $('mfaChallengeCode');
+      input?.focus();
+      input?.addEventListener('keydown', async (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const ok = await verifyAdminMFA(verified.id, input.value);
+        if (ok) {
+          hideMfaGate();
+          await loadDashboard();
+        }
+      });
+      return false;
+    }
+
+    try {
+      const enrollment = await state.db.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: 'Azim Abzar Admin'
+      });
+      if (enrollment.error) throw enrollment.error;
+      const factor = enrollment.data;
+      const qr = String(factor.totp?.qr_code || '');
+      const secret = String(factor.totp?.secret || '');
+      const qrData = qr ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(qr))) : '';
+
+      showMfaGate(
+        'فعال‌سازی احراز هویت دومرحله‌ای',
+        '<p>این مرحله را فقط یک‌بار انجام دهید. QR را با برنامه Authenticator اسکن کنید، سپس کد ۶ رقمی همان برنامه را وارد کنید.</p>' +
+        (qrData ? '<img class="mfa-qr" alt="QR کد MFA" src="' + qrData + '">' : '') +
+        '<div class="mfa-secret">' + esc(secret) + '</div>' +
+        '<input id="mfaEnrollCode" class="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">' +
+        '<div class="mfa-help">اگر QR اسکن نشد، کلید بالا را دستی داخل Authenticator وارد کنید.</div>'
+      );
+      const input = $('mfaEnrollCode');
+      input?.focus();
+      input?.addEventListener('keydown', async (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const ok = await verifyAdminMFA(factor.id, input.value);
+        if (ok) {
+          hideMfaGate();
+          await loadDashboard();
+        }
+      });
+    } catch (err) {
+      showMfaGate('فعال‌سازی MFA انجام نشد.', '<p>' + esc(errorText(err)) + '</p>');
+    }
+    return false;
   }
 
   async function ensureAdmin() {
@@ -3037,9 +3154,12 @@
         await state.db.auth.signOut();
         return;
       }
+      if (!(await requireAdminMFA())) return;
       await loadDashboard();
     };
 
-    if (await ensureAdmin()) await loadDashboard();
+    if (await ensureAdmin()) {
+      if (await requireAdminMFA()) await loadDashboard();
+    }
   })();
 })();
