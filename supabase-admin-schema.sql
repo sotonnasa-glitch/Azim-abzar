@@ -147,9 +147,18 @@ create trigger site_content_touch_updated_at before update on public.site_conten
 
 create or replace function private.is_azim_admin()
 returns boolean language sql stable security definer set search_path=public
-as $$ select exists(select 1 from public.admin_users where user_id=auth.uid() and is_active=true); $$;
+as $ select exists(select 1 from public.admin_users where user_id=auth.uid() and is_active=true); $;
 revoke all on function private.is_azim_admin() from public;
 grant execute on function private.is_azim_admin() to authenticated;
+
+create or replace function private.has_azim_role(allowed_roles text[])
+returns boolean language sql stable security definer set search_path=public
+as $ select exists(
+  select 1 from public.admin_users
+  where user_id=auth.uid() and is_active=true and role = any(allowed_roles)
+); $;
+revoke all on function private.has_azim_role(text[]) from public;
+grant execute on function private.has_azim_role(text[]) to authenticated;
 
 -- Remove the old exposed helper from the original schema.
 drop function if exists public.is_azim_admin();
@@ -169,54 +178,98 @@ alter table public.audit_logs enable row level security;
 drop policy if exists "Admins can read own admin row" on public.admin_users;
 create policy "Admins can read own admin row" on public.admin_users for select to authenticated using (user_id=auth.uid());
 drop policy if exists "Admins manage admin users" on public.admin_users;
-create policy "Admins manage admin users" on public.admin_users for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Owner admin manage admin users" on public.admin_users;
+create policy "Owner admin manage admin users" on public.admin_users for all to authenticated
+using (private.has_azim_role(array['owner','admin']))
+with check (private.has_azim_role(array['owner','admin']));
 
 drop policy if exists "Public can read products" on public.products;
 drop policy if exists "Public can read active products" on public.products;
-create policy "Public can read active products" on public.products for select to anon using (coalesce(is_active,true) or private.is_azim_admin());
+create policy "Public can read active products" on public.products for select to anon
+using (coalesce(is_active,true));
 drop policy if exists "Admins can read products" on public.products;
-create policy "Admins can read products" on public.products for select to authenticated using (private.is_azim_admin());
-
+create policy "Admins can read products" on public.products for select to authenticated
+using (private.is_azim_admin());
 drop policy if exists "Admins can insert products" on public.products;
-create policy "Admins can insert products" on public.products for insert to authenticated with check (private.is_azim_admin());
+create policy "Editors can insert products" on public.products for insert to authenticated
+with check (private.has_azim_role(array['owner','admin','editor']));
+drop policy if exists "Editors can insert products" on public.products;
+create policy "Editors can update products" on public.products for update to authenticated
+using (private.has_azim_role(array['owner','admin','editor']))
+with check (private.has_azim_role(array['owner','admin','editor']));
 drop policy if exists "Admins can update products" on public.products;
-create policy "Admins can update products" on public.products for update to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Editors can delete products" on public.products;
 drop policy if exists "Admins can delete products" on public.products;
-create policy "Admins can delete products" on public.products for delete to authenticated using (private.is_azim_admin());
+create policy "Editors can delete products" on public.products for delete to authenticated
+using (private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Public can read active categories" on public.categories;
-create policy "Public can read active categories" on public.categories for select to anon using (is_active=true or private.is_azim_admin());
+create policy "Public can read active categories" on public.categories for select to anon
+using (is_active=true);
 drop policy if exists "Admins manage categories" on public.categories;
-create policy "Admins manage categories" on public.categories for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Editors manage categories" on public.categories;
+create policy "Editors manage categories" on public.categories for all to authenticated
+using (private.has_azim_role(array['owner','admin','editor']))
+with check (private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Public can read active brands" on public.brands;
-create policy "Public can read active brands" on public.brands for select to anon using (is_active=true or private.is_azim_admin());
+create policy "Public can read active brands" on public.brands for select to anon
+using (is_active=true);
 drop policy if exists "Admins manage brands" on public.brands;
-create policy "Admins manage brands" on public.brands for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Editors manage brands" on public.brands;
+create policy "Editors manage brands" on public.brands for all to authenticated
+using (private.has_azim_role(array['owner','admin','editor']))
+with check (private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Public can create inquiries" on public.inquiries;
 create policy "Public can create inquiries" on public.inquiries for insert to anon with check (true);
 drop policy if exists "Admins manage inquiries" on public.inquiries;
-create policy "Admins manage inquiries" on public.inquiries for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Sales manage inquiries" on public.inquiries;
+create policy "Sales manage inquiries" on public.inquiries for all to authenticated
+using (private.has_azim_role(array['owner','admin','sales']))
+with check (private.has_azim_role(array['owner','admin','sales']));
 
 drop policy if exists "Admins manage customers" on public.customers;
-create policy "Admins manage customers" on public.customers for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Sales manage customers" on public.customers;
+create policy "Sales manage customers" on public.customers for all to authenticated
+using (private.has_azim_role(array['owner','admin','sales']))
+with check (private.has_azim_role(array['owner','admin','sales']));
+
 drop policy if exists "Admins manage orders" on public.orders;
-create policy "Admins manage orders" on public.orders for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Sales manage orders" on public.orders;
+create policy "Sales manage orders" on public.orders for all to authenticated
+using (private.has_azim_role(array['owner','admin','sales']))
+with check (private.has_azim_role(array['owner','admin','sales']));
+
 drop policy if exists "Admins manage order items" on public.order_items;
-create policy "Admins manage order items" on public.order_items for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Sales manage order items" on public.order_items;
+create policy "Sales manage order items" on public.order_items for all to authenticated
+using (private.has_azim_role(array['owner','admin','sales']))
+with check (private.has_azim_role(array['owner','admin','sales']));
+
 drop policy if exists "Admins manage media assets" on public.media_assets;
-create policy "Admins manage media assets" on public.media_assets for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Editors manage media assets" on public.media_assets;
+create policy "Editors manage media assets" on public.media_assets for all to authenticated
+using (private.has_azim_role(array['owner','admin','editor']))
+with check (private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Public can read active site content" on public.site_content;
-create policy "Public can read active site content" on public.site_content for select to anon using (is_active=true or private.is_azim_admin());
+create policy "Public can read active site content" on public.site_content for select to anon
+using (is_active=true);
 drop policy if exists "Admins manage site content" on public.site_content;
-create policy "Admins manage site content" on public.site_content for all to authenticated using (private.is_azim_admin()) with check (private.is_azim_admin());
+drop policy if exists "Editors manage site content" on public.site_content;
+create policy "Editors manage site content" on public.site_content for all to authenticated
+using (private.has_azim_role(array['owner','admin','editor']))
+with check (private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Admins read audit logs" on public.audit_logs;
-create policy "Admins read audit logs" on public.audit_logs for select to authenticated using (private.is_azim_admin());
 drop policy if exists "Admins insert audit logs" on public.audit_logs;
-create policy "Admins insert audit logs" on public.audit_logs for insert to authenticated with check (private.is_azim_admin());
+drop policy if exists "Owner admin read audit logs" on public.audit_logs;
+drop policy if exists "Active admins insert audit logs" on public.audit_logs;
+create policy "Owner admin read audit logs" on public.audit_logs for select to authenticated
+using (private.has_azim_role(array['owner','admin']));
+create policy "Active admins insert audit logs" on public.audit_logs for insert to authenticated
+with check (private.is_azim_admin());
 
 insert into storage.buckets(id,name,public) values ('admin-media','admin-media',true) on conflict(id) do update set public=true;
 
