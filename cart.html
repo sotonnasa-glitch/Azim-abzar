@@ -9,90 +9,245 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#070908;--surface:#0f1310;--panel:#131815;--line:#28312b;--text:#f6f7f5;--muted:#939d96;--gold:#f5b900;--gold2:#ffd84f;--green:#2ed573;--red:#ff7777;--shadow:0 24px 70px rgba(0,0,0,.48)}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 85% 0,rgba(245,185,0,.10),transparent 33%),radial-gradient(circle at 5% 70%,rgba(46,213,115,.045),transparent 28%),linear-gradient(180deg,#070908,#0b100d 48%,#070908);color:var(--text);font-family:Vazirmatn,system-ui,sans-serif}
-    a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}
-    header{position:sticky;top:0;z-index:50;background:rgba(7,9,8,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(245,185,0,.15)}
-    .head{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.mark{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#ffd84f,#c78600);color:#111;box-shadow:0 0 22px rgba(245,185,0,.25)}.brand strong{display:block;font-size:17px;font-weight:900}.brand small{display:block;color:#89928c;font-size:9px;margin-top:1px}
-    .nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.nav a{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);font-size:11px;font-weight:800;color:#d7ded9}.nav a.primary{background:linear-gradient(135deg,#ffd84f,#f5b900);color:#111;border-color:rgba(255,255,255,.25)}
-    main{padding:28px 0 60px}.hero{padding:24px;border:1px solid rgba(245,185,0,.24);border-radius:24px;background:radial-gradient(circle at 85% 10%,rgba(245,185,0,.15),transparent 30%),linear-gradient(135deg,#131815,#0c100e);box-shadow:var(--shadow);margin-bottom:16px}.kicker{font-size:10px;letter-spacing:1.7px;color:#d6ac2d;font-weight:900}.hero h1{margin:4px 0 7px;font-size:clamp(24px,4vw,36px)}.hero p{margin:0;color:#99a29c;font-size:12px;line-height:1.9}
-    .layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);gap:16px;align-items:start}.panel{border:1px solid var(--line);background:linear-gradient(160deg,#121713,#0d110f);border-radius:20px;box-shadow:0 14px 45px rgba(0,0,0,.25)}.panel-head{padding:16px 18px;border-bottom:1px solid #202822;display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-head h2{font-size:15px;margin:0}.panel-body{padding:14px 18px}
-    .cart-row{display:grid;grid-template-columns:92px 1fr auto;gap:14px;padding:14px 0;border-bottom:1px solid #202721;align-items:center}.cart-row:last-child{border-bottom:0}.cart-img{width:92px;height:78px;border-radius:13px;background:#fff;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(255,255,255,.12)}.cart-img img{width:100%;height:100%;object-fit:contain;padding:7px}.cart-name{font-size:13px;font-weight:900;line-height:1.6}.cart-code{color:#828c85;font-size:10px;margin-top:2px}.cart-variant{display:inline-flex;margin-top:5px;padding:4px 7px;border-radius:7px;background:rgba(245,185,0,.08);border:1px solid rgba(245,185,0,.2);font-size:9px;color:#ffe27d}.cart-price{font-size:13px;font-weight:900;color:#f7cd42;margin-top:7px}.cart-old{opacity:.45;text-decoration:line-through;margin-left:4px;color:#aaa}.qty{display:flex;align-items:center;gap:7px}.qty button{width:31px;height:31px;border:1px solid #354038;background:#111613;color:#fff;border-radius:9px;font:900 14px Vazirmatn;cursor:pointer}.qty button:hover{border-color:#f5b900;color:#ffd84f}.qty span{min-width:22px;text-align:center;font-weight:900}.row-total{text-align:left;font-size:12px;font-weight:900}.row-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:9px}.ghost{border:0;background:none;color:#9aa49d;cursor:pointer;font:800 10px Vazirmatn}.ghost:hover{color:#fff}.unavailable{padding:6px 8px;background:rgba(255,119,119,.08);border:1px solid rgba(255,119,119,.22);color:#ff9999;border-radius:8px;font-size:9px;margin-top:6px}
-    .empty{padding:48px 18px;text-align:center;color:#8f9992}.empty-cart-svg{width:46px;height:46px;color:#f5b900;margin:auto;opacity:.95}.empty-icon{font-size:34px}.empty h3{margin:9px 0 5px;color:#fff;font-size:15px}.empty p{margin:0;line-height:1.8;font-size:11px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:11px;border:1px solid rgba(245,185,0,.38);background:linear-gradient(145deg,#ffd84f,#f5b900);color:#111;font:900 11px Vazirmatn;cursor:pointer}.btn.secondary{background:#151b17;color:#f1f4f1;border-color:#364139}.btn.secondary:hover{border-color:#6b766d}.btn:disabled{opacity:.5;cursor:not-allowed}
-    .summary{position:sticky;top:90px}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed #242c27;font-size:11px;color:#aab2ad}.summary-line strong{color:#fff}.summary-line.discount strong{color:#69e69a}.summary-total{display:flex;justify-content:space-between;gap:10px;padding:15px 0 8px;font-size:15px;font-weight:950}.summary-total strong{color:#ffd84f;font-size:19px}
-    .coupon{padding:15px 18px;border-bottom:1px solid #202822}.coupon label{display:block;font-size:11px;font-weight:900;margin-bottom:7px}.coupon-row{display:grid;grid-template-columns:1fr auto;gap:7px}.input,.textarea{width:100%;border:1px solid #323d35;background:#090d0b;color:#fff;border-radius:10px;padding:10px 11px;font:700 11px Vazirmatn;outline:none}.input:focus,.textarea:focus{border-color:#f5b900;box-shadow:0 0 0 3px rgba(245,185,0,.09)}.coupon-status{margin-top:7px;font-size:10px;color:#8f9a92;line-height:1.7}.coupon-status.ok{color:#6fe59b}.coupon-status.err{color:#ff8c8c}
-    .form{padding:18px}.form h3{margin:0 0 11px;font-size:13px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field label{display:block;font-size:10px;color:#aab2ac;margin-bottom:4px}.field.full{grid-column:1/-1}.field .required{color:#ffd84f}.submit{width:100%;margin-top:12px}.notice{margin-top:9px;color:#7f8982;font-size:9px;line-height:1.8}.success{padding:24px;text-align:center}.success .order-code{display:inline-block;margin:12px 0;padding:9px 13px;border:1px dashed #80671f;background:#17150c;color:#ffd84f;border-radius:10px;font:900 15px ui-monospace,monospace;direction:ltr}.success h2{font-size:20px;margin:0}.success p{font-size:11px;color:#9aa39c;line-height:1.9}.success .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-    .trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.trust>div{padding:9px;border:1px solid #27312b;border-radius:10px;background:#0e130f;text-align:center;color:#929b95;font-size:9px}.trust b{display:block;color:#f2f4f1;font-size:10px;margin-bottom:2px}
-    @media(max-width:900px){.layout{grid-template-columns:1fr}.summary{position:static}.trust{grid-template-columns:1fr 1fr}}
-    @media(max-width:600px){.wrap{width:min(100% - 18px,1180px)}.head{min-height:64px}.brand small{display:none}.nav a span{display:none}.nav a{padding:8px 10px}.layout{gap:11px}.cart-row{grid-template-columns:68px 1fr}.cart-img{width:68px;height:64px}.row-total{grid-column:2;text-align:right}.row-actions{justify-content:flex-start}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.hero{padding:18px}.panel-body,.panel-head,.coupon,.form{padding:13px}}
-  </style>
+:root{
+  --bg:#050806;--bg2:#0a100d;--panel:rgba(15,21,17,.82);--panel2:rgba(10,15,12,.9);
+  --line:rgba(255,255,255,.08);--line2:rgba(245,185,0,.22);
+  --text:#f7f8f6;--muted:#8f9a93;--muted2:#68736c;--gold:#f5b900;--gold2:#ffe06a;
+  --green:#45e28a;--red:#ff7d83;--shadow:0 28px 80px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;color:var(--text);font-family:Vazirmatn,system-ui,sans-serif;
+  background:
+    radial-gradient(60% 45% at 85% -5%,rgba(245,185,0,.13),transparent 70%),
+    radial-gradient(45% 35% at 0 35%,rgba(69,226,138,.055),transparent 70%),
+    linear-gradient(180deg,#050806 0%,#09100c 42%,#050806 100%);
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 75%);
+}
+a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}
+header{
+  position:sticky;top:0;z-index:80;background:rgba(5,8,6,.76);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.065)
+}
+.head{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:11px}.mark{
+  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#ffe06a,#d38b00);color:#111;font-size:19px;
+  box-shadow:0 0 30px rgba(245,185,0,.2),inset 0 1px rgba(255,255,255,.45)
+}
+.brand strong{display:block;font-size:17px;font-weight:950}.brand small{display:block;color:#79847c;font-size:9px;margin-top:2px}
+.nav{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.nav a{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;background:rgba(255,255,255,.035);font-size:10px;font-weight:850;color:#dce1dd;transition:.22s ease
+}.nav a:hover{transform:translateY(-1px);border-color:rgba(245,185,0,.3);background:rgba(255,255,255,.055)}
+.nav a.primary{background:linear-gradient(135deg,#ffe06a,#f5b900);color:#111;border-color:rgba(255,255,255,.22);box-shadow:0 10px 26px rgba(245,185,0,.12)}
+main{position:relative;padding:34px 0 72px}
+.hero{
+  position:relative;overflow:hidden;padding:29px;border:1px solid rgba(245,185,0,.18);border-radius:28px;
+  background:
+    radial-gradient(circle at 92% 18%,rgba(245,185,0,.16),transparent 25%),
+    radial-gradient(circle at 10% 100%,rgba(69,226,138,.07),transparent 28%),
+    linear-gradient(145deg,rgba(18,25,21,.92),rgba(8,12,10,.9));
+  box-shadow:var(--shadow);margin-bottom:18px
+}
+.hero:after{content:"";position:absolute;width:180px;height:180px;left:-60px;bottom:-95px;border-radius:50%;border:1px solid rgba(255,255,255,.06);box-shadow:0 0 0 24px rgba(255,255,255,.012),0 0 0 48px rgba(255,255,255,.008)}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:25px;position:relative;z-index:1}
+.kicker{font-size:9px;letter-spacing:2.1px;color:#d5ad35;font-weight:950}
+.hero h1{margin:4px 0 7px;font-size:clamp(27px,5vw,43px);letter-spacing:-.7px;line-height:1.15}
+.hero p{max-width:720px;margin:0;color:#a0aaa3;font-size:11px;line-height:2}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:360px}
+.step{
+  padding:11px 10px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.025);
+  min-width:0
+}
+.step .n{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:8px;background:rgba(245,185,0,.13);color:#ffd952;font-size:9px;font-weight:950;margin-bottom:7px}
+.step strong{display:block;font-size:10px}.step small{display:block;color:#727d75;font-size:8px;margin-top:3px;line-height:1.7}
+.layout{display:grid;grid-template-columns:minmax(0,1.52fr) minmax(335px,.75fr);gap:18px;align-items:start}
+.panel{
+  border:1px solid var(--line);background:linear-gradient(160deg,rgba(17,23,19,.9),rgba(10,15,12,.92));
+  border-radius:22px;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden
+}
+.panel-head{padding:17px 19px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panel-head h2{font-size:14px;margin:0;font-weight:950}.panel-head .meta{display:flex;align-items:center;gap:7px}
+.count-pill{padding:5px 9px;border-radius:999px;background:rgba(245,185,0,.09);border:1px solid rgba(245,185,0,.17);color:#e4bd42;font-size:9px;font-weight:900}
+.panel-body{padding:13px 19px}
+.cart-row{
+  display:grid;grid-template-columns:108px minmax(0,1fr) auto;gap:15px;padding:17px 0;
+  border-bottom:1px solid rgba(255,255,255,.055);align-items:center;transition:.22s ease
+}
+.cart-row:last-child{border-bottom:0}.cart-row:hover{transform:translateX(-2px)}
+.cart-img{
+  width:108px;height:94px;border-radius:17px;background:linear-gradient(145deg,#fff,#edf1ec);display:grid;place-items:center;overflow:hidden;
+  border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 0 0 1px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.18)
+}
+.cart-img img{width:100%;height:100%;object-fit:contain;padding:9px}.cart-info{min-width:0}
+.cart-name{font-size:13px;font-weight:950;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cart-code{color:#6e7971;font-size:9px;margin-top:3px;direction:ltr;text-align:right}
+.cart-variant{display:inline-flex;margin-top:7px;padding:5px 8px;border-radius:8px;background:rgba(245,185,0,.07);border:1px solid rgba(245,185,0,.17);font-size:8px;color:#f8d860}
+.cart-price{font-size:12px;font-weight:950;color:#f7cf48;margin-top:8px}.cart-price .label{font-size:8px;color:#778179;font-weight:700;margin-left:5px}
+.qty{
+  display:inline-flex;align-items:center;gap:5px;padding:4px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#0a0f0c
+}
+.qty button{width:30px;height:30px;border:1px solid #29322c;background:#111713;color:#fff;border-radius:9px;font:950 14px Vazirmatn;cursor:pointer;transition:.2s}
+.qty button:hover{border-color:#f5b900;color:#ffd84f;background:#161c17}.qty span{min-width:25px;text-align:center;font-weight:950;font-size:11px}
+.row-total{text-align:left;direction:rtl;font-size:12px;font-weight:950;white-space:nowrap}.row-actions{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:10px}
+.ghost{border:0;background:none;color:#7f8982;cursor:pointer;font:850 9px Vazirmatn;padding:4px 0}.ghost:hover{color:#fff}
+.unavailable{padding:6px 8px;background:rgba(255,125,131,.08);border:1px solid rgba(255,125,131,.19);color:#ff9b9f;border-radius:8px;font-size:8px;margin-top:6px}
+.empty{padding:62px 18px;text-align:center;color:#7f8982}.empty-cart-svg{width:52px;height:52px;color:#f5b900;margin:auto;opacity:.92;filter:drop-shadow(0 0 15px rgba(245,185,0,.16))}
+.empty h3{margin:11px 0 5px;color:#fff;font-size:16px}.empty p{margin:0;line-height:1.9;font-size:10px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 15px;border-radius:12px;
+  border:1px solid rgba(245,185,0,.34);background:linear-gradient(145deg,#ffe06a,#f5b900);color:#111;
+  font:950 10px Vazirmatn;cursor:pointer;transition:.22s ease;box-shadow:0 12px 28px rgba(245,185,0,.11)
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.03)}.btn.secondary{background:#121813;color:#edf1ee;border-color:#344038;box-shadow:none}.btn.secondary:hover{border-color:#58655b}.btn:disabled{opacity:.48;cursor:not-allowed;transform:none}
+.summary{position:sticky;top:91px}
+.summary-glow{position:relative}.summary-glow:before{content:"";position:absolute;inset:-1px -1px auto;height:140px;background:radial-gradient(circle at 75% 0,rgba(245,185,0,.11),transparent 62%);pointer-events:none}
+.summary-inner{position:relative}
+.coupon{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06)}.coupon label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:950;margin-bottom:8px}.coupon-row{display:grid;grid-template-columns:1fr auto;gap:7px}
+.input,.textarea{
+  width:100%;border:1px solid #2d3830;background:#080c0a;color:#fff;border-radius:11px;padding:11px 11px;
+  font:750 10px Vazirmatn;outline:none;transition:.2s
+}
+.input::placeholder,.textarea::placeholder{color:#566158}.input:focus,.textarea:focus{border-color:#d8a70e;box-shadow:0 0 0 3px rgba(245,185,0,.08)}
+.coupon-status{margin-top:8px;font-size:9px;color:#7f8a83;line-height:1.8}.coupon-status.ok{color:#70e6a1}.coupon-status.err{color:#ff9297}
+.summary-body{padding:15px 18px}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.07);font-size:10px;color:#9aa49d}.summary-line strong{color:#f5f6f4}.summary-line.discount strong{color:#6ee79f}
+.summary-total{display:flex;justify-content:space-between;gap:10px;padding:15px 0 10px;font-size:13px;font-weight:950}.summary-total strong{color:#ffe06a;font-size:22px;letter-spacing:-.4px}
+.total-caption{font-size:8px;color:#6f7972;line-height:1.8;margin-bottom:4px}.submit{width:100%;margin-top:9px;min-height:44px;font-size:11px}
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}.trust>div{
+  padding:10px 8px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(255,255,255,.02);
+  text-align:center;color:#727d75;font-size:8px;line-height:1.7
+}.trust b{display:block;color:#e7ebe8;font-size:8px;margin-bottom:2px}
+.form{padding:17px 18px;border-top:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(245,185,0,.035),transparent 40%)}.form h3{margin:0 0 11px;font-size:12px;font-weight:950}
+.form-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}.form-badge{width:25px;height:25px;border-radius:9px;display:grid;place-items:center;background:rgba(69,226,138,.09);color:#68e69c;border:1px solid rgba(69,226,138,.15);font-size:11px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field label{display:block;font-size:9px;color:#9da79f;margin-bottom:5px}.field.full{grid-column:1/-1}.field .required{color:#ffd84f}
+.field input,.field textarea{min-height:40px}.textarea{resize:vertical;min-height:82px}
+.notice{margin-top:9px;padding:9px 10px;border:1px solid rgba(255,255,255,.05);border-radius:10px;color:#69746c;background:rgba(255,255,255,.018);font-size:8px;line-height:1.9}
+.success{padding:54px 24px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(69,226,138,.09),transparent 34%)}
+.success-check{width:58px;height:58px;margin:0 auto 12px;border-radius:19px;display:grid;place-items:center;background:rgba(69,226,138,.1);border:1px solid rgba(69,226,138,.2);color:#64e59b;font-size:25px;box-shadow:0 0 35px rgba(69,226,138,.08)}
+.success .order-code{display:inline-flex;margin:13px 0;padding:10px 15px;border:1px dashed #8b7020;background:#151308;color:#ffd84f;border-radius:11px;font:950 15px ui-monospace,monospace;direction:ltr}
+.success h2{font-size:22px;margin:0}.success p{font-size:10px;color:#909b93;line-height:2}.success .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.bottom-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.bottom-trust>div{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.02);font-size:8px;color:#778178;line-height:1.8}.bottom-trust b{color:#e4e9e5;display:block;font-size:9px;margin-bottom:2px}
+@media(max-width:950px){.hero-top{flex-direction:column}.steps{width:100%;min-width:0}.layout{grid-template-columns:1fr}.summary{position:static}.summary .summary-body{padding-bottom:16px}}
+@media(max-width:620px){
+  .wrap{width:min(100% - 14px,1180px)}.head{min-height:66px}.brand small{display:none}.brand strong{font-size:15px}.mark{width:40px;height:40px}
+  .nav a{padding:8px 9px}.nav a span{display:none}
+  main{padding:22px 0 48px}.hero{padding:20px;border-radius:22px}.hero h1{font-size:28px}.steps{grid-template-columns:1fr}
+  .step{display:grid;grid-template-columns:22px 1fr;column-gap:8px;align-items:center}.step .n{grid-row:span 2;margin:0}
+  .panel{border-radius:18px}.panel-head,.panel-body,.coupon,.summary-body,.form{padding-left:13px;padding-right:13px}
+  .cart-row{grid-template-columns:70px minmax(0,1fr);gap:10px;padding:14px 0}.cart-img{width:70px;height:68px;border-radius:13px}.row-total{grid-column:2;text-align:right;margin-top:-2px;font-size:11px}.cart-name{font-size:11px}.cart-price{font-size:10px}.row-actions{justify-content:flex-start;margin-top:8px}
+  .qty button{width:28px;height:28px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.trust,.bottom-trust{grid-template-columns:1fr}.success{padding:40px 17px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
 </head>
 <body>
   <header>
     <div class="wrap head">
       <a class="brand" href="index.html">
-        <span class="mark">⚙</span><span><strong>عظیم ابزار</strong><small>سبد سفارش و ثبت درخواست</small></span>
+        <span class="mark">⚙</span>
+        <span><strong>عظیم ابزار</strong><small>ثبت سفارش حرفه‌ای و سریع</small></span>
       </a>
       <nav class="nav">
         <a href="index.html"><span>⌂</span>صفحه اصلی</a>
         <a href="products-v4.html"><span>▣</span>محصولات</a>
-        <a href="cart.html" class="primary" data-cart-link aria-label="سبد سفارش"><span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>سبد سفارش <b data-cart-count hidden>۰</b></a>
+        <a href="cart.html" class="primary" data-cart-link aria-label="سبد سفارش">
+          <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>
+          <span>سفارش من</span><b data-cart-count hidden>۰</b>
+        </a>
       </nav>
     </div>
   </header>
 
   <main class="wrap">
     <section class="hero">
-      <div class="kicker">AZIM ABZAR · ORDER CART</div>
-      <h1>سبد سفارش</h1>
-      <p>محصولات را جمع کن، کد تخفیف را اعمال کن و درخواست سفارش را ثبت کن. قیمت‌ها هنگام ثبت نهایی دوباره از کاتالوگ فروشگاه بررسی می‌شوند.</p>
+      <div class="hero-top">
+        <div>
+          <div class="kicker">AZIM ABZAR · ORDER EXPERIENCE</div>
+          <h1>سفارش شما، آماده‌ی ثبت است.</h1>
+          <p>محصولات انتخابی را یک‌جا ببین، تعداد و تخفیف را کنترل کن و در چند قدم کوتاه درخواستت را برای عظیم ابزار بفرست. قیمت و اطلاعات کالا هنگام ثبت نهایی دوباره بررسی می‌شود.</p>
+        </div>
+        <div class="steps" aria-label="مراحل ثبت سفارش">
+          <div class="step"><span class="n">۰۱</span><div><strong>انتخاب</strong><small>محصولات و تعداد</small></div></div>
+          <div class="step"><span class="n">۰۲</span><div><strong>بررسی</strong><small>قیمت و تخفیف</small></div></div>
+          <div class="step"><span class="n">۰۳</span><div><strong>ثبت</strong><small>اطلاعات تماس</small></div></div>
+        </div>
+      </div>
     </section>
 
     <div id="cartSuccess" class="panel" hidden></div>
 
     <div id="cartWorkspace" class="layout">
       <section class="panel">
-        <div class="panel-head"><h2>اقلام سبد</h2><button class="ghost" id="clearCartBtn" type="button">پاک کردن سبد</button></div>
+        <div class="panel-head">
+          <div class="meta"><h2>محصولات انتخاب‌شده</h2><span id="cartCountLabel" class="count-pill">۰ قلم</span></div>
+          <button class="ghost" id="clearCartBtn" type="button">پاک کردن همه</button>
+        </div>
         <div class="panel-body" id="cartItems"></div>
       </section>
 
-      <aside class="panel summary">
-        <div class="panel-head"><h2>خلاصه سفارش</h2><span id="cartCountLabel" class="coupon-status">۰ قلم</span></div>
-        <div class="coupon">
-          <label for="couponInput">🏷️ کد تخفیف</label>
-          <div class="coupon-row"><input id="couponInput" class="input" dir="ltr" autocomplete="off" placeholder="مثلاً AZIM20"><button id="applyCouponBtn" class="btn secondary" type="button">اعمال</button></div>
-          <div id="couponStatus" class="coupon-status">کد تخفیف برای کل سبد، محصول، دسته، برند یا مشتری مشخص قابل تعریف است.</div>
-        </div>
-        <div class="panel-body">
-          <div class="summary-line"><span>جمع کالاها</span><strong id="subtotal">۰ تومان</strong></div>
-          <div class="summary-line discount"><span>تخفیف</span><strong id="discount">۰ تومان</strong></div>
-          <div class="summary-line"><span>ارسال</span><strong>هماهنگی با فروشگاه</strong></div>
-          <div class="summary-total"><span>مبلغ فعلی</span><strong id="total">۰ تومان</strong></div>
-          <button id="startCheckoutBtn" class="btn submit" type="button">ادامه و ثبت سفارش</button>
-          <div class="trust"><div><b>قیمت زنده</b>بررسی مجدد هنگام ثبت</div><div><b>کد تخفیف</b>محاسبه سمت سرور</div><div><b>پرداخت</b>در حال حاضر آنلاین نیست</div></div>
-        </div>
-        <div id="checkoutBox" class="form" hidden>
-          <h3>اطلاعات تماس و ثبت سفارش</h3>
-          <form id="checkoutForm">
-            <div class="fields">
-              <div class="field"><label>نام و نام خانوادگی <span class="required">*</span></label><input id="fullName" class="input" required maxlength="120"></div>
-              <div class="field"><label>موبایل <span class="required">*</span></label><input id="mobile" class="input" required inputmode="tel" maxlength="20" dir="ltr" placeholder="0912..."></div>
-              <div class="field"><label>ایمیل</label><input id="email" class="input" type="email" maxlength="180" dir="ltr"></div>
-              <div class="field"><label>شهر</label><input id="city" class="input" maxlength="80"></div>
-              <div class="field full"><label>آدرس / توضیحات تحویل</label><textarea id="address" class="textarea" rows="3" maxlength="600"></textarea></div>
+      <aside class="panel summary summary-glow">
+        <div class="summary-inner">
+          <div class="panel-head">
+            <div class="meta"><h2>خلاصه سفارش</h2></div>
+            <span class="count-pill">قیمت زنده</span>
+          </div>
+
+          <div class="coupon">
+            <label for="couponInput"><span aria-hidden="true">✦</span> کد تخفیف</label>
+            <div class="coupon-row">
+              <input id="couponInput" class="input" dir="ltr" autocomplete="off" placeholder="مثلاً AZIM20">
+              <button id="applyCouponBtn" class="btn secondary" type="button">اعمال</button>
             </div>
-            <button id="submitOrderBtn" class="btn submit" type="submit">ثبت درخواست سفارش</button>
-            <div class="notice">با ثبت این فرم، یک سفارش با وضعیت «در انتظار تأیید» در پنل فروشگاه ثبت می‌شود. پرداخت و شرایط ارسال بعد از هماهنگی با فروشگاه انجام خواهد شد.</div>
-            <div id="checkoutStatus" class="coupon-status"></div>
-          </form>
+            <div id="couponStatus" class="coupon-status">کد تخفیف می‌تواند برای کل سبد، محصول، دسته، برند یا مشتری تعریف شده باشد.</div>
+          </div>
+
+          <div class="summary-body">
+            <div class="summary-line"><span>جمع کالاها</span><strong id="subtotal">۰ تومان</strong></div>
+            <div class="summary-line discount"><span>تخفیف</span><strong id="discount">۰ تومان</strong></div>
+            <div class="summary-line"><span>ارسال</span><strong>هماهنگی با فروشگاه</strong></div>
+            <div class="summary-total"><span>مبلغ فعلی سفارش</span><strong id="total">۰ تومان</strong></div>
+            <div class="total-caption">مبلغ نمایش‌داده‌شده قبل از هماهنگی نهایی ارسال و شرایط تحویل است.</div>
+            <button id="startCheckoutBtn" class="btn submit" type="button">ادامه برای ثبت سفارش ←</button>
+
+            <div class="trust">
+              <div><b>قیمت زنده</b>بازبینی هنگام ثبت</div>
+              <div><b>تخفیف معتبر</b>محاسبه سمت سرور</div>
+              <div><b>پرداخت</b>پس از هماهنگی</div>
+            </div>
+          </div>
+
+          <div id="checkoutBox" class="form" hidden>
+            <div class="form-head">
+              <span class="form-badge">✓</span>
+              <div><h3>اطلاعات تماس و تحویل</h3><span class="coupon-status" style="margin:0">برای نهایی‌کردن درخواست کافی است.</span></div>
+            </div>
+            <form id="checkoutForm">
+              <div class="fields">
+                <div class="field"><label>نام و نام خانوادگی <span class="required">*</span></label><input id="fullName" class="input" required maxlength="120" placeholder="مثلاً علی رضایی"></div>
+                <div class="field"><label>موبایل <span class="required">*</span></label><input id="mobile" class="input" required inputmode="tel" maxlength="20" dir="ltr" placeholder="0912..."></div>
+                <div class="field"><label>ایمیل</label><input id="email" class="input" type="email" maxlength="180" dir="ltr" placeholder="you@example.com"></div>
+                <div class="field"><label>شهر</label><input id="city" class="input" maxlength="80" placeholder="مثلاً تهران"></div>
+                <div class="field full"><label>آدرس / توضیحات تحویل</label><textarea id="address" class="textarea" rows="3" maxlength="600" placeholder="آدرس، زمان مناسب تماس یا توضیحات سفارش..."></textarea></div>
+              </div>
+              <button id="submitOrderBtn" class="btn submit" type="submit">ثبت نهایی درخواست سفارش</button>
+              <div class="notice">با ثبت فرم، سفارش با وضعیت «در انتظار تأیید» در پنل عظیم ابزار ثبت می‌شود. پرداخت و شرایط ارسال پس از هماهنگی با فروشگاه مشخص خواهد شد.</div>
+              <div id="checkoutStatus" class="coupon-status"></div>
+            </form>
+          </div>
         </div>
       </aside>
     </div>
 
-    <div class="trust" style="margin-top:16px">
-      <div><b>سبد در گوشی هم حفظ می‌شود</b>تا وقتی حافظه مرورگر پاک نشده باشد.</div>
-      <div><b>قیمت و موجودی دوباره کنترل می‌شود</b>تا قیمت قدیمی وارد سفارش نشود.</div>
-      <div><b>محدودیت و اعتبار کد تخفیف سمت سرور است</b>نه فقط ظاهر مرورگر.</div>
+    <div class="bottom-trust">
+      <div><b>سبد شما از بین نمی‌رود</b>تا وقتی حافظه مرورگر پاک نشده باشد، اقلام سفارش در دستگاه نگه داشته می‌شوند.</div>
+      <div><b>قیمت‌ها دوباره کنترل می‌شوند</b>اطلاعات سفارش قبل از ثبت نهایی با کاتالوگ فروشگاه تطبیق داده می‌شود.</div>
+      <div><b>فرآیند ساده و مستقیم است</b>فعلاً پرداخت آنلاین نداریم؛ سفارش بعد از ثبت با فروشگاه هماهنگ می‌شود.</div>
     </div>
   </main>
 
@@ -118,7 +273,7 @@
         box.innerHTML=items.map(x=>{
           const total=x.unit_price*x.qty;
           const image=x.img?'<img src="'+escapeHtml(x.img)+'" alt="'+escapeHtml(x.name)+'">':'<span>⚙️</span>';
-          return '<article class="cart-row"><div class="cart-img">'+image+'</div><div><div class="cart-name">'+escapeHtml(x.name)+'</div><div class="cart-code">'+escapeHtml(x.code||x.product_id)+'</div>'+(x.variant_label?'<div class="cart-variant">مدل / سایز: '+escapeHtml(x.variant_label)+'</div>':'')+'<div class="cart-price">'+money(x.unit_price)+'</div><div class="row-actions"><div class="qty"><button type="button" data-qty="-1" data-key="'+escapeHtml(x.key)+'">−</button><span>'+fmt(x.qty)+'</span><button type="button" data-qty="1" data-key="'+escapeHtml(x.key)+'">+</button></div><button class="ghost" type="button" data-remove="'+escapeHtml(x.key)+'">حذف</button></div></div><div class="row-total">'+money(total)+'</div></article>';
+          return '<article class="cart-row"><div class="cart-img">'+image+'</div><div class="cart-info"><div class="cart-name">'+escapeHtml(x.name)+'</div><div class="cart-code">'+escapeHtml(x.code||x.product_id)+'</div>'+(x.variant_label?'<div class="cart-variant">مدل / سایز: '+escapeHtml(x.variant_label)+'</div>':'')+'<div class="cart-price"><span class="label">قیمت واحد</span>'+money(x.unit_price)+'</div><div class="row-actions"><div class="qty"><button type="button" data-qty="-1" data-key="'+escapeHtml(x.key)+'" aria-label="کاهش تعداد">−</button><span>'+fmt(x.qty)+'</span><button type="button" data-qty="1" data-key="'+escapeHtml(x.key)+'" aria-label="افزایش تعداد">+</button></div><button class="ghost" type="button" data-remove="'+escapeHtml(x.key)+'">حذف از سفارش</button></div></div><div class="row-total">'+money(total)+'</div></article>';
         }).join('');
         $('startCheckoutBtn').disabled=false;
       }
@@ -197,7 +352,7 @@
         coupon=null;
         $('cartWorkspace').hidden=true;
         $('cartSuccess').hidden=false;
-        $('cartSuccess').innerHTML='<div class="success"><div style="font-size:34px">✅</div><h2>درخواست سفارش ثبت شد</h2><p>سفارش شما با موفقیت در سیستم عظیم ابزار ثبت شد. برای هماهنگی نهایی با شما تماس گرفته می‌شود.</p><div class="order-code">'+escapeHtml(data.order_code||'AZ-ORDER')+'</div><p>مبلغ فعلی سفارش: <strong>'+money(data.total||0)+'</strong></p><div class="actions"><a class="btn" href="products-v4.html">بازگشت به محصولات</a><a class="btn secondary" href="index.html">صفحه اصلی</a></div></div>';
+        $('cartSuccess').innerHTML='<div class="success"><div class="success-check">✓</div><h2>درخواست سفارش ثبت شد</h2><p>سفارش شما با موفقیت در سیستم عظیم ابزار ثبت شد. برای هماهنگی نهایی با شما تماس گرفته می‌شود.</p><div class="order-code">'+escapeHtml(data.order_code||'AZ-ORDER')+'</div><p>مبلغ فعلی سفارش: <strong>'+money(data.total||0)+'</strong></p><div class="actions"><a class="btn" href="products-v4.html">بازگشت به محصولات</a><a class="btn secondary" href="index.html">صفحه اصلی</a></div></div>';
         window.scrollTo({top:0,behavior:'smooth'});
       }catch(err){
         status.textContent=err.message||'خطا در ثبت سفارش.';
