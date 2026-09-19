@@ -96,7 +96,7 @@ jobs:
           from pathlib import Path
           html = Path('_site/admin.html').read_text(encoding='utf-8')
           assert 'پنل مدیریت' in html
-          assert 'admin-app.js?v=34' in html
+          assert 'admin-app.js?v=35' in html
           match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
           assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
           Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
@@ -121,7 +121,7 @@ jobs:
           html = Path('_site/index.html').read_text(encoding='utf-8')
           assert '<script src="./azim-motion.js?v=7" defer></script>' in html
           assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
-          assert 'azim-live-content.js?v=2' in html
+          assert 'azim-live-content.js?v=3' in html
           assert 'azim-home-gallery.js' not in html
           print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
           PY
@@ -136,9 +136,9 @@ jobs:
           contact = Path('_site/contact.html').read_text(encoding='utf-8')
           index = Path('_site/index.html').read_text(encoding='utf-8')
           products = Path('_site/products-v4.html').read_text(encoding='utf-8')
-          assert 'azim-live-content.js?v=2' in contact
+          assert 'azim-live-content.js?v=3' in contact
           assert 'supabase-config.js' in contact
-          assert 'azim-live-content.js?v=2' in index
+          assert 'azim-live-content.js?v=3' in index
           assert 'loadLiveVariants' in products
           assert 'livePriceData' in products
           assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
