@@ -18,6 +18,8 @@
     el.textContent = String(value);
   }
 
+  function latinDigits(v){return String(v??'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));}
+
   function setAttr(el, attr, value) {
     if (el && value != null && String(value).trim() !== '') el.setAttribute(attr, String(value));
   }
@@ -215,7 +217,7 @@
 
     const phone=p.phone||{};
     const pc=document.querySelector('#card-channel-phone');
-    if(pc){setText(pc.querySelector('.channel-title'),phone.title);setText(pc.querySelector('.channel-pill'),phone.pill);setText(pc.querySelector('.channel-value'),phone.value);setText(pc.querySelector('.channel-sub'),phone.sub);setText(pc.querySelector('button[onclick*="copyValue"] span'),phone.copy);setText(pc.querySelector('a.channel-action-btn span'),phone.call);if(phone.value){const digits=String(phone.value).replace(/[^\d+]/g,'');pc.querySelectorAll('a[href^="tel:"]').forEach(a=>a.setAttribute('href','tel:'+digits.replace(/^0+/,'+98')));}}
+    if(pc){setText(pc.querySelector('.channel-title'),phone.title);setText(pc.querySelector('.channel-pill'),phone.pill);setText(pc.querySelector('.channel-value'),phone.value);setText(pc.querySelector('.channel-sub'),phone.sub);setText(pc.querySelector('button[onclick*="copyValue"] span'),phone.copy);setText(pc.querySelector('a.channel-action-btn span'),phone.call);if(phone.value){const digits=latinDigits(phone.value).replace(/[^\d+]/g,'');pc.querySelectorAll('a[href^="tel:"]').forEach(a=>a.setAttribute('href','tel:'+(digits.startsWith('+')?digits:(digits.replace(/^0+/,'')?'+98'+digits.replace(/^0+/,''):digits))));const b=pc.querySelector('button[onclick*="copyValue"]');if(b)b.setAttribute('onclick','copyValue('+JSON.stringify(latinDigits(phone.value).replace(/[^\d+]/g,''))+', '+JSON.stringify('شماره تماس فروشگاه کپی شد')+')');}}
     const support=p.support||{};
     const sc=document.querySelector('#card-channel-support');
     if(sc){setText(sc.querySelector('.channel-title'),support.title);setText(sc.querySelector('.channel-pill'),support.pill);setText(sc.querySelector('.channel-value'),support.value);setText(sc.querySelector('.channel-sub'),support.sub);setText(sc.querySelector('.channel-actions span'),support.button);}
