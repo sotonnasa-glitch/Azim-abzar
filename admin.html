@@ -180,6 +180,15 @@
   .az-simple-editor-footer>div .btn{width:100%}
   .az-simple-editor-footer .status{font-size:8px}
 }
+</style><style id="az-product-direct-discount-style">
+.az-product-direct-discount{padding:10px}
+.az-discount-toggle{display:flex;align-items:center;gap:6px;font-size:8px;color:#cfd6d1;cursor:pointer}
+.az-discount-toggle input{accent-color:#f5b900}
+.az-discount-fields{grid-template-columns:1fr 1fr}
+.az-product-discount-preview{margin-top:9px;padding:8px 10px;border-radius:8px;background:#0c100e;border:1px dashed #303a34;font-size:8px;color:#768078}
+.az-product-discount-preview.active{border-color:#6c5a22;color:#e7d78d}
+.az-product-discount-preview.active strong{color:#f5c51c}
+@media(max-width:650px){.az-discount-fields{grid-template-columns:1fr}}
 </style></head><body>
 <div id="loginScreen" class="login-wrap hidden"><div class="login-orb orb-a"></div><div class="login-orb orb-b"></div><div class="login-card"><div class="login-brand"><span class="login-mark">AZ</span><div><strong>عظیم ابزار</strong><small>مرکز مدیریت فروشگاه</small></div></div><div class="login-kicker">CONTROL CENTER</div><h1>خوش آمدی __AZICON_WAVE__</h1><p>برای مدیریت محصولات، سفارش‌ها و محتوای سایت وارد شو.</p><div class="field"><label>ایمیل مدیر</label><input id="loginEmail" class="input" type="email" autocomplete="username" placeholder="admin@example.com"></div><div class="field"><label>رمز عبور</label><input id="loginPassword" class="input" type="password" autocomplete="current-password" placeholder="••••••••"></div><button id="loginBtn" class="btn login-submit">ورود به پنل <span>←</span></button><div class="login-foot"><span>__AZICON_LOCK__ اتصال امن</span><span>Supabase Auth</span></div><div id="loginStatus" class="status"></div></div></div>
 <div id="app" class="layout hidden"><aside class="sidebar"><div class="brand"><strong><b>عظیم ابزار</b> · Admin</strong><span>مدیریت فروشگاه و کاتالوگ</span></div><nav class="nav"><button class="active" data-view="dashboard">◈ داشبورد</button><button data-view="products">▣ محصولات</button><button data-view="categories">▤ دسته‌بندی‌ها</button><button data-view="brands">◇ برندها</button><button data-view="inquiries">__AZICON_MAIL__ درخواست‌ها</button><button data-view="orders">◫ سفارش‌ها</button><button data-view="customers">__AZICON_USER__ مشتریان</button><button data-view="media">▧ رسانه</button><button data-view="content">⌘ محتوای سایت</button><button data-view="admins">__AZICON_ADMIN__ کاربران مدیر</button><button data-view="audit">⌁ گزارش فعالیت</button></nav><div class="side-bottom"><div id="userBox" class="userbox"></div><button id="logoutBtn" class="logout">خروج</button></div></aside>
@@ -297,7 +306,7 @@ $('newProductBtn').onclick=newProduct;$('newCategoryBtn').onclick=newCategory;$(
 async function loadSection(n){try{if(n==='dashboard')await loadDashboard();else if(n==='products')await fetchProducts();else if(n==='categories')await loadCategories();else if(n==='brands')await loadBrands();else if(n==='inquiries')await loadInquiries();else if(n==='orders')await loadOrders();else if(n==='customers')await loadCustomers();else if(n==='media')await loadMedia();else if(n==='content')await loadContent();else if(n==='admins')await loadAdmins();else if(n==='audit')await loadAudit()}catch(e){toast('__AZICON_ERROR__ '+e.message)}}
 (async function(){if(!window.supabase||!window.AZIM_SUPABASE_URL||!window.AZIM_SUPABASE_ANON_KEY){$('loginScreen').classList.remove('hidden');$('loginStatus').textContent='پیکربندی Supabase ناقص است.';return}db=window.supabase.createClient(window.AZIM_SUPABASE_URL,window.AZIM_SUPABASE_ANON_KEY);if(await ensureAdmin())await loadDashboard()})();
 }
-</script><script src="admin-app.js?v=38"></script>
+</script><script src="admin-app.js?v=39"></script>
 <script>
 (function(){
   const map={
