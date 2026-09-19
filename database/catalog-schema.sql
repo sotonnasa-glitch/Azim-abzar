@@ -3,6 +3,8 @@
 begin;
 alter table public.products add column if not exists original_price bigint;
 alter table public.products add column if not exists price bigint;
+-- Backward compatibility: legacy clients may request base_price; keep it synced to the catalog price.
+alter table public.products add column if not exists base_price bigint generated always as (price) stored;
 alter table public.products add column if not exists page integer;
 alter table public.products add column if not exists category_name text;
 alter table public.products add column if not exists is_active boolean not null default true;
