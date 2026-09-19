@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V22 = true;
+  window.__AZIM_ADMIN_V23 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -429,6 +429,8 @@
     $('newCategoryBtn').onclick = () => newCategory();
     $('newBrandBtn').onclick = () => newBrand();
     $('newContentBtn').onclick = () => newContent();
+    $('homeCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('home'));
+    $('contactCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
     $('unifiedSiteBtn')?.addEventListener('click', () => openUnifiedSiteEditor());
     $('changePasswordBtn')?.addEventListener('click', () => openPasswordChange(false));
     $('newOrderBtn').onclick = () => newOrder();
