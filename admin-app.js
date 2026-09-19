@@ -711,13 +711,18 @@
   function renderProductTable(rows, compact) {
     if (!rows.length) return '<div class="empty">محصولی پیدا نشد.</div>';
     const body = rows.map((p) => {
+      const siteButton = !compact && p.code
+        ? '<button class="btn ghost" data-open-product-site="' + esc(p.code) + '">مشاهده سایت</button>'
+        : '';
       const actions = compact ? '' :
         '<td>' + (can.edit() ? '<button class="btn secondary" data-edit-product="' + p.id + '">ویرایش</button> ' +
-        '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button>' : 'فقط مشاهده') +
-        '</td>';
+        '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button> ' : 'فقط مشاهده') +
+        siteButton + '</td>';
       return '<tr><td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
         '<td>' + esc(p.name) + '</td><td>' + esc(p.code || '—') + '</td><td>' + esc(p.brand || '—') + '</td>' +
-        '<td>' + money(p.price) + '</td><td><span class="badge ' + (p.is_active ? 'ok' : 'red') + '">' +
+        '<td>' + (isDirectProductDiscountLive(p) && Number(p.price) > 0
+        ? '<del style="opacity:.5;margin-left:5px;">' + money(p.price) + '</del> ' + money(directProductDiscountPrice(p.price, p)) + ' <small style="color:#e7d78d;">تخفیف مستقیم</small>'
+        : money(p.price)) + '</td><td><span class="badge ' + (p.is_active ? 'ok' : 'red') + '">' +
         (p.is_active ? 'فعال' : 'غیرفعال') + '</span></td>' + actions + '</tr>';
     }).join('');
     return '<table class="table"><thead><tr><th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>وضعیت</th>' +
@@ -1041,8 +1046,16 @@
 
   function wireProductBulk() {
     $('quickEditProducts')?.addEventListener('click', () => openQuickProductEditor());
-    $('openSiteFromProducts')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
+    $('openSiteFromProducts')?.addEventListener('click', () => window.open(new URL('./products-v4.html', window.location.href).href, '_blank', 'noopener'));
     $('exportStoreBackup')?.addEventListener('click', () => exportStoreBackup());
+    document.querySelectorAll('[data-open-product-site]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-open-product-site') || '';
+        const url = new URL('./products-v4.html', window.location.href);
+        if (code) url.searchParams.set('q', code);
+        window.open(url.href, '_blank', 'noopener');
+      });
+    });
   }
 
   function openQuickProductEditor() {
@@ -1068,7 +1081,7 @@
       '</div>'
     );
 
-    $('quickSiteBtn')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
+    $('quickSiteBtn')?.addEventListener('click', () => window.open(new URL('./products-v4.html', window.location.href).href, '_blank', 'noopener'));
     $('saveQuickProducts')?.addEventListener('click', saveQuickProducts);
   }
 
