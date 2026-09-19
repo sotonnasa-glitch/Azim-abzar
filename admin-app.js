@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V20 = true;
+  window.__AZIM_ADMIN_V21 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -1771,12 +1771,14 @@
     }).join('');
     return '<form id="unifiedSiteForm" class="az-unified-form">' +
       '<div class="az-copy-intro"><strong>ویرایش یکجای نوشته‌های سایت</strong><small>از همین صفحه متن‌های قابل مشاهده صفحه اصلی و «ارتباط با ما» را تغییر بده. دکمه‌ها و ساختار صفحه دست‌نخورده می‌مانند.</small></div>' +
-      '<details class="az-copy-group" open><summary>🏠 صفحه اصلی — هدر و هیرو</summary><div class="grid2">' + fieldHtml('home.header') + fieldHtml('home.topbar') + fieldHtml('home.hero') + '</div></details>' +
+      '<details class="az-copy-group" open><summary>🏠 صفحه اصلی — هدر و SEO</summary><div class="grid2">' + fieldHtml('home.meta') + fieldHtml('home.header') + '</div></details>' +
+      '<details class="az-copy-group"><summary>🎯 صفحه اصلی — هیرو و نوار بالایی</summary><div class="grid2">' + fieldHtml('home.topbar') + fieldHtml('home.hero') + '</div></details>' +
       '<details class="az-copy-group"><summary>⚙️ صفحه اصلی — HUD و نوار متحرک</summary><div class="grid2">' + fieldHtml('home.hud') + fieldHtml('home.ticker') + '</div></details>' +
       '<details class="az-copy-group"><summary>🧭 صفحه اصلی — مسیرهای خرید</summary><div class="grid2">' + fieldHtml('home.choice') + '</div></details>' +
       '<details class="az-copy-group"><summary>🛠️ صفحه اصلی — مزیت‌ها</summary><div class="grid2">' + fieldHtml('home.why') + '</div></details>' +
       '<details class="az-copy-group"><summary>🔻 صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
-      '<details class="az-copy-group"><summary>📞 ارتباط با ما — هدر و معرفی</summary><div class="grid2">' + fieldHtml('contact.header') + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
+      '<details class="az-copy-group"><summary>📞 ارتباط با ما — هدر و SEO</summary><div class="grid2">' + fieldHtml('contact.meta') + fieldHtml('contact.header') + '</div></details>' +
+      '<details class="az-copy-group"><summary>🧾 ارتباط با ما — معرفی صفحه</summary><div class="grid2">' + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
       '<details class="az-copy-group"><summary>☎️ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
       '<details class="az-copy-group"><summary>🕘 ارتباط با ما — ساعات کاری</summary><div class="grid2">' + fieldHtml('contact.hours') + '</div></details>' +
       '<details class="az-copy-group"><summary>📝 ارتباط با ما — فرم استعلام</summary><div class="grid2">' + fieldHtml('contact.form') + '</div></details>' +
