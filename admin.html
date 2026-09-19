@@ -112,6 +112,71 @@
   .az-save-action{min-width:0!important;flex:1.25!important}
 }
 
+</style><style id="az-simple-product-editor-style">
+.modal.product-editor-modal{align-items:center;justify-content:center;padding:12px;background:rgba(0,0,0,.72)}
+.modal.product-editor-modal .modal-box{width:min(720px,100%);height:auto;max-height:min(92vh,900px);overflow:hidden;border:1px solid #303a34;border-radius:16px;padding:0;background:#101512;box-shadow:0 22px 70px rgba(0,0,0,.5)}
+.modal.product-editor-modal .modal-head{padding:12px 14px;margin:0;background:#121815;border-bottom:1px solid #29322d}
+.modal.product-editor-modal .modal-head strong{font-size:13px}
+.modal.product-editor-modal .modal-head .x{position:static;width:32px;height:32px;font-size:18px}
+.modal.product-editor-modal #modalBody{height:auto;max-height:calc(92vh - 58px);overflow:auto}
+.az-simple-editor{display:flex;flex-direction:column;min-height:0;background:#101512}
+.az-simple-editor-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid #29322d}
+.az-simple-editor-top span{display:block;color:#a58a39;font-size:8px;font-weight:800;margin-bottom:3px}
+.az-simple-editor-top h2{margin:0;font-size:17px}
+.az-simple-active{display:flex;align-items:center;gap:7px;font-size:10px;white-space:nowrap;cursor:pointer;color:#d8dfda}
+.az-simple-active input{accent-color:#f5b900}
+.az-simple-editor-body{padding:14px 18px 4px}
+.az-simple-image-row{display:flex;gap:14px;align-items:center;padding-bottom:14px;margin-bottom:12px;border-bottom:1px solid #252e29}
+.az-simple-image{width:108px;height:108px;flex:0 0 108px;border-radius:12px;background:#0b0f0d;border:1px solid #303a34;display:grid;place-items:center;overflow:hidden}
+.az-simple-image img{width:100%;height:100%;object-fit:contain}
+.az-simple-image-empty{font-size:9px;color:#66726a;text-align:center;padding:10px}
+.az-simple-image-info{display:grid;gap:5px;min-width:0}
+.az-simple-image-info strong{font-size:11px}
+.az-simple-image-info small{font-size:9px;color:#727e76}
+.az-simple-file{display:inline-flex;align-items:center;justify-content:center;width:max-content;border:1px solid #414b45;background:#1a211d;color:#fff;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:800;cursor:pointer;margin-top:3px}
+.az-simple-file input{display:none}
+.az-simple-clear{font-size:8px;color:#a3aaa5;display:flex;align-items:center;gap:4px}
+.az-simple-section{border:1px solid #29332d;background:#121815;border-radius:11px;padding:12px;margin-bottom:10px}
+.az-simple-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.az-simple-section-head strong{font-size:10px}
+.az-simple-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.az-simple-field{display:grid;gap:5px;min-width:0}
+.az-simple-field>span{font-size:8px;color:#8d9891}
+.az-simple-wide{grid-column:1/-1}
+.az-simple-fields .input,.az-simple-fields .select,.az-simple-field .input{width:100%;min-width:0}
+.az-simple-price-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.az-simple-price{display:flex;align-items:stretch}
+.az-simple-price .input{border-radius:8px 0 0 8px;direction:ltr;text-align:right}
+.az-simple-price b{display:grid;place-items:center;padding:0 9px;background:#1a211d;border:1px solid #354039;border-right:0;border-radius:0 8px 8px 0;color:#8d9891;font-size:8px}
+.az-simple-price.primary .input{border-color:#806413}
+.az-simple-variants-list{display:grid;gap:7px}
+.az-simple-variants .az-variant-row{display:grid;grid-template-columns:1fr 1fr auto;gap:7px}
+.az-simple-variants .az-variant-row .input{width:100%;min-width:0}
+.az-simple-variants .az-variant-row .btn{padding:7px 9px;font-size:8px}
+.az-simple-variants .az-variant-empty{font-size:8px;color:#68736d;padding:4px 0}
+.az-simple-description{width:100%;min-height:95px}
+.az-simple-editor-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 18px;background:#0f1411;border-top:1px solid #29322d;position:sticky;bottom:0;z-index:3}
+.az-simple-editor-footer>div{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.az-simple-editor-footer .btn{padding:8px 12px}
+.az-simple-delete{background:transparent!important;border-color:#663535!important;color:#ffadad!important}
+@media(max-width:650px){
+  .modal.product-editor-modal{padding:0;align-items:stretch}
+  .modal.product-editor-modal .modal-box{width:100%;height:100%;max-height:none;border-radius:0;border-left:0;border-right:0}
+  .modal.product-editor-modal #modalBody{max-height:none;height:calc(100vh - 58px)}
+  .az-simple-editor-top{padding:13px 14px}
+  .az-simple-editor-top h2{font-size:15px}
+  .az-simple-editor-body{padding:11px 12px 2px}
+  .az-simple-image-row{gap:10px}
+  .az-simple-image{width:82px;height:82px;flex-basis:82px}
+  .az-simple-fields,.az-simple-price-row{grid-template-columns:1fr}
+  .az-simple-wide{grid-column:auto}
+  .az-simple-variants .az-variant-row{grid-template-columns:1fr 1fr}
+  .az-simple-variants .az-variant-row .btn{grid-column:1/-1}
+  .az-simple-editor-footer{padding:10px 12px;align-items:stretch;flex-direction:column-reverse}
+  .az-simple-editor-footer>div{display:grid;grid-template-columns:auto auto 1fr}
+  .az-simple-editor-footer>div .btn{width:100%}
+  .az-simple-editor-footer .status{font-size:8px}
+}
 </style></head><body>
 <div id="loginScreen" class="login-wrap hidden"><div class="login-orb orb-a"></div><div class="login-orb orb-b"></div><div class="login-card"><div class="login-brand"><span class="login-mark">AZ</span><div><strong>عظیم ابزار</strong><small>مرکز مدیریت فروشگاه</small></div></div><div class="login-kicker">CONTROL CENTER</div><h1>خوش آمدی __AZICON_WAVE__</h1><p>برای مدیریت محصولات، سفارش‌ها و محتوای سایت وارد شو.</p><div class="field"><label>ایمیل مدیر</label><input id="loginEmail" class="input" type="email" autocomplete="username" placeholder="admin@example.com"></div><div class="field"><label>رمز عبور</label><input id="loginPassword" class="input" type="password" autocomplete="current-password" placeholder="••••••••"></div><button id="loginBtn" class="btn login-submit">ورود به پنل <span>←</span></button><div class="login-foot"><span>__AZICON_LOCK__ اتصال امن</span><span>Supabase Auth</span></div><div id="loginStatus" class="status"></div></div></div>
 <div id="app" class="layout hidden"><aside class="sidebar"><div class="brand"><strong><b>عظیم ابزار</b> · Admin</strong><span>مدیریت فروشگاه و کاتالوگ</span></div><nav class="nav"><button class="active" data-view="dashboard">◈ داشبورد</button><button data-view="products">▣ محصولات</button><button data-view="categories">▤ دسته‌بندی‌ها</button><button data-view="brands">◇ برندها</button><button data-view="inquiries">__AZICON_MAIL__ درخواست‌ها</button><button data-view="orders">◫ سفارش‌ها</button><button data-view="customers">__AZICON_USER__ مشتریان</button><button data-view="media">▧ رسانه</button><button data-view="content">⌘ محتوای سایت</button><button data-view="admins">__AZICON_ADMIN__ کاربران مدیر</button><button data-view="audit">⌁ گزارش فعالیت</button></nav><div class="side-bottom"><div id="userBox" class="userbox"></div><button id="logoutBtn" class="logout">خروج</button></div></aside>
@@ -229,7 +294,7 @@ $('newProductBtn').onclick=newProduct;$('newCategoryBtn').onclick=newCategory;$(
 async function loadSection(n){try{if(n==='dashboard')await loadDashboard();else if(n==='products')await fetchProducts();else if(n==='categories')await loadCategories();else if(n==='brands')await loadBrands();else if(n==='inquiries')await loadInquiries();else if(n==='orders')await loadOrders();else if(n==='customers')await loadCustomers();else if(n==='media')await loadMedia();else if(n==='content')await loadContent();else if(n==='admins')await loadAdmins();else if(n==='audit')await loadAudit()}catch(e){toast('__AZICON_ERROR__ '+e.message)}}
 (async function(){if(!window.supabase||!window.AZIM_SUPABASE_URL||!window.AZIM_SUPABASE_ANON_KEY){$('loginScreen').classList.remove('hidden');$('loginStatus').textContent='پیکربندی Supabase ناقص است.';return}db=window.supabase.createClient(window.AZIM_SUPABASE_URL,window.AZIM_SUPABASE_ANON_KEY);if(await ensureAdmin())await loadDashboard()})();
 }
-</script><script src="admin-app.js?v=36"></script>
+</script><script src="admin-app.js?v=37"></script>
 <script>
 (function(){
   const map={
