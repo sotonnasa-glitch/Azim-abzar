@@ -304,3 +304,13 @@ $$;
 
 revoke all on function public.azim_save_order_with_discount(uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb) from public;
 grant execute on function public.azim_save_order_with_discount(uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb) to authenticated;
+
+
+drop policy if exists "Discount redemptions insert" on public.discount_redemptions;
+drop policy if exists "Discount redemptions delete" on public.discount_redemptions;
+create policy "Discount redemptions insert" on public.discount_redemptions
+for insert to authenticated
+with check (private.has_azim_role(array['owner','admin','sales']));
+create policy "Discount redemptions delete" on public.discount_redemptions
+for delete to authenticated
+using (private.has_azim_role(array['owner','admin','sales']));
