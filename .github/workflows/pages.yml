@@ -50,8 +50,16 @@ jobs:
           for archive_b64 in catalog_site_mapping_908/missing-images-*.b64 catalog_site_mapping_908/missing-mini-*.b64; do
             [ -f "$archive_b64" ] || continue
             archive_zip="${archive_b64%.b64}.zip"
-            base64 --decode "$archive_b64" > "$archive_zip"
-            unzip -o -q "$archive_zip" -d .
+            if ! base64 --decode "$archive_b64" > "$archive_zip"; then
+              echo "IMAGE_FALLBACK_ARCHIVE_INVALID: $archive_b64"
+              rm -f "$archive_zip"
+              continue
+            fi
+            if ! unzip -o -q "$archive_zip" -d .; then
+              echo "IMAGE_FALLBACK_ARCHIVE_INVALID_ZIP: $archive_b64"
+              rm -f "$archive_zip"
+              continue
+            fi
             found=$((found + 1))
           done
           echo "IMAGE_FALLBACK_ARCHIVES_RESTORED: $found"
@@ -106,7 +114,7 @@ jobs:
           mkdir -p _site
           rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' ./ _site/
           test -s _site/products.html
-          test -s _site/products-v3.html
+          test -s _site/products-v4.html
 
       - name: Validate admin panel runtime
         shell: bash
