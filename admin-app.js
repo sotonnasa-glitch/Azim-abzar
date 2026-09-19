@@ -3021,7 +3021,7 @@
     if (status) status.textContent = 'در حال تست اتصال به /api/chat…';
     if (top) top.disabled = true;
     try {
-      const r = await fetch('/api/chat', {
+      const r = await fetch(String(window.AZIM_AI_API_URL||'/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: 'یک پاسخ خیلی کوتاه بده: برای انتخاب آچار چه چیزی مهم است؟' })
