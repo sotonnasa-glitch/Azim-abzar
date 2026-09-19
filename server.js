@@ -9,7 +9,39 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.disable('x-powered-by');
+app.set('json spaces', 0);
+
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-site',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self' mailto:",
+    "img-src 'self' data: https:",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com",
+    "upgrade-insecure-requests"
+  ].join('; ')
+};
+
+app.use((req, res, next) => {
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  next();
+});
+
+app.use(express.json({ limit: '8kb' }));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
