@@ -325,6 +325,7 @@
     });
 
     $('refreshBtn').onclick = () => loadSection(activeView());
+    const topbar = document.querySelector('.topbar');
     if (topbar && !$('azOpenSiteBtn')) {
       const siteBtn = document.createElement('button');
       siteBtn.id = 'azOpenSiteBtn';
@@ -334,7 +335,6 @@
       siteBtn.onclick = () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener');
       topbar.appendChild(siteBtn);
     }
-    const topbar = document.querySelector('.topbar');
     if (topbar && !document.querySelector('.az-topbar-search')) {
       const tools = document.createElement('div');
       tools.className = 'az-topbar-search';
