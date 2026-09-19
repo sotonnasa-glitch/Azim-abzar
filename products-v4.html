@@ -1787,33 +1787,29 @@
       const liveMap = new Map(
         (Array.isArray(liveRows) ? liveRows : [])
           .map(x => [String(x?.code || '').trim().toUpperCase(), normalizeLiveRow(x)])
-          .filter(([id, d]) => /^P\d{4}$/.test(id) && id)
+          .filter(([id]) => /^P\d{4}$/.test(id))
       );
+      const staticMap = new Map(staticRows.map(x => [x.id, x]));
+      const useLiveCatalog = Array.isArray(liveRows) && liveRows.length > 0;
 
-      const merged = new Map();
-      staticRows.forEach(x => {
-        const d = liveMap.get(x.id);
-        if (d && d.is_active === false) return;
-        merged.set(x.id, {
-          ...x,
-          name: d?.name || x.name,
-          image: d?.img || x.image
+      if (useLiveCatalog) {
+        all = [...liveMap.entries()]
+          .filter(([, d]) => d.is_active !== false)
+          .map(([id, d]) => ({
+            id,
+            name: d.name || staticMap.get(id)?.name || ('محصول ' + id),
+            image: d.img || staticMap.get(id)?.image || ''
+          }))
+          .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+        liveMap.forEach((d, id) => {
+          if (d.category_name) categoriesMap[id] = d.category_name;
         });
-        if (d?.category_name) categoriesMap[x.id] = d.category_name;
-      });
+        livePriceData = Object.fromEntries([...liveMap.entries()]);
+      } else {
+        all = staticRows.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+        livePriceData = {};
+      }
 
-      liveMap.forEach((d, id) => {
-        if (d.is_active === false || merged.has(id)) return;
-        merged.set(id, {
-          id,
-          name: d.name || ('محصول ' + id),
-          image: d.img || ''
-        });
-        if (d.category_name) categoriesMap[id] = d.category_name;
-      });
-
-      all = [...merged.values()].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
-      livePriceData = Object.fromEntries([...liveMap.entries()]);
       renderCategoryChips();
 
       if (q) {
