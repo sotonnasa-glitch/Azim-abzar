@@ -543,6 +543,10 @@
     if (!target) return;
     target.classList.add('active');
     document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+    const activeNav = document.querySelector('.nav button[data-view="' + name + '"]');
+    if (activeNav && window.matchMedia && window.matchMedia('(max-width:720px)').matches) {
+      activeNav.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    }
     if (viewInfo[name]) {
       $('pageTitle').textContent = viewInfo[name][0];
       $('pageSub').textContent = viewInfo[name][1];
