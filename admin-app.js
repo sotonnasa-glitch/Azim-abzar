@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V14 = true;
+  window.__AZIM_ADMIN_V15 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -584,6 +584,79 @@
     return r;
   }
 
+  function variantRows(variants) {
+    const rows = Array.isArray(variants) ? variants : [];
+    if (!rows.length) return '<div class="az-variant-empty">این محصول فعلاً سایزبندی ندارد. برای افزودن، «＋ افزودن سایز» را بزن.</div>';
+    return rows.map((v, i) => {
+      const size = v && (v.size ?? v.label ?? v.name ?? '') || '';
+      const price = v && v.price != null ? v.price : '';
+      return '<div class="az-variant-row" data-variant-row>' +
+        '<input class="input" data-variant-size placeholder="سایز / مشخصه" value="' + esc(size) + '">' +
+        '<input class="input" data-variant-price inputmode="numeric" placeholder="قیمت این سایز" value="' + esc(price) + '">' +
+        '<button type="button" class="btn ghost" data-remove-variant>حذف</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function productVariantsEditor(variants) {
+    return '<div class="field full az-variants-box">' +
+      '<div class="az-variants-head"><div><strong>سایزبندی / مشخصات</strong><small>سایزهای واقعی این محصول و قیمت هر سایز را مستقیم مدیریت کن.</small></div>' +
+      '<button type="button" class="btn secondary" id="addVariantBtn">＋ افزودن سایز</button></div>' +
+      '<div id="variantRows">' + variantRows(variants) + '</div>' +
+      '<details class="az-advanced-variants"><summary>ویرایش پیشرفته JSON</summary><textarea class="textarea" name="variantsAdvanced" placeholder="مثال: [{&quot;size&quot;:&quot;10&quot;,&quot;price&quot;:1200000}]">' +
+      esc(variants ? JSON.stringify(variants, null, 2) : '') + '</textarea><small>برای داده‌های خاص، JSON فعلی را هم حفظ کرده‌ایم.</small></details>' +
+      '<textarea name="variants" hidden></textarea>' +
+    '</div>';
+  }
+
+  function collectVariantsFromEditor(form) {
+    const rows = [...form.querySelectorAll('[data-variant-row]')];
+    return rows.map((row) => {
+      const size = row.querySelector('[data-variant-size]')?.value.trim() || '';
+      const priceRaw = row.querySelector('[data-variant-price]')?.value.trim() || '';
+      const price = priceRaw === '' ? null : Number(priceRaw.replace(/,/g, ''));
+      if (!size) return null;
+      return { size, price: Number.isFinite(price) ? price : null };
+    }).filter(Boolean);
+  }
+
+  function initVariantEditor(form, originalVariants) {
+    const rows = $('variantRows');
+    const add = $('addVariantBtn');
+    if (!rows || !add) return;
+    add.onclick = () => {
+      if (rows.querySelector('.az-variant-empty')) rows.innerHTML = '';
+      const row = document.createElement('div');
+      row.className = 'az-variant-row';
+      row.setAttribute('data-variant-row','');
+      row.innerHTML = '<input class="input" data-variant-size placeholder="سایز / مشخصه">' +
+        '<input class="input" data-variant-price inputmode="numeric" placeholder="قیمت این سایز">' +
+        '<button type="button" class="btn ghost" data-remove-variant>حذف</button>';
+      rows.appendChild(row);
+      row.querySelector('[data-variant-size]')?.focus();
+    };
+    rows.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-remove-variant]');
+      if (!b) return;
+      b.closest('[data-variant-row]')?.remove();
+      if (!rows.querySelector('[data-variant-row]')) rows.innerHTML = '<div class="az-variant-empty">سایزی ثبت نشده.</div>';
+    });
+    form.addEventListener('input', () => {
+      const hidden = form.querySelector('[name="variants"]');
+      if (hidden) hidden.value = JSON.stringify(collectVariantsFromEditor(form));
+    });
+    const advanced = form.querySelector('[name="variantsAdvanced"]');
+    advanced?.addEventListener('change', () => {
+      try {
+        const parsed = JSON.parse(advanced.value || '[]');
+        if (!Array.isArray(parsed)) throw new Error('فرمت باید آرایه باشد.');
+        rows.innerHTML = variantRows(parsed);
+      } catch (_) {}
+    });
+    const hidden = form.querySelector('[name="variants"]');
+    if (hidden) hidden.value = JSON.stringify(collectVariantsFromEditor(form));
+  }
+
   function productForm(p) {
     const categoryOptions = state.categories.map((c) =>
       '<option value="' + esc(c.name) + '" ' + (c.name === (p?.category_name || p?.cat || '') ? 'selected' : '') + '>' + esc(c.name) + '</option>'
@@ -601,8 +674,7 @@
       '<div class="field"><label>تصویر جدید</label><input class="input" name="file" type="file" accept="image/*"></div>' +
       '<div class="field full"><label>توضیحات</label><textarea class="textarea" name="description">' + esc(p?.description || '') + '</textarea></div>' +
       '<label class="check field full"><input name="is_active" type="checkbox" ' + (p?.is_active === false ? '' : 'checked') + '> نمایش محصول در سایت</label>' +
-      '<div class="field full"><label>Variants JSON اختیاری</label><textarea class="textarea" name="variants" placeholder="[{&quot;label&quot;:&quot;10mm&quot;,&quot;price&quot;:120000]">' +
-      esc(p?.variants ? JSON.stringify(p.variants, null, 2) : '') + '</textarea></div>' +
+      productVariantsEditor(p?.variants) +
       '<div class="field full"><div class="tools"><button class="btn">ذخیره محصول</button>' +
       (p && can.edit() ? '<button type="button" class="btn ghost" id="deleteProductBtn">حذف محصول</button>' : '') +
       '</div></div><div id="productStatus" class="status field full"></div></form>';
@@ -615,6 +687,7 @@
     if (!p) return toast('محصول پیدا نشد.');
     openModal('ویرایش محصول', productForm(p));
     $('productForm').onsubmit = (e) => saveProduct(e, id);
+    initVariantEditor($('productForm'), p.variants);
     const del = $('deleteProductBtn');
     if (del) del.onclick = () => deleteProduct(id);
   }
@@ -624,6 +697,7 @@
     await ensureCaches();
     openModal('افزودن محصول', productForm(null));
     $('productForm').onsubmit = (e) => saveProduct(e, null);
+    initVariantEditor($('productForm'), null);
   }
 
   async function saveProduct(e, id) {
@@ -643,7 +717,10 @@
         img = state.db.storage.from('product-images').getPublicUrl(path).data.publicUrl;
       }
       let variants = null;
-      if (s.variants.value.trim()) variants = JSON.parse(s.variants.value);
+      const variantText = s.variants?.value?.trim() || '';
+      const advancedVariantText = s.variantsAdvanced?.value?.trim() || '';
+      if (variantText) variants = JSON.parse(variantText);
+      else if (advancedVariantText) variants = JSON.parse(advancedVariantText);
       const category = s.category_name.value || '';
       const p = {
         name: s.name.value.trim(),
