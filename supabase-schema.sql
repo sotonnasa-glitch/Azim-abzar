@@ -38,7 +38,7 @@ as $$
 $$;
 
 revoke all on function private.is_azim_admin() from public;
-grant execute on function private.is_azim_admin() to anon, authenticated;
+grant execute on function private.is_azim_admin() to authenticated;
 
  drop policy if exists "Public can read products" on public.products;
 create policy "Public can read products" on public.products
