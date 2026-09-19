@@ -146,17 +146,31 @@ drop trigger if exists site_content_touch_updated_at on public.site_content;
 create trigger site_content_touch_updated_at before update on public.site_content for each row execute function private.touch_updated_at();
 
 create or replace function private.is_azim_admin()
-returns boolean language sql stable security definer set search_path=public
-as $ select exists(select 1 from public.admin_users where user_id=auth.uid() and is_active=true); $;
+returns boolean
+language sql stable security definer set search_path=public
+as $
+  select coalesce(auth.jwt()->>'aal','aal1')='aal2'
+    and exists(
+      select 1 from public.admin_users
+      where user_id=auth.uid()
+        and is_active=true
+    );
+$;
 revoke all on function private.is_azim_admin() from public;
 grant execute on function private.is_azim_admin() to authenticated;
 
 create or replace function private.has_azim_role(allowed_roles text[])
-returns boolean language sql stable security definer set search_path=public
-as $ select exists(
-  select 1 from public.admin_users
-  where user_id=auth.uid() and is_active=true and role = any(allowed_roles)
-); $;
+returns boolean
+language sql stable security definer set search_path=public
+as $
+  select coalesce(auth.jwt()->>'aal','aal1')='aal2'
+    and exists(
+      select 1 from public.admin_users
+      where user_id=auth.uid()
+        and is_active=true
+        and role=any(allowed_roles)
+    );
+$;
 revoke all on function private.has_azim_role(text[]) from public;
 grant execute on function private.has_azim_role(text[]) to authenticated;
 
@@ -223,7 +237,17 @@ using (private.has_azim_role(array['owner','admin','editor']))
 with check (private.has_azim_role(array['owner','admin','editor']));
 
 drop policy if exists "Public can create inquiries" on public.inquiries;
-create policy "Public can create inquiries" on public.inquiries for insert to anon with check (true);
+drop policy if exists "Public can create clean inquiries" on public.inquiries;
+create policy "Public can create clean inquiries"
+on public.inquiries
+for insert to anon
+with check (
+  coalesce(status,'new')='new'
+  and coalesce(priority,'normal')='normal'
+  and coalesce(source,'contact_form')='contact_form'
+  and admin_notes is null
+  and handled_by is null
+);
 drop policy if exists "Admins manage inquiries" on public.inquiries;
 drop policy if exists "Sales manage inquiries" on public.inquiries;
 create policy "Sales manage inquiries" on public.inquiries for all to authenticated
