@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V17 = true;
+  window.__AZIM_ADMIN_V18 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -729,6 +729,9 @@
       '<option value="' + esc(c.name) + '" ' + (c.name === (p?.category_name || p?.cat || '') ? 'selected' : '') + '>' + esc(c.name) + '</option>'
     ).join('');
     const currentBrand = p?.brand || '';
+    const imageBlock = p?.img
+      ? '<div class="az-product-image-preview"><img id="productImagePreview" src="' + esc(p.img) + '" alt=""><div><strong>تصویر فعلی</strong><small>برای جایگزینی فایل جدید انتخاب کن.</small></div></div>'
+      : '<div class="az-product-image-preview empty"><div><strong>تصویری ثبت نشده</strong><small>یک تصویر برای محصول انتخاب کن.</small></div></div>';
     return '<form id="productForm" class="grid2">' +
       '<div class="field"><label>نام محصول *</label><input class="input" name="name" required value="' + esc(p?.name) + '"></div>' +
       '<div class="field"><label>برند</label><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="نام برند را آزادانه بنویس">' +
@@ -738,7 +741,9 @@
       '<div class="field"><label>قیمت اصلی</label><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '"></div>' +
       '<div class="field"><label>قیمت فروش</label><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '"></div>' +
       '<div class="field"><label>برچسب</label><input class="input" name="badge" value="' + esc(p?.badge) + '"></div>' +
-      '<div class="field"><label>تصویر جدید</label><input class="input" name="file" type="file" accept="image/*"></div>' +
+      '<div class="field full"><label>مدیریت تصویر</label><div class="az-image-manager">' + imageBlock +
+        '<div class="az-image-actions"><input class="input" name="file" type="file" accept="image/*"><label class="az-clear-image"><input name="clearImage" type="checkbox"> حذف تصویر فعلی</label></div>' +
+      '</div></div>' +
       '<div class="field full"><label>توضیحات</label><textarea class="textarea" name="description">' + esc(p?.description || '') + '</textarea></div>' +
       '<label class="check field full"><input name="is_active" type="checkbox" ' + (p?.is_active === false ? '' : 'checked') + '> نمایش محصول در سایت</label>' +
       productVariantsEditor(p?.variants) +
@@ -746,6 +751,26 @@
       (p && can.edit() ? '<button type="button" class="btn ghost" id="deleteProductBtn">حذف محصول</button>' : '') +
       '</div></div><div id="productStatus" class="status field full"></div></form>';
   }
+
+  function initProductImageEditor(form) {
+    const file = form?.elements?.file;
+    const preview = form?.querySelector('#productImagePreview');
+    const clear = form?.elements?.clearImage;
+    if (!file) return;
+    file.addEventListener('change', () => {
+      const f = file.files?.[0];
+      if (!f) return;
+      if (clear) clear.checked = false;
+      if (!preview) return;
+      const url = URL.createObjectURL(f);
+      preview.src = url;
+      preview.onload = () => URL.revokeObjectURL(url);
+    });
+    clear?.addEventListener('change', () => {
+      if (clear.checked && file.files?.length) file.value = '';
+    });
+  }
+
 
   async function editProduct(id) {
     if (!can.edit()) return toast('⛔ این نقش اجازه ویرایش محصول ندارد.');
@@ -755,6 +780,7 @@
     openModal('ویرایش محصول', productForm(p));
     $('productForm').onsubmit = (e) => saveProduct(e, id);
     initVariantEditor($('productForm'), p.variants);
+    initProductImageEditor($('productForm'));
     const del = $('deleteProductBtn');
     if (del) del.onclick = () => deleteProduct(id);
   }
@@ -765,6 +791,7 @@
     openModal('افزودن محصول', productForm(null));
     $('productForm').onsubmit = (e) => saveProduct(e, null);
     initVariantEditor($('productForm'), null);
+    initProductImageEditor($('productForm'));
   }
 
   async function saveProduct(e, id) {
@@ -773,6 +800,7 @@
     const s = e.target.elements;
     try {
       let img = id ? (state.products.find((x) => x.id === id)?.img || null) : null;
+      if (s.clearImage?.checked) img = null;
       const file = s.file?.files?.[0];
       if (file) {
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
