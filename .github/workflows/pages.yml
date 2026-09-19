@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -41,6 +41,20 @@ jobs:
           print('IMAGE HOST: Supabase Storage / catalog-images')
           PY
 
+      - name: Restore archived catalog image fallbacks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p catalog_site_mapping_908/images
+          found=0
+          for archive_b64 in catalog_site_mapping_908/missing-images-*.b64 catalog_site_mapping_908/missing-mini-*.b64; do
+            [ -f "$archive_b64" ] || continue
+            archive_zip="${archive_b64%.b64}.zip"
+            base64 --decode "$archive_b64" > "$archive_zip"
+            unzip -o -q "$archive_zip" -d .
+            found=$((found + 1))
+          done
+          echo "IMAGE_FALLBACK_ARCHIVES_RESTORED: $found"
       - name: Verify existing Supabase product images
         shell: bash
         run: |
@@ -63,7 +77,7 @@ jobs:
           assert [x['id'] for x in p] == [f'P{i:04d}' for i in range(1, 909)]
           expected = 'https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/'
           assert all(x.get('image','').startswith(expected) and x['image'].endswith(f'{x["id"]}.jpg') for x in p)
-          assert 'catalog_site_mapping_908/products.json' in Path('products-v3.html').read_text(encoding='utf-8')
+          assert 'catalog_site_mapping_908/products.json' in Path('products-v4.html').read_text(encoding='utf-8')
           print(f'CATALOG VERIFIED: {len(p)} products')
           print('REMOTE IMAGES VERIFIED: Supabase URLs for all 908 product IDs')
           PY
