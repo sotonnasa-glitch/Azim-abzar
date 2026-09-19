@@ -158,6 +158,13 @@
     }
 
     const main = document.querySelector('.main');
+    const dash = $('view-dashboard');
+    if (dash && !$('dashboardHealth')) {
+      const h = document.createElement('div');
+      h.id = 'dashboardHealth';
+      dash.appendChild(h);
+    }
+
     if (main && !$('view-ai')) {
       const sec = document.createElement('section');
       sec.id = 'view-ai';
@@ -1101,8 +1108,7 @@
       }
       const title = s.admin_title ? s.admin_title.value.trim() || null : s.title.value.trim() || null;
       const p = {
-        section_key: key, title, payload, is_active: key === 'ai_settings' ? true : !!s.is_active.checked,
-        ...(key === 'home_meta' && !p?.updated_by ? {} : {})
+        section_key: key, title, payload, is_active: key === 'ai_settings' ? true : !!s.is_active.checked
       };
       let r;
       if (id) r = await state.db.from('site_content').update(p).eq('id', id);
