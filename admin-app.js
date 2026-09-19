@@ -431,6 +431,8 @@
     $('newContentBtn').onclick = () => newContent();
     $('homeCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('home'));
     $('contactCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
+    $('homeCopyCard')?.addEventListener('click', () => openFocusedSiteEditor('home'));
+    $('contactCopyCard')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
     $('unifiedSiteBtn')?.addEventListener('click', () => openUnifiedSiteEditor());
     $('changePasswordBtn')?.addEventListener('click', () => openPasswordChange(false));
     $('newOrderBtn').onclick = () => newOrder();
