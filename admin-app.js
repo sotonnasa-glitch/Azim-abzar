@@ -207,6 +207,16 @@
       location.reload();
     };
 
+    const productTools = document.querySelector('#view-products .tools');
+    if (productTools && !$('productCategoryFilter')) {
+      const sel = document.createElement('select');
+      sel.id = 'productCategoryFilter';
+      sel.className = 'select';
+      sel.innerHTML = '<option value="">همه دسته‌ها</option>';
+      productTools.insertBefore(sel, $('newProductBtn'));
+      sel.onchange = () => loadProducts();
+    }
+
     $('newProductBtn').onclick = () => newProduct();
     $('newCategoryBtn').onclick = () => newCategory();
     $('newBrandBtn').onclick = () => newBrand();
@@ -367,7 +377,9 @@
       .order('updated_at', { ascending: false }).limit(1000);
     const search = $('productSearch').value.trim();
     const status = $('productStatus').value;
+    const category = $('productCategoryFilter')?.value || '';
     if (status) q = q.eq('is_active', status === 'true');
+    if (category) q = q.eq('category_name', category);
     if (search) {
       const s = search.replace(/[%(),]/g, ' ');
       q = q.or('name.ilike.%' + s + '%,brand.ilike.%' + s + '%,code.ilike.%' + s + '%,category_name.ilike.%' + s + '%');
@@ -381,6 +393,12 @@
   async function ensureCaches() {
     if (!state.categories.length) await fetchCategoriesCache();
     if (!state.brands.length) await fetchBrandsCache();
+    const categoryFilter = $('productCategoryFilter');
+    if (categoryFilter) {
+      const current = categoryFilter.value;
+      categoryFilter.innerHTML = '<option value="">همه دسته‌ها</option>' + state.categories.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+      categoryFilter.value = current;
+    }
   }
 
   async function fetchCategoriesCache() {
