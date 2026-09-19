@@ -14,8 +14,8 @@
 /* Product editor — premium industrial workspace */
 .modal.product-editor-modal{align-items:stretch;justify-content:flex-start;padding:0;background:rgba(2,4,3,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .modal.product-editor-modal .modal-box{width:min(1180px,100%);height:100vh;max-height:none;overflow:hidden;border:0;border-right:1px solid rgba(245,185,0,.16);border-left:1px solid rgba(255,255,255,.06);border-radius:0;padding:0;background:linear-gradient(180deg,#0d1210 0%,#0a0e0c 100%);box-shadow:-30px 0 90px rgba(0,0,0,.55);margin-right:auto}
-.modal.product-editor-modal .modal-head{height:0;overflow:hidden;margin:0;padding:0;position:relative;z-index:5}
-.modal.product-editor-modal .modal-head .x{position:absolute;right:18px;top:16px;width:40px;height:40px;border-radius:12px;background:#171d19;border-color:#39443d;font-size:20px;z-index:10}
+.modal.product-editor-modal .modal-head{position:absolute;inset:0 0 auto 0;height:0;overflow:visible;margin:0;padding:0;z-index:9;pointer-events:none}
+.modal.product-editor-modal .modal-head .x{pointer-events:auto;position:absolute;right:18px;top:16px;width:40px;height:40px;border-radius:12px;background:#171d19;border-color:#39443d;font-size:20px;z-index:10}
 .modal.product-editor-modal #modalBody{height:100%;overflow:auto;scrollbar-width:thin;scrollbar-color:#39443d transparent}
 .az-product-editor-form{min-height:100%;display:flex;flex-direction:column;color:#f5f7f5}
 .az-product-editor-top{position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 30px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(10,14,12,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
@@ -81,7 +81,7 @@
 .az-advanced-variants summary{cursor:pointer;color:#9ca69f;font-size:8px}
 .az-advanced-variants .textarea{margin-top:10px;min-height:130px;width:100%}
 .az-advanced-variants small{display:block;color:#68736b;font-size:7px;margin-top:5px}
-.az-product-editor-footer{position:fixed;right:0;bottom:0;left:0;z-index:8;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px max(26px,calc((100vw - 1080px)/2));background:rgba(8,12,10,.96);border-top:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.az-product-editor-footer{position:fixed;left:0;right:auto;width:min(1180px,100vw);bottom:0;z-index:8;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px max(26px,calc((100vw - 1080px)/2));background:rgba(8,12,10,.96);border-top:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .az-editor-save-state{display:flex;align-items:center;gap:8px;min-width:0}
 .az-save-dot{width:7px;height:7px;border-radius:50%;background:#53d27a;box-shadow:0 0 10px rgba(83,210,122,.35);flex:0 0 auto}
 .az-editor-save-state .status{color:#87928a;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
