@@ -55,6 +55,13 @@ jobs:
             found=$((found + 1))
           done
           echo "IMAGE_FALLBACK_ARCHIVES_RESTORED: $found"
+          for id in P0452 P0453 P0454 P0455 P0457 P0460 P0468 P0502 P0519 P0522 P0524 P0525 P0526 P0527 P0528 P0529 P0530 P0533 P0535 P0537 P0538 P0541 P0542 P0553 P0821 P0838 P0840; do
+            if [ -f "catalog_site_mapping_908/images/${id}.jpg" ]; then
+              echo "FALLBACK_IMAGE_OK: ${id}"
+            else
+              echo "FALLBACK_IMAGE_MISSING: ${id}"
+            fi
+          done
       - name: Verify existing Supabase product images
         shell: bash
         run: |
@@ -97,7 +104,7 @@ jobs:
           set -euo pipefail
           rm -rf _site
           mkdir -p _site
-          rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='catalog_site_mapping_908/images/' ./ _site/
+          rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' ./ _site/
           test -s _site/products.html
           test -s _site/products-v3.html
 
