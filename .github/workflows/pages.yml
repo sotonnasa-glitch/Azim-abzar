@@ -126,6 +126,34 @@ jobs:
           print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
           PY
 
+      - name: Validate contact and catalog runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          contact = Path('_site/contact.html').read_text(encoding='utf-8')
+          index = Path('_site/index.html').read_text(encoding='utf-8')
+          products = Path('_site/products-v4.html').read_text(encoding='utf-8')
+          assert 'azim-live-content.js?v=2' in contact
+          assert 'supabase-config.js' in contact
+          assert 'azim-live-content.js?v=2' in index
+          assert 'loadLiveVariants' in products
+          assert 'livePriceData' in products
+          assert 'products-v4.html' in index
+          assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
+          print('CONTACT/CATALOG VERIFIED: unified CMS + live variants + no placeholder mobile number')
+          PY
+          node --check <(python - <<'PY'
+          from pathlib import Path
+          import re
+          h=Path('_site/contact.html').read_text(encoding='utf-8')
+          for s in re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',h):
+              if 'handleFormSubmission' in s:
+                  print(s)
+                  break
+          PY
+          )
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
