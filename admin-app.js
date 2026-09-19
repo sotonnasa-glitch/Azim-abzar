@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V21 = true;
+  window.__AZIM_ADMIN_V22 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -1787,6 +1787,112 @@
       '<details class="az-copy-group"><summary>📍 ارتباط با ما — آدرس پایین صفحه و فوتر</summary><div class="grid2">' + fieldHtml('contact.bottom') + fieldHtml('contact.footer') + '</div></details>' +
       '<div class="az-copy-savebar"><button class="btn" type="submit">💾 ذخیره همه نوشته‌ها</button><span id="unifiedSiteStatus" class="status"></span></div>' +
       '</form>';
+  }
+
+
+  const focusedCopyGroups = {
+    home: [
+      ['🏠 هدر و SEO','home.meta,home.header'],
+      ['🎯 هیرو و نوار بالایی','home.topbar,home.hero'],
+      ['🧭 مسیرهای خرید','home.choice'],
+      ['🛠️ مزیت‌های فروشگاه','home.why'],
+      ['🔻 فوتر صفحه اصلی','home.footer']
+    ],
+    contact: [
+      ['📞 هدر و SEO','contact.meta,contact.header'],
+      ['🧾 معرفی صفحه','contact.hero,contact.channels_head'],
+      ['☎️ تلفن، پشتیبانی، ایمیل و آدرس','contact.phone,contact.support,contact.email,contact.address'],
+      ['🕘 ساعات کاری','contact.hours'],
+      ['📝 فرم استعلام و پیام','contact.form'],
+      ['✅ مزیت‌های اعتماد','contact.trust'],
+      ['❓ پرسش‌های متداول','contact.faq'],
+      ['📍 آدرس پایین صفحه و فوتر','contact.bottom,contact.footer']
+    ]
+  };
+
+  function fieldsForPaths(paths) {
+    const wanted = new Set(paths.split(',').map(x => x.trim()));
+    return unifiedSiteFields.filter(f => [...wanted].some(prefix => f[0] === prefix || f[0].startsWith(prefix + '.')));
+  }
+
+  function focusedSiteForm(scope, copy) {
+    const p = Object.assign(siteCopyDefaults(), copy || {});
+    const groups = focusedCopyGroups[scope] || [];
+    return '<form id="focusedSiteForm" class="az-unified-form">' +
+      '<div class="az-copy-intro"><strong>' + (scope === 'contact' ? '📞 مدیریت صفحه ارتباط با ما' : '🏠 مدیریت صفحه اصلی') + '</strong>' +
+      '<small>فقط محتوای همین صفحه در این بخش قرار دارد؛ اطلاعات را تغییر بده و «ذخیره صفحه» را بزن.</small></div>' +
+      groups.map((g,i) => {
+        const html = fieldsForPaths(g[1]).map(f => {
+          const kind = f[2] || 'input';
+          return copyField('fc_' + f[0], f[1], copyGet(p, f[0], kind === 'lines' ? [] : ''), kind, kind === 'textarea' || kind === 'lines');
+        }).join('');
+        return '<details class="az-copy-group" ' + (i === 0 ? 'open' : '') + '><summary>' + g[0] + '</summary><div class="grid2">' + html + '</div></details>';
+      }).join('') +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">💾 ذخیره صفحه</button><button class="btn ghost" type="button" id="previewFocusedSite">🌐 پیش‌نمایش</button><span id="focusedSiteStatus" class="status"></span></div>' +
+      '</form>';
+  }
+
+  async function openFocusedSiteEditor(scope) {
+    if (!can.edit()) return toast('⛔ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
+    const r = await state.db.from('site_content').select('id,section_key,title,payload,is_active').eq('section_key','site_copy').maybeSingle();
+    if (r.error) return toast('❌ ' + errorText(r.error));
+    openModal(scope === 'contact' ? 'ویرایش صفحه ارتباط با ما' : 'ویرایش صفحه اصلی', focusedSiteForm(scope, r.data?.payload || {}));
+    $('focusedSiteForm').onsubmit = (e) => saveFocusedSiteContent(e, scope, r.data?.id || null);
+    $('previewFocusedSite')?.addEventListener('click', () => {
+      const target = scope === 'contact' ? 'contact.html' : 'index.html';
+      window.open(new URL(target, window.location.origin).href, '_blank', 'noopener');
+    });
+  }
+
+  async function saveFocusedSiteContent(e, scope, rowId) {
+    e.preventDefault();
+    if (!can.edit()) return;
+    const status = $('focusedSiteStatus');
+    try {
+      const existingRow = await state.db.from('site_content').select('section_key,payload').eq('section_key','site_copy').maybeSingle();
+      if (existingRow.error) throw existingRow.error;
+      const copy = Object.assign(siteCopyDefaults(), existingRow.data?.payload || {});
+      const fields = (focusedCopyGroups[scope] || []).flatMap(g => fieldsForPaths(g[1]));
+      fields.forEach(f => {
+        const el = e.target.elements['fc_' + f[0]];
+        if (!el) return;
+        copySet(copy, f[0], f[2] === 'lines'
+          ? el.value.split('\n').map(x => x.trim()).filter(Boolean)
+          : el.value.trim());
+      });
+
+      const saved = rowId
+        ? await state.db.from('site_content').update({section_key:'site_copy',title:'ویرایش یکجای متن سایت',payload:copy,is_active:true,updated_by:state.user.id}).eq('id',rowId)
+        : await state.db.from('site_content').insert({section_key:'site_copy',title:'ویرایش یکجای متن سایت',payload:copy,is_active:true,updated_by:state.user.id});
+      if (saved.error) throw saved.error;
+
+      if (scope === 'home') {
+        const h = copy.home || {};
+        const compat = [
+          ['home_meta',{title:copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی',description:copyGet(h,'meta.description') || copyGet(h,'hero.description')}],
+          ['home_hero',{eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),secondary_ai_cta:copyGet(h,'hero.secondary_ai_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
+          ['home_choice',{eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
+          ['home_why',{eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}]
+        ];
+        for (const [key,payload] of compat) {
+          const rr = await state.db.from('site_content').update({payload,updated_by:state.user.id}).eq('section_key',key);
+          if (rr.error) throw rr.error;
+        }
+      } else {
+        const p = copy.contact || {};
+        const rr = await state.db.from('site_content').update({
+          payload:{title:copyGet(p,'meta.title') || copyGet(p,'hero.title'),description:copyGet(p,'meta.description') || copyGet(p,'hero.description'),email:copyGet(p,'email.value')},
+          updated_by:state.user.id
+        }).eq('section_key','contact_page');
+        if (rr.error) throw rr.error;
+      }
+      await audit('update','site_content',rowId || 'site_copy',{scope});
+      if (status) status.textContent='✅ ذخیره شد';
+      toast('✅ صفحه ' + (scope === 'contact' ? 'ارتباط با ما' : 'اصلی') + ' بروزرسانی شد');
+      await loadContent();
+    } catch (err) {
+      if (status) status.textContent='❌ ' + errorText(err);
+    }
   }
 
   async function openUnifiedSiteEditor() {
