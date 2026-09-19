@@ -1080,12 +1080,7 @@
 
       <!-- Quick Category Chips -->
       <div class="category-chips-row" id="categoryChips" role="tablist" aria-label="دسته‌بندی‌های سریع ابزار">
-        <button type="button" class="cat-chip active" data-cat="all">همه محصولات <span class="chip-count">۹۰۸</span></button>
-        <button type="button" class="cat-chip" data-cat="آچار و بکس">آچار و بکس <span class="chip-count">۳۱۳</span></button>
-        <button type="button" class="cat-chip" data-cat="ابزار دستی">ابزار دستی و انبرها <span class="chip-count">۳۹۲</span></button>
-        <button type="button" class="cat-chip" data-cat="تعمیرگاهی">تخصصی تعمیرگاهی <span class="chip-count">۱۱۸</span></button>
-        <button type="button" class="cat-chip" data-cat="برقی / بادی">ابزار بادی و پنوماتیک <span class="chip-count">۵۵</span></button>
-        <button type="button" class="cat-chip" data-cat="اندازه‌گیری">اندازه‌گیری و ترکمتر <span class="chip-count">۳۰</span></button>
+        <button type="button" class="cat-chip active" data-cat="all">همه محصولات <span class="chip-count">۰</span></button>
       </div>
     </section>
 
@@ -1135,8 +1130,8 @@
           <div>
             <div class="modal-head-tags">
               <span class="modal-code-badge" id="modalCode">کد: P0000</span>
-              <span class="modal-badge-alloy">آلیاژ Cr-V استاندارد صنعتی</span>
-              <span class="modal-badge-alloy">تضمین اصالت فیزیکی</span>
+              <span class="modal-badge-alloy">اطلاعات فنی و قیمت</span>
+              <span class="modal-badge-alloy">برای استعلام و سفارش</span>
             </div>
             <h2 class="modal-title" id="modalTitle" style="margin-top:10px;">نام محصول</h2>
             <div class="modal-cat" id="modalCat" style="margin-top:4px;">دسته‌بندی تخصصی</div>
@@ -1145,22 +1140,22 @@
           <!-- Technical Specs Highlights -->
           <div class="modal-specs-grid">
             <div class="modal-spec-item">
-              <span class="modal-spec-label">ضمانت اصالت:</span>
-              <span class="modal-spec-val">۱۰۰٪ اصل و فابریک</span>
+              <span class="modal-spec-label">دسته‌بندی:</span>
+              <span class="modal-spec-val" id="modalSpecCategory">—</span>
             </div>
             <div class="modal-spec-item">
-              <span class="modal-spec-label">نوع کاربری:</span>
-              <span class="modal-spec-val">کارگاهی و مکانیکی</span>
+              <span class="modal-spec-label">سایزبندی:</span>
+              <span class="modal-spec-val" id="modalSpecVariants">بدون سایزبندی</span>
             </div>
             <div class="modal-spec-item">
-              <span class="modal-spec-label">وضعیت انبار:</span>
-              <span class="modal-spec-val" style="color:#2ed573;">موجود و آماده تحویل</span>
+              <span class="modal-spec-label">وضعیت کاتالوگ:</span>
+              <span class="modal-spec-val" id="modalSpecStatus" style="color:#2ed573;">قابل نمایش</span>
             </div>
           </div>
 
           <!-- Price Block -->
           <div class="modal-price-block">
-            <span class="modal-price-label">قیمت منبع (واحد):</span>
+            <span class="modal-price-label">قیمت فعلی نمایش‌داده‌شده:</span>
             <span class="modal-price-val" id="modalPrice">--</span>
           </div>
 
@@ -1179,7 +1174,7 @@
                 <line x1="20" y1="8" x2="20" y2="14"></line>
                 <line x1="23" y1="11" x2="17" y2="11"></line>
               </svg>
-              <span id="modalOrderBtnText">ثبت سفارش</span>
+              <span id="modalOrderBtnText">استعلام / سفارش</span>
             </a>
           </div>
         </div>
@@ -1222,6 +1217,7 @@
     let priceData = {};
     let basePrices = {};
     let livePriceData = {};
+    let liveCategories = [];
 
     // Current Modal State
     let activeModalItem = null;
@@ -1265,10 +1261,10 @@
       }
     }
 
-    async function loadLiveVariants() {
-      if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return {};
+    async function loadLiveCatalog() {
+      if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
-        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=code,price,variants,is_active,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&is_active=eq.true&limit=1000';
+        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=code,name,img,price,variants,is_active,category_name,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
         const r = await fetch(u, {
           headers: {
             apikey: window.AZIM_SUPABASE_ANON_KEY,
@@ -1276,14 +1272,30 @@
           },
           cache: 'no-store'
         });
-        if (!r.ok) return {};
+        if (!r.ok) return null;
         const rows = await r.json();
-        return Object.fromEntries(
-          (rows || []).map(x => [String(x.code || '').trim().toUpperCase(), normalizeLiveRow(x)])
-            .filter(([id, d]) => /^P\d{4}$/.test(id) && d.v.length)
-        );
+        return Array.isArray(rows) ? rows : [];
       } catch (_) {
-        return {};
+        return null;
+      }
+    }
+
+    async function loadLiveCategories() {
+      if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
+      try {
+        const u = window.AZIM_SUPABASE_URL + '/rest/v1/categories?select=name,sort_order,is_active&is_active=eq.true&order=sort_order.asc&limit=100';
+        const r = await fetch(u, {
+          headers: {
+            apikey: window.AZIM_SUPABASE_ANON_KEY,
+            Authorization: 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
+          },
+          cache: 'no-store'
+        });
+        if (!r.ok) return null;
+        const rows = await r.json();
+        return Array.isArray(rows) ? rows : [];
+      } catch (_) {
+        return null;
       }
     }
 
@@ -1294,6 +1306,10 @@
       return {
         p: x?.price ?? null,
         v: vs,
+        name: String(x?.name ?? '').trim(),
+        img: String(x?.img ?? '').trim(),
+        category_name: String(x?.category_name ?? '').trim(),
+        is_active: x?.is_active !== false,
         discount_type: x?.discount_type || null,
         discount_value: x?.discount_value == null ? null : Number(x.discount_value),
         discount_is_active: !!x?.discount_is_active,
@@ -1330,7 +1346,9 @@
     function getProductPriceValue(id) {
       const d = getData(id);
       const nums = d.vs.map(v => Number(v[1])).filter(n => Number.isFinite(n) && n > 0);
-      if (nums.length) return Math.min(...nums);
+      const liveNums = nums.map(n => discountedPrice(n, d.discount));
+      const values = liveNums.filter(n => Number.isFinite(n) && n > 0);
+      if (values.length) return Math.min(...values);
       if (d.base != null && Number(d.base) > 0) return discountedPrice(Number(d.base), d.discount);
       return 0;
     }
@@ -1431,6 +1449,16 @@
       const modalImg = document.getElementById('modalImg');
       modalImg.src = item.image;
       modalImg.alt = item.name;
+      const modalSpecCategory = document.getElementById('modalSpecCategory');
+      const modalSpecVariants = document.getElementById('modalSpecVariants');
+      const modalSpecStatus = document.getElementById('modalSpecStatus');
+      if (modalSpecCategory) modalSpecCategory.textContent = cat;
+      if (modalSpecVariants) modalSpecVariants.textContent = vs.length ? fmt(vs.length) + ' گزینه' : 'بدون سایزبندی';
+      if (modalSpecStatus) {
+        const live = livePriceData[id];
+        modalSpecStatus.textContent = live ? (live.is_active ? 'فعال در فروشگاه' : 'غیرفعال') : 'اطلاعات کاتالوگ';
+        modalSpecStatus.style.color = live?.is_active === false ? '#ff8b8b' : '#2ed573';
+      }
 
       const varWrap = document.getElementById('modalVariantsContainer');
       const varList = document.getElementById('modalVariantsList');
@@ -1678,28 +1706,59 @@
       render();
     });
 
-    document.querySelectorAll('.cat-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        selectedCategory = chip.dataset.cat;
-        page = 1;
-        render();
+    function renderCategoryChips() {
+      const box = document.getElementById('categoryChips');
+      if (!box) return;
+
+      const fallbackNames = [...new Set(Object.values(categoriesMap).filter(Boolean))];
+      const sourceNames = liveCategories.length
+        ? liveCategories.map(x => String(x.name || '').trim()).filter(Boolean)
+        : fallbackNames;
+
+      const names = [...new Set(sourceNames)];
+      const counts = new Map();
+      all.forEach(x => {
+        const cat = categoriesMap[x.id];
+        if (cat) counts.set(cat, (counts.get(cat) || 0) + 1);
       });
-    });
+
+      box.innerHTML =
+        '<button type="button" class="cat-chip active" data-cat="all">همه محصولات <span class="chip-count">' + fmt(all.length) + '</span></button>' +
+        names.map(name =>
+          '<button type="button" class="cat-chip" data-cat="' + esc(name) + '">' +
+          esc(name) + ' <span class="chip-count">' + fmt(counts.get(name) || 0) + '</span></button>'
+        ).join('');
+
+      bindCategoryChips();
+      const active = selectedCategory || 'all';
+      document.querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === active));
+    }
+
+    function bindCategoryChips() {
+      document.querySelectorAll('.cat-chip').forEach(chip => {
+        chip.onclick = () => {
+          document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          selectedCategory = chip.dataset.cat;
+          page = 1;
+          render();
+        };
+      });
+    }
 
     // Main Init
     async function init() {
-      const [products, variants, prices, live, catMap] = await Promise.all([
+      const [products, variants, prices, liveRows, catMap, categoryRows] = await Promise.all([
         fetchJSON('./catalog_site_mapping_908/products.json', 'کاتالوگ'),
         fetchJSON('./catalog_site_mapping_908/price-size-data.json', 'فایل سایز و قیمت'),
         fetchJSON('./catalog_site_mapping_908/prices.json', 'فایل قیمت محصولات'),
-        loadLiveVariants(),
-        fetchJSON('./catalog_site_mapping_908/category-map.json', 'نقشه دسته‌بندی').catch(() => ({}))
+        loadLiveCatalog(),
+        fetchJSON('./catalog_site_mapping_908/category-map.json', 'نقشه دسته‌بندی').catch(() => ({})),
+        loadLiveCategories()
       ]);
 
       if (!Array.isArray(products) || products.length !== 908) {
-        throw Error('کاتالوگ باید دقیقاً ۹۰۸ محصول داشته باشد');
+        throw Error('کاتالوگ پایه باید دقیقاً ۹۰۸ محصول داشته باشد');
       }
       if (!variants || typeof variants !== 'object' || Object.keys(variants).length !== 908) {
         throw Error('داده سایز و قیمت باید ۹۰۸ شناسه داشته باشد');
@@ -1708,32 +1767,58 @@
         throw Error('داده قیمت باید ۹۰۸ شناسه داشته باشد');
       }
 
-      all = products.map(x => ({
+      const staticRows = products.map(x => ({
         id: String(x.id || '').trim().toUpperCase(),
         name: String(x.name || '').trim(),
         image: String(x.image || '').trim()
       }));
-
-      if (new Set(all.map(x => x.id)).size !== 908) {
+      if (new Set(staticRows.map(x => x.id)).size !== 908) {
         throw Error('شناسه‌های کاتالوگ تکراری است');
       }
 
-      all.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
-
       priceData = variants;
       basePrices = prices;
-      livePriceData = live || {};
-      categoriesMap = catMap || {};
+      categoriesMap = { ...(catMap || {}) };
+      liveCategories = Array.isArray(categoryRows) ? categoryRows
+        .filter(x => x && x.is_active !== false)
+        .sort((a,b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
+        : [];
+
+      const liveMap = new Map(
+        (Array.isArray(liveRows) ? liveRows : [])
+          .map(x => [String(x?.code || '').trim().toUpperCase(), normalizeLiveRow(x)])
+          .filter(([id, d]) => /^P\d{4}$/.test(id) && id)
+      );
+
+      const merged = new Map();
+      staticRows.forEach(x => {
+        const d = liveMap.get(x.id);
+        if (d && d.is_active === false) return;
+        merged.set(x.id, {
+          ...x,
+          name: d?.name || x.name,
+          image: d?.img || x.image
+        });
+        if (d?.category_name) categoriesMap[x.id] = d.category_name;
+      });
+
+      liveMap.forEach((d, id) => {
+        if (d.is_active === false || merged.has(id)) return;
+        merged.set(id, {
+          id,
+          name: d.name || ('محصول ' + id),
+          image: d.img || ''
+        });
+        if (d.category_name) categoriesMap[id] = d.category_name;
+      });
+
+      all = [...merged.values()].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+      livePriceData = Object.fromEntries([...liveMap.entries()]);
+      renderCategoryChips();
 
       if (q) {
         searchInput.value = q;
         clearBtn.style.display = 'block';
-      }
-
-      if (selectedCategory && selectedCategory !== 'all') {
-        document.querySelectorAll('.cat-chip').forEach(c => {
-          c.classList.toggle('active', c.dataset.cat === selectedCategory);
-        });
       }
 
       render();
