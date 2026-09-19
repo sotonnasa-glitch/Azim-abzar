@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V11 = true;
+  window.__AZIM_ADMIN_V13 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
