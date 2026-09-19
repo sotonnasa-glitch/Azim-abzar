@@ -279,3 +279,47 @@ html,body{background:
  .tools{width:100%}.tools .input,.tools .select{min-width:0;flex:1}
 }
 @media(max-width:440px){.az-menu-grid{grid-template-columns:1fr}.az-menu-group{display:none}.topbar .btn.secondary{font-size:0;width:42px}.topbar .btn.secondary:after{content:'↻';font-size:16px}}
+
+/* === AZIM ADMIN // V13 SIDE MENU + PRODUCTS FIX === */
+.az-menu-overlay{
+  align-items:stretch;
+  justify-content:flex-start;
+  padding:0;
+  background:rgba(2,4,3,.68);
+}
+.az-menu-card{
+  width:min(440px,92vw);
+  height:100vh;
+  max-height:none;
+  border-radius:0 24px 24px 0;
+  border-left:1px solid rgba(245,185,0,.16);
+  border-right:0;
+  animation:azSideMenuIn .22s ease;
+  overflow:auto;
+}
+@keyframes azSideMenuIn{
+  from{opacity:.5;transform:translateX(-100%)}
+  to{opacity:1;transform:translateX(0)}
+}
+.az-menu-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:rgba(14,19,16,.96);
+  backdrop-filter:blur(16px);
+}
+.az-menu-foot{
+  position:sticky;
+  bottom:0;
+  background:rgba(8,12,10,.96);
+  backdrop-filter:blur(16px);
+}
+@media(max-width:760px){
+  .az-menu-overlay{align-items:stretch;justify-content:flex-start;padding:0}
+  .az-menu-card{
+    width:min(420px,92vw);
+    height:100vh;
+    max-height:none;
+    border-radius:0 20px 20px 0;
+  }
+}
