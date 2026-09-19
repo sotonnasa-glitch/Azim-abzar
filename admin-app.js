@@ -1635,7 +1635,7 @@
 
   function siteCopyForm(copy) {
     const p = Object.assign(siteCopyDefaults(), copy || {});
-    const fieldHtml = (prefix) => unifiedSiteFields.filter(f => f[0].startsWith(prefix + '.')).map(f => {
+    const fieldHtml = (prefix) => unifiedSiteFields.filter(f => f[0] === prefix || f[0].startsWith(prefix + '.')).map(f => {
       const kind = f[2] || 'input';
       return copyField('sc_' + f[0], f[1], copyGet(p, f[0], kind === 'lines' ? [] : ''), kind, kind === 'textarea' || kind === 'lines');
     }).join('');
