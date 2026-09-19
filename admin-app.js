@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V26 = true;
+  window.__AZIM_ADMIN_V27 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -50,17 +50,17 @@
   };
 
   const animatedIconMap = {
-    '👋':'wave','🔒':'lock','✉':'mail','♙':'user','♟':'admin','☰':'menu','✎':'edit','🌐':'globe',
-    '🏠':'home','📞':'phone','✦':'spark','🔐':'lock','⛔':'block','❌':'error','✅':'success','🎯':'target',
-    '⚙':'gear','🧭':'compass','🛠':'tools','🔻':'down','🧾':'invoice','☎':'phone','🕘':'clock',
-    '📝':'note','❓':'question','📍':'pin','💾':'save','⚠':'warning','✓':'success'
+    '__AZICON_WAVE__':'wave','__AZICON_LOCK__':'lock','__AZICON_MAIL__':'mail','__AZICON_USER__':'user','__AZICON_ADMIN__':'admin','__AZICON_MENU__':'menu','__AZICON_EDIT__':'edit','__AZICON_GLOBE__':'globe',
+    '__AZICON_HOME__':'home','__AZICON_PHONE__':'phone','__AZICON_SPARK__':'spark','__AZICON_LOCK__':'lock','__AZICON_BLOCK__':'block','__AZICON_ERROR__':'error','__AZICON_SUCCESS__':'success','__AZICON_TARGET__':'target',
+    '__AZICON_GEAR__':'gear','__AZICON_COMPASS__':'compass','__AZICON_TOOLS__':'tools','__AZICON_DOWN__':'down','__AZICON_INVOICE__':'invoice','__AZICON_PHONE__':'phone','__AZICON_CLOCK__':'clock',
+    '__AZICON_NOTE__':'note','__AZICON_QUESTION__':'question','__AZICON_PIN__':'pin','__AZICON_SAVE__':'save','__AZICON_WARNING__':'warning','__AZICON_SUCCESS__':'success'
   };
 
   function installAnimatedIconLayer() {
     const root = document.body;
     if (!root || root.dataset.azAnimatedIcons === '1') return;
     root.dataset.azAnimatedIcons = '1';
-    const emojiRe = /👋|🔒|✉|♙|♟|☰|✎|🌐|🏠|📞|✦|🔐|⛔|❌|✅|🎯|⚙|🧭|🛠|🔻|🧾|☎|🕘|📝|❓|📍|💾|⚠|✓/u;
+    const emojiRe = /__AZICON_WAVE__|__AZICON_LOCK__|__AZICON_MAIL__|__AZICON_USER__|__AZICON_ADMIN__|__AZICON_MENU__|__AZICON_EDIT__|__AZICON_GLOBE__|__AZICON_HOME__|__AZICON_PHONE__|__AZICON_SPARK__|__AZICON_BLOCK__|__AZICON_ERROR__|__AZICON_SUCCESS__|__AZICON_TARGET__|__AZICON_GEAR__|__AZICON_COMPASS__|__AZICON_TOOLS__|__AZICON_DOWN__|__AZICON_INVOICE__|__AZICON_CLOCK__|__AZICON_NOTE__|__AZICON_QUESTION__|__AZICON_PIN__|__AZICON_SAVE__|__AZICON_WARNING__/u;
 
     const replaceNode = (node) => {
       if (!node?.nodeValue || !emojiRe.test(node.nodeValue)) return;
@@ -151,7 +151,7 @@
   function passwordForm(required = false) {
     return '<form id="passwordForm" class="grid2">' +
       '<div class="az-password-intro">' +
-        '<strong>🔐 تغییر رمز عبور</strong>' +
+        '<strong>__AZICON_LOCK__ تغییر رمز عبور</strong>' +
         '<small>رمز جدید فقط در Supabase Auth ثبت می‌شود و داخل پنل ذخیره نمی‌شود.</small>' +
       '</div>' +
       '<div class="field full"><label>رمز فعلی *</label><input class="input" name="currentPassword" type="password" autocomplete="current-password" required></div>' +
@@ -177,33 +177,33 @@
     const confirm = s.confirmPassword.value;
     const status = $('passwordStatus');
     if (next.length < 8) {
-      status.textContent = '❌ رمز جدید باید حداقل ۸ کاراکتر باشد.';
+      status.textContent = '__AZICON_ERROR__ رمز جدید باید حداقل ۸ کاراکتر باشد.';
       return;
     }
     if (next !== confirm) {
-      status.textContent = '❌ تکرار رمز جدید یکسان نیست.';
+      status.textContent = '__AZICON_ERROR__ تکرار رمز جدید یکسان نیست.';
       return;
     }
     if (next === current) {
-      status.textContent = '❌ رمز جدید باید با رمز فعلی متفاوت باشد.';
+      status.textContent = '__AZICON_ERROR__ رمز جدید باید با رمز فعلی متفاوت باشد.';
       return;
     }
     status.textContent = 'در حال بررسی رمز فعلی…';
     try {
       const authCheck = await state.db.auth.signInWithPassword({ email: state.user.email, password: current });
       if (authCheck.error || !authCheck.data?.user || authCheck.data.user.id !== state.user.id) {
-        status.textContent = '❌ رمز فعلی صحیح نیست.';
+        status.textContent = '__AZICON_ERROR__ رمز فعلی صحیح نیست.';
         return;
       }
       status.textContent = 'در حال ثبت رمز جدید…';
       const updated = await state.db.auth.updateUser({ password: next });
       if (updated.error) throw updated.error;
             await audit('password_change', 'admin_users', state.user.id, {});
-      status.textContent = '✅ رمز تغییر کرد؛ در حال خروج امن…';
+      status.textContent = '__AZICON_SUCCESS__ رمز تغییر کرد؛ در حال خروج امن…';
       await state.db.auth.signOut();
       setTimeout(() => location.reload(), 350);
     } catch (err) {
-      status.textContent = '❌ ' + errorText(err);
+      status.textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
@@ -225,7 +225,7 @@
 
   function showSectionError(id, err) {
     const el = $(id);
-    if (el) el.innerHTML = '<div class="empty">❌ ' + esc(errorText(err)) + '</div>';
+    if (el) el.innerHTML = '<div class="empty">__AZICON_ERROR__ ' + esc(errorText(err)) + '</div>';
   }
 
   async function requireData(query, targetId) {
@@ -251,7 +251,7 @@
       .maybeSingle();
 
     if (r.error || !r.data || !r.data.is_active) {
-      $('loginStatus').textContent = '⛔ این حساب مدیر فعال نیست.';
+      $('loginStatus').textContent = '__AZICON_BLOCK__ این حساب مدیر فعال نیست.';
       $('loginScreen').classList.remove('hidden');
       $('app').classList.add('hidden');
       return false;
@@ -393,7 +393,7 @@
     if (nav && !nav.querySelector('[data-view="ai"]')) {
       const btn = document.createElement('button');
       btn.dataset.view = 'ai';
-      btn.textContent = '✦ دستیار AI';
+      btn.textContent = '__AZICON_SPARK__ دستیار AI';
       const adminsBtn = nav.querySelector('[data-view="admins"]');
       nav.insertBefore(btn, adminsBtn || null);
     }
@@ -449,7 +449,7 @@
       siteBtn.id = 'azOpenSiteBtn';
       siteBtn.className = 'btn secondary';
       siteBtn.type = 'button';
-      siteBtn.textContent = '🌐 مشاهده سایت';
+      siteBtn.textContent = '__AZICON_GLOBE__ مشاهده سایت';
       siteBtn.onclick = () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener');
       topbar.appendChild(siteBtn);
     }
@@ -575,7 +575,7 @@
       else if (name === 'admins') await loadAdmins();
       else if (name === 'audit') await loadAudit();
     } catch (e) {
-      toast('❌ ' + errorText(e));
+      toast('__AZICON_ERROR__ ' + errorText(e));
     }
   }
 
@@ -633,7 +633,7 @@
 
   function healthItemModern(label, ok, value) {
     return '<div class="az-health-card"><div class="az-health-title">' + esc(label) + '</div><div class="az-health-value">' +
-      (ok ? '✓ آماده' : '⚠ بررسی') + '</div><div class="az-health-sub">' + esc(value) + '</div></div>';
+      (ok ? '__AZICON_SUCCESS__ آماده' : '__AZICON_WARNING__ بررسی') + '</div><div class="az-health-sub">' + esc(value) + '</div></div>';
   }
   function miniStat(label, value) {
     return '<div class="az-mini-stat"><b>' + esc(label) + '</b><strong>' + Number(value || 0).toLocaleString('fa-IR') + '</strong></div>';
@@ -697,7 +697,7 @@
     if ($('productMetaVariant')) $('productMetaVariant').textContent = variantCount.toLocaleString('fa-IR') + ' محصول سایزبندی‌دار';
 
     $('productsTable').innerHTML =
-      (can.edit() ? '<div class="az-product-tools"><div class="az-tool-badge"><span class="az-dot"></span> مدیریت زنده</div><button class="btn secondary" id="quickEditProducts">✎ ویرایش سریع</button><button class="btn ghost" id="openSiteFromProducts">🌐 مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">⬇️ بکاپ</button></div>' : '') +
+      (can.edit() ? '<div class="az-product-tools"><div class="az-tool-badge"><span class="az-dot"></span> مدیریت زنده</div><button class="btn secondary" id="quickEditProducts">__AZICON_EDIT__ ویرایش سریع</button><button class="btn ghost" id="openSiteFromProducts">__AZICON_GLOBE__ مشاهده سایت</button><button class="btn ghost" id="exportStoreBackup">⬇️ بکاپ</button></div>' : '') +
       renderProductTable(state.products, false);
     wireProductBulk();
   }
@@ -849,7 +849,7 @@
 
 
   async function editProduct(id) {
-    if (!can.edit()) return toast('⛔ این نقش اجازه ویرایش محصول ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ این نقش اجازه ویرایش محصول ندارد.');
     await ensureCaches();
     const p = state.products.find((x) => x.id === id);
     if (!p) return toast('محصول پیدا نشد.');
@@ -862,7 +862,7 @@
   }
 
   async function newProduct() {
-    if (!can.edit()) return toast('⛔ این نقش اجازه افزودن محصول ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ این نقش اجازه افزودن محصول ندارد.');
     await ensureCaches();
     openModal('افزودن محصول', productForm(null));
     $('productForm').onsubmit = (e) => saveProduct(e, null);
@@ -912,20 +912,20 @@
       if (r.error) throw r.error;
       await audit(id ? 'update' : 'create', 'products', id || 'new', { name: p.name, code: p.code });
       closeModal();
-      toast('✅ محصول ذخیره شد');
+      toast('__AZICON_SUCCESS__ محصول ذخیره شد');
       await Promise.all([loadProducts(), loadDashboard()]);
     } catch (err) {
-      $('productStatus').textContent = '❌ ' + errorText(err);
+      $('productStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
   async function deleteProduct(id) {
     if (!confirm('این محصول حذف شود؟')) return;
     const r = await state.db.from('products').delete().eq('id', id);
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('delete', 'products', id);
     closeModal();
-    toast('✅ محصول حذف شد');
+    toast('__AZICON_SUCCESS__ محصول حذف شد');
     await Promise.all([loadProducts(), loadDashboard()]);
   }
 
@@ -959,9 +959,9 @@
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       await audit('export', 'store_backup', stamp, { products: backup.products.length, site_content: backup.site_content.length });
-      toast('✅ فایل پشتیبان آماده شد');
+      toast('__AZICON_SUCCESS__ فایل پشتیبان آماده شد');
     } catch (err) {
-      toast('❌ ' + errorText(err));
+      toast('__AZICON_ERROR__ ' + errorText(err));
     }
   }
 
@@ -972,7 +972,7 @@
   }
 
   function openQuickProductEditor() {
-    if (!can.edit()) return toast('⛔ این نقش اجازه ویرایش محصول ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ این نقش اجازه ویرایش محصول ندارد.');
     const rows = state.products || [];
     if (!rows.length) return toast('محصولی برای ویرایش وجود ندارد.');
 
@@ -988,7 +988,7 @@
 
     openModal('ویرایش سریع محصولات (' + rows.length.toLocaleString('fa-IR') + ' مورد)', 
       '<div class="az-quick-editor">' +
-        '<div class="az-quick-head"><span>فیلدها را تغییر بده و در پایان همه را یکجا ذخیره کن.</span><button type="button" class="btn ghost" id="quickSiteBtn">🌐 سایت</button></div>' +
+        '<div class="az-quick-head"><span>فیلدها را تغییر بده و در پایان همه را یکجا ذخیره کن.</span><button type="button" class="btn ghost" id="quickSiteBtn">__AZICON_GLOBE__ سایت</button></div>' +
         '<div class="az-quick-list">' + items + '</div>' +
         '<div class="az-quick-actions"><button type="button" class="btn" id="saveQuickProducts">ذخیره تغییرات همه</button><span id="quickProductStatus" class="status"></span></div>' +
       '</div>'
@@ -1031,20 +1031,20 @@
         await audit('quick_update', 'products', id, patch);
       }
       closeModal();
-      toast('✅ ' + rows.length.toLocaleString('fa-IR') + ' محصول بروزرسانی شد');
+      toast('__AZICON_SUCCESS__ ' + rows.length.toLocaleString('fa-IR') + ' محصول بروزرسانی شد');
       await Promise.all([loadProducts(), loadDashboard()]);
     } catch (err) {
-      status.textContent = '❌ ' + errorText(err);
+      status.textContent = '__AZICON_ERROR__ ' + errorText(err);
       button.disabled = false;
     }
   }
 
   async function toggleProduct(id) {
-    if (!can.edit()) return toast('⛔ این نقش اجازه تغییر وضعیت محصول ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ این نقش اجازه تغییر وضعیت محصول ندارد.');
     const p = state.products.find((x) => x.id === id);
     if (!p) return;
     const r = await state.db.from('products').update({ is_active: !p.is_active }).eq('id', id);
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('toggle', 'products', id, { is_active: !p.is_active });
     await Promise.all([loadProducts(), loadDashboard()]);
   }
@@ -1093,24 +1093,24 @@
   }
 
   async function toggleCategory(id) {
-    if (!can.edit()) return toast('⛔ دسترسی تغییر وضعیت دسته وجود ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ دسترسی تغییر وضعیت دسته وجود ندارد.');
     const c = state.categories.find((x) => x.id === id);
     if (!c) return;
     const r = await state.db.from('categories').update({ is_active: !c.is_active }).eq('id', id);
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('toggle', 'categories', id, { is_active: !c.is_active });
     await loadCategories();
   }
 
   function editCategory(id) {
-    if (!can.edit()) return toast('⛔ دسترسی ویرایش دسته وجود ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ دسترسی ویرایش دسته وجود ندارد.');
     const c = state.categories.find((x) => x.id === id);
     openModal('ویرایش دسته', categoryForm(c));
     $('categoryForm').onsubmit = (e) => saveCategory(e, id);
   }
 
   function newCategory() {
-    if (!can.edit()) return toast('⛔ دسترسی افزودن دسته وجود ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ دسترسی افزودن دسته وجود ندارد.');
     openModal('دسته جدید', categoryForm(null));
     $('categoryForm').onsubmit = (e) => saveCategory(e, null);
   }
@@ -1135,9 +1135,9 @@
       if (r.error) throw r.error;
       await audit(id ? 'update' : 'create', 'categories', id || 'new', { name: p.name });
       closeModal();
-      toast('✅ دسته ذخیره شد');
+      toast('__AZICON_SUCCESS__ دسته ذخیره شد');
       await loadCategories();
-    } catch (err) { $('categoryStatus').textContent = '❌ ' + errorText(err); }
+    } catch (err) { $('categoryStatus').textContent = '__AZICON_ERROR__ ' + errorText(err); }
   }
 
   async function loadBrands() {
@@ -1171,24 +1171,24 @@
   }
 
   async function toggleBrand(id) {
-    if (!can.edit()) return toast('⛔ دسترسی تغییر وضعیت برند وجود ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ دسترسی تغییر وضعیت برند وجود ندارد.');
     const b = state.brands.find((x) => x.id === id);
     if (!b) return;
     const r = await state.db.from('brands').update({ is_active: !b.is_active }).eq('id', id);
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('toggle', 'brands', id, { is_active: !b.is_active });
     await loadBrands();
   }
 
   function editBrand(id) {
-    if (!can.edit()) return toast('⛔ دسترسی ویرایش برند وجود ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ دسترسی ویرایش برند وجود ندارد.');
     const b = state.brands.find((x) => x.id === id);
     openModal('ویرایش برند', brandForm(b));
     $('brandForm').onsubmit = (e) => saveBrand(e, id);
   }
 
   function newBrand() {
-    if (!can.edit()) return toast('⛔ دسترسی افزودن برند وجود ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ دسترسی افزودن برند وجود ندارد.');
     openModal('برند جدید', brandForm(null));
     $('brandForm').onsubmit = (e) => saveBrand(e, null);
   }
@@ -1213,9 +1213,9 @@
       if (r.error) throw r.error;
       await audit(id ? 'update' : 'create', 'brands', id || 'new', { name: p.name });
       closeModal();
-      toast('✅ برند ذخیره شد');
+      toast('__AZICON_SUCCESS__ برند ذخیره شد');
       await loadBrands();
-    } catch (err) { $('brandStatus').textContent = '❌ ' + errorText(err); }
+    } catch (err) { $('brandStatus').textContent = '__AZICON_ERROR__ ' + errorText(err); }
   }
 
   async function loadInquiries() {
@@ -1228,9 +1228,9 @@
   }
 
   async function editInquiry(id) {
-    if (!can.sales()) return toast('⛔ نقش شما دسترسی به درخواست‌ها ندارد.');
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی به درخواست‌ها ندارد.');
     const r = await state.db.from('inquiries').select('*').eq('id', id).single();
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     const x = r.data;
     const options = ['new','in_progress','quoted','answered','closed','spam'].map((v) =>
       '<option value="' + v + '" ' + (x.status === v ? 'selected' : '') + '>' + labels[v] + '</option>'
@@ -1259,10 +1259,10 @@
       handled_by: state.user.id
     };
     const r = await state.db.from('inquiries').update(p).eq('id', id);
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('update', 'inquiries', id, p);
     closeModal();
-    toast('✅ درخواست بروزرسانی شد');
+    toast('__AZICON_SUCCESS__ درخواست بروزرسانی شد');
     await Promise.all([loadInquiries(), loadDashboard()]);
   }
 
@@ -1297,15 +1297,15 @@
   }
 
   async function editCustomer(id) {
-    if (!can.sales()) return toast('⛔ نقش شما دسترسی مشتریان ندارد.');
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی مشتریان ندارد.');
     const r = await state.db.from('customers').select('*').eq('id', id).single();
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal('ویرایش مشتری', customerForm(r.data));
     $('customerForm').onsubmit = (e) => saveCustomer(e, id);
   }
 
   function newCustomer() {
-    if (!can.sales()) return toast('⛔ نقش شما اجازه افزودن مشتری ندارد.');
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه افزودن مشتری ندارد.');
     openModal('مشتری جدید', customerForm(null));
     $('customerForm').onsubmit = (e) => saveCustomer(e, null);
   }
@@ -1319,10 +1319,10 @@
       address: s.address.value.trim() || null, city: s.city.value.trim() || null, notes: s.notes.value.trim() || null
     };
     const r = id ? await state.db.from('customers').update(p).eq('id', id) : await state.db.from('customers').insert(p);
-    if (r.error) { $('customerStatus').textContent = '❌ ' + errorText(r.error); return; }
+    if (r.error) { $('customerStatus').textContent = '__AZICON_ERROR__ ' + errorText(r.error); return; }
     await audit(id ? 'update' : 'create', 'customers', id || p.mobile, { full_name: p.full_name });
     closeModal();
-    toast('✅ مشتری ذخیره شد');
+    toast('__AZICON_SUCCESS__ مشتری ذخیره شد');
     await loadCustomers();
   }
 
@@ -1412,13 +1412,13 @@
   }
 
   async function openOrder(id) {
-    if (!can.sales()) return toast('⛔ نقش شما دسترسی سفارش‌ها ندارد.');
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
     const [o, c, i] = await Promise.all([
       state.db.from('orders').select('*').eq('id', id).single(),
       loadCustomersForOrder(),
       state.db.from('order_items').select('*').eq('order_id', id)
     ]);
-    if (o.error) return toast('❌ ' + errorText(o.error));
+    if (o.error) return toast('__AZICON_ERROR__ ' + errorText(o.error));
     state.orderItems = i.data || [];
     await loadProductsForOrder();
     openModal('مدیریت سفارش', orderForm(o.data, c, state.orderItems));
@@ -1426,7 +1426,7 @@
   }
 
   async function newOrder() {
-    if (!can.sales()) return toast('⛔ نقش شما اجازه ساخت سفارش ندارد.');
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه ساخت سفارش ندارد.');
     const c = await loadCustomersForOrder();
     await loadProductsForOrder();
     state.orderItems = [];
@@ -1525,10 +1525,10 @@
       }
       await audit(id ? 'update' : 'create', 'orders', orderId, { order_code: p.order_code, total: p.total, items: items.length });
       closeModal();
-      toast('✅ سفارش ذخیره شد');
+      toast('__AZICON_SUCCESS__ سفارش ذخیره شد');
       await Promise.all([loadOrders(), loadDashboard()]);
     } catch (err) {
-      $('orderStatus').textContent = '❌ ' + errorText(err);
+      $('orderStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
@@ -1547,36 +1547,36 @@
   }
 
   async function uploadMedia() {
-    if (!can.edit()) return toast('⛔ نقش شما اجازه آپلود رسانه ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه آپلود رسانه ندارد.');
     const file = $('mediaFile').files[0];
     if (!file) return toast('یک فایل انتخاب کن');
     const folder = $('mediaFolder').value;
     const path = folder + '/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
-    if (up.error) return toast('❌ ' + errorText(up.error));
+    if (up.error) return toast('__AZICON_ERROR__ ' + errorText(up.error));
     const url = state.db.storage.from('admin-media').getPublicUrl(path).data.publicUrl;
     const r = await state.db.from('media_assets').insert({
       filename: file.name, storage_path: path, public_url: url, mime_type: file.type,
       size_bytes: file.size, folder, uploaded_by: state.user.id
     });
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('upload', 'media_assets', path, { folder, filename: file.name });
     $('mediaFile').value = '';
-    toast('✅ فایل آپلود شد');
+    toast('__AZICON_SUCCESS__ فایل آپلود شد');
     await loadMedia();
   }
 
   async function deleteMedia(id) {
     if (!can.edit()) return;
     const r = await state.db.from('media_assets').select('*').eq('id', id).single();
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     if (!confirm('این فایل رسانه‌ای حذف شود؟')) return;
     const rem = await state.db.storage.from('admin-media').remove([r.data.storage_path]);
-    if (rem.error) return toast('❌ ' + errorText(rem.error));
+    if (rem.error) return toast('__AZICON_ERROR__ ' + errorText(rem.error));
     const d = await state.db.from('media_assets').delete().eq('id', id);
-    if (d.error) return toast('❌ ' + errorText(d.error));
+    if (d.error) return toast('__AZICON_ERROR__ ' + errorText(d.error));
     await audit('delete', 'media_assets', id, { path: r.data.storage_path });
-    toast('✅ رسانه حذف شد');
+    toast('__AZICON_SUCCESS__ رسانه حذف شد');
     await loadMedia();
   }
 
@@ -1671,15 +1671,15 @@
   }
 
   async function editContent(id) {
-    if (!can.edit()) return toast('⛔ نقش شما اجازه ویرایش محتوا ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوا ندارد.');
     const r = await state.db.from('site_content').select('*').eq('id', id).single();
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal('ویرایش محتوا', contentForm(r.data));
     $('contentForm').onsubmit = (e) => saveContent(e, id);
   }
 
   function newContent() {
-    if (!can.edit()) return toast('⛔ نقش شما اجازه ساخت محتوا ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ساخت محتوا ندارد.');
     openModal('بخش محتوایی جدید', contentForm(null));
     $('contentForm').onsubmit = (e) => saveContent(e, null);
   }
@@ -1710,10 +1710,10 @@
       if (r.error) throw r.error;
       await audit(id ? 'update' : 'create', 'site_content', id || key, { section_key: key });
       closeModal();
-      toast('✅ محتوای سایت ذخیره شد');
+      toast('__AZICON_SUCCESS__ محتوای سایت ذخیره شد');
       await loadContent();
     } catch (err) {
-      $('contentStatus').textContent = '❌ ' + errorText(err);
+      $('contentStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
@@ -1857,42 +1857,42 @@
     }).join('');
     return '<form id="unifiedSiteForm" class="az-unified-form">' +
       '<div class="az-copy-intro"><strong>ویرایش یکجای نوشته‌های سایت</strong><small>از همین صفحه متن‌های قابل مشاهده صفحه اصلی و «ارتباط با ما» را تغییر بده. دکمه‌ها و ساختار صفحه دست‌نخورده می‌مانند.</small></div>' +
-      '<details class="az-copy-group" open><summary>🏠 صفحه اصلی — هدر و SEO</summary><div class="grid2">' + fieldHtml('home.meta') + fieldHtml('home.header') + '</div></details>' +
-      '<details class="az-copy-group"><summary>🎯 صفحه اصلی — هیرو و نوار بالایی</summary><div class="grid2">' + fieldHtml('home.topbar') + fieldHtml('home.hero') + '</div></details>' +
-      '<details class="az-copy-group"><summary>⚙️ صفحه اصلی — HUD و نوار متحرک</summary><div class="grid2">' + fieldHtml('home.hud') + fieldHtml('home.ticker') + '</div></details>' +
-      '<details class="az-copy-group"><summary>🧭 صفحه اصلی — مسیرهای خرید</summary><div class="grid2">' + fieldHtml('home.choice') + '</div></details>' +
-      '<details class="az-copy-group"><summary>🛠️ صفحه اصلی — مزیت‌ها</summary><div class="grid2">' + fieldHtml('home.why') + '</div></details>' +
-      '<details class="az-copy-group"><summary>🔻 صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
-      '<details class="az-copy-group"><summary>📞 ارتباط با ما — هدر و SEO</summary><div class="grid2">' + fieldHtml('contact.meta') + fieldHtml('contact.header') + '</div></details>' +
-      '<details class="az-copy-group"><summary>🧾 ارتباط با ما — معرفی صفحه</summary><div class="grid2">' + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
-      '<details class="az-copy-group"><summary>☎️ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
-      '<details class="az-copy-group"><summary>🕘 ارتباط با ما — ساعات کاری</summary><div class="grid2">' + fieldHtml('contact.hours') + '</div></details>' +
-      '<details class="az-copy-group"><summary>📝 ارتباط با ما — فرم استعلام</summary><div class="grid2">' + fieldHtml('contact.form') + '</div></details>' +
-      '<details class="az-copy-group"><summary>✅ ارتباط با ما — مزیت‌ها و اعتماد</summary><div class="grid2">' + fieldHtml('contact.trust') + '</div></details>' +
-      '<details class="az-copy-group"><summary>❓ ارتباط با ما — پرسش‌های متداول</summary><div class="grid2">' + fieldHtml('contact.faq') + '</div></details>' +
-      '<details class="az-copy-group"><summary>📍 ارتباط با ما — آدرس پایین صفحه و فوتر</summary><div class="grid2">' + fieldHtml('contact.bottom') + fieldHtml('contact.footer') + '</div></details>' +
-      '<div class="az-copy-savebar"><button class="btn" type="submit">💾 ذخیره همه نوشته‌ها</button><span id="unifiedSiteStatus" class="status"></span></div>' +
+      '<details class="az-copy-group" open><summary>__AZICON_HOME__ صفحه اصلی — هدر و SEO</summary><div class="grid2">' + fieldHtml('home.meta') + fieldHtml('home.header') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_TARGET__ صفحه اصلی — هیرو و نوار بالایی</summary><div class="grid2">' + fieldHtml('home.topbar') + fieldHtml('home.hero') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_GEAR__ صفحه اصلی — HUD و نوار متحرک</summary><div class="grid2">' + fieldHtml('home.hud') + fieldHtml('home.ticker') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_COMPASS__ صفحه اصلی — مسیرهای خرید</summary><div class="grid2">' + fieldHtml('home.choice') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_TOOLS__ صفحه اصلی — مزیت‌ها</summary><div class="grid2">' + fieldHtml('home.why') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_DOWN__ صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — هدر و SEO</summary><div class="grid2">' + fieldHtml('contact.meta') + fieldHtml('contact.header') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_INVOICE__ ارتباط با ما — معرفی صفحه</summary><div class="grid2">' + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PHONE__️ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_CLOCK__ ارتباط با ما — ساعات کاری</summary><div class="grid2">' + fieldHtml('contact.hours') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_NOTE__ ارتباط با ما — فرم استعلام</summary><div class="grid2">' + fieldHtml('contact.form') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_SUCCESS__ ارتباط با ما — مزیت‌ها و اعتماد</summary><div class="grid2">' + fieldHtml('contact.trust') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_QUESTION__ ارتباط با ما — پرسش‌های متداول</summary><div class="grid2">' + fieldHtml('contact.faq') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PIN__ ارتباط با ما — آدرس پایین صفحه و فوتر</summary><div class="grid2">' + fieldHtml('contact.bottom') + fieldHtml('contact.footer') + '</div></details>' +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">__AZICON_SAVE__ ذخیره همه نوشته‌ها</button><span id="unifiedSiteStatus" class="status"></span></div>' +
       '</form>';
   }
 
 
   const focusedCopyGroups = {
     home: [
-      ['🏠 هدر و SEO','home.meta,home.header'],
-      ['🎯 هیرو و نوار بالایی','home.topbar,home.hero'],
-      ['🧭 مسیرهای خرید','home.choice'],
-      ['🛠️ مزیت‌های فروشگاه','home.why'],
-      ['🔻 فوتر صفحه اصلی','home.footer']
+      ['__AZICON_HOME__ هدر و SEO','home.meta,home.header'],
+      ['__AZICON_TARGET__ هیرو و نوار بالایی','home.topbar,home.hero'],
+      ['__AZICON_COMPASS__ مسیرهای خرید','home.choice'],
+      ['__AZICON_TOOLS__ مزیت‌های فروشگاه','home.why'],
+      ['__AZICON_DOWN__ فوتر صفحه اصلی','home.footer']
     ],
     contact: [
-      ['📞 هدر و SEO','contact.meta,contact.header'],
-      ['🧾 معرفی صفحه','contact.hero,contact.channels_head'],
-      ['☎️ تلفن، پشتیبانی، ایمیل و آدرس','contact.phone,contact.support,contact.email,contact.address'],
-      ['🕘 ساعات کاری','contact.hours'],
-      ['📝 فرم استعلام و پیام','contact.form'],
-      ['✅ مزیت‌های اعتماد','contact.trust'],
-      ['❓ پرسش‌های متداول','contact.faq'],
-      ['📍 آدرس پایین صفحه و فوتر','contact.bottom,contact.footer']
+      ['__AZICON_PHONE__ هدر و SEO','contact.meta,contact.header'],
+      ['__AZICON_INVOICE__ معرفی صفحه','contact.hero,contact.channels_head'],
+      ['__AZICON_PHONE__️ تلفن، پشتیبانی، ایمیل و آدرس','contact.phone,contact.support,contact.email,contact.address'],
+      ['__AZICON_CLOCK__ ساعات کاری','contact.hours'],
+      ['__AZICON_NOTE__ فرم استعلام و پیام','contact.form'],
+      ['__AZICON_SUCCESS__ مزیت‌های اعتماد','contact.trust'],
+      ['__AZICON_QUESTION__ پرسش‌های متداول','contact.faq'],
+      ['__AZICON_PIN__ آدرس پایین صفحه و فوتر','contact.bottom,contact.footer']
     ]
   };
 
@@ -1905,7 +1905,7 @@
     const p = Object.assign(siteCopyDefaults(), copy || {});
     const groups = focusedCopyGroups[scope] || [];
     return '<form id="focusedSiteForm" class="az-unified-form">' +
-      '<div class="az-copy-intro"><strong>' + (scope === 'contact' ? '📞 مدیریت صفحه ارتباط با ما' : '🏠 مدیریت صفحه اصلی') + '</strong>' +
+      '<div class="az-copy-intro"><strong>' + (scope === 'contact' ? '__AZICON_PHONE__ مدیریت صفحه ارتباط با ما' : '__AZICON_HOME__ مدیریت صفحه اصلی') + '</strong>' +
       '<small>فقط محتوای همین صفحه در این بخش قرار دارد؛ اطلاعات را تغییر بده و «ذخیره صفحه» را بزن.</small></div>' +
       groups.map((g,i) => {
         const html = fieldsForPaths(g[1]).map(f => {
@@ -1914,14 +1914,14 @@
         }).join('');
         return '<details class="az-copy-group" ' + (i === 0 ? 'open' : '') + '><summary>' + g[0] + '</summary><div class="grid2">' + html + '</div></details>';
       }).join('') +
-      '<div class="az-copy-savebar"><button class="btn" type="submit">💾 ذخیره صفحه</button><button class="btn ghost" type="button" id="previewFocusedSite">🌐 پیش‌نمایش</button><span id="focusedSiteStatus" class="status"></span></div>' +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">__AZICON_SAVE__ ذخیره صفحه</button><button class="btn ghost" type="button" id="previewFocusedSite">__AZICON_GLOBE__ پیش‌نمایش</button><span id="focusedSiteStatus" class="status"></span></div>' +
       '</form>';
   }
 
   async function openFocusedSiteEditor(scope) {
-    if (!can.edit()) return toast('⛔ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
     const r = await state.db.from('site_content').select('id,section_key,title,payload,is_active').eq('section_key','site_copy').maybeSingle();
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal(scope === 'contact' ? 'ویرایش صفحه ارتباط با ما' : 'ویرایش صفحه اصلی', focusedSiteForm(scope, r.data?.payload || {}));
     $('focusedSiteForm').onsubmit = (e) => saveFocusedSiteContent(e, scope, r.data?.id || null);
     $('previewFocusedSite')?.addEventListener('click', () => {
@@ -1973,18 +1973,18 @@
         if (rr.error) throw rr.error;
       }
       await audit('update','site_content',rowId || 'site_copy',{scope});
-      if (status) status.textContent='✅ ذخیره شد';
-      toast('✅ صفحه ' + (scope === 'contact' ? 'ارتباط با ما' : 'اصلی') + ' بروزرسانی شد');
+      if (status) status.textContent='__AZICON_SUCCESS__ ذخیره شد';
+      toast('__AZICON_SUCCESS__ صفحه ' + (scope === 'contact' ? 'ارتباط با ما' : 'اصلی') + ' بروزرسانی شد');
       await loadContent();
     } catch (err) {
-      if (status) status.textContent='❌ ' + errorText(err);
+      if (status) status.textContent='__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
   async function openUnifiedSiteEditor() {
-    if (!can.edit()) return toast('⛔ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
     const r = await state.db.from('site_content').select('id,section_key,title,payload,is_active').eq('section_key','site_copy').maybeSingle();
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal('ویرایش یکجای سایت', siteCopyForm(r.data?.payload || {}));
     $('unifiedSiteForm').onsubmit = (e) => saveUnifiedSiteContent(e, r.data?.id || null);
   }
@@ -2034,11 +2034,11 @@
         if (rr.error) throw rr.error;
       }
       await audit('update','site_content',rowId || 'site_copy',{section_key:'site_copy',scope:'home+contact'});
-      if (status) status.textContent='✅ همه نوشته‌ها ذخیره شد';
-      toast('✅ نوشته‌های صفحه اصلی و ارتباط با ما ذخیره شد');
+      if (status) status.textContent='__AZICON_SUCCESS__ همه نوشته‌ها ذخیره شد';
+      toast('__AZICON_SUCCESS__ نوشته‌های صفحه اصلی و ارتباط با ما ذخیره شد');
       await loadContent();
     } catch (err) {
-      if (status) status.textContent='❌ ' + errorText(err);
+      if (status) status.textContent='__AZICON_ERROR__ ' + errorText(err);
     }
   }
 
@@ -2060,7 +2060,7 @@
   async function loadAI() {
     const r = await state.db.from('site_content').select('*').eq('section_key', 'ai_settings').maybeSingle();
     const row = r.data || null;
-    if (r.error) $('aiEditor').innerHTML = '<div class="empty">❌ ' + esc(errorText(r.error)) + '</div>';
+    if (r.error) $('aiEditor').innerHTML = '<div class="empty">__AZICON_ERROR__ ' + esc(errorText(r.error)) + '</div>';
     else {
       $('aiEditor').innerHTML = aiForm(row);
       const enabled = row?.payload?.enabled !== false;
@@ -2073,7 +2073,7 @@
 
   async function saveAI(e, row) {
     e.preventDefault();
-    if (!can.edit()) return toast('⛔ نقش شما اجازه تنظیم AI ندارد.');
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه تنظیم AI ندارد.');
     const s = e.target.elements;
     const payload = {
       enabled: s.enabled.checked,
@@ -2088,9 +2088,9 @@
     const r = row?.id
       ? await state.db.from('site_content').update(p).eq('id', row.id)
       : await state.db.from('site_content').insert(p);
-    if (r.error) { $('aiStatus').textContent = '❌ ' + errorText(r.error); return; }
+    if (r.error) { $('aiStatus').textContent = '__AZICON_ERROR__ ' + errorText(r.error); return; }
     await audit('update', 'site_content', row?.id || 'ai_settings', { section_key: 'ai_settings', enabled: payload.enabled, provider: payload.provider });
-    toast('✅ تنظیمات AI ذخیره شد');
+    toast('__AZICON_SUCCESS__ تنظیمات AI ذخیره شد');
     await loadAI();
   }
 
@@ -2104,9 +2104,9 @@
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
-      $('aiStatus').textContent = '✅ پاسخ دریافت شد: ' + String(data.reply || '').slice(0, 260);
+      $('aiStatus').textContent = '__AZICON_SUCCESS__ پاسخ دریافت شد: ' + String(data.reply || '').slice(0, 260);
     } catch (e) {
-      $('aiStatus').textContent = '❌ تست AI ناموفق: ' + errorText(e);
+      $('aiStatus').textContent = '__AZICON_ERROR__ تست AI ناموفق: ' + errorText(e);
     }
   }
 
@@ -2126,13 +2126,13 @@
   }
 
   async function changeAdmin(id, field, value) {
-    if (!can.all()) return toast('⛔ فقط مالک/مدیر ارشد می‌تواند کاربران مدیر را تغییر دهد.');
+    if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند کاربران مدیر را تغییر دهد.');
     if (id === state.user.id && field === 'is_active' && value === false) return toast('حساب جاری را غیرفعال نکن.');
     const p = {}; p[field] = value;
     const r = await state.db.from('admin_users').update(p).eq('user_id', id);
-    if (r.error) return toast('❌ ' + errorText(r.error));
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit(field === 'role' ? 'role_change' : 'status_change', 'admin_users', id, p);
-    toast('✅ بروزرسانی شد');
+    toast('__AZICON_SUCCESS__ بروزرسانی شد');
   }
 
   async function loadAudit() {
@@ -2189,7 +2189,7 @@
       if (!email || !password) return $('loginStatus').textContent = 'ایمیل و رمز عبور را وارد کن.';
       $('loginStatus').textContent = 'در حال ورود…';
       const r = await state.db.auth.signInWithPassword({ email, password });
-      if (r.error) return $('loginStatus').textContent = '❌ ' + errorText(r.error);
+      if (r.error) return $('loginStatus').textContent = '__AZICON_ERROR__ ' + errorText(r.error);
       if (!(await ensureAdmin())) {
         await state.db.auth.signOut();
         return;
