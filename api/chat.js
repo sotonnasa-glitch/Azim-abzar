@@ -3,6 +3,36 @@ import { GoogleGenAI } from '@google/genai';
 const FALLBACK_SYSTEM_INSTRUCTION = 'تو دستیار هوشمند فروشگاه عظیم ابزار هستی. به زبان فارسی روان، کوتاه و کاربردی پاسخ بده. به مشتریان برای انتخاب و آشنایی با انواع ابزارهای مکانیکی، تعمیرگاهی، کارگاهی و ابزار دستی کمک کن. اگر اطلاعات درخواست شده کافی نیست، مؤدبانه سوال بپرس. قیمت یا موجودی قطعی را بدون اطلاعات واقعی فروشگاه حدس نزن.';
 
 const SUPABASE_URL = process.env.AZIM_SUPABASE_URL || process.env.SUPABASE_URL || 'https://lzkrwtnylkordkwkdyzp.supabase.co';
+const CHAT_RATE = new Map();
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT = 12;
+
+function getClientIp(req) {
+  const real = req.headers?.['x-real-ip'] || req.headers?.['x-vercel-forwarded-for'];
+  if (real) return String(real).split(',')[0].trim();
+  const forwarded = req.headers?.['x-forwarded-for'];
+  if (forwarded) return String(forwarded).split(',')[0].trim();
+  return String(req.socket?.remoteAddress || 'unknown');
+}
+
+function rateLimit(req) {
+  const now = Date.now();
+  const ip = getClientIp(req);
+  const entry = CHAT_RATE.get(ip) || { start: now, count: 0 };
+  if (now - entry.start >= RATE_WINDOW_MS) {
+    entry.start = now;
+    entry.count = 0;
+  }
+  entry.count += 1;
+  CHAT_RATE.set(ip, entry);
+  if (CHAT_RATE.size > 5000) {
+    for (const [key, value] of CHAT_RATE) {
+      if (now - value.start >= RATE_WINDOW_MS) CHAT_RATE.delete(key);
+    }
+  }
+  return { allowed: entry.count <= RATE_LIMIT, retryAfter: Math.max(1, Math.ceil((RATE_WINDOW_MS - (now - entry.start)) / 1000)) };
+}
+
 const SUPABASE_KEY = process.env.AZIM_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_jnrMEKAW7prmIKcnFG_ANQ_s6VFrm_3';
 
 async function getAISettings() {
@@ -22,11 +52,23 @@ async function getAISettings() {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('X-Content-Type-Options','nosniff');
+  res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    const contentLength = Number(req.headers?.['content-length'] || 0);
+    if (contentLength > 8000) {
+      return res.status(413).json({ error: 'درخواست بیش از حد بزرگ است' });
+    }
+    const limit = rateLimit(req);
+    if (!limit.allowed) {
+      res.setHeader('Retry-After', String(limit.retryAfter));
+      return res.status(429).json({ error: 'تعداد درخواست‌های دستیار زیاد است؛ کمی بعد دوباره تلاش کنید.' });
+    }
     const message = String(req.body?.message || '').trim();
     if (!message) {
       return res.status(400).json({ error: 'پیام خالی است' });
@@ -52,7 +94,7 @@ export default async function handler(req, res) {
         const geminiRes = await ai.models.generateContent({
           model: geminiModel,
           contents: message,
-          config: { systemInstruction }
+          config: { systemInstruction, maxOutputTokens: 600 }
         });
         return geminiRes?.text?.trim() || null;
       } catch (e) {
@@ -72,6 +114,8 @@ export default async function handler(req, res) {
           },
           body: JSON.stringify({
             model: openaiModel,
+            max_tokens: 600,
+            temperature: 0.2,
             messages: [
               { role: 'system', content: systemInstruction },
               { role: 'user', content: message }
