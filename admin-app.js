@@ -331,8 +331,8 @@
     if (!rows.length) return '<div class="empty">محصولی پیدا نشد.</div>';
     const body = rows.map((p) => {
       const actions = compact ? '' :
-        '<td><button class="btn secondary" data-edit-product="' + p.id + '">ویرایش</button> ' +
-        (can.edit() ? '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button>' : '') +
+        '<td>' + (can.edit() ? '<button class="btn secondary" data-edit-product="' + p.id + '">ویرایش</button> ' +
+        '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button>' : 'فقط مشاهده') +
         '</td>';
       return '<tr><td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
         '<td>' + esc(p.name) + '</td><td>' + esc(p.code || '—') + '</td><td>' + esc(p.brand || '—') + '</td>' +
