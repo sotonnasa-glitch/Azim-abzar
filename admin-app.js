@@ -2180,6 +2180,7 @@
       return;
     }
     ensureExtraUI();
+    installAnimatedIconLayer();
     initAdminMenu();
     initCommandPalette();
     state.db = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
