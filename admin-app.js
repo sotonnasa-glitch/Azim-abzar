@@ -2265,7 +2265,7 @@
     ['home.meta.title','عنوان SEO صفحه اصلی'],['home.meta.description','توضیحات SEO صفحه اصلی','textarea'],
     ['home.header.brand','نام برند'],['home.header.tagline','شعار زیر برند'],
     ['home.header.nav_home','منوی صفحه اصلی'],['home.header.nav_products','منوی کاتالوگ محصولات'],
-    ['home.header.nav_ai','منوی دستیار هوشمند'],['home.header.nav_contact','منوی ارتباط و سفارش'],
+    ['home.header.nav_contact','منوی ارتباط و سفارش'],
     ['home.topbar','نوار بالای صفحه','lines'],['home.hero.eyebrow','برچسب بالای هیرو'],
     ['home.hero.title','عنوان اصلی هیرو'],['home.hero.highlight','خط برجسته هیرو'],
     ['home.hero.description','توضیحات هیرو','textarea'],['home.hero.trust','۴ مزیت هیرو','lines'],
