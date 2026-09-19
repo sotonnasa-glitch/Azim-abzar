@@ -314,3 +314,8 @@ with check (private.has_azim_role(array['owner','admin','sales']));
 create policy "Discount redemptions delete" on public.discount_redemptions
 for delete to authenticated
 using (private.has_azim_role(array['owner','admin','sales']));
+
+
+-- Statistics are admin-only; do not expose this RPC to anonymous visitors.
+revoke all on function public.azim_discount_stats() from public, anon;
+grant execute on function public.azim_discount_stats() to authenticated;
