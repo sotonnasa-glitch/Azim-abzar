@@ -330,7 +330,6 @@
         '<input id="mfaChallengeCode" class="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">' +
         '<div class="mfa-actions">' +
           '<button type="button" id="mfaChallengeVerifyBtn" class="btn">تأیید کد</button>' +
-          '<button type="button" id="mfaChallengeLogoutBtn" class="btn secondary">خروج از حساب</button>' +
         '</div>' +
         '<div class="mfa-help">Google Authenticator، Microsoft Authenticator، 1Password یا برنامه TOTP مشابه قابل استفاده است.</div>'
       );
@@ -358,7 +357,8 @@
         await state.db.auth.signOut();
         $('mfaScreen')?.classList.add('hidden');
         $('loginScreen')?.classList.remove('hidden');
-        $('loginStatus')?.textContent = '';
+        const loginStatus = $('loginStatus');
+        if (loginStatus) loginStatus.textContent = '';
       });
       return false;
     }
@@ -402,7 +402,7 @@
       input?.focus();
       verifyBtn?.addEventListener('click', finish);
       input?.addEventListener('input', () => {
-        input.value = input.value.replace(/\\D/g, '').slice(0, 6);
+        input.value = input.value.replace(/\D/g, '').slice(0, 6);
         if (input.value.length === 6) verifyBtn?.focus();
       });
       input?.addEventListener('keydown', async (e) => {
