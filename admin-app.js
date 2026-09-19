@@ -1540,6 +1540,7 @@
   function siteCopyDefaults() {
     return {
       home: {
+        meta:{title:'',description:''},
         header:{brand:'',tagline:'',nav_home:'',nav_products:'',nav_ai:'',nav_contact:''},
         topbar:[],
         hero:{eyebrow:'',title:'',highlight:'',description:'',trust:[],primary_cta:'',secondary_ai_cta:'',contact_cta:''},
@@ -1550,6 +1551,7 @@
         footer:{text:'',links:[]}
       },
       contact:{
+        meta:{title:'',description:''},
         header:{brand:'',tagline:'',back:''},
         hero:{title:'',description:'',call_cta:'',form_cta:''},
         channels_head:{title:'',description:''},
@@ -1568,6 +1570,7 @@
   }
 
   const unifiedSiteFields = [
+    ['home.meta.title','عنوان SEO صفحه اصلی'],['home.meta.description','توضیحات SEO صفحه اصلی','textarea'],
     ['home.header.brand','نام برند'],['home.header.tagline','شعار زیر برند'],
     ['home.header.nav_home','منوی صفحه اصلی'],['home.header.nav_products','منوی کاتالوگ محصولات'],
     ['home.header.nav_ai','منوی دستیار هوشمند'],['home.header.nav_contact','منوی ارتباط و سفارش'],
@@ -1595,6 +1598,7 @@
     ['home.why.items.3.0','مزیت ۴ — عنوان'],['home.why.items.3.1','مزیت ۴ — توضیح','textarea'],
     ['home.footer.text','متن فوتر'],['home.footer.links','لینک‌های فوتر','lines'],
 
+    ['contact.meta.title','عنوان SEO ارتباط با ما'],['contact.meta.description','توضیحات SEO ارتباط با ما','textarea'],
     ['contact.header.brand','ارتباط — نام برند'],['contact.header.tagline','ارتباط — شعار زیر برند'],['contact.header.back','متن بازگشت'],
     ['contact.hero.title','ارتباط — عنوان','textarea'],['contact.hero.description','ارتباط — توضیحات','textarea'],
     ['contact.hero.call_cta','دکمه تماس'],['contact.hero.form_cta','دکمه فرم'],
@@ -1697,11 +1701,11 @@
       const h = copyPayload.home || {};
       const c = copyPayload.contact || {};
       const compat = [
-        ['home_meta', {title: copyGet(h,'header.brand') || 'عظیم ابزار', description: copyGet(h,'hero.description') || ''}],
+        ['home_meta', {title: copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی', description: copyGet(h,'meta.description') || copyGet(h,'hero.description') || ''}],
         ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),secondary_ai_cta:copyGet(h,'hero.secondary_ai_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
         ['home_choice', {eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
         ['home_why', {eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}],
-        ['contact_page', {title:copyGet(c,'hero.title'),description:copyGet(c,'hero.description'),email:copyGet(c,'email.value')}]
+        ['contact_page', {title:copyGet(c,'meta.title') || copyGet(c,'hero.title'),description:copyGet(c,'meta.description') || copyGet(c,'hero.description'),email:copyGet(c,'email.value')}]
       ];
       for (const [key,payload] of compat) {
         const row = existing.find(x => x.section_key === key);
