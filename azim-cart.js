@@ -135,9 +135,11 @@
       if(!r.ok) throw new Error('catalog '+r.status);
       const rows = await r.json();
       const map = new Map(rows.map(x=>[String(x.id),x]));
+      const byCode = new Map(rows.map(x=>[String(x.code || '').trim().toUpperCase(),x]).filter(([k])=>k));
       for(const item of state.items){
-        const p = map.get(item.product_id);
+        const p = map.get(item.product_id) || byCode.get(String(item.code || '').trim().toUpperCase());
         if(!p) { item.unavailable = true; continue; }
+        if(!item.product_id && p.id) item.product_id = String(p.id);
         item.unavailable = p.is_active === false;
         item.name = p.name || item.name;
         item.code = p.code || item.code;
