@@ -139,7 +139,7 @@ jobs:
           assert 'azim-live-content.js?v=3' in contact
           assert 'supabase-config.js' in contact
           assert 'azim-live-content.js?v=3' in index
-          assert 'loadLiveVariants' in products
+          assert 'loadLiveCatalog' in products
           assert 'livePriceData' in products
           assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
           scripts = re.findall(r'<script>(.*?)</script>', contact, flags=re.S)
