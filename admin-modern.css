@@ -387,3 +387,36 @@ html,body{background:
 .az-variant-empty{padding:14px;border:1px dashed rgba(255,255,255,.15);border-radius:12px;opacity:.7;text-align:center}
 .az-advanced-variants{margin-top:12px}.az-advanced-variants summary{cursor:pointer;opacity:.8}.az-advanced-variants small{display:block;opacity:.55;margin-top:5px}
 @media(max-width:700px){.az-variants-head{align-items:stretch;flex-direction:column}.az-variant-row{grid-template-columns:1fr 1fr}.az-variant-row [data-remove-variant]{grid-column:1/-1}.az-variant-row .btn{width:100%}}
+
+
+/* V17 — unified site copy editor + compact variants */
+.az-unified-form{display:grid;gap:10px}
+.az-copy-intro{padding:12px 14px;border:1px solid rgba(245,185,0,.22);border-radius:14px;background:linear-gradient(135deg,rgba(245,185,0,.08),rgba(255,255,255,.02))}
+.az-copy-intro strong{display:block;font-size:14px;color:var(--az-text)}
+.az-copy-intro small{display:block;color:var(--az-muted);margin-top:4px;line-height:1.8}
+.az-copy-group{border:1px solid var(--az-line);border-radius:14px;background:rgba(255,255,255,.015);overflow:hidden}
+.az-copy-group>summary{cursor:pointer;list-style:none;padding:12px 14px;font-weight:900;color:var(--az-text);background:rgba(17,24,21,.55)}
+.az-copy-group>summary::-webkit-details-marker{display:none}
+.az-copy-group[open]>summary{border-bottom:1px solid var(--az-line)}
+.az-copy-group .grid2{padding:12px}
+.az-copy-group .field label{font-size:10px;color:#bac4be}
+.az-copy-group .input,.az-copy-group .textarea{font-size:12px}
+.az-copy-group .textarea{min-height:76px}
+.az-copy-savebar{position:sticky;bottom:0;z-index:3;display:flex;align-items:center;gap:10px;padding:10px;margin-top:4px;border:1px solid var(--az-line);border-radius:14px;background:rgba(7,9,8,.94);backdrop-filter:blur(12px)}
+.az-copy-savebar .status{margin:0}
+.az-variants-box{padding:10px!important}
+.az-variants-head{margin-bottom:8px!important}
+.az-variants-head strong{font-size:13px}
+.az-variants-head small{font-size:9px}
+#variantRows{max-height:220px;overflow:auto;padding:2px 3px 2px 0}
+.az-variant-row{grid-template-columns:minmax(95px,1fr) minmax(110px,1fr) auto!important;gap:6px!important}
+.az-variant-row .input{height:34px!important;padding:5px 8px!important;font-size:11px!important}
+.az-variant-row .btn{padding:6px 8px!important;font-size:10px!important}
+.az-variant-empty{padding:9px!important;font-size:10px}
+@media(max-width:700px){
+  .az-copy-group .grid2{grid-template-columns:1fr}
+  .az-copy-group .field.full{grid-column:1}
+  #variantRows{max-height:190px}
+  .az-variant-row{grid-template-columns:minmax(88px,1fr) minmax(100px,1fr) auto!important}
+  .az-variant-row .btn{width:auto!important}
+}
