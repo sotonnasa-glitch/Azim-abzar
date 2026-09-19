@@ -1,6 +1,6 @@
 {
   "name": "عظیم ابزار (Azim Abzar)",
-  "description": "مرجع تخصصی و کاتالوگ جامع ابزارهای مکانیکی و تعمیرگاهی عظیم ابزار همراه با دستیار هوشمند",
+  "description": "مرجع تخصصی و کاتالوگ جامع ابزارهای مکانیکی و تعمیرگاهی عظیم ابزار",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
