@@ -56,6 +56,10 @@
         if (span && hero.highlight) span.textContent = hero.highlight;
       }
       setText(heroRoot.querySelector('p'), hero.description);
+      const ctaLinks = heroRoot.querySelectorAll('.actions a.btn');
+      if (ctaLinks[0] && hero.primary_cta) setText(ctaLinks[0].querySelector('.az-arrow')?.previousSibling?.previousSibling || ctaLinks[0].querySelector('span:nth-of-type(2)'), hero.primary_cta);
+      if (ctaLinks[1] && hero.secondary_ai_cta) setText(ctaLinks[1].querySelector('.az-arrow')?.previousSibling?.previousSibling || ctaLinks[1].querySelector('span:nth-of-type(2)'), hero.secondary_ai_cta);
+      if (ctaLinks[2] && hero.contact_cta) setText(ctaLinks[2].querySelector('.az-arrow')?.previousSibling?.previousSibling || ctaLinks[2].querySelector('span:nth-of-type(2)'), hero.contact_cta);
       if (Array.isArray(hero.trust_badges)) {
         heroRoot.querySelectorAll('.trust-badge').forEach((el, i) => {
           if (hero.trust_badges[i]) {
