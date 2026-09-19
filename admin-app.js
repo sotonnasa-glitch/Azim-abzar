@@ -345,34 +345,57 @@
     }
 
     try {
-      const enrollment = await state.db.auth.mfa.enroll({
-        factorType: 'totp',
-        friendlyName: 'Azim Abzar Admin'
-      });
-      if (enrollment.error) throw enrollment.error;
-      const factor = enrollment.data;
-      const qr = String(factor.totp?.qr_code || '');
-      const secret = String(factor.totp?.secret || '');
-      const qrData = qr ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(qr))) : '';
+      const pending = (factors.data?.totp || []).find(f => f.status !== 'verified' && (f.friendly_name || '') === 'Azim Abzar Admin');
+      let factor = pending;
+      let qrData = '';
+      let secret = '';
+
+      if (!factor) {
+        const enrollment = await state.db.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: 'Azim Abzar Admin'
+        });
+        if (enrollment.error) throw enrollment.error;
+        factor = enrollment.data;
+        const qr = String(factor.totp?.qr_code || '');
+        secret = String(factor.totp?.secret || '');
+        qrData = qr ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(qr))) : '';
+      }
 
       showMfaGate(
         'فعال‌سازی احراز هویت دومرحله‌ای',
-        '<p>این مرحله را فقط یک‌بار انجام دهید. QR را با برنامه Authenticator اسکن کنید، سپس کد ۶ رقمی همان برنامه را وارد کنید.</p>' +
+        (pending ? '<p>یک راه‌اندازی MFA نیمه‌کاره پیدا شد. همان Authenticator قبلی را نگه دارید و کد ۶ رقمی فعلی را وارد کنید.</p>' : '<p>این مرحله را فقط یک‌بار انجام دهید. QR را با برنامه Authenticator اسکن کنید، سپس کد ۶ رقمی همان برنامه را وارد کنید.</p>') +
         (qrData ? '<img class="mfa-qr" alt="QR کد MFA" src="' + qrData + '">' : '') +
-        '<div class="mfa-secret">' + esc(secret) + '</div>' +
+        (secret ? '<div class="mfa-secret">' + esc(secret) + '</div>' : '') +
         '<input id="mfaEnrollCode" class="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">' +
-        '<div class="mfa-help">اگر QR اسکن نشد، کلید بالا را دستی داخل Authenticator وارد کنید.</div>'
+        '<div class="mfa-actions"><button type="button" id="mfaVerifyBtn" class="btn">تأیید و فعال‌سازی</button><button type="button" id="mfaCancelBtn" class="btn secondary">خروج از حساب</button></div>' +
+        '<div class="mfa-help">' + (pending ? 'عامل قبلی هنوز تأیید نشده است؛ با تأیید کد، همان عامل فعال می‌شود.' : 'اگر QR اسکن نشد، کلید بالا را دستی داخل Authenticator وارد کنید.') + '</div>'
       );
       const input = $('mfaEnrollCode');
-      input?.focus();
-      input?.addEventListener('keydown', async (e) => {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
-        const ok = await verifyAdminMFA(factor.id, input.value);
+      const verifyBtn = $('mfaVerifyBtn');
+      const finish = async () => {
+        const ok = await verifyAdminMFA(factor.id, input?.value);
         if (ok) {
           hideMfaGate();
           await loadDashboard();
         }
+      };
+      input?.focus();
+      verifyBtn?.addEventListener('click', finish);
+      input?.addEventListener('input', () => {
+        input.value = input.value.replace(/\\D/g, '').slice(0, 6);
+        if (input.value.length === 6) verifyBtn?.focus();
+      });
+      input?.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          await finish();
+        }
+      });
+      $('mfaCancelBtn')?.addEventListener('click', async () => {
+        await state.db.auth.signOut();
+        $('mfaScreen')?.classList.add('hidden');
+        $('loginScreen')?.classList.remove('hidden');
       });
     } catch (err) {
       showMfaGate('فعال‌سازی MFA انجام نشد.', '<p>' + esc(errorText(err)) + '</p>');
