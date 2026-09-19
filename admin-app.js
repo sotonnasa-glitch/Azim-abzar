@@ -850,7 +850,7 @@
             '<label class="az-simple-field az-simple-wide"><span>نام محصول *</span><input class="input" name="name" required value="' + esc(p?.name) + '" placeholder="نام محصول"></label>' +
             '<label class="az-simple-field"><span>برند</span><input class="input" name="brand" list="productBrandSuggestions" value="' + esc(currentBrand) + '" placeholder="برند"><datalist id="productBrandSuggestions">' + state.brands.map((brand) => '<option value="' + esc(brand.name) + '"></option>').join('') + '</datalist></label>' +
             '<label class="az-simple-field"><span>دسته‌بندی</span><select class="select" name="category_name"><option value="">بدون دسته</option>' + categoryOptions + '</select></label>' +
-            '<label class="az-simple-field"><span>کد / SKU</span><input class="input" name="code" value="' + esc(p?.code) + '" placeholder="کد محصول" dir="ltr"></label>' +
+            '<label class="az-simple-field"><span>کد / SKU</span><input class="input" name="code" value="' + esc(p?.code) + '" placeholder="کد محصول" dir="ltr" ' + (isEdit ? 'readonly title="شناسه محصول برای حفظ اتصال تصویر و کاتالوگ در محصول موجود قابل تغییر نیست."' : '') + '></label>' +
             '<label class="az-simple-field"><span>برچسب</span><input class="input" name="badge" value="' + esc(p?.badge) + '" placeholder="مثلاً جدید"></label>' +
           '</div>' +
         '</div>' +
@@ -959,6 +959,11 @@
       if (variantText) variants = JSON.parse(variantText);
       else if (advancedVariantText) variants = JSON.parse(advancedVariantText);
       const category = s.category_name.value || '';
+      const existingProduct = id ? state.products.find((x) => x.id === id) : null;
+      const nextCode = s.code.value.trim() || null;
+      if (existingProduct?.code && nextCode !== existingProduct.code) {
+        throw new Error('شناسه / کد محصول موجود برای حفظ اتصال تصویر و کاتالوگ قابل تغییر نیست.');
+      }
       const discountActive = !!s.discount_is_active?.checked;
       const discountType = s.discount_type?.value || null;
       const discountValue = s.discount_value?.value === '' ? null : Number(s.discount_value.value);
@@ -972,7 +977,7 @@
         brand: s.brand.value.trim() || 'بدون برند',
         category_name: category || null,
         cat: category,
-        code: s.code.value.trim() || null,
+        code: nextCode,
         badge: s.badge.value.trim() || null,
         description: s.description.value.trim() || s.name.value.trim(),
         original_price: s.original_price.value ? Number(s.original_price.value) : null,
