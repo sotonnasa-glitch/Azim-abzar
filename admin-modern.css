@@ -548,3 +548,11 @@ body{min-height:100vh;overflow-x:hidden;background:
  .az-category-grid{grid-template-columns:1fr!important}
  .login-card{padding:25px!important;border-radius:23px!important}
 }
+
+.az-category-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-bottom:14px}
+.az-category-overview>div,.az-category-overview>button{min-height:74px;border:1px solid rgba(255,255,255,.06);border-radius:15px;background:linear-gradient(145deg,rgba(20,27,23,.9),rgba(9,13,11,.92));padding:12px 14px}
+.az-category-overview>div span{display:block;font-size:8px;color:#68756d}.az-category-overview>div strong{display:block;margin-top:6px;font-size:23px;font-weight:950;color:#f7f8f6}
+.az-cat-index{display:inline-block;font-size:7px;letter-spacing:.16em;color:#a58c3a;font-weight:900;margin-bottom:7px}
+.az-cat-stats{display:flex;gap:16px;margin-top:18px;color:#66736b;font-size:8px}.az-cat-stats b{color:#c5cec8;font-size:10px;margin-right:3px}
+.az-category-progress{height:4px;border-radius:999px;background:#17201b;overflow:hidden;margin-top:10px}.az-category-progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#39d98a,#f5b900)}
+@media(max-width:820px){.az-category-overview{grid-template-columns:1fr 1fr}.az-category-overview>button{grid-column:1/-1}}
