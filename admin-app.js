@@ -78,11 +78,13 @@
   function openModal(title, body) {
     $('modalTitle').textContent = title;
     $('modalBody').innerHTML = body;
+    $('modal').classList.toggle('drawer-mode', /محصول|سفارش|محتوا|AI/.test(title));
     $('modal').classList.add('show');
   }
 
   function closeModal() {
     $('modal').classList.remove('show');
+    $('modal').classList.remove('drawer-mode');
   }
 
   window.closeModal = closeModal;
@@ -145,6 +147,48 @@
 
     applyRoleUI();
     return true;
+  }
+
+  function initCommandPalette() {
+    const overlay = $('commandPalette');
+    const input = $('commandInput');
+    const list = $('commandList');
+    if (!overlay || !input || !list) return;
+    const navItems = [
+      ['dashboard','داشبورد','نمای کلی و سلامت سیستم'],
+      ['products','محصولات','جستجو و ویرایش کاتالوگ'],
+      ['categories','دسته‌بندی‌ها','گروه‌بندی محصولات'],
+      ['brands','برندها','مدیریت برندها'],
+      ['inquiries','درخواست‌ها','استعلام و پیگیری'],
+      ['orders','سفارش‌ها','سفارش و ارسال'],
+      ['customers','مشتریان','اطلاعات مشتریان'],
+      ['media','رسانه','تصاویر و فایل‌ها'],
+      ['content','محتوای سایت','CMS'],
+      ['ai','دستیار AI','کنترل هوش مصنوعی'],
+      ['admins','کاربران مدیر','نقش‌ها'],
+      ['audit','گزارش فعالیت','Audit Log']
+    ];
+    let active = 0;
+    function render(q='') {
+      const nq = q.trim().toLowerCase();
+      const matches = navItems.filter(x => !nq || (x[1]+' '+x[2]).toLowerCase().includes(nq));
+      list.innerHTML = matches.length ? matches.map((x,i) =>
+        '<div class="az-command-item ' + (i===active?'active':'') + '" data-command-view="' + x[0] + '"><span>' + esc(x[1]) + '</span><small>' + esc(x[2]) + '</small></div>'
+      ).join('') : '<div class="empty">نتیجه‌ای پیدا نشد.</div>';
+      list.querySelectorAll('[data-command-view]').forEach(el => el.onclick = () => { close(); setView(el.dataset.commandView); });
+    }
+    function open() { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); input.value=''; active=0; render(); setTimeout(()=>input.focus(),20); }
+    function close() { overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); }
+    $('commandClose').onclick=close;
+    overlay.onclick=(e)=>{if(e.target===overlay)close();};
+    input.oninput=()=>{active=0;render(input.value);};
+    document.addEventListener('keydown',(e)=>{
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='k') { e.preventDefault(); open(); }
+      if (e.key==='Escape' && overlay.classList.contains('show')) close();
+      if (overlay.classList.contains('show') && e.key==='ArrowDown') { e.preventDefault(); active++; render(input.value); }
+      if (overlay.classList.contains('show') && e.key==='ArrowUp') { e.preventDefault(); active=Math.max(0,active-1); render(input.value); }
+      if (overlay.classList.contains('show') && e.key==='Enter') { const el=list.querySelectorAll('[data-command-view]')[active]; if(el){el.click();} }
+    });
   }
 
   function ensureExtraUI() {
@@ -272,7 +316,19 @@
     await loadSection(name);
   }
 
+  function showSkeleton(id, rows = 5) {
+    const el = $(id);
+    if (!el) return;
+    el.innerHTML = '<div style="display:grid;gap:8px">' + Array.from({length: rows}, () => '<div class="az-skeleton"></div>').join('') + '</div>';
+  }
+
   async function loadSection(name) {
+    const skeletons = {
+      products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
+      inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
+      media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
+    };
+    if (skeletons[name]) showSkeleton(skeletons[name]);
     try {
       if (name === 'dashboard') await loadDashboard();
       else if (name === 'products') await loadProducts();
@@ -324,22 +380,31 @@
 
     const health = $('dashboardHealth');
     if (health) {
+      const catCount = await countTable('categories');
+      const brandCount = await countTable('brands');
+      const siteCount = await countTable('site_content');
       health.innerHTML =
-        '<div class="panel" style="margin-top:14px"><div class="panel-head"><h2>سلامت سیستم</h2></div>' +
-        '<div class="grid2">' +
-        healthItem('احراز هویت', true, 'حساب مدیر فعال است') +
-        healthItem('محصولات', all === 908 || all > 0, all.toLocaleString('fa-IR') + ' رکورد') +
-        healthItem('دسته‌بندی', true, (await countTable('categories')).toLocaleString('fa-IR') + ' رکورد') +
-        healthItem('برند', true, (await countTable('brands')).toLocaleString('fa-IR') + ' رکورد') +
-        healthItem('مشتری', true, customers.toLocaleString('fa-IR') + ' رکورد') +
-        healthItem('رسانه', true, media.toLocaleString('fa-IR') + ' رکورد') +
+        '<div class="panel" style="margin-top:14px"><div class="panel-head"><h2>مرکز سلامت و کنترل</h2><span class="az-publish-dot"><i></i> سیستم فعال</span></div>' +
+        '<div class="az-health-grid">' +
+        healthItemModern('احراز هویت', true, 'حساب مدیر فعال است') +
+        healthItemModern('کاتالوگ', all > 0, all.toLocaleString('fa-IR') + ' محصول') +
+        healthItemModern('دسته‌بندی', catCount > 0, catCount.toLocaleString('fa-IR') + ' دسته') +
+        healthItemModern('برند', brandCount > 0, brandCount.toLocaleString('fa-IR') + ' برند') +
+        healthItemModern('محتوا', siteCount > 0, siteCount.toLocaleString('fa-IR') + ' بخش قابل مدیریت') +
+        healthItemModern('رسانه', true, media.toLocaleString('fa-IR') + ' فایل') +
+        '</div>' +
+        '<div class="az-stat-strip">' +
+        miniStat('مشتریان', customers) + miniStat('درخواست جدید', inq) + miniStat('سفارش‌ها', orders) +
         '</div></div>';
     }
   }
 
-  function healthItem(label, ok, value) {
-    return '<div class="card"><div class="k">' + esc(label) + '</div><div class="v" style="font-size:15px">' +
-      (ok ? '✓ آماده' : '⚠ بررسی') + '</div><div class="s">' + esc(value) + '</div></div>';
+  function healthItemModern(label, ok, value) {
+    return '<div class="az-health-card"><div class="az-health-title">' + esc(label) + '</div><div class="az-health-value">' +
+      (ok ? '✓ آماده' : '⚠ بررسی') + '</div><div class="az-health-sub">' + esc(value) + '</div></div>';
+  }
+  function miniStat(label, value) {
+    return '<div class="az-mini-stat"><b>' + esc(label) + '</b><strong>' + Number(value || 0).toLocaleString('fa-IR') + '</strong></div>';
   }
 
   function renderProductTable(rows, compact) {
@@ -349,13 +414,14 @@
         '<td>' + (can.edit() ? '<button class="btn secondary" data-edit-product="' + p.id + '">ویرایش</button> ' +
         '<button class="btn ghost" data-toggle-product="' + p.id + '">' + (p.is_active ? 'غیرفعال' : 'فعال') + '</button>' : 'فقط مشاهده') +
         '</td>';
-      return '<tr><td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
+      return '<tr>' + check + '<td>' + (p.img ? '<img class="thumb" src="' + esc(p.img) + '" alt="">' : '—') + '</td>' +
         '<td>' + esc(p.name) + '</td><td>' + esc(p.code || '—') + '</td><td>' + esc(p.brand || '—') + '</td>' +
         '<td>' + money(p.price) + '</td><td><span class="badge ' + (p.is_active ? 'ok' : 'red') + '">' +
         (p.is_active ? 'فعال' : 'غیرفعال') + '</span></td>' + actions + '</tr>';
     }).join('');
-    return '<table class="table"><thead><tr><th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>وضعیت</th>' +
-      (compact ? '' : '<th>عملیات</th>') + '</tr></thead><tbody>' + body + '</tbody></table>';
+    return '<table class="table"><thead><tr>' + (compact ? '' : '<th><input id="productSelectAll" class="az-check" type="checkbox"></th>') +
+      '<th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>وضعیت</th>' +
+      (compact ? '' : '<th>عملیات</th>') + '</tr></thead><tbody>' + body.replace(/<tr>/g, '<tr>') + '</tbody></table>';
   }
 
   function renderInquiryTable(rows, compact) {
@@ -387,7 +453,8 @@
     const r = await q;
     if (r.error) return showSectionError('productsTable', r.error);
     state.products = r.data || [];
-    $('productsTable').innerHTML = renderProductTable(state.products, false);
+    $('productsTable').innerHTML = (can.edit() ? '<div id="productBulkBar" class="az-bulkbar"><span id="selectedProductCount">۰ انتخاب</span><button class="btn ghost" id="bulkActivate">فعال‌سازی</button><button class="btn ghost" id="bulkDeactivate">غیرفعال‌سازی</button><button class="btn ghost" id="bulkClear">پاک کردن انتخاب</button></div>' : '') + renderProductTable(state.products, false);
+    wireProductBulk();
   }
 
   async function ensureCaches() {
@@ -514,6 +581,40 @@
     await Promise.all([loadProducts(), loadDashboard()]);
   }
 
+  function selectedProductIds() {
+    return Array.from(document.querySelectorAll('[data-product-select]:checked')).map(x => x.dataset.productSelect);
+  }
+
+  async function bulkSetProducts(active) {
+    if (!can.edit()) return;
+    const ids = selectedProductIds();
+    if (!ids.length) return toast('ابتدا محصولی را انتخاب کن.');
+    const r = await state.db.from('products').update({ is_active: active }).in('id', ids);
+    if (r.error) return toast('❌ ' + errorText(r.error));
+    await audit('bulk_toggle', 'products', ids.join(','), { ids, is_active: active });
+    toast('✅ ' + ids.length + ' محصول بروزرسانی شد');
+    await loadProducts();
+    await loadDashboard();
+  }
+
+  function wireProductBulk() {
+    const checks = document.querySelectorAll('[data-product-select]');
+    const all = $('productSelectAll');
+    const bar = $('productBulkBar');
+    const count = $('selectedProductCount');
+    const sync = () => {
+      const n = selectedProductIds().length;
+      if (bar) bar.classList.toggle('show', n > 0);
+      if (count) count.textContent = n.toLocaleString('fa-IR') + ' انتخاب';
+      if (all) all.checked = n > 0 && n === checks.length;
+    };
+    checks.forEach(c => c.addEventListener('change', sync));
+    if (all) all.onchange = () => { checks.forEach(c => c.checked = all.checked); sync(); };
+    $('bulkActivate')?.addEventListener('click', () => bulkSetProducts(true));
+    $('bulkDeactivate')?.addEventListener('click', () => bulkSetProducts(false));
+    $('bulkClear')?.addEventListener('click', () => { checks.forEach(c => c.checked = false); sync(); });
+  }
+
   async function toggleProduct(id) {
     if (!can.edit()) return toast('⛔ این نقش اجازه تغییر وضعیت محصول ندارد.');
     const p = state.products.find((x) => x.id === id);
@@ -539,7 +640,13 @@
       '</td></tr>'
     ).join('');
     $('categoriesTable').innerHTML = rows.length ?
-      '<table class="table"><thead><tr><th>نام</th><th>Slug</th><th>محصول</th><th>ترتیب</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>' + body + '</tbody></table>' :
+      '<div class="az-category-grid">' + rows.map((c) =>
+        '<article class="az-category-card"><div class="az-cat-top"><div><h3>' + esc(c.name) + '</h3><div class="az-cat-meta">' + esc(c.slug) + ' · ترتیب ' + c.sort_order + '</div></div>' +
+        '<div class="az-cat-count">' + c.productCount.toLocaleString('fa-IR') + '</div></div>' +
+        '<div class="az-cat-meta">محصول مرتبط</div><div class="az-cat-actions">' +
+        (can.edit() ? '<button class="btn secondary" data-edit-category="' + c.id + '">ویرایش</button><button class="btn ghost" data-toggle-category="' + c.id + '">' + (c.is_active ? 'غیرفعال' : 'فعال') + '</button>' : '<span class="badge">فقط مشاهده</span>') +
+        '<button class="btn ghost" data-filter-category="' + esc(c.name) + '">مشاهده محصولات</button></div></article>'
+      ).join('') + '</div>' :
       '<div class="empty">دسته‌ای ثبت نشده.</div>';
   }
 
@@ -820,13 +927,22 @@
     return state.products;
   }
 
+  function orderTimeline(status) {
+    const steps = ['pending','confirmed','processing','shipped','delivered'];
+    const current = Math.max(0, steps.indexOf(status));
+    return '<div class="az-order-timeline">' + steps.map((v,i) =>
+      '<span class="az-order-step ' + (i < current ? 'done' : (i === current ? 'current' : '')) + '">' +
+      '<i></i>' + esc(labels[v] || v) + '</span>'
+    ).join('') + '</div>';
+  }
+
   function orderForm(x, customers, items) {
     const customerOptions = customers.map((c) =>
       '<option value="' + esc(c.id) + '" ' + (x?.customer_id === c.id ? 'selected' : '') + '>' +
       esc(c.full_name) + ' · ' + esc(c.mobile) + '</option>'
     ).join('');
     const itemRows = (items || []).map((it, idx) => orderItemRow(it, idx)).join('');
-    return '<form id="orderForm" class="grid2">' +
+    return '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending') + '</div><form id="orderForm" class="grid2">'
       '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" required value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
       '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
       '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
@@ -1287,10 +1403,17 @@
     const o = e.target.closest('[data-edit-order]'); if (o) openOrder(o.dataset.editOrder);
     const m = e.target.closest('[data-delete-media]'); if (m) deleteMedia(m.dataset.deleteMedia);
     const co = e.target.closest('[data-edit-content]'); if (co) editContent(co.dataset.editContent);
+    const fc = e.target.closest('[data-filter-category]'); if (fc) { $('productSearch').value=''; if ($('productCategoryFilter')) $('productCategoryFilter').value=fc.dataset.filterCategory; setView('products'); }
   });
 
   document.addEventListener('change', (e) => {
     if (e.target.classList.contains('admin-role')) changeAdmin(e.target.dataset.id, 'role', e.target.value);
+    if (e.target.matches('[data-product-select],#productSelectAll')) {
+      const checks = document.querySelectorAll('[data-product-select]');
+      const n = document.querySelectorAll('[data-product-select]:checked').length;
+      $('productBulkBar')?.classList.toggle('show', n > 0);
+      if ($('selectedProductCount')) $('selectedProductCount').textContent = n.toLocaleString('fa-IR') + ' انتخاب';
+    }
     if (e.target.classList.contains('admin-active')) changeAdmin(e.target.dataset.id, 'is_active', e.target.checked);
   });
 
@@ -1301,6 +1424,7 @@
       return;
     }
     ensureExtraUI();
+    initCommandPalette();
     state.db = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
     $('loginBtn').onclick = async () => {
       const email = $('loginEmail').value.trim();
