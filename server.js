@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
+const ALLOWED_ORIGIN = String(process.env.AZIM_ALLOWED_ORIGIN || '').trim();
 
 app.disable('x-powered-by');
 app.set('json spaces', 0);
