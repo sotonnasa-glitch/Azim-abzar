@@ -378,3 +378,12 @@ html,body{background:
   .az-quick-active{grid-column:1/-1}
   .az-quick-list{max-height:calc(92vh - 230px)}
 }
+
+/* V15 — visual product size/variant editor */
+.az-variants-box{grid-column:1/-1;border:1px solid rgba(245,185,0,.18);border-radius:18px;padding:16px;background:rgba(255,255,255,.025)}
+.az-variants-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.az-variants-head strong{display:block;font-size:15px}.az-variants-head small{display:block;opacity:.65;margin-top:4px}
+#variantRows{display:grid;gap:8px}.az-variant-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(150px,1fr) auto;gap:8px;align-items:center}
+.az-variant-empty{padding:14px;border:1px dashed rgba(255,255,255,.15);border-radius:12px;opacity:.7;text-align:center}
+.az-advanced-variants{margin-top:12px}.az-advanced-variants summary{cursor:pointer;opacity:.8}.az-advanced-variants small{display:block;opacity:.55;margin-top:5px}
+@media(max-width:700px){.az-variants-head{align-items:stretch;flex-direction:column}.az-variant-row{grid-template-columns:1fr 1fr}.az-variant-row [data-remove-variant]{grid-column:1/-1}.az-variant-row .btn{width:100%}}
