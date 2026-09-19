@@ -1214,7 +1214,7 @@
 
   <!-- Scripts -->
   <script src="./supabase-config.js"></script>
-  <script src="./azim-cart.js?v=1"></script>
+  <script src="./azim-cart.js?v=3"></script>
   <script>
     const PER = 36;
     const VERSION = '20260919-v5-pro-ux2';
@@ -1481,17 +1481,52 @@
     async function addCatalogItemToCart(id, sourceButton = null, variantIndex = null) {
       const item = all.find(x => x.id === id);
       if (!item || !window.AZIM_CART) return;
+
       const d = getData(id);
       let idx = Number(variantIndex);
       if (variantIndex == null) {
         const select = document.querySelector('select[data-id="' + id + '"]');
         idx = Number(select?.value || 0);
       }
+
       const v = d.vs?.[idx];
       const base = v ? Number(v[1] || 0) : Number(d.base || 0);
       const net = discountedPrice(base, d.discount);
+      if (!(net > 0)) {
+        window.AZIM_CART.showToast('برای این کالا قیمت قابل افزودن به سبد مشخص نیست.');
+        return;
+      }
+
+      // شناسه UUID را همیشه از داده زنده می‌گیریم؛ اگر لود زنده در لحظه
+      // در دسترس نباشد، با کد محصول از Supabase پیدا می‌کنیم.
+      let productId = item.product_id || null;
+      if (!productId && window.AZIM_SUPABASE_URL && window.AZIM_SUPABASE_ANON_KEY) {
+        try {
+          const code = encodeURIComponent(String(item.id || id).trim().toUpperCase());
+          const r = await fetch(
+            window.AZIM_SUPABASE_URL + '/rest/v1/products?select=id&code=eq.' + code + '&limit=1',
+            {
+              headers: {
+                apikey: window.AZIM_SUPABASE_ANON_KEY,
+                Authorization: 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
+              },
+              cache: 'no-store'
+            }
+          );
+          if (r.ok) {
+            const rows = await r.json();
+            productId = rows?.[0]?.id || null;
+          }
+        } catch (_) {}
+      }
+
+      if (!productId) {
+        window.AZIM_CART.showToast('شناسه این محصول از فروشگاه دریافت نشد؛ دوباره تلاش کن.');
+        return;
+      }
+
       const ok = window.AZIM_CART.add({
-        product_id: item.product_id || null,
+        product_id: productId,
         code: item.id,
         name: item.name,
         img: item.image,
@@ -1500,7 +1535,12 @@
         base_price: base,
         qty: 1
       });
-      if (!ok) return window.AZIM_CART.showToast('برای این کالا قیمت قابل افزودن به سبد مشخص نیست.');
+
+      if (!ok) {
+        window.AZIM_CART.showToast('برای این کالا قیمت قابل افزودن به سبد مشخص نیست.');
+        return;
+      }
+
       if (sourceButton) {
         const old = sourceButton.innerHTML;
         sourceButton.innerHTML = '✓ به سبد اضافه شد';
