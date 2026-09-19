@@ -1048,7 +1048,10 @@
         ['title', 'عنوان اصلی', 'input'],
         ['highlight', 'خط برجسته عنوان', 'input'],
         ['description', 'توضیحات', 'textarea'],
-        ['trust_badges', 'مزیت‌ها (هر خط یک مورد)', 'lines']
+        ['trust_badges', 'مزیت‌ها (هر خط یک مورد)', 'lines'],
+        ['primary_cta', 'دکمه کاتالوگ', 'input'],
+        ['secondary_ai_cta', 'دکمه دستیار AI', 'input'],
+        ['contact_cta', 'دکمه ارتباط', 'input']
       ]
     },
     home_choice: {
