@@ -426,3 +426,13 @@ html,body{background:
 .az-menu-password:hover{background:rgba(245,185,0,.16);border-color:rgba(245,185,0,.55)}
 .az-password-intro{grid-column:1/-1;padding:12px 14px;border:1px solid rgba(245,185,0,.22);border-radius:14px;background:rgba(245,185,0,.06)}
 .az-password-intro strong{display:block;color:var(--az-text);font-size:14px}.az-password-intro small{display:block;color:var(--az-muted);margin-top:4px}
+
+.az-image-manager{display:grid;gap:10px}
+.az-product-image-preview{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--az-line);border-radius:14px;background:rgba(255,255,255,.02)}
+.az-product-image-preview img{width:72px;height:72px;object-fit:contain;border-radius:10px;background:#0b0f0d;border:1px solid var(--az-line-2)}
+.az-product-image-preview.empty{min-height:72px}
+.az-product-image-preview strong{display:block;font-size:11px;color:var(--az-text)}
+.az-product-image-preview small{display:block;color:var(--az-muted);font-size:9px;margin-top:3px}
+.az-image-actions{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.az-clear-image{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#ffb0b0;white-space:nowrap}
+@media(max-width:700px){.az-image-actions{grid-template-columns:1fr}.az-clear-image{white-space:normal}}
