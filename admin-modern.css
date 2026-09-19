@@ -323,3 +323,58 @@ html,body{background:
     border-radius:0 20px 20px 0;
   }
 }
+
+
+/* === AZIM ADMIN // V14 PRODUCT WORKFLOW === */
+.az-product-tools{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:9px;
+  flex-wrap:wrap;
+  padding:10px 0 12px;
+}
+.az-product-count{
+  font-size:9px;
+  color:#89958e;
+  margin-left:auto;
+}
+.az-product-tools .btn{font-size:9px}
+.az-quick-editor{display:flex;flex-direction:column;gap:12px;height:100%}
+.az-quick-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 12px;border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;background:#0d1310;color:#8d9992;font-size:9px;
+}
+.az-quick-list{
+  display:grid;gap:8px;overflow:auto;max-height:calc(100vh - 240px);
+  padding:2px;
+}
+.az-quick-product{
+  display:grid;
+  grid-template-columns:minmax(180px,1.3fr) minmax(150px,1fr) minmax(130px,.8fr) minmax(110px,.6fr) auto;
+  gap:8px;align-items:center;padding:9px;
+  background:rgba(255,255,255,.018);
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:12px;
+}
+.az-quick-product-info{min-width:0}
+.az-quick-product-info strong,.az-quick-product-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.az-quick-product-info strong{font-size:10px;color:#fff}
+.az-quick-product-info small{font-size:8px;color:#707c75;margin-top:3px}
+.az-quick-product .input{min-width:0;padding:9px;font-size:9px}
+.az-quick-active{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:8px;color:#9ba59f}
+.az-quick-active input{width:16px;height:16px;accent-color:#f5b900}
+.az-quick-actions{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  position:sticky;bottom:0;padding:12px 0 2px;
+  background:linear-gradient(180deg,transparent,#0b100d 28%);
+}
+@media(max-width:760px){
+  .az-product-tools{align-items:stretch}
+  .az-product-count{width:100%;margin-left:0}
+  .az-quick-product{grid-template-columns:1fr 1fr;gap:7px}
+  .az-quick-product-info{grid-column:1/-1}
+  .az-quick-active{grid-column:1/-1}
+  .az-quick-list{max-height:calc(92vh - 230px)}
+}
