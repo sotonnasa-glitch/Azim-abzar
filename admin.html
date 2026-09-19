@@ -2,7 +2,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>پنل مدیریت | عظیم ابزار</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="admin-modern.css?v=29">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="admin-modern.css?v=30">
 <script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#070908;--panel:#101513;--line:#29312d;--text:#f4f6f5;--muted:#8e9791;--gold:#f5b900;--ok:#39d98a;--red:#ff6b6b}
@@ -128,4 +128,63 @@ $('newProductBtn').onclick=newProduct;$('newCategoryBtn').onclick=newCategory;$(
 async function loadSection(n){try{if(n==='dashboard')await loadDashboard();else if(n==='products')await fetchProducts();else if(n==='categories')await loadCategories();else if(n==='brands')await loadBrands();else if(n==='inquiries')await loadInquiries();else if(n==='orders')await loadOrders();else if(n==='customers')await loadCustomers();else if(n==='media')await loadMedia();else if(n==='content')await loadContent();else if(n==='admins')await loadAdmins();else if(n==='audit')await loadAudit()}catch(e){toast('__AZICON_ERROR__ '+e.message)}}
 (async function(){if(!window.supabase||!window.AZIM_SUPABASE_URL||!window.AZIM_SUPABASE_ANON_KEY){$('loginScreen').classList.remove('hidden');$('loginStatus').textContent='پیکربندی Supabase ناقص است.';return}db=window.supabase.createClient(window.AZIM_SUPABASE_URL,window.AZIM_SUPABASE_ANON_KEY);if(await ensureAdmin())await loadDashboard()})();
 }
-</script><script src="admin-app.js?v=28"></script></body></html>
+</script><script src="admin-app.js?v=29"></script>
+<script>
+(function(){
+  const map={
+    '__AZICON_WAVE__':'wave','__AZICON_LOCK__':'lock','__AZICON_MAIL__':'mail','__AZICON_USER__':'user','__AZICON_ADMIN__':'admin',
+    '__AZICON_MENU__':'menu','__AZICON_EDIT__':'edit','__AZICON_GLOBE__':'globe','__AZICON_HOME__':'home','__AZICON_PHONE__':'phone',
+    '__AZICON_SPARK__':'spark','__AZICON_BLOCK__':'block','__AZICON_ERROR__':'error','__AZICON_SUCCESS__':'success','__AZICON_TARGET__':'target',
+    '__AZICON_GEAR__':'gear','__AZICON_COMPASS__':'compass','__AZICON_TOOLS__':'tools','__AZICON_DOWN__':'down','__AZICON_INVOICE__':'invoice',
+    '__AZICON_CLOCK__':'clock','__AZICON_NOTE__':'note','__AZICON_QUESTION__':'question','__AZICON_PIN__':'pin','__AZICON_SAVE__':'save','__AZICON_WARNING__':'warning'
+  };
+  const re=/__AZICON_(?:WAVE|LOCK|MAIL|USER|ADMIN|MENU|EDIT|GLOBE|HOME|PHONE|SPARK|BLOCK|ERROR|SUCCESS|TARGET|GEAR|COMPASS|TOOLS|DOWN|INVOICE|CLOCK|NOTE|QUESTION|PIN|SAVE|WARNING)__/u;
+  function replaceNode(node){
+    if(!node || !node.nodeValue || !re.test(node.nodeValue) || !node.parentNode) return;
+    let text=node.nodeValue, frag=document.createDocumentFragment(), m;
+    while(text){
+      m=text.match(re);
+      if(!m){ frag.appendChild(document.createTextNode(text)); break; }
+      if(m.index) frag.appendChild(document.createTextNode(text.slice(0,m.index)));
+      const icon=document.createElement('span');
+      const type=map[m[0]]||'spark';
+      icon.className='az-animated-icon az-animated-icon-'+type;
+      icon.setAttribute('aria-hidden','true');
+      icon.dataset.icon=type;
+      frag.appendChild(icon);
+      text=text.slice(m.index+m[0].length);
+    }
+    node.parentNode.replaceChild(frag,node);
+  }
+  function scan(root){
+    if(!root) return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+      acceptNode(node){
+        const el=node.parentElement;
+        if(!el || ['SCRIPT','STYLE','NOSCRIPT','TEXTAREA'].includes(el.tagName)) return NodeFilter.FILTER_REJECT;
+        return re.test(node.nodeValue||'') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(replaceNode);
+  }
+  function boot(){
+    const root=document.body;
+    if(!root || root.dataset.azIconFallback==='1') return;
+    root.dataset.azIconFallback='1';
+    scan(root);
+    new MutationObserver(function(mutations){
+      mutations.forEach(function(m){
+        if(m.type==='characterData') replaceNode(m.target);
+        else m.addedNodes && m.addedNodes.forEach(function(n){
+          if(n.nodeType===Node.TEXT_NODE) replaceNode(n);
+          else if(n.nodeType===Node.ELEMENT_NODE) scan(n);
+        });
+      });
+    }).observe(root,{subtree:true,childList:true,characterData:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
+</script></body></html>
