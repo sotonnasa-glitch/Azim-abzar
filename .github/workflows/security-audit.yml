@@ -1,0 +1,53 @@
+name: Security audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Generate lockfile without running scripts
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Dependency vulnerability audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: JavaScript syntax checks
+        run: |
+          node --check server.js
+          node --input-type=module --check < api/chat.js
+          node --check admin-app.js
+
+      - name: Secret and security invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RniE 'service_role|sb_secret_|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}|postgresql://'             --exclude-dir=.git --exclude='*.zip' --exclude='*.b64' .
+          grep -q "X-Content-Type-Options" server.js
+          grep -q "Content-Security-Policy" server.js
+          grep -q "express.json({ limit: '8kb' })" server.js
+          grep -q "RATE_LIMIT = 12" api/chat.js
+          grep -q "requireAdminMFA" admin-app.js
+          grep -q "sb_publishable_" supabase-config.js
+          echo "SECURITY INVARIANTS VERIFIED"
