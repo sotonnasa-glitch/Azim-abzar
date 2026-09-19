@@ -179,6 +179,7 @@
     }
     function open() { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); input.value=''; active=0; render(); setTimeout(()=>input.focus(),20); }
     function close() { overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); }
+    window.__openAzCommandPalette = open;
     $('commandClose').onclick=close;
     overlay.onclick=(e)=>{if(e.target===overlay)close();};
     input.oninput=()=>{active=0;render(input.value);};
@@ -268,7 +269,7 @@
       b.className = 'btn secondary';
       b.type = 'button';
       b.innerHTML = '⌘ <span>جستجوی سریع</span>';
-      b.onclick = () => document.getElementById('commandInput')?.focus();
+      b.onclick = () => window.__openAzCommandPalette?.();
       tools.appendChild(b);
       topbar.appendChild(tools);
     }
