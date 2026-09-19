@@ -5,6 +5,7 @@ create schema if not exists private;
 
 create table if not exists public.admin_users (
   user_id uuid primary key references auth.users(id) on delete cascade,
+  is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -15,8 +16,9 @@ create table if not exists public.products (
   cat text not null,
   code text,
   badge text,
-  desc text not null,
+  description text not null,
   img text,
+  is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -33,16 +35,21 @@ language sql
 stable
 security definer
 set search_path = public
-as $$
-  select exists(select 1 from public.admin_users where user_id = auth.uid());
-$$;
+as $
+  select coalesce(auth.jwt()->>'aal','aal1')='aal2'
+    and exists(
+      select 1 from public.admin_users
+      where user_id = auth.uid()
+        and is_active = true
+    );
+$;
 
 revoke all on function private.is_azim_admin() from public;
 grant execute on function private.is_azim_admin() to authenticated;
 
  drop policy if exists "Public can read products" on public.products;
-create policy "Public can read products" on public.products
-for select using (true);
+create policy "Public can read active products" on public.products
+for select to anon using (coalesce(is_active,true));
 
 drop policy if exists "Admins can insert products" on public.products;
 create policy "Admins can insert products" on public.products
