@@ -191,15 +191,16 @@ drop policy if exists "Admins can read products" on public.products;
 create policy "Admins can read products" on public.products for select to authenticated
 using (private.is_azim_admin());
 drop policy if exists "Admins can insert products" on public.products;
+drop policy if exists "Editors can insert products" on public.products;
 create policy "Editors can insert products" on public.products for insert to authenticated
 with check (private.has_azim_role(array['owner','admin','editor']));
-drop policy if exists "Editors can insert products" on public.products;
+drop policy if exists "Admins can update products" on public.products;
+drop policy if exists "Editors can update products" on public.products;
 create policy "Editors can update products" on public.products for update to authenticated
 using (private.has_azim_role(array['owner','admin','editor']))
 with check (private.has_azim_role(array['owner','admin','editor']));
-drop policy if exists "Admins can update products" on public.products;
-drop policy if exists "Editors can delete products" on public.products;
 drop policy if exists "Admins can delete products" on public.products;
+drop policy if exists "Editors can delete products" on public.products;
 create policy "Editors can delete products" on public.products for delete to authenticated
 using (private.has_azim_role(array['owner','admin','editor']));
 
