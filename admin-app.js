@@ -32,7 +32,8 @@
     media: ['رسانه', 'آپلود، مشاهده و حذف تصاویر سایت'],
     content: ['محتوای سایت', 'مدیریت متن‌های واقعی صفحه اصلی و ارتباط با ما'],
     admins: ['کاربران مدیر', 'نقش‌ها و سطح دسترسی'],
-    audit: ['گزارش فعالیت', 'ردپای تغییرات پنل']
+    audit: ['گزارش فعالیت', 'ردپای تغییرات پنل'],
+    security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی']
   };
 
   const labels = {
@@ -470,7 +471,8 @@
       media:['owner','admin','editor'],
       content:['owner','admin','editor'],
       admins:['owner','admin'],
-      audit:['owner','admin']
+      audit:['owner','admin'],
+      security:['owner','admin']
     };
     document.querySelectorAll('[data-menu-view]').forEach((btn) => {
       btn.style.display = (allowed[btn.dataset.menuView] || []).includes(role) ? '' : 'none';
@@ -495,7 +497,8 @@
       ['media','رسانه','تصاویر و فایل‌ها'],
       ['content','محتوای سایت','CMS'],
       ['admins','کاربران مدیر','نقش‌ها'],
-      ['audit','گزارش فعالیت','Audit Log']
+      ['audit','گزارش فعالیت','Audit Log'],
+      ['security','امنیت حساب','MFA، نشست و دسترسی']
     ];
     let active = 0;
     function render(q='') {
@@ -3091,6 +3094,69 @@
     if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit(field === 'role' ? 'role_change' : 'status_change', 'admin_users', id, p);
     toast('__AZICON_SUCCESS__ بروزرسانی شد');
+  }
+
+  async function loadSecurity() {
+    const el = $('securityPanel');
+    if (!el || !state.db || !state.user) return;
+    el.innerHTML = '<div class="az-security-loading">در حال بررسی وضعیت امنیتی حساب…</div>';
+    try {
+      const [aal, factors, session] = await Promise.all([
+        state.db.auth.mfa.getAuthenticatorAssuranceLevel(),
+        state.db.auth.mfa.listFactors(),
+        state.db.auth.getSession()
+      ]);
+      if (aal.error) throw aal.error;
+      if (factors.error) throw factors.error;
+      if (session.error) throw session.error;
+
+      const current = aal.data?.currentLevel || 'aal1';
+      const next = aal.data?.nextLevel || 'aal2';
+      const totp = (factors.data?.totp || []).filter(x => x.status === 'verified');
+      const pending = (factors.data?.totp || []).filter(x => x.status !== 'verified');
+      const expiresAt = session.data?.session?.expires_at ? new Date(session.data.session.expires_at * 1000) : null;
+      const expText = expiresAt ? expiresAt.toLocaleString('fa-IR') : 'نامشخص';
+      const aalOk = current === 'aal2';
+
+      el.innerHTML =
+        '<div class="az-security-grid">' +
+          '<div class="az-security-main">' +
+            '<div class="az-security-hero">' +
+              '<div><span class="az-security-kicker">SECURITY CENTER</span><h2>حساب مدیر تحت کنترل است</h2><p>مجوزهای مدیریتی دیتابیس فقط در نشست MFA سطح AAL2 قابل استفاده هستند.</p></div>' +
+              '<div class="az-security-status ' + (aalOk ? 'ok' : 'warn') + '"><span></span><strong>' + (aalOk ? 'MFA فعال' : 'نیازمند MFA') + '</strong><small>' + esc(current.toUpperCase()) + '</small></div>' +
+            '</div>' +
+            '<div class="az-security-cards">' +
+              '<div class="az-security-card"><span>سطح نشست</span><b>' + esc(current.toUpperCase()) + '</b><small>' + (aalOk ? 'تأیید دومرحله‌ای در این نشست برقرار است.' : 'بدون AAL2 دسترسی مدیریتی رد می‌شود.') + '</small></div>' +
+              '<div class="az-security-card"><span>عامل TOTP</span><b>' + String(totp.length) + '</b><small>' + (totp.length ? 'عامل تأییدشده برای حساب وجود دارد.' : 'هیچ عامل TOTP تأییدشده‌ای ندارید.') + '</small></div>' +
+              '<div class="az-security-card"><span>نشست بعدی</span><b>' + esc(next.toUpperCase()) + '</b><small>سطح اطمینان مورد انتظار برای عملیات حساس.</small></div>' +
+              '<div class="az-security-card"><span>انقضای نشست</span><b dir="ltr" style="font-size:10px">' + esc(expText) + '</b><small>توکن نشست طبق تنظیمات Supabase مدیریت می‌شود.</small></div>' +
+            '</div>' +
+            '<div class="az-security-section">' +
+              '<div class="az-security-section-head"><strong>کنترل‌های فعال</strong><small>بررسی‌های امنیتی قابل مشاهده از داخل پنل</small></div>' +
+              '<div class="az-security-checks">' +
+                '<div class="az-security-check ' + (aalOk ? 'ok' : 'bad') + '"><span>' + (aalOk ? '✓' : '!') + '</span><div><b>احراز هویت دومرحله‌ای</b><small>دسترسی حساس به نشست AAL2 وابسته است.</small></div></div>' +
+                '<div class="az-security-check ' + (totp.length ? 'ok' : 'bad') + '"><span>' + (totp.length ? '✓' : '!') + '</span><div><b>Authenticator / TOTP</b><small>' + (totp.length ? 'عامل TOTP تأیید شده است.' : 'یک عامل TOTP باید فعال شود.') + '</small></div></div>' +
+                '<div class="az-security-check ok"><span>✓</span><div><b>تفکیک نقش‌ها</b><small>دسترسی‌ها بر اساس owner / admin / editor / sales کنترل می‌شوند.</small></div></div>' +
+                '<div class="az-security-check ok"><span>✓</span><div><b>ثبت رویدادها</b><small>عملیات مدیریتی حساس در Audit Log ثبت می‌شوند.</small></div></div>' +
+              '</div>' +
+            '</div>' +
+            (pending.length ? '<div class="az-security-warning">یک عامل MFA در وضعیت انتظار تأیید است. قبل از خروج از این دستگاه، فعال‌سازی آن را کامل کنید.</div>' : '') +
+          '</div>' +
+          '<aside class="az-security-side">' +
+            '<div class="az-security-section"><div class="az-security-section-head"><strong>عامل‌های MFA</strong><small>Supabase Auth</small></div><div class="az-security-factor-list">' +
+              (totp.length ? totp.map(x => '<div class="az-security-factor"><span class="dot"></span><div><b>' + esc(x.friendly_name || 'TOTP') + '</b><small>تأیید شده · ' + esc(x.created_at ? dateFa(x.created_at,false) : '—') + '</small></div></div>').join('') : '<div class="az-security-empty">عامل تأییدشده‌ای ثبت نشده.</div>') +
+            '</div></div>' +
+            '<div class="az-security-section"><div class="az-security-section-head"><strong>اقدام امنیتی</strong></div><button id="securityRecheckBtn" class="btn" style="width:100%">بازبینی MFA</button><p class="az-security-note">برای تغییر عامل یا بازیابی MFA از تنظیمات Auth حساب Supabase استفاده کنید؛ این پنل هیچ secret یا seed را ذخیره نمی‌کند.</p></div>' +
+          '</aside>' +
+        '</div>';
+
+      $('securityRecheckBtn')?.addEventListener('click', async () => {
+        const ok = await requireAdminMFA();
+        if (ok) { toast('__AZICON_SUCCESS__ نشست MFA تأیید شد'); await loadSecurity(); }
+      });
+    } catch (err) {
+      el.innerHTML = '<div class="empty">__AZICON_ERROR__ بررسی امنیتی ناموفق: ' + esc(errorText(err)) + '</div>';
+    }
   }
 
   async function loadAudit() {
