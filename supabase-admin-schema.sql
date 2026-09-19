@@ -174,6 +174,9 @@ create policy "Admins manage admin users" on public.admin_users for all to authe
 drop policy if exists "Public can read products" on public.products;
 drop policy if exists "Public can read active products" on public.products;
 create policy "Public can read active products" on public.products for select to anon using (coalesce(is_active,true) or private.is_azim_admin());
+drop policy if exists "Admins can read products" on public.products;
+create policy "Admins can read products" on public.products for select to authenticated using (private.is_azim_admin());
+
 drop policy if exists "Admins can insert products" on public.products;
 create policy "Admins can insert products" on public.products for insert to authenticated with check (private.is_azim_admin());
 drop policy if exists "Admins can update products" on public.products;
