@@ -193,6 +193,20 @@
 
   function ensureExtraUI() {
     const nav = document.querySelector('.nav');
+    if (nav && !nav.querySelector('.az-nav-group-label')) {
+      const addGroup = (text, beforeView) => {
+        const target = nav.querySelector('[data-view="' + beforeView + '"]');
+        if (!target) return;
+        const label = document.createElement('div');
+        label.className = 'az-nav-group-label';
+        label.textContent = text;
+        target.before(label);
+      };
+      addGroup('فروش و مشتری', 'orders');
+      addGroup('کاتالوگ', 'products');
+      addGroup('محتوا و هوش', 'content');
+      addGroup('سیستم', 'admins');
+    }
     if (nav && !nav.querySelector('[data-view="ai"]')) {
       const btn = document.createElement('button');
       btn.dataset.view = 'ai';
@@ -246,6 +260,18 @@
     });
 
     $('refreshBtn').onclick = () => loadSection(activeView());
+    const topbar = document.querySelector('.topbar');
+    if (topbar && !document.querySelector('.az-topbar-search')) {
+      const tools = document.createElement('div');
+      tools.className = 'az-topbar-search';
+      const b = document.createElement('button');
+      b.className = 'btn secondary';
+      b.type = 'button';
+      b.innerHTML = '⌘ <span>جستجوی سریع</span>';
+      b.onclick = () => document.getElementById('commandInput')?.focus();
+      tools.appendChild(b);
+      topbar.appendChild(tools);
+    }
     $('logoutBtn').onclick = async () => {
       await state.db.auth.signOut();
       location.reload();
