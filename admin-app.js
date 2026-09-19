@@ -345,7 +345,7 @@
     }
 
     try {
-      const pending = (factors.data?.totp || []).find(f => f.status !== 'verified' && (f.friendly_name || '') === 'Azim Abzar Admin');
+      const pending = (factors.data?.totp || []).find(f => f.status !== 'verified');
       let factor = pending;
       let qrData = '';
       let secret = '';
