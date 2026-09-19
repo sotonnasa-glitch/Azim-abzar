@@ -1,0 +1,130 @@
+:root{
+  --az-surface:#0d1210;
+  --az-surface-2:#111815;
+  --az-surface-3:#151d19;
+  --az-line:#27332c;
+  --az-line-2:#344139;
+  --az-text:#f7f8f6;
+  --az-muted:#8e9b94;
+  --az-gold:#f5b900;
+  --az-gold-2:#ffd84f;
+  --az-ok:#39d98a;
+  --az-red:#ff7070;
+  --az-shadow:0 24px 70px rgba(0,0,0,.30);
+}
+body{background:
+  radial-gradient(900px 420px at 95% -10%,rgba(245,185,0,.10),transparent 55%),
+  radial-gradient(800px 520px at -10% 30%,rgba(47,213,115,.06),transparent 60%),
+  #070908;}
+.layout{grid-template-columns:268px 1fr;gap:0}
+.sidebar{background:linear-gradient(180deg,rgba(9,13,11,.98),rgba(7,10,9,.98));border-left:1px solid var(--az-line);box-shadow:12px 0 40px rgba(0,0,0,.10)}
+.brand{padding:14px 12px 18px}
+.brand strong{font-size:22px;letter-spacing:-.3px}
+.brand span{font-size:10px}
+.nav{gap:6px}
+.nav button{padding:11px 12px;border-radius:12px;font-size:11px;transition:.18s ease}
+.nav button.active,.nav button:hover{background:linear-gradient(180deg,#171f1a,#121815);border-color:#344038;box-shadow:inset -3px 0 var(--az-gold),0 8px 20px rgba(0,0,0,.15);transform:translateX(-1px)}
+.main{padding:24px 24px 36px}
+.topbar{padding:6px 0 8px;margin-bottom:16px}
+.page-title{font-size:26px;letter-spacing:-.4px}
+.page-sub{font-size:10px}
+.cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{padding:17px;border-radius:17px;box-shadow:var(--az-shadow);background:linear-gradient(180deg,rgba(18,24,21,.98),rgba(13,18,16,.98));position:relative;overflow:hidden}
+.card:after{content:"";position:absolute;inset:auto -40px -60px auto;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(245,185,0,.10),transparent 68%);pointer-events:none}
+.card .k{font-size:10px}
+.card .v{font-size:31px;line-height:1.2}
+.panel{border-radius:18px;padding:18px;background:linear-gradient(180deg,rgba(18,24,21,.98),rgba(12,17,15,.98));box-shadow:var(--az-shadow)}
+.panel-head{margin-bottom:14px}
+.panel-head h2{font-size:16px}
+.tools{gap:8px}
+.input,.select,.textarea{background:#0a0e0c;border-color:#334038;border-radius:11px}
+.input:focus,.select:focus,.textarea:focus{box-shadow:0 0 0 3px rgba(245,185,0,.08);border-color:var(--az-gold)}
+.btn{border-radius:11px;padding:10px 13px;transition:.18s ease;box-shadow:0 8px 18px rgba(245,185,0,.08)}
+.btn:hover{transform:translateY(-1px)}
+.btn.secondary,.btn.ghost{box-shadow:none}
+.table-wrap{border-radius:13px;border-color:#27312b}
+.table th,.table td{padding:11px 10px}
+.table tbody tr{transition:.16s ease}
+.table tbody tr:hover{background:rgba(255,255,255,.018)}
+.badge{border-radius:10px}
+.thumb{width:46px;height:46px;border-radius:10px}
+.empty{padding:38px 24px}
+.modal{backdrop-filter:blur(8px);background:rgba(0,0,0,.72)}
+.modal.show .modal-box{animation:azModalIn .18s ease}
+@keyframes azModalIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal-box{border-radius:18px;box-shadow:0 30px 100px rgba(0,0,0,.48)}
+.modal.drawer-mode{justify-content:flex-end;padding:0}
+.modal.drawer-mode .modal-box{height:100vh;max-height:none;width:min(820px,96vw);border-radius:22px 0 0 22px;border-width:0 1px 0 0;padding:22px;animation:azDrawerIn .22s ease}
+@keyframes azDrawerIn{from{transform:translateX(40px);opacity:.3}to{transform:none;opacity:1}}
+.modal.drawer-mode .modal-head{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,#111613 80%,transparent);padding-bottom:12px}
+.modal.drawer-mode .grid2{padding-bottom:84px}
+.modal.drawer-mode .grid2>.field.full:last-of-type{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(17,22,19,0),#111613 35%);padding-top:22px;margin-top:6px}
+.toast{left:24px;bottom:24px;padding:11px 14px;border-radius:12px;box-shadow:0 16px 35px rgba(0,0,0,.28)}
+.az-command{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;padding:12vh 16px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);z-index:60}
+.az-command.show{display:flex}
+.az-command-box{width:min(720px,100%);background:#0f1512;border:1px solid #38463e;border-radius:18px;box-shadow:0 30px 100px rgba(0,0,0,.55);overflow:hidden}
+.az-command-head{display:flex;gap:10px;align-items:center;padding:14px;border-bottom:1px solid #26312b}
+.az-command-head input{flex:1;background:#0a0e0c;border:0;outline:0;color:#fff;font:inherit;font-size:14px}
+.az-command-hint{font-size:9px;color:#7f8a84;padding:0 2px}
+.az-command-list{max-height:52vh;overflow:auto;padding:8px}
+.az-command-item{display:flex;justify-content:space-between;gap:12px;padding:11px 12px;border-radius:11px;color:#d9dfdc;cursor:pointer}
+.az-command-item:hover,.az-command-item.active{background:#18201b;color:#fff}
+.az-command-item small{color:#7e8982}
+.az-skeleton{height:44px;border-radius:10px;background:linear-gradient(90deg,#151b18,#1c2420,#151b18);background-size:200% 100%;animation:azShimmer 1.2s infinite}
+@keyframes azShimmer{to{background-position:-200% 0}}
+.az-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.az-health-card{background:#0d1310;border:1px solid #27332c;border-radius:13px;padding:13px}
+.az-health-card .az-health-title{font-size:10px;color:#aab4ae}
+.az-health-card .az-health-value{font-size:14px;font-weight:900;margin-top:5px}
+.az-health-card .az-health-sub{font-size:9px;color:#738079;margin-top:4px}
+.az-stat-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.az-mini-stat{background:#0c120f;border:1px solid #253029;border-radius:13px;padding:12px}
+.az-mini-stat b{display:block;font-size:9px;color:#8d9991}
+.az-mini-stat strong{display:block;font-size:18px;margin-top:4px}
+.az-category-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.az-category-card{background:linear-gradient(180deg,#121915,#0e1411);border:1px solid #2a362f;border-radius:16px;padding:15px;box-shadow:0 14px 34px rgba(0,0,0,.16)}
+.az-category-card .az-cat-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.az-category-card h3{font-size:14px;margin:0}
+.az-category-card .az-cat-count{font-size:24px;font-weight:900;color:var(--az-gold)}
+.az-category-card .az-cat-meta{font-size:9px;color:#7f8b84;margin-top:4px}
+.az-category-card .az-cat-actions{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.az-order-timeline{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.az-order-step{display:flex;align-items:center;gap:7px;border:1px solid #2a352f;background:#0d1310;border-radius:999px;padding:7px 10px;font-size:9px;color:#8e9993}
+.az-order-step.done{border-color:rgba(57,217,138,.38);color:#b6ffd7;background:rgba(57,217,138,.06)}
+.az-order-step.current{border-color:rgba(245,185,0,.45);color:#ffe28a;background:rgba(245,185,0,.07)}
+.az-order-step i{width:7px;height:7px;border-radius:50%;background:#4c5a52}
+.az-order-step.done i{background:#39d98a;box-shadow:0 0 10px rgba(57,217,138,.45)}
+.az-order-step.current i{background:#f5b900;box-shadow:0 0 10px rgba(245,185,0,.45)}
+.az-bulkbar{display:none;align-items:center;gap:8px;padding:9px 11px;margin-bottom:10px;background:#121a16;border:1px solid #334139;border-radius:12px}
+.az-bulkbar.show{display:flex}
+.az-check{width:18px;height:18px;accent-color:#f5b900}
+.az-product-check{width:18px;height:18px;accent-color:#f5b900}
+.az-publish-dot{display:inline-flex;align-items:center;gap:6px}
+.az-publish-dot i{width:7px;height:7px;border-radius:50%;background:#39d98a;box-shadow:0 0 10px rgba(57,217,138,.5)}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.az-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){
+  .layout{display:block}
+  .sidebar{padding:6px 6px env(safe-area-inset-bottom);border-top:1px solid #2b352f}
+  .nav{gap:5px}
+  .nav button{padding:9px 11px;border-radius:11px}
+  .nav button.active{box-shadow:inset 0 2px var(--az-gold)}
+  .main{padding:12px 12px 90px}
+  .page-title{font-size:19px}
+  .topbar{gap:8px}
+  .topbar .btn{padding:9px 11px}
+  .cards{gap:9px}
+  .card{padding:13px;border-radius:14px}
+  .card .v{font-size:23px}
+  .panel{padding:13px;border-radius:15px}
+  .az-category-grid{grid-template-columns:1fr}
+  .az-health-grid,.az-stat-strip{grid-template-columns:1fr 1fr}
+  .modal.drawer-mode{padding:0}
+  .modal.drawer-mode .modal-box{width:100vw;border-radius:20px 20px 0 0;height:92vh;margin-top:8vh}
+  .az-command{padding:6vh 10px}
+  .az-command-box{border-radius:15px}
+}
+@media(max-width:460px){
+  .cards{grid-template-columns:1fr 1fr}
+  .az-health-grid,.az-stat-strip{grid-template-columns:1fr}
+  .nav button{font-size:8px;padding:8px 9px}
+}
