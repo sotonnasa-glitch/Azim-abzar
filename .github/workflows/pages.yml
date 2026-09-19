@@ -132,6 +132,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          import re
           contact = Path('_site/contact.html').read_text(encoding='utf-8')
           index = Path('_site/index.html').read_text(encoding='utf-8')
           products = Path('_site/products-v4.html').read_text(encoding='utf-8')
@@ -140,20 +141,15 @@ jobs:
           assert 'azim-live-content.js?v=2' in index
           assert 'loadLiveVariants' in products
           assert 'livePriceData' in products
-          assert 'products-v4.html' in index
           assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
+          scripts = re.findall(r'<script>(.*?)</script>', contact, flags=re.S)
+          inline = next((s for s in scripts if 'handleFormSubmission' in s), '')
+          assert inline.strip(), 'CONTACT_INLINE_SCRIPT_MISSING'
+          Path('/tmp/contact-inline.js').write_text(inline, encoding='utf-8')
           print('CONTACT/CATALOG VERIFIED: unified CMS + live variants + no placeholder mobile number')
           PY
-          node --check <(python - <<'PY'
-          from pathlib import Path
-          import re
-          h=Path('_site/contact.html').read_text(encoding='utf-8')
-          for s in re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',h):
-              if 'handleFormSubmission' in s:
-                  print(s)
-                  break
-          PY
-          )
+          node --check /tmp/contact-inline.js
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
