@@ -277,7 +277,19 @@
 
     const bottom=p.bottom||{};
     const br=document.querySelector('#bottom-store-address');
-    if(br){setText(br.querySelector('.store-address-title'),bottom.title);setText(br.querySelector('.store-address-badge'),bottom.badge);setText(br.querySelector('.store-address-text'),bottom.address);const ms=br.querySelectorAll('.store-address-meta > span:not(.sep)');[bottom.meta1,bottom.meta2,bottom.phone].forEach((v,i)=>{if(ms[i]) setText(ms[i],v)});setText(br.querySelector('.store-address-btn span'),bottom.map);}
+    if(br){
+      setText(br.querySelector('.store-address-title'),bottom.title);
+      setText(br.querySelector('.store-address-badge'),bottom.badge);
+      setText(br.querySelector('.store-address-text'),bottom.address);
+      const ms=br.querySelectorAll('.store-address-meta > span:not(.sep)');
+      [bottom.meta1,bottom.meta2,bottom.phone].forEach((v,i)=>{if(ms[i]) setText(ms[i],v)});
+      setText(br.querySelector('.location-primary span'),bottom.map || 'مسیریابی با نشان');
+      const n=br.querySelector('.location-primary');
+      const bl=br.querySelector('.location-secondary');
+      if(n && address.neshan_url) n.href=address.neshan_url;
+      if(bl && address.balad_url) bl.href=address.balad_url;
+      if(bl && !address.balad_url) bl.style.display='none';
+    }
     const ft=p.footer||{};
     const f=document.querySelector('.footer');
     if(f){setText(f.querySelector('.footer-inner > span'),ft.text);const footerLinks=(ft.links||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v))); f.querySelectorAll('.footer-links a').forEach((a,i)=>{if(footerLinks[i]) setText(a,footerLinks[i]);});}
