@@ -25,7 +25,8 @@
     brands: ['برندها', 'مدیریت برند و اتصال آن به محصولات'],
     inquiries: ['درخواست‌ها', 'استعلام قیمت و ارتباط با مشتری'],
     orders: ['سفارش‌ها', 'مدیریت سفارش، پرداخت، ارسال و اقلام سفارش'],
-    discounts: ['تخفیف و پروموشن', 'کد تخفیف، تخفیف محصول، کمپین و تخفیف اختصاصی مشتری'],
+    discounts: ['تخفیف و پروموشن', 'کمپین‌ها و تخفیف‌های خودکار'],
+    'discount-codes': ['کدهای تخفیف', 'ساخت و مدیریت کدهای قابل استفاده مشتری'],
     customers: ['مشتریان', 'اطلاعات تماس و سوابق مشتریان'],
     media: ['رسانه', 'آپلود، مشاهده و حذف تصاویر سایت'],
     content: ['محتوای سایت', 'مدیریت متن‌های واقعی صفحه اصلی و ارتباط با ما'],
@@ -323,6 +324,7 @@
       inquiries:['owner','admin','sales'],
       orders:['owner','admin','sales'],
       discounts:['owner','admin','sales'],
+      'discount-codes':['owner','admin','sales'],
       customers:['owner','admin','sales'],
       media:['owner','admin','editor'],
       content:['owner','admin','editor'],
@@ -346,7 +348,8 @@
       ['brands','برندها','مدیریت برندها'],
       ['inquiries','درخواست‌ها','استعلام و پیگیری'],
       ['orders','سفارش‌ها','سفارش و ارسال'],
-      ['discounts','تخفیف و پروموشن','کد تخفیف و کمپین فروش'],
+      ['discounts','تخفیف و پروموشن','کمپین و تخفیف خودکار'],
+      ['discount-codes','کدهای تخفیف','کدهای قابل استفاده مشتری'],
       ['customers','مشتریان','اطلاعات مشتریان'],
       ['media','رسانه','تصاویر و فایل‌ها'],
       ['content','محتوای سایت','CMS'],
@@ -401,10 +404,18 @@
       const ordersBtn = nav.querySelector('[data-view="orders"]');
       nav.insertBefore(btn, ordersBtn || null);
     }
+    if (nav && !nav.querySelector('[data-view="discount-codes"]')) {
+      const btn = document.createElement('button');
+      btn.dataset.view = 'discount-codes';
+      btn.innerHTML = '🏷️ کدهای تخفیف';
+      const discountBtn = nav.querySelector('[data-view="discounts"]');
+      if (discountBtn) discountBtn.after(btn);
+    }
 
     const main = document.querySelector('.main');
     const dash = $('view-dashboard');
     ensureDiscountSection();
+    ensureDiscountCodeSection();
     if (dash && !$('dashboardHealth')) {
       const h = document.createElement('div');
       h.id = 'dashboardHealth';
@@ -588,6 +599,7 @@
 
   async function loadSection(name) {
     if (name === 'discounts') return loadDiscounts();
+    if (name === 'discount-codes') return loadDiscountCodes();
     const skeletons = {
       products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
       inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
@@ -1720,7 +1732,7 @@
     if ($('discountTargetCount')) $('discountTargetCount').textContent = n.toLocaleString('fa-IR') + ' انتخاب';
   }
 
-  async function openDiscountEditor(id, presetCustomerId = null) {
+  async function openDiscountEditor(id, presetCustomerId = null, codeOnly = false) {
     if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند تخفیف بسازد.');
     await loadDiscountReferenceData();
     const x = id ? discountState.rows.find(r => r.id === id) : null;
@@ -1730,6 +1742,7 @@
     }
     openModal(id ? 'ویرایش تخفیف' : (presetCustomerId ? 'تخفیف اختصاصی مشتری' : 'ساخت تخفیف جدید'), discountForm(x || null, presetCustomerId));
     const form = $('discountForm');
+    if (codeOnly) form.dataset.codeRequired = '1';
     form.onsubmit = (e) => saveDiscount(e, id, presetCustomerId);
     form.elements.applies_to.onchange = () => loadDiscountTargets(x || null, presetCustomerId);
     $('discountPreviewBtn').onclick = () => previewDiscountLogic(form);
@@ -1767,6 +1780,7 @@
       const ends = s.ends_at.value ? new Date(s.ends_at.value).toISOString() : null;
       const scope = s.applies_to.value;
       if (!name) throw new Error('عنوان تخفیف الزامی است.');
+      if (e.target.dataset.codeRequired === '1' && !code) throw new Error('کد تخفیف برای این بخش الزامی است.');
       if (type === 'percentage' && (value < 1 || value > 100)) throw new Error('درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.');
       if (type === 'fixed' && value < 1) throw new Error('مبلغ تخفیف باید بیشتر از صفر باشد.');
       if (ends && new Date(ends) <= new Date(starts)) throw new Error('پایان باید بعد از شروع باشد.');
@@ -1805,6 +1819,7 @@
       closeModal();
       toast('__AZICON_SUCCESS__ تخفیف ذخیره شد');
       await loadDiscounts();
+      await loadDiscountCodes();
     } catch (err) {
       if (status) status.textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
@@ -1818,6 +1833,7 @@
     if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     await audit('toggle','discounts',id,{is_active:!x.is_active});
     await loadDiscounts();
+    await loadDiscountCodes();
   }
 
   async function deleteDiscount(id) {
@@ -1830,6 +1846,7 @@
     await audit('delete','discounts',id,{name:x.name,code:x.code});
     toast('__AZICON_SUCCESS__ تخفیف حذف شد');
     await loadDiscounts();
+    await loadDiscountCodes();
   }
 
   async function calculateAdminDiscount(code, customerId, items, subtotal) {
@@ -1949,6 +1966,82 @@
     $('discountSearch').oninput = renderDiscounts;
     $('discountFilterStatus').onchange = renderDiscounts;
     $('discountFilterType').onchange = renderDiscounts;
+  }
+
+  function ensureDiscountCodeSection() {
+    const main = document.querySelector('.main');
+    if (!main || $('view-discount-codes')) return;
+    const sec = document.createElement('section');
+    sec.id = 'view-discount-codes';
+    sec.className = 'view';
+    sec.innerHTML =
+      '<div class="az-discount-shell">' +
+        '<div class="az-discount-hero"><div><span class="az-section-kicker">CUSTOMER COUPON CENTER</span><h2>کدهای تخفیف</h2><p>کدهای قابل ورود توسط مشتری را جدا از کمپین‌های خودکار مدیریت کن.</p></div><div class="tools"><button id="newDiscountCodeBtn" class="btn">＋ ساخت کد تخفیف</button></div></div>' +
+        '<div class="cards az-discount-stats">' +
+          '<div class="card"><div class="k">همه کدها</div><div id="discountCodeStatTotal" class="v">—</div><div class="s">کدهای ثبت‌شده</div></div>' +
+          '<div class="card"><div class="k">فعال</div><div id="discountCodeStatActive" class="v">—</div><div class="s">قابل استفاده</div></div>' +
+          '<div class="card"><div class="k">خاموش</div><div id="discountCodeStatOff" class="v">—</div><div class="s">غیرفعال</div></div>' +
+          '<div class="card"><div class="k">ورود مشتری</div><div class="v">کد</div><div class="s">محل استفاده در سفارش</div></div>' +
+        '</div>' +
+        '<div class="panel"><div class="panel-head"><h2>لیست کدهای تخفیف</h2><div class="tools"><input id="discountCodeSearch" class="input" placeholder="جستجو در نام یا کد…"><select id="discountCodeFilter" class="select"><option value="">همه</option><option value="active">فعال</option><option value="off">خاموش</option></select></div></div><div id="discountCodesTable" class="table-wrap"></div></div>' +
+      '</div>';
+    main.appendChild(sec);
+    $('newDiscountCodeBtn').onclick = () => openDiscountCodeEditor(null);
+    $('discountCodeSearch').oninput = renderDiscountCodes;
+    $('discountCodeFilter').onchange = renderDiscountCodes;
+  }
+
+  async function loadDiscountCodes() {
+    const box = $('discountCodesTable');
+    if (!box) return;
+    try {
+      const r = await state.db.from('discounts').select('*').not('code','is',null).order('created_at',{ascending:false}).limit(500);
+      if (r.error) throw r.error;
+      const rows = (r.data || []).filter(x => String(x.code || '').trim());
+      discountState.rows = Array.isArray(discountState.rows) ? discountState.rows.filter(x => !x.code) .concat(rows) : rows;
+      const active = rows.filter(x => x.is_active).length;
+      const off = rows.length - active;
+      if ($('discountCodeStatTotal')) $('discountCodeStatTotal').textContent = rows.length.toLocaleString('fa-IR');
+      if ($('discountCodeStatActive')) $('discountCodeStatActive').textContent = active.toLocaleString('fa-IR');
+      if ($('discountCodeStatOff')) $('discountCodeStatOff').textContent = off.toLocaleString('fa-IR');
+      renderDiscountCodes();
+    } catch (err) {
+      showSectionError('discountCodesTable', err);
+    }
+  }
+
+  function renderDiscountCodes() {
+    const box = $('discountCodesTable');
+    if (!box) return;
+    const term = ($('discountCodeSearch')?.value || '').trim().toLocaleLowerCase('fa');
+    const filter = $('discountCodeFilter')?.value || '';
+    const rows = (discountState.rows || []).filter(x => {
+      if (!String(x.code || '').trim()) return false;
+      const hay = (String(x.name || '') + ' ' + String(x.code || '')).toLocaleLowerCase('fa');
+      if (term && !hay.includes(term)) return false;
+      if (filter === 'active' && !x.is_active) return false;
+      if (filter === 'off' && x.is_active) return false;
+      return true;
+    });
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">هنوز کد تخفیفی ثبت نشده است.</div>';
+      return;
+    }
+    const body = rows.map(x => {
+      const value = x.discount_type === 'percentage' ? Number(x.value || 0) + '%' : money(x.value);
+      const start = x.starts_at ? dateFa(x.starts_at,false) : 'همین حالا';
+      const end = x.ends_at ? dateFa(x.ends_at,false) : 'بدون پایان';
+      return '<tr><td><code dir="ltr">' + esc(x.code) + '</code></td><td>' + esc(x.name || '—') + '</td><td>' + esc(value) + '</td><td>' +
+        '<span class="badge ' + (x.is_active ? 'ok' : 'red') + '">' + (x.is_active ? 'فعال' : 'خاموش') + '</span></td><td>' +
+        esc(start + ' تا ' + end) + '</td><td>' +
+        (can.all() ? '<button class="btn secondary" data-edit-discount="' + x.id + '">ویرایش</button> <button class="btn ghost" data-toggle-discount="' + x.id + '">' + (x.is_active ? 'خاموش' : 'روشن') + '</button> <button class="btn ghost" data-delete-discount="' + x.id + '">حذف</button>' : '') +
+        '</td></tr>';
+    }).join('');
+    box.innerHTML = '<table class="table"><thead><tr><th>کد</th><th>عنوان</th><th>مقدار</th><th>وضعیت</th><th>بازه</th><th>عملیات</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  async function openDiscountCodeEditor(id) {
+    await openDiscountEditor(id, null, true);
   }
 
   async function redeemOrderDiscount(orderId, result, customerId, orderCode) {
