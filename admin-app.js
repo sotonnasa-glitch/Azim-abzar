@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V10) return;
-  window.__AZIM_ADMIN_V25 = true;
+  window.__AZIM_ADMIN_V26 = true;
 
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -49,6 +49,64 @@
     sales: () => ['owner', 'admin', 'sales'].includes(state.me?.role)
   };
 
+  const animatedIconMap = {
+    '👋':'wave','🔒':'lock','✉':'mail','♙':'user','♟':'admin','☰':'menu','✎':'edit','🌐':'globe',
+    '🏠':'home','📞':'phone','✦':'spark','🔐':'lock','⛔':'block','❌':'error','✅':'success','🎯':'target',
+    '⚙':'gear','🧭':'compass','🛠':'tools','🔻':'down','🧾':'invoice','☎':'phone','🕘':'clock',
+    '📝':'note','❓':'question','📍':'pin','💾':'save','⚠':'warning','✓':'success'
+  };
+
+  function installAnimatedIconLayer() {
+    const root = document.body;
+    if (!root || root.dataset.azAnimatedIcons === '1') return;
+    root.dataset.azAnimatedIcons = '1';
+    const emojiRe = /👋|🔒|✉|♙|♟|☰|✎|🌐|🏠|📞|✦|🔐|⛔|❌|✅|🎯|⚙|🧭|🛠|🔻|🧾|☎|🕘|📝|❓|📍|💾|⚠|✓/u;
+
+    const replaceNode = (node) => {
+      if (!node?.nodeValue || !emojiRe.test(node.nodeValue)) return;
+      const frag = document.createDocumentFragment();
+      let text = node.nodeValue;
+      while (text) {
+        const m = text.match(emojiRe);
+        if (!m || m.index == null) { frag.appendChild(document.createTextNode(text)); break; }
+        if (m.index) frag.appendChild(document.createTextNode(text.slice(0,m.index)));
+        const icon = document.createElement('span');
+        const type = animatedIconMap[m[0]] || 'spark';
+        icon.className = 'az-animated-icon az-animated-icon-' + type;
+        icon.setAttribute('aria-hidden','true');
+        icon.dataset.icon = type;
+        frag.appendChild(icon);
+        text = text.slice(m.index + m[0].length);
+      }
+      node.parentNode?.replaceChild(frag,node);
+    };
+
+    const scan = (rootNode) => {
+      const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const el = node.parentElement;
+          if (!el || ['SCRIPT','STYLE','NOSCRIPT','TEXTAREA'].includes(el.tagName)) return NodeFilter.FILTER_REJECT;
+          return emojiRe.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(replaceNode);
+    };
+
+    scan(root);
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(m => {
+        if (m.type === 'characterData') replaceNode(m.target);
+        else m.addedNodes?.forEach(n => {
+          if (n.nodeType === Node.TEXT_NODE) replaceNode(n);
+          else if (n.nodeType === Node.ELEMENT_NODE) scan(n);
+        });
+      });
+    });
+    observer.observe(root,{subtree:true,childList:true,characterData:true});
+    window.__azAnimatedIconObserver = observer;
+  }
   function esc(v) {
     return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
