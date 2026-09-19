@@ -156,6 +156,7 @@ main{position:relative;padding:34px 0 72px}
       <nav class="nav">
         <a href="index.html"><span>⌂</span>صفحه اصلی</a>
         <a href="products-v4.html"><span>▣</span>محصولات</a>
+        <a href="order-status.html"><span>⌁</span>پیگیری سفارش</a>
         <a href="cart.html" class="primary" data-cart-link aria-label="سبد سفارش">
           <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>
           <span>سفارش من</span><b data-cart-count hidden>۰</b>
@@ -252,7 +253,7 @@ main{position:relative;padding:34px 0 72px}
   </main>
 
   <script src="./supabase-config.js"></script>
-  <script src="./azim-cart.js?v=4"></script>
+  <script src="./azim-cart.js?v=5"></script>
   <script>
   (function(){
     const C=window.AZIM_CART;
@@ -352,7 +353,7 @@ main{position:relative;padding:34px 0 72px}
         coupon=null;
         $('cartWorkspace').hidden=true;
         $('cartSuccess').hidden=false;
-        $('cartSuccess').innerHTML='<div class="success"><div class="success-check">✓</div><h2>درخواست سفارش ثبت شد</h2><p>سفارش شما با موفقیت در سیستم عظیم ابزار ثبت شد. برای هماهنگی نهایی با شما تماس گرفته می‌شود.</p><div class="order-code">'+escapeHtml(data.order_code||'AZ-ORDER')+'</div><p>مبلغ فعلی سفارش: <strong>'+money(data.total||0)+'</strong></p><div class="actions"><a class="btn" href="products-v4.html">بازگشت به محصولات</a><a class="btn secondary" href="index.html">صفحه اصلی</a></div></div>';
+        $('cartSuccess').innerHTML='<div class="success"><div class="success-check">✓</div><h2>درخواست سفارش ثبت شد</h2><p>سفارش شما با موفقیت در سیستم عظیم ابزار ثبت شد. برای هماهنگی نهایی با شما تماس گرفته می‌شود.</p><div class="order-code">'+escapeHtml(data.order_code||'AZ-ORDER')+'</div><p>مبلغ فعلی سفارش: <strong>'+money(data.total||0)+'</strong></p><div class="actions"><a class="btn" href="order-status.html?code='+encodeURIComponent(data.order_code||'')+'">پیگیری وضعیت سفارش</a><a class="btn secondary" href="products-v4.html">بازگشت به محصولات</a><a class="btn secondary" href="index.html">صفحه اصلی</a></div></div>';
         window.scrollTo({top:0,behavior:'smooth'});
       }catch(err){
         status.textContent=err.message||'خطا در ثبت سفارش.';
