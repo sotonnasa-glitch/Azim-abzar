@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="پیگیری وضعیت سفارش در عظیم ابزار با استفاده از شناسه سفارش.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>پیگیری سفارش | عظیم ابزار</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#050806;--panel:rgba(15,21,17,.9);--panel2:#0b100d;--line:rgba(255,255,255,.08);
+      --text:#f6f8f5;--muted:#8f9b93;--gold:#f5b900;--gold2:#ffe06a;--green:#45e28a;--red:#ff7d83;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;min-height:100vh;color:var(--text);font-family:Vazirmatn,system-ui,sans-serif;
+      background:
+        radial-gradient(60% 45% at 85% -5%,rgba(245,185,0,.13),transparent 70%),
+        radial-gradient(45% 35% at 0 35%,rgba(69,226,138,.05),transparent 70%),
+        linear-gradient(180deg,#050806 0%,#09100c 42%,#050806 100%);
+    }
+    body:before{
+      content:"";position:fixed;inset:0;pointer-events:none;opacity:.2;
+      background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+      background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 80%);
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{width:min(980px,calc(100% - 28px));margin:auto;position:relative;z-index:1}
+    header{position:sticky;top:0;z-index:50;background:rgba(5,8,6,.78);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.065)}
+    .head{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px}.mark{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#ffe06a,#d38b00);color:#111;font-size:18px;box-shadow:0 0 26px rgba(245,185,0,.18)}
+    .brand strong{display:block;font-size:16px;font-weight:950}.brand small{display:block;color:#78847b;font-size:8px;margin-top:2px}
+    .nav{display:flex;gap:7px;flex-wrap:wrap}.nav a{padding:9px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.035);font-size:9px;font-weight:850;color:#dce1dd}.nav a:hover{border-color:rgba(245,185,0,.3)}
+    main{padding:36px 0 72px}
+    .hero{padding:30px;border:1px solid rgba(245,185,0,.18);border-radius:27px;background:radial-gradient(circle at 88% 10%,rgba(245,185,0,.13),transparent 31%),linear-gradient(145deg,rgba(18,25,21,.95),rgba(8,12,10,.92));box-shadow:0 28px 80px rgba(0,0,0,.35)}
+    .kicker{font-size:9px;letter-spacing:2px;color:#d5ad35;font-weight:950}.hero h1{margin:5px 0 7px;font-size:clamp(27px,5vw,43px);line-height:1.15}.hero p{margin:0;color:#a0aaa3;font-size:10px;line-height:2}
+    .search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:22px}
+    .input{width:100%;border:1px solid #2d3830;background:#080c0a;color:#fff;border-radius:12px;padding:13px 13px;font:800 11px Vazirmatn;outline:none;transition:.2s}
+    .input::placeholder{color:#566158}.input:focus{border-color:#d8a70e;box-shadow:0 0 0 3px rgba(245,185,0,.08)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 15px;border-radius:12px;border:1px solid rgba(245,185,0,.34);background:linear-gradient(145deg,#ffe06a,#f5b900);color:#111;font:950 10px Vazirmatn;cursor:pointer;transition:.2s}.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn.secondary{background:#121813;color:#edf1ee;border-color:#344038}
+    .hint{margin-top:9px;color:#69756d;font-size:8px;line-height:1.9}.hint strong{color:#b9c0bb}
+    #status{margin-top:15px}.message{padding:13px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.07);background:#0e1410;color:#909b93;font-size:9px;line-height:1.9}.message.err{border-color:rgba(255,125,131,.2);background:rgba(255,125,131,.05);color:#ff9a9f}
+    .result{margin-top:15px;padding:18px;border:1px solid rgba(255,255,255,.075);border-radius:22px;background:linear-gradient(160deg,rgba(17,23,19,.96),rgba(10,15,12,.95));box-shadow:0 18px 50px rgba(0,0,0,.24)}
+    .result-top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .code-label{color:#7b867e;font-size:8px}.code{display:block;margin-top:4px;direction:ltr;font:950 16px ui-monospace,monospace;color:#ffd84f;letter-spacing:.4px;word-break:break-all}
+    .last{font-size:8px;color:#69756d;text-align:left;white-space:nowrap}.last b{display:block;color:#dce2dd;font-size:9px;margin-top:4px}
+    .current{margin:16px 0 18px;padding:13px 14px;border-radius:15px;background:rgba(245,185,0,.055);border:1px solid rgba(245,185,0,.14);display:flex;align-items:center;justify-content:space-between;gap:10px}.current-label{font-size:8px;color:#858f88}.current strong{font-size:15px;color:#ffe06a}
+    .current.cancelled{background:rgba(255,125,131,.055);border-color:rgba(255,125,131,.2)}.current.cancelled strong{color:#ff989d}
+    .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:16px 0 20px}.step{position:relative;padding:11px 7px;text-align:center;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:rgba(255,255,255,.018);color:#5f6962}.step .dot{width:27px;height:27px;border-radius:9px;margin:0 auto 7px;display:grid;place-items:center;background:#101612;border:1px solid #2a342e;font-size:9px;font-weight:950}.step strong{display:block;font-size:8px;line-height:1.7}.step.active{border-color:rgba(245,185,0,.22);background:rgba(245,185,0,.045);color:#e6d27c}.step.active .dot{background:rgba(245,185,0,.15);border-color:rgba(245,185,0,.35);color:#ffd84f}.step.done{color:#8edeb0}.step.done .dot{background:rgba(69,226,138,.1);border-color:rgba(69,226,138,.2);color:#66e49b}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.info{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.018)}.info span{display:block;color:#69756d;font-size:8px;margin-bottom:4px}.info b{font-size:10px;color:#eef1ee}.info.highlight b{color:#ffe06a}
+    .tracking{margin-top:10px;padding:12px 13px;border:1px dashed rgba(245,185,0,.2);border-radius:13px;background:rgba(245,185,0,.035);font-size:8px;color:#777f79}.tracking b{display:block;color:#f1d25e;font:950 12px ui-monospace,monospace;margin-top:4px;direction:ltr;text-align:right}
+    .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .empty{padding:24px;color:#747f77;font-size:9px;line-height:1.9}
+    @media(max-width:640px){.wrap{width:min(100% - 14px,980px)}.head{min-height:66px}.brand small{display:none}.nav a{padding:8px 9px}.nav a span{display:none}.hero{padding:20px;border-radius:21px}.search{grid-template-columns:1fr}.result{border-radius:18px;padding:13px}.result-top{flex-direction:column}.last{text-align:right}.steps{grid-template-columns:1fr}.step{text-align:right;display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center}.step .dot{margin:0}.step strong{font-size:9px}.grid{grid-template-columns:1fr}.actions{justify-content:stretch}.actions .btn{flex:1 1 180px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap head">
+      <a class="brand" href="index.html"><span class="mark">⚙</span><span><strong>عظیم ابزار</strong><small>پیگیری آنلاین سفارش</small></span></a>
+      <nav class="nav">
+        <a href="index.html">صفحه اصلی</a>
+        <a href="products-v4.html">محصولات</a>
+        <a href="cart.html">سبد سفارش</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="kicker">AZIM ABZAR · ORDER TRACKING</div>
+      <h1>پیگیری سفارش</h1>
+      <p>شناسه‌ای را که بعد از ثبت سفارش دریافت کردی وارد کن تا آخرین وضعیت سفارش، پرداخت و ارسال را ببینی.</p>
+      <div class="search">
+        <input id="orderCode" class="input" dir="ltr" autocomplete="off" spellcheck="false" maxlength="40" placeholder="مثلاً AZ-20260919-152857-C7716" aria-label="شناسه سفارش">
+        <button id="trackBtn" class="btn" type="button">بررسی وضعیت ←</button>
+      </div>
+      <div class="hint">شناسه سفارش به فرم <strong>AZ-XXXXXXXX-HHMMSS-XXXXX</strong> است. برای امنیت، اطلاعات شخصی مشتری در صفحه عمومی نمایش داده نمی‌شود.</div>
+      <div id="status" aria-live="polite"></div>
+    </section>
+
+    <section id="result" class="result" hidden></section>
+  </main>
+
+  <script src="./supabase-config.js"></script>
+  <script>
+  (function(){
+    const $=id=>document.getElementById(id);
+    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]||m));
+    const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
+    const money=n=>fmt(n)+' تومان';
+
+    const orderStatus={
+      pending:{label:'در انتظار تأیید',index:0},
+      confirmed:{label:'تأیید شد',index:1},
+      processing:{label:'در حال آماده‌سازی',index:2},
+      shipped:{label:'ارسال شد',index:3},
+      delivered:{label:'تحویل شد',index:4},
+      cancelled:{label:'لغو شد',index:-1}
+    };
+    const paymentStatus={
+      unpaid:'پرداخت نشده',
+      pending:'در انتظار پرداخت',
+      paid:'پرداخت شده',
+      refunded:'مسترد شده'
+    };
+    const shippingStatus={
+      pending:'در انتظار ارسال',
+      packed:'آماده‌سازی',
+      shipped:'تحویل به ارسال',
+      delivered:'تحویل شد'
+    };
+
+    let currentCode='';
+    let timer=null;
+
+    function normalizeCode(v){
+      return String(v||'').trim().toUpperCase().replace(/\s+/g,'');
+    }
+
+    function faDate(v){
+      if(!v) return '—';
+      const d=new Date(v);
+      if(Number.isNaN(d.getTime())) return '—';
+      return new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium',timeStyle:'short'}).format(d);
+    }
+
+    function setMessage(text,isErr=false){
+      $('status').innerHTML='<div class="message'+(isErr?' err':'')+'">'+esc(text)+'</div>';
+    }
+
+    function render(data){
+      const s=orderStatus[data.status]||{label:data.status||'نامشخص',index:0};
+      const cancelled=data.status==='cancelled';
+      const labels=['ثبت سفارش','تأیید فروشگاه','آماده‌سازی','ارسال','تحویل'];
+      const nums=['۱','۲','۳','۴','۵'];
+      let steps='';
+      labels.forEach((label,i)=>{
+        let cls='';
+        if(cancelled) cls='';
+        else if(i<s.index) cls='done';
+        else if(i===s.index) cls='active';
+        steps+='<div class="step '+cls+'"><span class="dot">'+(i<s.index&&!cancelled?'✓':nums[i])+'</span><strong>'+label+'</strong></div>';
+      });
+
+      $('result').innerHTML=
+        '<div class="result-top">'+
+          '<div><span class="code-label">شناسه سفارش</span><strong class="code">'+esc(data.order_code)+'</strong></div>'+
+          '<div class="last">آخرین بروزرسانی<b>'+esc(faDate(data.updated_at||data.created_at))+'</b></div>'+
+        '</div>'+
+        '<div class="current '+(cancelled?'cancelled':'')+'"><span class="current-label">وضعیت فعلی</span><strong>'+esc(s.label)+'</strong></div>'+
+        '<div class="steps">'+steps+'</div>'+
+        '<div class="grid">'+
+          '<div class="info"><span>وضعیت پرداخت</span><b>'+esc(paymentStatus[data.payment_status]||data.payment_status||'—')+'</b></div>'+
+          '<div class="info"><span>وضعیت ارسال</span><b>'+esc(shippingStatus[data.shipping_status]||data.shipping_status||'—')+'</b></div>'+
+          '<div class="info highlight"><span>مبلغ سفارش</span><b>'+money(data.total)+'</b></div>'+
+        '</div>'+
+        (data.tracking_code?'<div class="tracking">کد رهگیری ارسال<b>'+esc(data.tracking_code)+'</b></div>':'')+
+        '<div class="hint">زمان ثبت: <strong>'+esc(faDate(data.created_at))+'</strong></div>'+
+        '<div class="actions"><button class="btn" id="refreshTrack" type="button">↻ بروزرسانی وضعیت</button><a class="btn secondary" href="products-v4.html">مشاهده محصولات</a><a class="btn secondary" href="cart.html">سبد سفارش</a></div>';
+      $('result').hidden=false;
+      const refresh=$('refreshTrack');
+      if(refresh) refresh.onclick=()=>lookup(true);
+    }
+
+    async function lookup(isRefresh=false){
+      const code=normalizeCode($('orderCode').value);
+      if(!code){setMessage('شناسه سفارش را وارد کن.',true);$('result').hidden=true;return;}
+      if(currentCode===code && isRefresh){ setMessage('در حال بروزرسانی وضعیت…'); }
+      else { setMessage(isRefresh?'در حال بروزرسانی وضعیت…':'در حال دریافت وضعیت سفارش…');$('result').hidden=true; }
+      currentCode=code;
+      $('trackBtn').disabled=true;
+      try{
+        const url=(window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_order_status';
+        const r=await fetch(url,{
+          method:'POST',
+          headers:{
+            apikey:window.AZIM_SUPABASE_ANON_KEY,
+            Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify({p_order_code:code})
+        });
+        const body=await r.json();
+        if(!r.ok) throw new Error(body?.message||body?.hint||'دریافت وضعیت سفارش ناموفق بود.');
+        if(!body?.found){
+          $('result').hidden=true;
+          setMessage(body?.message||'سفارشی با این شناسه پیدا نشد.',true);
+          return;
+        }
+        render(body);
+        setMessage('وضعیت سفارش به‌روز شد.');
+      }catch(err){
+        $('result').hidden=true;
+        setMessage(err?.message||'خطا در دریافت وضعیت سفارش.',true);
+      }finally{
+        $('trackBtn').disabled=false;
+      }
+    }
+
+    function startAutoRefresh(){
+      if(timer) clearInterval(timer);
+      if(!currentCode) return;
+      timer=setInterval(()=>lookup(true),60000);
+    }
+
+    $('trackBtn').onclick=()=>{ lookup(false).finally(startAutoRefresh); };
+    $('orderCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('trackBtn').click();}});
+    const urlCode=new URLSearchParams(location.search).get('code');
+    if(urlCode){
+      $('orderCode').value=normalizeCode(urlCode);
+      lookup(false).finally(startAutoRefresh);
+    }
+  })();
+  </script>
+</body>
+</html>
