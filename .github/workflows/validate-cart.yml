@@ -41,6 +41,13 @@ jobs:
           grep -q 'addCatalogItemToCart' products-v4.html
           grep -q 'azim_cart_checkout' cart.html
           grep -q 'data-cart-link' products-v4.html
+      - name: Check order tracking page
+        shell: bash
+        run: |
+          test -f order-status.html
+          grep -q 'azim_order_status' order-status.html
+          grep -q 'پیگیری سفارش' order-status.html
+
       - name: Check public cart SQL
         shell: bash
         run: |
