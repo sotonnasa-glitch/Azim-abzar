@@ -128,7 +128,7 @@ $('newProductBtn').onclick=newProduct;$('newCategoryBtn').onclick=newCategory;$(
 async function loadSection(n){try{if(n==='dashboard')await loadDashboard();else if(n==='products')await fetchProducts();else if(n==='categories')await loadCategories();else if(n==='brands')await loadBrands();else if(n==='inquiries')await loadInquiries();else if(n==='orders')await loadOrders();else if(n==='customers')await loadCustomers();else if(n==='media')await loadMedia();else if(n==='content')await loadContent();else if(n==='admins')await loadAdmins();else if(n==='audit')await loadAudit()}catch(e){toast('__AZICON_ERROR__ '+e.message)}}
 (async function(){if(!window.supabase||!window.AZIM_SUPABASE_URL||!window.AZIM_SUPABASE_ANON_KEY){$('loginScreen').classList.remove('hidden');$('loginStatus').textContent='پیکربندی Supabase ناقص است.';return}db=window.supabase.createClient(window.AZIM_SUPABASE_URL,window.AZIM_SUPABASE_ANON_KEY);if(await ensureAdmin())await loadDashboard()})();
 }
-</script><script src="admin-app.js?v=30"></script>
+</script><script src="admin-app.js?v=31"></script>
 <script>
 (function(){
   const map={
