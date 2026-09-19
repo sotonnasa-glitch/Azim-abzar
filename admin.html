@@ -149,11 +149,13 @@
 .az-simple-price .input{border-radius:8px 0 0 8px;direction:ltr;text-align:right}
 .az-simple-price b{display:grid;place-items:center;padding:0 9px;background:#1a211d;border:1px solid #354039;border-right:0;border-radius:0 8px 8px 0;color:#8d9891;font-size:8px}
 .az-simple-price.primary .input{border-color:#806413}
-.az-simple-variants-list{display:grid;gap:7px}
-.az-simple-variants .az-variant-row{display:grid;grid-template-columns:1fr 1fr auto;gap:7px}
-.az-simple-variants .az-variant-row .input{width:100%;min-width:0}
-.az-simple-variants .az-variant-row .btn{padding:7px 9px;font-size:8px}
-.az-simple-variants .az-variant-empty{font-size:8px;color:#68736d;padding:4px 0}
+.az-simple-variants-list{display:grid;gap:5px}
+.az-simple-variants .az-variant-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(120px,1fr) 54px;gap:5px;align-items:center}
+.az-simple-variants .az-variant-row .input{width:100%;min-width:0;padding:7px 8px;height:34px;font-size:9px}
+.az-simple-variants .az-variant-row .btn{padding:7px 6px;height:34px;font-size:8px;min-width:54px}
+.az-simple-variants .az-variant-empty{font-size:8px;color:#68736d;padding:2px 0}
+.az-simple-variants .az-simple-section-head{margin-bottom:7px}
+.az-simple-variants{padding:10px}
 .az-simple-description{width:100%;min-height:95px}
 .az-simple-editor-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 18px;background:#0f1411;border-top:1px solid #29322d;position:sticky;bottom:0;z-index:3}
 .az-simple-editor-footer>div{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
@@ -170,7 +172,8 @@
   .az-simple-image{width:82px;height:82px;flex-basis:82px}
   .az-simple-fields,.az-simple-price-row{grid-template-columns:1fr}
   .az-simple-wide{grid-column:auto}
-  .az-simple-variants .az-variant-row{grid-template-columns:1fr 1fr}
+  .az-simple-variants .az-variant-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 52px}
+  .az-simple-variants .az-variant-row .btn{grid-column:auto}
   .az-simple-variants .az-variant-row .btn{grid-column:1/-1}
   .az-simple-editor-footer{padding:10px 12px;align-items:stretch;flex-direction:column-reverse}
   .az-simple-editor-footer>div{display:grid;grid-template-columns:auto auto 1fr}
