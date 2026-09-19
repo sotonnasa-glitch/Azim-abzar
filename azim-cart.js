@@ -269,10 +269,18 @@
     window.addEventListener('storage',()=>{read();updateBadges();});
   }
 
+  // Read the cart immediately so pages that render inline before DOMContentLoaded
+  // see the persisted cart instead of an empty initial state.
+  read();
+
   window.AZIM_CART = {
     add:addButton, remove, update, clear, count, items:()=>state.items.slice(), subtotal,
     syncPrices, previewCoupon, showToast, format:money, raw:state, cartNavHtml
   };
 
-  document.addEventListener('DOMContentLoaded',initShared);
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded',initShared);
+  }else{
+    initShared();
+  }
 })();
