@@ -1151,7 +1151,8 @@
       }
       const title = s.admin_title ? s.admin_title.value.trim() || null : s.title.value.trim() || null;
       const p = {
-        section_key: key, title, payload, is_active: key === 'ai_settings' ? true : !!s.is_active.checked
+        section_key: key, title, payload, is_active: key === 'ai_settings' ? true : !!s.is_active.checked,
+        updated_by: state.user.id
       };
       let r;
       if (id) r = await state.db.from('site_content').update(p).eq('id', id);
@@ -1208,7 +1209,7 @@
       system_instruction: s.system_instruction.value.trim(),
       quick_prompts: s.quick_prompts.value.split('\\n').map((x) => x.trim()).filter(Boolean)
     };
-    const p = { section_key: 'ai_settings', title: 'کنترل دستیار هوشمند', payload, is_active: true };
+    const p = { section_key: 'ai_settings', title: 'کنترل دستیار هوشمند', payload, is_active: true, updated_by: state.user.id };
     const r = row?.id
       ? await state.db.from('site_content').update(p).eq('id', row.id)
       : await state.db.from('site_content').insert(p);
