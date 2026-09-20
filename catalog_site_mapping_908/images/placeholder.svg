@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#121713"/><stop offset="1" stop-color="#080b09"/></linearGradient></defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <g fill="none" stroke="#f5b900" stroke-width="10" opacity=".8">
+    <circle cx="400" cy="285" r="92"/><path d="M400 155v52M400 363v52M270 285h52M478 285h52M308 193l38 38M454 339l38 38M492 193l-38 38M346 339l-38 38"/>
+  </g>
+  <circle cx="400" cy="285" r="32" fill="#ffd84f"/>
+  <text x="400" y="490" text-anchor="middle" fill="#b6beb8" font-family="Tahoma,Vazirmatn,sans-serif" font-size="30">عظیم ابزار</text>
+  <text x="400" y="530" text-anchor="middle" fill="#777f79" font-family="Tahoma,Vazirmatn,sans-serif" font-size="20">تصویر این محصول فعلاً ثبت نشده است</text>
+</svg>
