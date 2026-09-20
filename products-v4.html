@@ -1965,6 +1965,8 @@
         searchInput.value = q;
         clearBtn.style.display = 'block';
       }
+      const sortSelect = document.getElementById('sortSelect');
+      if (sortSelect) sortSelect.value = currentSort;
 
       render();
     }
