@@ -35,7 +35,6 @@
     audit: ['گزارش فعالیت', 'ردپای تغییرات پنل'],
     security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی'],
     ai: ['دستیار هوشمند', 'مرکز کنترل، تست و تنظیمات AI فروشگاه']
-    security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی']
   };
 
   const labels = {
@@ -518,7 +517,6 @@
       audit:['owner','admin'],
       security:['owner','admin'],
       ai:['owner','admin','editor']
-      security:['owner','admin']
     };
     document.querySelectorAll('[data-menu-view]').forEach((btn) => {
       btn.style.display = (allowed[btn.dataset.menuView] || []).includes(role) ? '' : 'none';
@@ -546,7 +544,6 @@
       ['audit','گزارش فعالیت','Audit Log'],
       ['security','امنیت حساب','MFA، نشست و دسترسی'],
       ['ai','دستیار هوشمند','مرکز کنترل AI']
-      ['security','امنیت حساب','MFA، نشست و دسترسی']
     ];
     let active = 0;
     function render(q='') {
@@ -782,7 +779,6 @@
       admins: ['owner', 'admin'],
       audit: ['owner', 'admin'],
       ai: ['owner', 'admin', 'editor']
-      audit: ['owner', 'admin']
     };
     document.querySelectorAll('.nav button[data-view]').forEach((b) => {
       const v = b.dataset.view;
