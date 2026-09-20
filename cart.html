@@ -262,6 +262,13 @@ main{position:relative;padding:34px 0 72px}
     const $=id=>document.getElementById(id);
     const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
     const money=n=>fmt(n)+' تومان';
+    function normalizeMobile(v){
+      let s=String(v||'').trim().replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\s()-]/g,'');
+      if(s.startsWith('0098')) s='0'+s.slice(4);
+      else if(s.startsWith('+98')) s='0'+s.slice(3);
+      else if(s.startsWith('98')) s='0'+s.slice(2);
+      return s;
+    }
     let coupon=null;
 
     function render(){
@@ -332,6 +339,14 @@ main{position:relative;padding:34px 0 72px}
       const items=C.items();
       if(!items.length) return;
       const btn=$('submitOrderBtn'), status=$('checkoutStatus');
+      const normalizedMobile=normalizeMobile($('mobile').value);
+      if(!/^09\\d{9}$/.test(normalizedMobile)) {
+        status.textContent='شماره موبایل معتبر وارد کنید.';
+        status.className='coupon-status err';
+        btn.disabled=false;
+        btn.textContent='ثبت نهایی درخواست سفارش';
+        return;
+      }
       btn.disabled=true; btn.textContent='در حال ثبت سفارش…'; status.textContent='';
       try{
         await C.syncPrices();
@@ -342,7 +357,7 @@ main{position:relative;padding:34px 0 72px}
           body:JSON.stringify({
             p_mode:'submit',
             p_full_name:$('fullName').value.trim(),
-            p_mobile:$('mobile').value.trim(),
+            p_mobile:normalizedMobile,
             p_email:$('email').value.trim()||null,
             p_address:$('address').value.trim()||null,
             p_city:$('city').value.trim()||null,
