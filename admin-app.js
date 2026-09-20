@@ -2238,13 +2238,17 @@
     if (now < start) return {discount:0,row:x,reason:'زمان شروع این تخفیف نرسیده است.'};
     if (now > end) return {discount:0,row:x,reason:'این تخفیف منقضی شده است.'};
     if (subtotal < Number(x.min_order_amount || 0)) return {discount:0,row:x,reason:'مبلغ سفارش به حداقل لازم نرسیده است.'};
-    const used = await state.db.from('discount_redemptions').select('id,customer_id,order_id').eq('discount_id',x.id).limit(5000);
+    let usedQ = state.db.from('discount_redemptions').select('id',{count:'exact',head:true}).eq('discount_id',x.id);
+    if (excludeOrderId) usedQ = usedQ.neq('order_id', excludeOrderId);
+    const used = await usedQ;
     if (used.error) throw used.error;
-    const usedRows = (used.data||[]).filter(v => !excludeOrderId || String(v.order_id || '') !== String(excludeOrderId));
-    if (x.usage_limit != null && usedRows.length >= Number(x.usage_limit)) return {discount:0,row:x,reason:'سقف استفاده از این کد تکمیل شده است.'};
+    if (x.usage_limit != null && Number(used.count || 0) >= Number(x.usage_limit)) return {discount:0,row:x,reason:'سقف استفاده از این کد تکمیل شده است.'};
     if (customerId) {
-      const customerUses = usedRows.filter(v=>v.customer_id===customerId).length;
-      if (customerUses >= Number(x.per_customer_limit || 1)) return {discount:0,row:x,reason:'این مشتری قبلاً بیش از حد مجاز از کد استفاده کرده است.'};
+      let customerUsesQ = state.db.from('discount_redemptions').select('id',{count:'exact',head:true}).eq('discount_id',x.id).eq('customer_id',customerId);
+      if (excludeOrderId) customerUsesQ = customerUsesQ.neq('order_id', excludeOrderId);
+      const customerUses = await customerUsesQ;
+      if (customerUses.error) throw customerUses.error;
+      if (Number(customerUses.count || 0) >= Number(x.per_customer_limit || 1)) return {discount:0,row:x,reason:'این مشتری قبلاً بیش از حد مجاز از کد استفاده کرده است.'};
     }
     if (x.first_order_only) {
       if (!customerId) return {discount:0,row:x,reason:'این تخفیف فقط برای مشتریِ ثبت‌شده و اولین خرید است.'};
