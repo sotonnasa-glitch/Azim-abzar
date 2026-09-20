@@ -33,6 +33,8 @@
     content: ['محتوای سایت', 'مدیریت متن‌های واقعی صفحه اصلی و ارتباط با ما'],
     admins: ['کاربران مدیر', 'نقش‌ها و سطح دسترسی'],
     audit: ['گزارش فعالیت', 'ردپای تغییرات پنل'],
+    security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی'],
+    ai: ['دستیار هوشمند', 'مرکز کنترل، تست و تنظیمات AI فروشگاه']
     security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی']
   };
 
@@ -514,6 +516,8 @@
       content:['owner','admin','editor'],
       admins:['owner','admin'],
       audit:['owner','admin'],
+      security:['owner','admin'],
+      ai:['owner','admin','editor']
       security:['owner','admin']
     };
     document.querySelectorAll('[data-menu-view]').forEach((btn) => {
@@ -540,6 +544,8 @@
       ['content','محتوای سایت','CMS'],
       ['admins','کاربران مدیر','نقش‌ها'],
       ['audit','گزارش فعالیت','Audit Log'],
+      ['security','امنیت حساب','MFA، نشست و دسترسی'],
+      ['ai','دستیار هوشمند','مرکز کنترل AI']
       ['security','امنیت حساب','MFA، نشست و دسترسی']
     ];
     let active = 0;
@@ -774,6 +780,8 @@
       media: ['owner', 'admin', 'editor'],
       content: ['owner', 'admin', 'editor'],
       admins: ['owner', 'admin'],
+      audit: ['owner', 'admin'],
+      ai: ['owner', 'admin', 'editor']
       audit: ['owner', 'admin']
     };
     document.querySelectorAll('.nav button[data-view]').forEach((b) => {
