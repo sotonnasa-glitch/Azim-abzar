@@ -1240,7 +1240,8 @@
     let categoriesMap = {};
     let q = _u.get('q') || '';
     let selectedCategory = _u.get('cat') ? (_cMap[_u.get('cat')] || _u.get('cat')) : 'all';
-    let currentSort = 'code_asc';
+    const _allowedSorts = new Set(['code_asc','price_asc','price_desc','variants_first','name_asc']);
+    let currentSort = _allowedSorts.has(_u.get('sort')) ? _u.get('sort') : 'code_asc';
     let page = Math.max(1, parseInt(_u.get('page'), 10) || 1);
 
     let priceData = {};
@@ -1261,6 +1262,19 @@
     }[m] || m));
 
     const fmt = n => new Intl.NumberFormat('fa-IR').format(Number(n) || 0);
+
+    function syncUrlState() {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set('q', q.trim());
+      if (selectedCategory && selectedCategory !== 'all') {
+        const categoryKey = Object.keys(_cMap).find(k => _cMap[k] === selectedCategory);
+        params.set('cat', categoryKey || selectedCategory);
+      }
+      if (currentSort !== 'code_asc') params.set('sort', currentSort);
+      if (page > 1) params.set('page', String(page));
+      const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash || ''}`;
+      window.history.replaceState(null, '', next);
+    }
 
     const priceHtml = (n, compare) => {
       if (!(Number(n) > 0)) return '<span class="price-no-val">قیمت در لیست درج نشده</span>';
@@ -1656,12 +1670,13 @@
 
     // Filtering & Sorting
     function applyFilters() {
-      const term = q.trim().toLocaleLowerCase('fa');
+      const normalizeFa = v => String(v ?? '').normalize('NFKC').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ۀة]/g,'ه').replace(/ؤ/g,'و').replace(/إ|أ/g,'ا').replace(/\u200c/g,' ').replace(/\s+/g,' ').trim().toLocaleLowerCase('fa');
+      const term = normalizeFa(q);
       
       let filtered = all.filter(x => {
         // Search Term match
         if (term) {
-          const match = (`${x.id} ${x.name}`).toLocaleLowerCase('fa').includes(term);
+          const match = normalizeFa(`${x.id} ${x.name}`).includes(term);
           if (!match) return false;
         }
 
@@ -1699,6 +1714,7 @@
       const filtered = applyFilters();
       const total = Math.max(1, Math.ceil(filtered.length / PER));
       page = Math.min(page, total);
+      syncUrlState();
 
       const rows = filtered.slice((page - 1) * PER, page * PER);
 
@@ -1914,7 +1930,7 @@
           .filter(([id]) => /^P\d{4}$/.test(id))
       );
       const staticMap = new Map(staticRows.map(x => [x.id, x]));
-      const useLiveCatalog = Array.isArray(liveRows) && liveRows.length > 0;
+      const useLiveCatalog = liveMap.size === staticRows.length && staticRows.length === 908;
 
       if (useLiveCatalog) {
         all = [...liveMap.entries()]
