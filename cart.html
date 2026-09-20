@@ -340,7 +340,7 @@ main{position:relative;padding:34px 0 72px}
       if(!items.length) return;
       const btn=$('submitOrderBtn'), status=$('checkoutStatus');
       const normalizedMobile=normalizeMobile($('mobile').value);
-      if(!/^09\\d{9}$/.test(normalizedMobile)) {
+      if(!/^09\d{9}$/.test(normalizedMobile)) {
         status.textContent='شماره موبایل معتبر وارد کنید.';
         status.className='coupon-status err';
         btn.disabled=false;
