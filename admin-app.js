@@ -1746,10 +1746,14 @@
       '<option value="' + esc(p.id) + '" ' + (it?.product_id === p.id ? 'selected' : '') + '>' +
       esc(p.code || '—') + ' · ' + esc(p.name) + '</option>'
     ).join('');
+    const existingVariant = typeof it?.variant === 'string'
+      ? it.variant
+      : (it?.variant?.label || it?.variant?.size || it?.variant?.name || '');
     return '<div class="grid2 order-item-row" data-idx="' + idx + '" style="padding:10px 0;border-bottom:1px solid #202722">' +
       '<div class="field"><label>محصول</label><select class="select item-product"><option value="">انتخاب محصول</option>' + productOptions + '</select></div>' +
       '<div class="field"><label>تعداد</label><input class="input item-qty" type="number" min="1" value="' + esc(it?.quantity || 1) + '"></div>' +
       '<div class="field"><label>قیمت واحد</label><input class="input item-price" type="number" min="0" value="' + esc(it?.unit_price ?? 0) + '"></div>' +
+      '<div class="field"><label>مدل / سایز</label><input class="input item-variant" maxlength="160" value="' + esc(existingVariant) + '"></div>' +
       '<div class="field"><label>جمع</label><input class="input item-total" type="number" min="0" value="' + esc(it?.line_total ?? 0) + '" readonly></div>' +
       '<div class="field full"><button type="button" class="btn ghost remove-item">حذف قلم</button></div></div>';
   }
@@ -1780,17 +1784,19 @@
   function readOrderItems() {
     return Array.from(document.querySelectorAll('#orderItemsBox .order-item-row')).map((row) => {
       const productId = row.querySelector('.item-product')?.value || null;
-      const qty = Number(row.querySelector('.item-qty')?.value || 1);
+      const qtyRaw = Number(row.querySelector('.item-qty')?.value || 1);
+      const qty = qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
       const price = Number(row.querySelector('.item-price')?.value || 0);
+      const variantLabel = String(row.querySelector('.item-variant')?.value || '').trim();
       const product = state.products.find((p) => p.id === productId);
       return productId ? {
         product_id: productId,
         product_name: product?.name || 'محصول',
         sku: product?.code || null,
-        quantity: qty > 0 ? qty : 1,
-        unit_price: price,
-        line_total: qty * price,
-        variant: null
+        quantity: qty,
+        unit_price: price >= 0 ? Math.floor(price) : 0,
+        line_total: qty * (price >= 0 ? Math.floor(price) : 0),
+        variant: variantLabel ? { label: variantLabel } : null
       } : null;
     }).filter(Boolean);
   }
