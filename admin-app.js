@@ -3308,7 +3308,7 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installAnimatedIconLayer, { once: true }); else installAnimatedIconLayer();
     initAdminMenu();
     initCommandPalette();
-    state.db = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false } });
+    state.db = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
     $('loginBtn').onclick = async () => {
       const email = $('loginEmail').value.trim();
       const password = $('loginPassword').value;
