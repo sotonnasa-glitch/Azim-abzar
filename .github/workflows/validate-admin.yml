@@ -31,7 +31,7 @@ jobs:
           grep -q 'admin-app.js?v=50' admin.html
           grep -q 'data-menu-view="ai"' admin.html
           grep -q "\['ai','دستیار هوشمند'" admin-app.js
-          grep -q 'id="view-ai"' admin-app.js
+          grep -q "sec.id = 'view-ai'" admin-app.js
           grep -q 'azim_save_order_with_discount' admin-app.js
           grep -q 'az-coupon-card' admin-app.js
           grep -q 'data-new-discount-product' admin-app.js
