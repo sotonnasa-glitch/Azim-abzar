@@ -352,7 +352,7 @@ begin
     updated_at=now()
   returning id into v_customer_id;
 
-  v_order_code := 'AZ-' || to_char(now(),'YYYYMMDD-HH24MISS') || '-' || upper(substr(md5(random()::text),1,5));
+  v_order_code := 'AZ-' || to_char(now(),'YYYYMMDD-HH24MISS') || '-' || upper(encode(extensions.gen_random_bytes(12),'hex'));
 
   insert into public.orders(
     order_code,customer_id,status,payment_status,shipping_status,
