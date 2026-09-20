@@ -26,13 +26,13 @@ declare
   );
   v_result jsonb;
 begin
-  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}
+  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$'
+     and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$' then
     return jsonb_build_object(
       'found', false,
       'message', 'شناسه سفارش نامعتبر است.'
     );
   end if;
-
   begin
     v_ip := nullif(trim(v_ip_text),'')::inet;
   exception when others then
