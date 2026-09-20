@@ -1163,6 +1163,7 @@
             </div>
             <h2 class="modal-title" id="modalTitle" style="margin-top:10px;">نام محصول</h2>
             <div class="modal-cat" id="modalCat" style="margin-top:4px;">دسته‌بندی تخصصی</div>
+            <div id="modalDescription" style="margin-top:14px;color:#aeb6b0;font-size:12px;line-height:2;white-space:pre-wrap;"></div>
           </div>
 
           <!-- Technical Specs Highlights -->
@@ -1324,7 +1325,7 @@
     async function loadLiveCatalog() {
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
-        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=id,code,name,img,price,variants,is_active,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
+        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=id,code,name,description,img,price,variants,is_active,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
         const r = await fetch(u, {
           headers: {
             apikey: window.AZIM_SUPABASE_ANON_KEY,
@@ -1368,6 +1369,7 @@
         p: x?.price ?? null,
         v: vs,
         name: String(x?.name ?? '').trim(),
+        description: String(x?.description ?? '').trim(),
         img: String(x?.img ?? '').trim(),
         category_name: String(x?.category_name ?? '').trim(),
         is_active: x?.is_active !== false,
@@ -1580,6 +1582,8 @@
       document.getElementById('modalTitle').textContent = item.name;
       document.getElementById('modalCode').textContent = 'کد کالا: ' + item.id;
       document.getElementById('modalCat').textContent = 'دسته‌بندی اصلی: ' + cat;
+      const modalDescription = document.getElementById('modalDescription');
+      if (modalDescription) modalDescription.textContent = item.description || 'توضیحات محصول برای این کالا ثبت نشده است.';
       
       const modalImg = document.getElementById('modalImg');
       modalImg.dataset.fallbackTried = '0';
@@ -1940,6 +1944,7 @@
             id,
             product_id: d.id || null,
             name: d.name || staticMap.get(id)?.name || ('محصول ' + id),
+            description: d.description || '',
             image: d.img || staticMap.get(id)?.image || ''
           }))
           .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
