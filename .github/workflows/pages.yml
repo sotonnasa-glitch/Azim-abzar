@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
           rm -rf _site
           mkdir -p _site
-          rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' ./ _site/
+          rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='test.txt' --exclude='temp*.txt' --exclude='upscale-failures.json' --exclude='products-source-generated.json' --exclude='HANDOVER.md' --exclude='*.sql' --exclude='server.js' --exclude='api/' ./ _site/
           test -s _site/products.html
           test -s _site/products-v4.html
 
@@ -139,7 +139,6 @@ jobs:
           node --check /tmp/admin-inline.js
           node --check _site/admin-app.js
           node --check _site/azim-live-content.js
-          node --input-type=module --check < _site/api/chat.js
 
       - name: Validate homepage runtime scripts
         shell: bash
