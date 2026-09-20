@@ -1810,6 +1810,7 @@
   }
 
   function wireOrderForm(id) {
+    $('orderForm').dataset.orderId = id || '';
     $('orderForm').onsubmit = (e) => saveOrder(e, id);
     $('addOrderItemBtn').onclick = () => addOrderItemRow();
     $('orderItemsBox').addEventListener('input', (e) => {
@@ -1853,7 +1854,7 @@
       if (!items.length) throw new Error('حداقل یک قلم برای سفارش لازم است.');
 
       // Client-side preview is only UX; the database function is authoritative.
-      const preview = await calculateAdminDiscount(discountCode, customerId, items, items.reduce((sum, it) => sum + it.line_total, 0));
+      const preview = await calculateAdminDiscount(discountCode, customerId, items, items.reduce((sum, it) => sum + it.line_total, 0), id || null);
       if (discountCode && preview.reason !== 'کد تخفیف معتبر است.') throw new Error(preview.reason);
 
       const rpc = await state.db.rpc('azim_save_order_with_discount', {
@@ -2089,10 +2090,11 @@
   async function openDiscountEditor(id, presetCustomerId = null, codeOnly = false, presetProductId = null) {
     if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند تخفیف بسازد.');
     await loadDiscountReferenceData();
-    const x = id ? discountState.rows.find(r => r.id === id) : null;
+    let x = id ? discountState.rows.find(r => r.id === id) : null;
     if (id && !x) {
       const r = await state.db.from('discounts').select('*').eq('id', id).single();
       if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+      x = r.data;
     }
     const title = id ? 'ویرایش تخفیف' : (presetProductId ? 'کد تخفیف محصول' : (presetCustomerId ? 'تخفیف اختصاصی مشتری' : (codeOnly ? 'ساخت کد تخفیف' : 'ساخت تخفیف جدید')));
     openModal(title, discountForm(x || null, presetCustomerId, presetProductId));
@@ -2144,6 +2146,7 @@
       const starts = s.starts_at.value ? new Date(s.starts_at.value).toISOString() : new Date().toISOString();
       const ends = s.ends_at.value ? new Date(s.ends_at.value).toISOString() : null;
       const scope = s.applies_to.value;
+      const checked = Array.from(document.querySelectorAll('#discountTargetList input[data-target-id]:checked')).map(el=>el.dataset.targetId);
       if (!name) throw new Error('عنوان تخفیف الزامی است.');
       if (e.target.dataset.codeRequired === '1' && !code) throw new Error('کد تخفیف برای این بخش الزامی است.');
       if (type === 'percentage' && (value < 1 || value > 100)) throw new Error('درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.');
@@ -2178,7 +2181,6 @@
         const d = await state.db.from(table).delete().eq('discount_id',rid);
         if (d.error) throw d.error;
       }
-      const checked = Array.from(document.querySelectorAll('#discountTargetList input[data-target-id]:checked')).map(el=>el.dataset.targetId);
       if (scope !== 'all' && checked.length) {
         const table = scope === 'products' ? 'discount_products' : scope === 'categories' ? 'discount_categories' : scope === 'brands' ? 'discount_brands' : 'discount_customers';
         const key = scope === 'products' ? 'product_id' : scope === 'categories' ? 'category_id' : scope === 'brands' ? 'brand_id' : 'customer_id';
@@ -2219,7 +2221,7 @@
     await loadDiscountCodes();
   }
 
-  async function calculateAdminDiscount(code, customerId, items, subtotal) {
+  async function calculateAdminDiscount(code, customerId, items, subtotal, excludeOrderId = null) {
     const normalized = String(code || '').trim().toUpperCase();
     const r = normalized
       ? await state.db.from('discounts').select('*').eq('code',normalized).maybeSingle()
@@ -2232,16 +2234,19 @@
     if (now < start) return {discount:0,row:x,reason:'زمان شروع این تخفیف نرسیده است.'};
     if (now > end) return {discount:0,row:x,reason:'این تخفیف منقضی شده است.'};
     if (subtotal < Number(x.min_order_amount || 0)) return {discount:0,row:x,reason:'مبلغ سفارش به حداقل لازم نرسیده است.'};
-    const used = await state.db.from('discount_redemptions').select('id,customer_id').eq('discount_id',x.id).limit(5000);
+    const used = await state.db.from('discount_redemptions').select('id,customer_id,order_id').eq('discount_id',x.id).limit(5000);
     if (used.error) throw used.error;
-    if (x.usage_limit != null && (used.data||[]).length >= Number(x.usage_limit)) return {discount:0,row:x,reason:'سقف استفاده از این کد تکمیل شده است.'};
+    const usedRows = (used.data||[]).filter(v => !excludeOrderId || String(v.order_id || '') !== String(excludeOrderId));
+    if (x.usage_limit != null && usedRows.length >= Number(x.usage_limit)) return {discount:0,row:x,reason:'سقف استفاده از این کد تکمیل شده است.'};
     if (customerId) {
-      const customerUses = (used.data||[]).filter(v=>v.customer_id===customerId).length;
+      const customerUses = usedRows.filter(v=>v.customer_id===customerId).length;
       if (customerUses >= Number(x.per_customer_limit || 1)) return {discount:0,row:x,reason:'این مشتری قبلاً بیش از حد مجاز از کد استفاده کرده است.'};
     }
     if (x.first_order_only) {
       if (!customerId) return {discount:0,row:x,reason:'این تخفیف فقط برای مشتریِ ثبت‌شده و اولین خرید است.'};
-      const ord = await state.db.from('orders').select('id').eq('customer_id',customerId).limit(1);
+      let ordq = state.db.from('orders').select('id').eq('customer_id',customerId).neq('status','cancelled');
+      if (excludeOrderId) ordq = ordq.neq('id', excludeOrderId);
+      const ord = await ordq.limit(1);
       if (ord.error) throw ord.error;
       if ((ord.data||[]).length) return {discount:0,row:x,reason:'این تخفیف فقط برای اولین خرید است.'};
     }
@@ -2302,7 +2307,7 @@
     const out = $('orderDiscountStatus');
     const total = $('orderTotalPreview');
     try {
-      const result = await calculateAdminDiscount(code,customerId,items,subtotal);
+      const result = await calculateAdminDiscount(code,customerId,items,subtotal,form.dataset.orderId || null);
       if (out) out.textContent = result.reason + (result.discount ? ' • تخفیف: ' + money(result.discount) : '');
       form.elements.discount.value = String(result.discount);
       if (form.elements.total) form.elements.total.value = String(Math.max(0, subtotal + Number(form.elements.shipping_cost.value||0) - result.discount));
