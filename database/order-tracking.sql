@@ -26,7 +26,148 @@ declare
   );
   v_result jsonb;
 begin
-  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$' then
+  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}
+    return jsonb_build_object(
+      'found', false,
+      'message', 'شناسه سفارش نامعتبر است.'
+    );
+  end if;
+
+  begin
+    v_ip := nullif(trim(v_ip_text),'')::inet;
+  exception when others then
+    v_ip := null;
+  end;
+
+  if v_ip is not null and (
+    select count(*)
+    from private.azim_order_tracking_rate_limits
+    where ip=v_ip
+      and created_at > now() - interval '10 minutes'
+  ) >= 30 then
+    return jsonb_build_object(
+      'found', false,
+      'rate_limited', true,
+      'message', 'تعداد درخواست‌های پیگیری زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.'
+    );
+  end if;
+
+  insert into private.azim_order_tracking_rate_limits(ip)
+  values(v_ip);
+
+  select jsonb_build_object(
+    'found', true,
+    'order_code', o.order_code,
+    'status', o.status,
+    'payment_status', o.payment_status,
+    'shipping_status', o.shipping_status,
+    'tracking_code', nullif(o.tracking_code,''),
+    'total', o.total,
+    'created_at', o.created_at,
+    'updated_at', o.updated_at
+  )
+  into v_result
+  from public.orders o
+  where upper(o.order_code)=v_code
+  limit 1;
+
+  if v_result is null then
+    return jsonb_build_object(
+      'found', false,
+      'message', 'سفارشی با این شناسه پیدا نشد.'
+    );
+  end if;
+
+  return v_result;
+end;
+$function$;
+
+revoke all on function private.azim_order_status(text) from public, anon, authenticated;
+grant execute on function private.azim_order_status(text) to anon;
+
+create or replace function public.azim_order_status(p_order_code text)
+returns jsonb
+language sql
+security invoker
+set search_path to ''
+as $function$
+  select private.azim_order_status(p_order_code);
+$function$;
+
+revoke all on function public.azim_order_status(text) from public, authenticated;
+grant execute on function public.azim_order_status(text) to anon;
+
+     and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}
+    return jsonb_build_object(
+      'found', false,
+      'message', 'شناسه سفارش نامعتبر است.'
+    );
+  end if;
+
+  begin
+    v_ip := nullif(trim(v_ip_text),'')::inet;
+  exception when others then
+    v_ip := null;
+  end;
+
+  if v_ip is not null and (
+    select count(*)
+    from private.azim_order_tracking_rate_limits
+    where ip=v_ip
+      and created_at > now() - interval '10 minutes'
+  ) >= 30 then
+    return jsonb_build_object(
+      'found', false,
+      'rate_limited', true,
+      'message', 'تعداد درخواست‌های پیگیری زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.'
+    );
+  end if;
+
+  insert into private.azim_order_tracking_rate_limits(ip)
+  values(v_ip);
+
+  select jsonb_build_object(
+    'found', true,
+    'order_code', o.order_code,
+    'status', o.status,
+    'payment_status', o.payment_status,
+    'shipping_status', o.shipping_status,
+    'tracking_code', nullif(o.tracking_code,''),
+    'total', o.total,
+    'created_at', o.created_at,
+    'updated_at', o.updated_at
+  )
+  into v_result
+  from public.orders o
+  where upper(o.order_code)=v_code
+  limit 1;
+
+  if v_result is null then
+    return jsonb_build_object(
+      'found', false,
+      'message', 'سفارشی با این شناسه پیدا نشد.'
+    );
+  end if;
+
+  return v_result;
+end;
+$function$;
+
+revoke all on function private.azim_order_status(text) from public, anon, authenticated;
+grant execute on function private.azim_order_status(text) to anon;
+
+create or replace function public.azim_order_status(p_order_code text)
+returns jsonb
+language sql
+security invoker
+set search_path to ''
+as $function$
+  select private.azim_order_status(p_order_code);
+$function$;
+
+revoke all on function public.azim_order_status(text) from public, authenticated;
+grant execute on function public.azim_order_status(text) to anon;
+ then
     return jsonb_build_object(
       'found', false,
       'message', 'شناسه سفارش نامعتبر است.'
