@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "build": "node -e \"console.log('Build complete')\""
+    "build": "node -e \"console.log('Build complete')\"",
+    "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js"
   },
   "dependencies": {
     "express": "4.22.3",
