@@ -7,10 +7,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
-const ALLOWED_ORIGIN = String(process.env.AZIM_ALLOWED_ORIGIN || '').trim();
+const PORT = Number(process.env.PORT || 3000);
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+  throw new Error('Invalid PORT environment value');
+}
+const ALLOWED_ORIGINS = new Set(
+  String(process.env.AZIM_ALLOWED_ORIGIN || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+);
 
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 app.set('json spaces', 0);
 
 const SECURITY_HEADERS = {
@@ -39,6 +48,20 @@ app.use((req, res, next) => {
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
+  next();
+});
+
+app.use('/api', (req, res, next) => {
+  const origin = String(req.headers.origin || '').trim();
+  if (!ALLOWED_ORIGINS.size || !origin) return next();
+  if (!ALLOWED_ORIGINS.has('*') && !ALLOWED_ORIGINS.has(origin)) {
+    return res.status(403).json({ error: 'Origin is not allowed.' });
+  }
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   next();
 });
 
