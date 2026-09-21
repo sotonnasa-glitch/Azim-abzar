@@ -1,0 +1,9 @@
+.git
+.github
+.env
+.env.*
+node_modules
+*.zip
+*.b64
+catalog_site_mapping_908/*.zip
+catalog_site_mapping_908/*.b64
