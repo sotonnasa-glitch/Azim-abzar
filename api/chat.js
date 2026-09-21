@@ -8,6 +8,7 @@ const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 12;
 
 function getClientIp(req) {
+  if (req.ip) return String(req.ip);
   const real = req.headers?.['x-real-ip'] || req.headers?.['x-vercel-forwarded-for'];
   if (real) return String(real).split(',')[0].trim();
   const forwarded = req.headers?.['x-forwarded-for'];
