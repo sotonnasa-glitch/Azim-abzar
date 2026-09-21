@@ -1269,7 +1269,8 @@
       const params = new URLSearchParams();
       if (q.trim()) params.set('q', q.trim());
       if (selectedCategory && selectedCategory !== 'all') {
-        const categoryKey = Object.keys(_cMap).find(k => _cMap[k] === selectedCategory);
+        const live = liveCategories.find(x => String(x?.name || '').trim() === selectedCategory);
+        const categoryKey = live?.slug || Object.keys(_cMap).find(k => _cMap[k] === selectedCategory);
         params.set('cat', categoryKey || selectedCategory);
       }
       if (currentSort !== 'code_asc') params.set('sort', currentSort);
@@ -1346,7 +1347,7 @@
     async function loadLiveCategories() {
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
-        const u = window.AZIM_SUPABASE_URL + '/rest/v1/categories?select=name,sort_order,is_active&is_active=eq.true&order=sort_order.asc&limit=100';
+        const u = window.AZIM_SUPABASE_URL + '/rest/v1/categories?select=name,slug,sort_order,is_active&is_active=eq.true&order=sort_order.asc&limit=100';
         const r = await fetch(u, {
           headers: {
             apikey: window.AZIM_SUPABASE_ANON_KEY,
@@ -1930,6 +1931,16 @@
         .filter(x => x && x.is_active !== false)
         .sort((a,b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
         : [];
+
+      const requestedCategory = _u.get('cat');
+      if (requestedCategory && requestedCategory !== 'all') {
+        const requestedName = _cMap[requestedCategory] || requestedCategory;
+        const liveMatch = liveCategories.find(x =>
+          String(x?.slug || '').trim() === requestedCategory ||
+          String(x?.name || '').trim() === requestedName
+        );
+        selectedCategory = liveMatch ? String(liveMatch.name).trim() : requestedName;
+      }
 
       const liveMap = new Map(
         (Array.isArray(liveRows) ? liveRows : [])
