@@ -93,6 +93,10 @@ jobs:
           expected = 'https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/'
           assert all(x.get('image','').startswith(expected) and x['image'].endswith(f'{x["id"]}.jpg') for x in p)
           assert 'catalog_site_mapping_908/products.json' in Path('products-v4.html').read_text(encoding='utf-8')
+          assert 'azim-home-categories.js?v=1' in Path('index.html').read_text(encoding='utf-8')
+          assert 'azim-home-categories.css?v=1' in Path('index.html').read_text(encoding='utf-8')
+          assert Path('azim-home-categories.js').is_file() and Path('azim-home-categories.js').stat().st_size > 1000
+          assert Path('azim-home-categories.css').is_file() and Path('azim-home-categories.css').stat().st_size > 1000
           print(f'CATALOG VERIFIED: {len(p)} products')
           print('REMOTE IMAGES VERIFIED: Supabase URLs for all 908 product IDs')
           PY
@@ -105,6 +109,17 @@ jobs:
             curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
           echo 'REMOTE SUPABASE IMAGES VERIFIED'
+
+      - name: Validate backend source
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check server.js
+          node --input-type=module --check < api/chat.js
+          node --check admin-app.js
+          grep -q "const PORT = Number(process.env.PORT || 3000)" server.js
+          grep -q "AZIM_ALLOWED_ORIGIN" server.js
+          echo 'BACKEND SOURCE VERIFIED'
 
       - name: Prepare Pages artifact
         shell: bash
