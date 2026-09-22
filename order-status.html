@@ -600,7 +600,26 @@
         align-items: flex-start;
       }
     }
-  </style>
+  
+.action-box{margin-top:14px;padding:15px;border:1px solid rgba(245,185,0,.18);border-radius:14px;background:linear-gradient(160deg,rgba(245,185,0,.045),rgba(255,255,255,.015))}
+.action-box h3{margin:0 0 7px;color:#f3f5f3;font-size:14px}
+.action-box p{margin:0 0 12px;color:#89948d;font-size:10px;line-height:1.8}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.action-grid .full{grid-column:1/-1}
+.action-grid label{display:block;color:#9da8a1;font-size:9px;margin-bottom:5px}
+.action-grid input,.action-grid select,.action-grid textarea{width:100%;box-sizing:border-box;padding:9px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0b100d;color:#eef2ef;font:inherit;font-size:10px}
+.action-grid textarea{min-height:76px;resize:vertical}
+.action-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.item-list{margin-top:14px}
+.item-list h3{margin:0 0 9px;font-size:13px;color:#eef2ee}
+.item-card{padding:11px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.018);margin-top:8px}
+.item-card-top{display:flex;justify-content:space-between;gap:10px}
+.item-card-name{font-size:11px;font-weight:800;color:#f3f5f3}
+.item-card-meta{margin-top:4px;color:#7f8a83;font-size:9px;line-height:1.8}
+.item-card-actions{margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;background:rgba(245,185,0,.08);border:1px solid rgba(245,185,0,.2);color:#f5d260;font-size:8px}
+@media(max-width:620px){.action-grid{grid-template-columns:1fr}.action-grid .full{grid-column:auto}}
+</style>
 </head>
 <body>
   <!-- Header: Single Row on All Screen Sizes -->
@@ -832,6 +851,7 @@
 
   <script src="./supabase-config.js"></script>
   <script>
+
   (function(){
     const $ = id => document.getElementById(id);
     const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m] || m));
@@ -952,6 +972,24 @@
           '</div>';
       });
 
+      const items=Array.isArray(data.items)?data.items:[];
+      const returnStatus={pending:'در حال بررسی',approved:'تأیید شد',rejected:'رد شد',received:'کالا دریافت شد',closed:'بسته شد'};
+      let itemHtml='';
+      if(items.length){
+        itemHtml=items.map(item=>{
+          const reqs=Array.isArray(item.return_requests)?item.return_requests:[];
+          const latest=reqs[0];
+          const canReturn=(data.status==='delivered'||data.shipping_status==='delivered')&&Number(item.returnable_quantity||0)>0&&!['pending','approved','received'].includes(latest?.status);
+          const badge=latest?'<span class="badge">مرجوعی: '+esc(returnStatus[latest.status]||latest.status||'—')+(latest.refund_status==='pending'?' • عودت وجه در انتظار':'')+'</span>':'';
+          return '<div class="item-card"><div class="item-card-top"><div><div class="item-card-name">'+esc(item.product_name||'محصول')+'</div><div class="item-card-meta">تعداد: '+fmt(item.quantity)+(item.variant?.label?' • مدل/سایز: '+esc(item.variant.label):'')+' • قابل مرجوعی: '+fmt(item.returnable_quantity||0)+'</div></div><div>'+money(item.line_total)+'</div></div>'+(badge?'<div style="margin-top:7px">'+badge+'</div>':'')+(canReturn?'<div class="item-card-actions"><button class="action-btn" type="button" data-return-item="'+esc(item.id)+'">↩️ درخواست مرجوعی</button></div>':'')+'</div>';
+        }).join('');
+      }else{
+        itemHtml='<div class="empty">جزئیات اقلام سفارش در دسترس نیست.</div>';
+      }
+      let cancelAction='';
+      if(data.can_cancel&&data.cancel_request_status!=='pending') cancelAction='<button class="action-btn" type="button" id="cancelOrderBtn">❌ درخواست لغو سفارش</button>';
+      else if(data.cancel_request_status==='pending') cancelAction='<span class="badge">درخواست لغو در حال بررسی است</span>';
+
       const trackingBlock = data.tracking_code ?
         '<div class="tracking-code-banner">' +
           '<div>' +
@@ -999,12 +1037,40 @@
 
         trackingBlock +
 
+        '<div class="item-list"><h3>اقلام این سفارش</h3>'+itemHtml+'</div>' +
         '<div class="result-actions">' +
+          cancelAction +
           '<button class="action-btn" type="button" onclick="doLookup(true)">↻ بروزرسانی وضعیت</button>' +
           '<a class="action-btn" href="products-v4.html">مشاهده محصولات</a>' +
-        '</div>';
+        '</div>' +
+        '<div id="actionBox" class="action-box" hidden></div>';
 
       $('result').hidden = false;
+      const cancelBtn=$('cancelOrderBtn');
+      if(cancelBtn) cancelBtn.onclick=()=>openCancelForm();
+      document.querySelectorAll('[data-return-item]').forEach(btn=>{btn.onclick=()=>openReturnForm(items.find(x=>String(x.id)===String(btn.dataset.returnItem)));});
+    }
+
+    function closeActionBox(){const box=$('actionBox');if(!box)return;box.hidden=true;box.innerHTML='';}
+    function openCancelForm(){
+      const box=$('actionBox');if(!box)return;box.hidden=false;
+      box.innerHTML='<h3>درخواست لغو سفارش</h3><p>لغو فقط تا قبل از ارسال بسته امکان‌پذیر است. درخواست ابتدا برای بررسی فروشگاه ثبت می‌شود.</p><form id="cancelForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>دلیل لغو</label><input id="cancelReason" maxlength="300" required placeholder="مثلاً منصرف شدم"></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست لغو</button><button class="btn secondary" type="button" id="cancelActionClose">بستن</button></div></form>';
+      $('cancelActionClose').onclick=closeActionBox;$('cancelForm').onsubmit=async e=>{e.preventDefault();await submitCancel($('actionMobile').value,$('cancelReason').value);};box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    function openReturnForm(item){
+      const box=$('actionBox');if(!box||!item)return;box.hidden=false;const max=Math.max(1,Number(item.returnable_quantity||1));
+      box.innerHTML='<h3>↩️ درخواست مرجوعی: '+esc(item.product_name||'محصول')+'</h3><p>فقط همین کالا برای مرجوعی ثبت می‌شود.</p><form id="returnForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>تعداد</label><input id="returnQty" type="number" min="1" max="'+max+'" value="1" required></div><div class="full"><label>دلیل مرجوعی</label><select id="returnReason" required><option value="">انتخاب کنید</option><option>کالا معیوب است</option><option>کالای اشتباه ارسال شده</option><option>کالا با سفارش مغایرت دارد</option><option>کالا آسیب‌دیده به دستم رسیده</option><option>سایر</option></select></div><div class="full"><label>توضیحات بیشتر</label><textarea id="returnDetails" maxlength="1000" placeholder="توضیح کوتاه برای بررسی فروشگاه..."></textarea></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست مرجوعی</button><button class="btn secondary" type="button" id="returnActionClose">بستن</button></div></form>';
+      $('returnActionClose').onclick=closeActionBox;$('returnForm').onsubmit=async e=>{e.preventDefault();await submitReturn(item,$('actionMobile').value,Number($('returnQty').value),$('returnReason').value,$('returnDetails').value);};box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    async function callRpc(name,payload){
+      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const body=await r.json();if(!r.ok)throw new Error(body?.message||body?.hint||'درخواست ناموفق بود.');return body;
+    }
+    async function submitCancel(mobile,reason){
+      try{setMessage('در حال ثبت درخواست لغو…','loading');const body=await callRpc('azim_request_order_cancel',{p_order_code:currentCode,p_mobile:mobile,p_reason:reason});if(!body?.ok)throw new Error(body?.message||'ثبت درخواست لغو ناموفق بود.');closeActionBox();await lookup(true);setMessage(body.message||'درخواست لغو ثبت شد.','success');}catch(err){setMessage(err?.message||'ثبت درخواست لغو ناموفق بود.','error');}
+    }
+    async function submitReturn(item,mobile,quantity,reason,details){
+      try{setMessage('در حال ثبت درخواست مرجوعی…','loading');const body=await callRpc('azim_request_order_return',{p_order_code:currentCode,p_mobile:mobile,p_order_item_id:item.id,p_quantity:quantity,p_reason:reason,p_details:details||null});if(!body?.ok)throw new Error(body?.message||'ثبت درخواست مرجوعی ناموفق بود.');closeActionBox();await lookup(true);setMessage(body.message||'درخواست مرجوعی ثبت شد.','success');}catch(err){setMessage(err?.message||'ثبت درخواست مرجوعی ناموفق بود.','error');}
     }
 
     async function lookup(isRefresh = false){
@@ -1089,6 +1155,7 @@
     return false;
   }
   window.handleSmartBack = handleSmartBack;
+  
   </script>
 </body>
 </html>
