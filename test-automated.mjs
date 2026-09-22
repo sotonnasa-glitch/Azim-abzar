@@ -364,6 +364,15 @@ function testCartAndCheckout() {
     fail('برخی فیلدهای فرم پیش‌فاکتور یافت نشدند');
   }
 
+  const paymentPhone = doc.querySelector('input[name="paymentMethod"][value="phone"]');
+  const paymentMessage = doc.querySelector('input[name="paymentMethod"][value="message"]');
+  const paymentOnline = doc.getElementById('onlinePaymentOption');
+  if (paymentPhone && paymentMessage && paymentOnline && cartHtml.includes('p_payment_method:')) {
+    pass('روش‌های پرداخت و ارسال روش انتخابی به RPC ثبت سفارش متصل هستند');
+  } else {
+    fail('اتصال روش‌های پرداخت به فرم/RPC کامل نیست');
+  }
+
   if (fullName.hasAttribute('required') && mobile.hasAttribute('required')) {
     pass('اعتبارسنجی فیلدهای اجباری خریدار (نام و شماره همراه) با ویژگی required تایید شد');
   } else {
@@ -464,6 +473,7 @@ async function main() {
   testProductsAndFilters();
   testCartAndCheckout();
   testContactForm();
+  testOrderTrackingFlow();
   await testServerRoutes();
 
   const duration = ((Date.now() - start) / 1000).toFixed(2);
