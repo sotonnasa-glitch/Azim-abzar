@@ -1062,9 +1062,23 @@
       box.innerHTML='<h3>↩️ درخواست مرجوعی: '+esc(item.product_name||'محصول')+'</h3><p>فقط همین کالا برای مرجوعی ثبت می‌شود.</p><form id="returnForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>تعداد</label><input id="returnQty" type="number" min="1" max="'+max+'" value="1" required></div><div class="full"><label>دلیل مرجوعی</label><select id="returnReason" required><option value="">انتخاب کنید</option><option>کالا معیوب است</option><option>کالای اشتباه ارسال شده</option><option>کالا با سفارش مغایرت دارد</option><option>کالا آسیب‌دیده به دستم رسیده</option><option>سایر</option></select></div><div class="full"><label>توضیحات بیشتر</label><textarea id="returnDetails" maxlength="1000" placeholder="توضیح کوتاه برای بررسی فروشگاه..."></textarea></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست مرجوعی</button><button class="btn secondary" type="button" id="returnActionClose">بستن</button></div></form>';
       $('returnActionClose').onclick=closeActionBox;$('returnForm').onsubmit=async e=>{e.preventDefault();await submitReturn(item,$('actionMobile').value,Number($('returnQty').value),$('returnReason').value,$('returnDetails').value);};box.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
+    function friendlyNetworkError(error,fallback){
+      const message=String(error?.message||'');
+      if(error instanceof TypeError || /Failed to fetch|Load failed|NetworkError|network request failed/i.test(message)){
+        return 'خطا در اتصال به سرور. لطفاً اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.';
+      }
+      return message||fallback;
+    }
     async function callRpc(name,payload){
-      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      const body=await r.json();if(!r.ok)throw new Error(body?.message||body?.hint||'درخواست ناموفق بود.');return body;
+      try{
+        const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        let body=null;
+        try{ body=await r.json(); }catch(_){}
+        if(!r.ok)throw new Error(body?.message||body?.hint||'درخواست ناموفق بود.');
+        return body;
+      }catch(error){
+        throw new Error(friendlyNetworkError(error,'درخواست ناموفق بود.'));
+      }
     }
     async function submitCancel(mobile,reason){
       try{setMessage('در حال ثبت درخواست لغو…','loading');const body=await callRpc('azim_request_order_cancel',{p_order_code:currentCode,p_mobile:mobile,p_reason:reason});if(!body?.ok)throw new Error(body?.message||'ثبت درخواست لغو ناموفق بود.');closeActionBox();await lookup(true);setMessage(body.message||'درخواست لغو ثبت شد.','success');}catch(err){setMessage(err?.message||'ثبت درخواست لغو ناموفق بود.','error');}
