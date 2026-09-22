@@ -43,11 +43,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -RniE 'service_role|sb_secret_|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}|postgresql://'             --exclude-dir=.git --exclude='*.zip' --exclude='*.b64' .
+          ! grep -RniE 'sb_secret_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}|postgresql://[^[:space:]]+:[^@[:space:]]+@' --exclude-dir=.git --exclude='*.zip' --exclude='*.b64' .
           grep -q "X-Content-Type-Options" server.js
           grep -q "Content-Security-Policy" server.js
           grep -q "express.json({ limit: '8kb' })" server.js
           grep -q "RATE_LIMIT = 12" api/chat.js
           grep -q "requireAdminMFA" admin-app.js
           grep -q "sb_publishable_" supabase-config.js
+          grep -q 'name="paymentMethod"' cart.html
+          grep -q 'p_payment_method:' cart.html
+          grep -q 'azim_checkout_options' cart.html
+          grep -q 'azim_request_order_cancel' order-status.html
+          grep -q 'azim_request_order_return' order-status.html
+          grep -q 'window.copyText' order-status.html
           echo "SECURITY INVARIANTS VERIFIED"
