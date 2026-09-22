@@ -4,3 +4,15 @@ wrangler.jsonc
 node_modules/
 .git/
 .github/
+supabase/
+database/
+api/
+*.sql
+*.md
+*.b64
+*.zip
+server.js
+package.json
+package-lock.json
+.env
+.env.*
