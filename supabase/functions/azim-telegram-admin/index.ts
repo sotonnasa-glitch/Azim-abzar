@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 
 const PROJECT_URL = Deno.env.get("SUPABASE_URL") ?? "https://lzkrwtnylkordkwkdyzp.supabase.co";
+const PUBLIC_SITE_URL = (Deno.env.get("AZIM_PUBLIC_SITE_URL") ?? "https://sotonnasa-glitch.github.io/Azim-abzar").replace(/\/+$/, "");
 const ADMIN_IDS = new Set(
   (Deno.env.get("TELEGRAM_ADMIN_CHAT_IDS") ?? "")
     .split(",")
@@ -816,7 +817,9 @@ async function handleReplyMessage(msg: any) {
       "شرکت ارسال: " + (saved.shipping_carrier || "—") + "\n" +
       "کد مرسوله: " + (saved.tracking_code || "—") + "\n" +
       "لینک پیگیری: " + (saved.tracking_url || "—") + "\n\n" +
-      "اطلاعات مرسوله در صفحه پیگیری سفارش مشتری ثبت شد.",
+      "اطلاعات مرسوله در صفحه پیگیری سفارش مشتری ثبت شد.\n" +
+      "🔗 لینک پیگیری مشتری:\n" +
+      PUBLIC_SITE_URL + "/order-status.html?code=" + encodeURIComponent(saved.order_code),
       { reply_markup: orderActionsMarkup(saved.order_code, saved.status, saved.payment_status, saved.shipping_status) }
     );
     return true;
