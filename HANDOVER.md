@@ -24,12 +24,22 @@
 در Supabase Dashboard > Auth > Password Security، گزینه Leaked Password Protection را فعال کنید. این تنها هشدار امنیتی باقی‌مانده‌ای است که Security Advisor پروژه در آخرین بررسی گزارش می‌کند.
 
 ## 5) هوش مصنوعی
-ai.html به مسیر /api/chat وابسته است.
-- اگر سایت با Node/Express اجرا می‌شود، server.js همین مسیر را ارائه می‌کند.
-- اگر سایت فقط روی GitHub Pages است، Node/Express اجرا نمی‌شود و /api/chat در Pages وجود ندارد. در این حالت backend مربوط به AI باید روی یک سرویس سروری/Serverless مستقل اجرا شود و frontend به URL آن متصل شود.
-- GEMINI_API_KEY و OPENAI_API_KEY فقط باید به عنوان server-side secret در محیط backend نگهداری شوند.
+- مسیر اصلی AI برای GitHub Pages اکنون Supabase Edge Function با نام `azim-ai-chat` است.
+- `supabase-config.js` این مسیر را به `/functions/v1/azim-ai-chat` روی پروژه Supabase وصل می‌کند؛ بنابراین AI روی هاست استاتیک هم قابل اجرا است.
+- Node/Express و مسیر `/api/chat` همچنان برای استقرار self-hosted قابل استفاده است، اما برای GitHub Pages وابستگی اصلی نیست.
+- `GEMINI_API_KEY` و `OPENAI_API_KEY` فقط باید در Secrets محیط Edge Function یا backend نگهداری شوند.
 
-## 6) قبل از تحویل
+## 6) ربات مدیر تلگرام
+- ربات مدیر با Supabase Edge Function به نام `azim-telegram-admin` اجرا می‌شود.
+- Secretهای لازم: `TELEGRAM_BOT_TOKEN` و `TELEGRAM_ADMIN_CHAT_IDS`.
+- webhook واقعی روی `https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/azim-telegram-admin` تنظیم شده است.
+- ربات سفارش‌ها را می‌خواند، وضعیت/پرداخت/ارسال را تغییر می‌دهد و برای ثبت کد مرسوله، لینک پیگیری و نام شرکت ارسال مرحله‌به‌مرحله از ادمین ورودی می‌گیرد.
+- منبع Edge Function در `supabase/functions/azim-telegram-admin/index.ts` داخل همین repository نگهداری می‌شود.
+
+## 7) ترتیب SQL
+برای پروژه Supabase جدید، فایل‌ها را بر اساس وابستگی‌ها اجرا کنید: ابتدا schema پایه و catalog، سپس `public-cart.sql`، سپس `checkout-actions.sql` و بعد `order-tracking.sql`. فایل `order-tracking.sql` نسخه کامل تابع پیگیری را نگه می‌دارد و نباید یک نسخه ساده‌تر از آن اجرا شود.
+
+## 8) قبل از تحویل
 تست کنید:
 - صفحه اصلی
 - کاتالوگ و 908 محصول
@@ -44,7 +54,7 @@ ai.html به مسیر /api/chat وابسته است.
 - دستیار AI
 - دامنه اختصاصی، SSL و ایمیل‌های سایت
 
-## 7) اصل مهم تحویل
+## 9) اصل مهم تحویل
 بعد از تحویل، مشتری باید بتواند بدون دسترسی به حساب شخصی سازنده:
 1. repository را مدیریت کند،
 2. Supabase را مدیریت کند،
