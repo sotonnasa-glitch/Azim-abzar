@@ -562,6 +562,16 @@ main{position:relative;padding:20px 0 64px}
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+.payment-box{margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.018)}
+.payment-title{font-size:9px;font-weight:950;margin-bottom:8px}
+.payment-options{display:grid;gap:7px}
+.payment-option{display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.012);cursor:pointer}
+.payment-option:has(input:checked){border-color:rgba(245,185,0,.28);background:rgba(245,185,0,.04)}
+.payment-option input{margin-top:2px;accent-color:#f5b900}
+.payment-option strong{display:block;font-size:9px}
+.payment-option span{display:block;margin-top:2px;color:#6f7972;font-size:8px;line-height:1.7}
+.payment-note{margin-top:7px;color:#78837b;font-size:8px;line-height:1.8}
 </style>
 </head>
 <body>
@@ -738,6 +748,15 @@ main{position:relative;padding:20px 0 64px}
                 <div class="field"><label>ایمیل (اختیاری)</label><input id="email" class="input" type="email" maxlength="180" dir="ltr" placeholder="info@example.com"></div>
                 <div class="field"><label>شهر / استان</label><input id="city" class="input" maxlength="80" placeholder="مثلاً تهران / اصفهان"></div>
                 <div class="field full"><label>آدرس یا توضیحات باربری و تحویل</label><textarea id="address" class="textarea" rows="3" maxlength="600" placeholder="آدرس دقیق کارگاه یا انبار، نام باربری مدنظر یا ساعت تماس..."></textarea></div>
+              </div>
+              <div class="payment-box">
+                <div class="payment-title">روش پرداخت</div>
+                <div class="payment-options">
+                  <label class="payment-option"><input type="radio" name="paymentMethod" value="phone" checked><div><strong>📞 تماس تلفنی</strong><span>فروشگاه برای هماهنگی پرداخت و ارسال با شما تماس می‌گیرد.</span></div></label>
+                  <label class="payment-option"><input type="radio" name="paymentMethod" value="message"><div><strong>💬 پیام</strong><span>هماهنگی پرداخت و ارسال از طریق پیام انجام می‌شود.</span></div></label>
+                  <label class="payment-option" id="onlinePaymentOption" hidden><input type="radio" name="paymentMethod" value="online"><div><strong>💳 پرداخت آنلاین</strong><span>پس از فعال شدن درگاه، به درگاه پرداخت منتقل می‌شوید.</span></div></label>
+                </div>
+                <div id="paymentNote" class="payment-note">در حال دریافت روش‌های پرداخت…</div>
               </div>
               <button id="submitOrderBtn" class="btn submit" type="submit">
                 <span>ثبت نهایی و صدور کد رهگیری</span>
@@ -1048,7 +1067,8 @@ main{position:relative;padding:20px 0 64px}
             p_address:$('address').value.trim()||null,
             p_city:$('city').value.trim()||null,
             p_discount_code:$('couponInput').value.trim().toUpperCase().replace(/\s+/g,'')||null,
-            p_items:freshItems.map(x=>({product_id:x.product_id,variant_label:x.variant_label||null,quantity:x.qty}))
+            p_items:freshItems.map(x=>({product_id:x.product_id,variant_label:x.variant_label||null,quantity:x.qty})),
+            p_payment_method:document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone'
           })
         }).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d?.message||d?.hint||'ثبت سفارش ناموفق بود.');return d;});
         C.clear();
@@ -1083,6 +1103,13 @@ main{position:relative;padding:20px 0 64px}
             '</div>'+
           '</div>';
         
+        const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
+        const paymentLabel={phone:'تماس تلفنی',message:'پیام',online:'پرداخت آنلاین'}[selectedPayment]||selectedPayment;
+        const paymentInfo=document.createElement('div');
+        paymentInfo.style.cssText='margin-top:8px;color:#8f9a92;font-size:10px;';
+        paymentInfo.textContent='روش پرداخت انتخابی: '+paymentLabel;
+        $('cartSuccess')?.querySelector('.success')?.appendChild(paymentInfo);
+
         const copyBtn=$('copyCodeBtn');
         if(copyBtn){
           copyBtn.onclick=()=>{
@@ -1104,7 +1131,22 @@ main{position:relative;padding:20px 0 64px}
       }
     };
 
+    async function loadPaymentOptions(){
+      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_checkout_options',{method:'POST',headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:'{}'});
+      const data=await r.json();
+      if(!r.ok) throw new Error(data?.message||data?.hint||'روش‌های پرداخت دریافت نشد.');
+      const online=Boolean(data?.online_enabled);
+      const onlineOption=$('onlinePaymentOption');
+      const note=$('paymentNote');
+      if(onlineOption) onlineOption.hidden=!online;
+      if(note) note.textContent=online?'پرداخت آنلاین فعال است و در صورت انتخاب، ادامه پرداخت طبق تنظیمات درگاه انجام می‌شود.':'درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام قابل استفاده است.';
+      if(!online && document.querySelector('input[name="paymentMethod"]:checked')?.value==='online'){
+        document.querySelector('input[name="paymentMethod"][value="phone"]')?.click();
+      }
+    }
+
     C.syncPrices().finally(render);
+    loadPaymentOptions().catch(err=>console.warn('payment options:',err?.message||err)).finally(render);
     render();
   })();
 
