@@ -53,7 +53,7 @@
     .current.cancelled{background:rgba(255,125,131,.055);border-color:rgba(255,125,131,.2)}.current.cancelled strong{color:#ff989d}
     .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:16px 0 20px}.step{position:relative;padding:11px 7px;text-align:center;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:rgba(255,255,255,.018);color:#5f6962}.step .dot{width:27px;height:27px;border-radius:9px;margin:0 auto 7px;display:grid;place-items:center;background:#101612;border:1px solid #2a342e;font-size:9px;font-weight:950}.step strong{display:block;font-size:8px;line-height:1.7}.step.active{border-color:rgba(245,185,0,.22);background:rgba(245,185,0,.045);color:#e6d27c}.step.active .dot{background:rgba(245,185,0,.15);border-color:rgba(245,185,0,.35);color:#ffd84f}.step.done{color:#8edeb0}.step.done .dot{background:rgba(69,226,138,.1);border-color:rgba(69,226,138,.2);color:#66e49b}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.info{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.018)}.info span{display:block;color:#69756d;font-size:8px;margin-bottom:4px}.info b{font-size:10px;color:#eef1ee}.info.highlight b{color:#ffe06a}
-    .tracking{margin-top:10px;padding:12px 13px;border:1px dashed rgba(245,185,0,.2);border-radius:13px;background:rgba(245,185,0,.035);font-size:8px;color:#777f79}.tracking b{display:block;color:#f1d25e;font:950 12px ui-monospace,monospace;margin-top:4px;direction:ltr;text-align:right}
+    .tracking{margin-top:10px;padding:12px 13px;border:1px dashed rgba(245,185,0,.2);border-radius:13px;background:rgba(245,185,0,.035);font-size:8px;color:#777f79}.tracking b{display:block;color:#f1d25e;font:950 12px ui-monospace,monospace;margin-top:4px;direction:ltr;text-align:right}.tracking span{display:block;color:#777f79;font-size:8px}.tracking small{display:block;margin-top:6px;color:#c5ccc7;font-size:8px}
     .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
     .empty{padding:24px;color:#747f77;font-size:9px;line-height:1.9}
     @media(max-width:640px){.wrap{width:min(100% - 14px,980px)}.head{min-height:66px}.brand small{display:none}.nav a{padding:8px 9px}.nav a span{display:none}.hero{padding:20px;border-radius:21px}.search{grid-template-columns:1fr}.result{border-radius:18px;padding:13px}.result-top{flex-direction:column}.last{text-align:right}.steps{grid-template-columns:1fr}.step{text-align:right;display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center}.step .dot{margin:0}.step strong{font-size:9px}.grid{grid-template-columns:1fr}.actions{justify-content:stretch}.actions .btn{flex:1 1 180px}}
@@ -161,7 +161,10 @@
           '<div class="info"><span>وضعیت ارسال</span><b>'+esc(shippingStatus[data.shipping_status]||data.shipping_status||'—')+'</b></div>'+
           '<div class="info highlight"><span>مبلغ سفارش</span><b>'+money(data.total)+'</b></div>'+
         '</div>'+
-        (data.tracking_code?'<div class="tracking">کد رهگیری ارسال<b>'+esc(data.tracking_code)+'</b></div>':'')+
+        (data.tracking_code?'<div class="tracking"><span>کد رهگیری ارسال</span><b>'+esc(data.tracking_code)+'</b>'+
+  (data.shipping_carrier?'<small>شرکت ارسال: '+esc(data.shipping_carrier)+'</small>':'')+
+  (data.tracking_url?'<a class="btn secondary" style="margin-top:9px;width:100%" href="'+esc(data.tracking_url)+'" target="_blank" rel="noopener noreferrer">پیگیری مرسوله ←</a>':'')+
+'</div>':'')+
         '<div class="hint">زمان ثبت: <strong>'+esc(faDate(data.created_at))+'</strong></div>'+
         '<div class="actions"><button class="btn" id="refreshTrack" type="button">↻ بروزرسانی وضعیت</button><a class="btn secondary" href="products-v4.html">مشاهده محصولات</a><a class="btn secondary" href="cart.html">سبد سفارش</a></div>';
       $('result').hidden=false;
