@@ -3,6 +3,7 @@
 -- It adds admin-only RLS, FK indexes, a pending-cancel uniqueness guard,
 -- moves SECURITY DEFINER implementations into private schema wrappers,
 -- and locks order/order-item rows during customer cancellation/return requests.
+-- The live pg_net extension was also recreated under the extensions schema after confirming its request queue was empty.
 
 begin;
 
