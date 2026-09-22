@@ -156,7 +156,7 @@ begin
     where sc.section_key='checkout_payment' and sc.is_active=true
       and lower(coalesce(sc.payload->>'online_enabled','false'))='true'
   ) then raise exception using message='درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام را انتخاب کنید.'; end if;
-  v_result := public.azim_cart_checkout(p_mode,p_full_name,p_mobile,p_email,p_address,p_city,p_discount_code,p_items);
+  v_result := private.azim_cart_checkout(p_mode,p_full_name,p_mobile,p_email,p_address,p_city,p_discount_code,p_items);
   if lower(coalesce(p_mode,'preview')) <> 'submit' then
     return v_result || jsonb_build_object('payment_method',v_method);
   end if;
