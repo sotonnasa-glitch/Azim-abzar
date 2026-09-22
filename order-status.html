@@ -55,6 +55,11 @@
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.info{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.018)}.info span{display:block;color:#69756d;font-size:8px;margin-bottom:4px}.info b{font-size:10px;color:#eef1ee}.info.highlight b{color:#ffe06a}
     .tracking{margin-top:10px;padding:12px 13px;border:1px dashed rgba(245,185,0,.2);border-radius:13px;background:rgba(245,185,0,.035);font-size:8px;color:#777f79}.tracking b{display:block;color:#f1d25e;font:950 12px ui-monospace,monospace;margin-top:4px;direction:ltr;text-align:right}.tracking span{display:block;color:#777f79;font-size:8px}.tracking small{display:block;margin-top:6px;color:#c5ccc7;font-size:8px}
     .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .items{margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:14px}.items h3{margin:0 0 9px;font-size:10px}
+    .item{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:14px;background:rgba(255,255,255,.018);margin-bottom:8px}.item-top{display:flex;justify-content:space-between;gap:10px}.item-name{font-size:10px;font-weight:900}.item-meta{margin-top:4px;color:#727d75;font-size:8px;line-height:1.8}.item-total{font-size:10px;color:#ffe06a;font-weight:900;white-space:nowrap}.item-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.item-actions .btn{padding:8px 10px;font-size:8px}
+    .badge{display:inline-flex;padding:4px 7px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:#b7c0ba;font-size:7px}
+    .action-box{margin-top:12px;padding:14px;border:1px solid rgba(245,185,0,.16);border-radius:15px;background:rgba(245,185,0,.035)}.action-box h3{margin:0 0 10px;font-size:10px}.action-box p{margin:0 0 10px;color:#828d85;font-size:8px;line-height:1.8}
+    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-grid .full{grid-column:1/-1}.action-box label{display:block;font-size:8px;color:#7d887f;margin-bottom:4px}.action-box input,.action-box textarea,.action-box select{width:100%;border:1px solid #2d3830;background:#080c0a;color:#fff;border-radius:10px;padding:10px;font:800 10px Vazirmatn}.action-box textarea{min-height:75px;resize:vertical}.action-actions{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
     .empty{padding:24px;color:#747f77;font-size:9px;line-height:1.9}
     @media(max-width:640px){.wrap{width:min(100% - 14px,980px)}.head{min-height:66px}.brand small{display:none}.nav a{padding:8px 9px}.nav a span{display:none}.hero{padding:20px;border-radius:21px}.search{grid-template-columns:1fr}.result{border-radius:18px;padding:13px}.result-top{flex-direction:column}.last{text-align:right}.steps{grid-template-columns:1fr}.step{text-align:right;display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center}.step .dot{margin:0}.step strong{font-size:9px}.grid{grid-template-columns:1fr}.actions{justify-content:stretch}.actions .btn{flex:1 1 180px}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
@@ -119,6 +124,7 @@
 
     let currentCode='';
     let timer=null;
+    let currentData=null;
 
     function normalizeCode(v){
       return String(v||'').trim().toUpperCase().replace(/\s+/g,'');
@@ -136,6 +142,7 @@
     }
 
     function render(data){
+      currentData=data;
       const s=orderStatus[data.status]||{label:data.status||'نامشخص',index:0};
       const cancelled=data.status==='cancelled';
       const labels=['ثبت سفارش','تأیید فروشگاه','آماده‌سازی','ارسال','تحویل'];
@@ -143,11 +150,38 @@
       let steps='';
       labels.forEach((label,i)=>{
         let cls='';
-        if(cancelled) cls='';
-        else if(i<s.index) cls='done';
-        else if(i===s.index) cls='active';
+        if(!cancelled && i<s.index) cls='done';
+        else if(!cancelled && i===s.index) cls='active';
         steps+='<div class="step '+cls+'"><span class="dot">'+(i<s.index&&!cancelled?'✓':nums[i])+'</span><strong>'+label+'</strong></div>';
       });
+
+      const method={phone:'تماس تلفنی',message:'پیام',online:'پرداخت آنلاین'}[data.payment_method]||data.payment_method||'—';
+      const items=Array.isArray(data.items)?data.items:[];
+      const returnStatus={pending:'در حال بررسی',approved:'تأیید شد',rejected:'رد شد',received:'کالا دریافت شد',closed:'بسته شد'};
+      let itemHtml='';
+      if(items.length){
+        itemHtml=items.map(item=>{
+          const reqs=Array.isArray(item.return_requests)?item.return_requests:[];
+          const latest=reqs[0];
+          let reqBadge='';
+          if(latest){
+            reqBadge='<span class="badge">مرجوعی: '+esc(returnStatus[latest.status]||latest.status||'—')+(latest.refund_status==='pending'?' • عودت وجه در انتظار':'')+'</span>';
+          }
+          const canReturn=(data.status==='delivered'||data.shipping_status==='delivered') && Number(item.returnable_quantity||0)>0 && !['pending','approved','received'].includes(latest?.status);
+          const action=canReturn?'<button class="btn secondary" type="button" data-return-item="'+esc(item.id)+'">↩️ درخواست مرجوعی</button>':'';
+          const variant=item.variant?.label?'<div>مدل/سایز: '+esc(item.variant.label)+'</div>':'';
+          return '<div class="item"><div class="item-top"><div><div class="item-name">'+esc(item.product_name||'محصول')+'</div><div class="item-meta"><div>تعداد: '+fmt(item.quantity)+'</div>'+variant+'<div>تعداد قابل مرجوعی: '+fmt(item.returnable_quantity||0)+'</div></div></div><div class="item-total">'+money(item.line_total)+'</div></div>'+ (reqBadge?'<div style="margin-top:7px">'+reqBadge+'</div>':'') +'<div class="item-actions">'+action+'</div></div>';
+        }).join('');
+      }else{
+        itemHtml='<div class="empty">جزئیات اقلام این سفارش در دسترس نیست.</div>';
+      }
+
+      let cancelAction='';
+      if(data.can_cancel && data.cancel_request_status!=='pending'){
+        cancelAction='<button class="btn secondary" id="cancelOrderBtn" type="button">❌ درخواست لغو سفارش</button>';
+      }else if(data.cancel_request_status==='pending'){
+        cancelAction='<span class="badge">درخواست لغو در حال بررسی است</span>';
+      }
 
       $('result').innerHTML=
         '<div class="result-top">'+
@@ -158,20 +192,114 @@
         '<div class="steps">'+steps+'</div>'+
         '<div class="grid">'+
           '<div class="info"><span>وضعیت پرداخت</span><b>'+esc(paymentStatus[data.payment_status]||data.payment_status||'—')+'</b></div>'+
-          '<div class="info"><span>وضعیت ارسال</span><b>'+esc(shippingStatus[data.shipping_status]||data.shipping_status||'—')+'</b></div>'+
+          '<div class="info"><span>روش پرداخت</span><b>'+esc(method)+'</b></div>'+
           '<div class="info highlight"><span>مبلغ سفارش</span><b>'+money(data.total)+'</b></div>'+
         '</div>'+
-        (data.tracking_code?'<div class="tracking"><span>کد رهگیری ارسال</span><b>'+esc(data.tracking_code)+'</b>'+
-  (data.shipping_carrier?'<small>شرکت ارسال: '+esc(data.shipping_carrier)+'</small>':'')+
-  (data.tracking_url?'<a class="btn secondary" style="margin-top:9px;width:100%" href="'+esc(data.tracking_url)+'" target="_blank" rel="noopener noreferrer">پیگیری مرسوله ←</a>':'')+
-'</div>':'')+
-        '<div class="hint">زمان ثبت: <strong>'+esc(faDate(data.created_at))+'</strong></div>'+
-        '<div class="actions"><button class="btn" id="refreshTrack" type="button">↻ بروزرسانی وضعیت</button><a class="btn secondary" href="products-v4.html">مشاهده محصولات</a><a class="btn secondary" href="cart.html">سبد سفارش</a></div>';
+        '<div class="grid" style="margin-top:8px">'+
+          '<div class="info"><span>وضعیت ارسال</span><b>'+esc(shippingStatus[data.shipping_status]||data.shipping_status||'—')+'</b></div>'+
+          '<div class="info"><span>کد مرسوله</span><b>'+esc(data.tracking_code||'—')+'</b></div>'+
+          '<div class="info"><span>شرکت ارسال</span><b>'+esc(data.shipping_carrier||'—')+'</b></div>'+
+        '</div>'+
+        (data.tracking_url?'<div class="tracking"><span>لینک پیگیری مرسوله</span><a class="btn secondary" style="margin-top:9px;width:100%" href="'+esc(data.tracking_url)+'" target="_blank" rel="noopener noreferrer">پیگیری مرسوله ←</a></div>':'')+
+        '<div class="items"><h3>اقلام این سفارش</h3>'+itemHtml+'</div>'+
+        '<div class="actions">'+cancelAction+'<button class="btn" id="refreshTrack" type="button">↻ بروزرسانی وضعیت</button><a class="btn secondary" href="products-v4.html">مشاهده محصولات</a><a class="btn secondary" href="cart.html">سبد سفارش</a></div>'+
+        '<div id="actionBox" class="action-box" hidden></div>'+
+        '<div class="hint">زمان ثبت: <strong>'+esc(faDate(data.created_at))+'</strong></div>';
+
       $('result').hidden=false;
+
       const refresh=$('refreshTrack');
       if(refresh) refresh.onclick=()=>lookup(true);
+      const cancelBtn=$('cancelOrderBtn');
+      if(cancelBtn) cancelBtn.onclick=()=>openCancelForm();
+      document.querySelectorAll('[data-return-item]').forEach(btn=>{
+        btn.onclick=()=>openReturnForm(items.find(x=>String(x.id)===String(btn.dataset.returnItem)));
+      });
     }
 
+    function closeActionBox(){
+      const box=$('actionBox');
+      if(!box) return;
+      box.hidden=true;
+      box.innerHTML='';
+    }
+
+    function openCancelForm(){
+      const box=$('actionBox');
+      if(!box) return;
+      box.hidden=false;
+      box.innerHTML='<h3>درخواست لغو سفارش</h3><p>لغو فقط تا قبل از ارسال بسته امکان‌پذیر است. درخواست ابتدا برای بررسی فروشگاه ثبت می‌شود.</p><form id="cancelForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>دلیل لغو</label><input id="cancelReason" maxlength="300" required placeholder="مثلاً منصرف شدم"></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست لغو</button><button class="btn secondary" type="button" id="cancelActionClose">بستن</button></div></form>';
+      $('cancelActionClose').onclick=closeActionBox;
+      $('cancelForm').onsubmit=async e=>{
+        e.preventDefault();
+        await submitCancel($('actionMobile').value,$('cancelReason').value);
+      };
+      box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+
+    function openReturnForm(item){
+      const box=$('actionBox');
+      if(!box||!item) return;
+      box.hidden=false;
+      const max=Math.max(1,Number(item.returnable_quantity||1));
+      box.innerHTML='<h3>↩️ درخواست مرجوعی: '+esc(item.product_name||'محصول')+'</h3><p>فقط همین کالا به درخواست مرجوعی اضافه می‌شود. نتیجه درخواست را بعداً در همین صفحه می‌بینی.</p><form id="returnForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>تعداد</label><input id="returnQty" type="number" min="1" max="'+max+'" value="1" required></div><div class="full"><label>دلیل مرجوعی</label><select id="returnReason" required><option value="">انتخاب کنید</option><option>کالا معیوب است</option><option>کالای اشتباه ارسال شده</option><option>کالا با سفارش مغایرت دارد</option><option>کالا آسیب‌دیده به دستم رسیده</option><option>سایر</option></select></div><div class="full"><label>توضیحات بیشتر</label><textarea id="returnDetails" maxlength="1000" placeholder="توضیح کوتاه برای بررسی فروشگاه..."></textarea></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست مرجوعی</button><button class="btn secondary" type="button" id="returnActionClose">بستن</button></div></form>';
+      $('returnActionClose').onclick=closeActionBox;
+      $('returnForm').onsubmit=async e=>{
+        e.preventDefault();
+        await submitReturn(item,$('actionMobile').value,Number($('returnQty').value),$('returnReason').value,$('returnDetails').value);
+      };
+      box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+
+    async function callRpc(name,payload){
+      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/'+name,{
+        method:'POST',
+        headers:{
+          apikey:window.AZIM_SUPABASE_ANON_KEY,
+          Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(payload)
+      });
+      const body=await r.json();
+      if(!r.ok) throw new Error(body?.message||body?.hint||'درخواست ناموفق بود.');
+      return body;
+    }
+
+    async function submitCancel(mobile,reason){
+      try{
+        setMessage('در حال ثبت درخواست لغو…');
+        const body=await callRpc('azim_request_order_cancel',{
+          p_order_code:currentCode,p_mobile:mobile,p_reason:reason
+        });
+        if(!body?.ok) throw new Error(body?.message||'ثبت درخواست لغو ناموفق بود.');
+        closeActionBox();
+        await lookup(true);
+        setMessage(body.message||'درخواست لغو ثبت شد.');
+      }catch(err){
+        setMessage(err?.message||'ثبت درخواست لغو ناموفق بود.',true);
+      }
+    }
+
+    async function submitReturn(item,mobile,quantity,reason,details){
+      try{
+        setMessage('در حال ثبت درخواست مرجوعی…');
+        const body=await callRpc('azim_request_order_return',{
+          p_order_code:currentCode,
+          p_mobile:mobile,
+          p_order_item_id:item.id,
+          p_quantity:quantity,
+          p_reason:reason,
+          p_details:details||null
+        });
+        if(!body?.ok) throw new Error(body?.message||'ثبت درخواست مرجوعی ناموفق بود.');
+        closeActionBox();
+        await lookup(true);
+        setMessage(body.message||'درخواست مرجوعی ثبت شد.');
+      }catch(err){
+        setMessage(err?.message||'ثبت درخواست مرجوعی ناموفق بود.',true);
+      }
+    }
     async function lookup(isRefresh=false){
       const code=normalizeCode($('orderCode').value);
       if(!code){setMessage('شناسه سفارش را وارد کن.',true);$('result').hidden=true;return;}
