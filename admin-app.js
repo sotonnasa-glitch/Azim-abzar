@@ -2812,6 +2812,8 @@
     ['contact.faq.items.0.0','سؤال ۱'],['contact.faq.items.0.1','پاسخ ۱','textarea'],
     ['contact.faq.items.1.0','سؤال ۲'],['contact.faq.items.1.1','پاسخ ۲','textarea'],
     ['contact.faq.items.2.0','سؤال ۳'],['contact.faq.items.2.1','پاسخ ۳','textarea'],
+    ['contact.faq.items.3.0','سؤال ۴'],['contact.faq.items.3.1','پاسخ ۴','textarea'],
+    ['contact.faq.items.4.0','سؤال ۵'],['contact.faq.items.4.1','پاسخ ۵','textarea'],
     ['contact.bottom.title','پایین صفحه — عنوان آدرس'],['contact.bottom.badge','پایین صفحه — برچسب'],
     ['contact.bottom.address','پایین صفحه — آدرس','textarea'],['contact.bottom.meta1','پایین صفحه — توضیح اول'],
     ['contact.bottom.meta2','پایین صفحه — توضیح دوم'],['contact.bottom.phone','پایین صفحه — تلفن'],
