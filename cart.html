@@ -929,6 +929,13 @@ main{position:relative;padding:20px 0 64px}
   <script>
   (function(){
     const C=window.AZIM_CART;
+    function cartFriendlyError(error,fallback){
+      const message=String(error?.message||'');
+      if(error instanceof TypeError || /Failed to fetch|Load failed|NetworkError|network request failed/i.test(message)){
+        return 'خطا در اتصال به سرور فروشگاه. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.';
+      }
+      return message||fallback;
+    }
     if(!C) return;
     const $=id=>document.getElementById(id);
     const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
@@ -1123,7 +1130,7 @@ main{position:relative;padding:20px 0 64px}
 
         window.scrollTo({top:0,behavior:'smooth'});
       }catch(err){
-        status.textContent=err.message||'خطا در ثبت سفارش.';
+        status.textContent=cartFriendlyError(err,'خطا در ثبت سفارش.');
         status.className='coupon-status err';
       }finally{
         btn.disabled=false;
@@ -1132,16 +1139,22 @@ main{position:relative;padding:20px 0 64px}
     };
 
     async function loadPaymentOptions(){
-      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_checkout_options',{method:'POST',headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:'{}'});
-      const data=await r.json();
-      if(!r.ok) throw new Error(data?.message||data?.hint||'روش‌های پرداخت دریافت نشد.');
+      try{
+        const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_checkout_options',{method:'POST',headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:'{}'});
+        let data=null;
+        try{ data=await r.json(); }catch(_){}
+        if(!r.ok) throw new Error(data?.message||data?.hint||'روش‌های پرداخت دریافت نشد.');
+
       const online=Boolean(data?.online_enabled);
       const onlineOption=$('onlinePaymentOption');
       const note=$('paymentNote');
       if(onlineOption) onlineOption.hidden=!online;
       if(note) note.textContent=online?'پرداخت آنلاین فعال است و در صورت انتخاب، ادامه پرداخت طبق تنظیمات درگاه انجام می‌شود.':'درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام قابل استفاده است.';
-      if(!online && document.querySelector('input[name="paymentMethod"]:checked')?.value==='online'){
+        if(!online && document.querySelector('input[name="paymentMethod"]:checked')?.value==='online'){
         document.querySelector('input[name="paymentMethod"][value="phone"]')?.click();
+      }
+      }catch(error){
+        console.warn('payment options:',cartFriendlyError(error,'روش‌های پرداخت دریافت نشد.'));
       }
     }
 
