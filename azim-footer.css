@@ -1,0 +1,323 @@
+/* ==========================================================================
+   Azim Tools Rich Comprehensive Footer (فوتر جامع و غنی عظیم ابزار)
+   همراه با نوشته‌های کامل، تضمین‌های چهارگانه و انیمیشن‌های زنده
+   ========================================================================== */
+
+.az-main-footer {
+  border-top: 1px solid rgba(245, 185, 0, 0.22);
+  background: linear-gradient(180deg, #070a08 0%, #030504 100%);
+  color: #9da8a1;
+  margin-top: 60px;
+  position: relative;
+  overflow: hidden;
+  font-family: inherit;
+  direction: rtl;
+  text-align: right;
+}
+
+.az-main-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 185, 0, 0.65), transparent);
+}
+
+/* 4 Guarantees & Features Strip */
+.az-footer-features-strip {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(245, 185, 0, 0.025);
+  padding: 24px 0;
+}
+
+.az-footer-features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.az-feat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: transparent;
+  transition: all 0.28s ease;
+}
+
+.az-feat-item:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.az-feat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(245, 185, 0, 0.08);
+  border: 1px solid rgba(245, 185, 0, 0.25);
+  display: grid;
+  place-items: center;
+  color: #f5b900;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.az-feat-item:hover .az-feat-icon {
+  transform: translateY(-3px) scale(1.06);
+  border-color: #f5b900;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(245, 185, 0, 0.25);
+}
+
+.az-feat-info strong {
+  display: block;
+  color: #f0f4f1;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.az-feat-info p {
+  margin: 0;
+  color: #7e8a82;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* Main 4-Column Footer */
+.az-footer-main {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+  gap: 36px;
+  padding: 48px 20px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.az-footer-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.az-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.az-fbrand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(245, 185, 0, 0.25), rgba(245, 185, 0, 0.06));
+  border: 1px solid rgba(245, 185, 0, 0.4);
+  display: grid;
+  place-items: center;
+  color: #f5b900;
+  box-shadow: 0 0 16px rgba(245, 185, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.az-fbrand-text strong {
+  display: block;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+.az-fbrand-text small {
+  display: block;
+  color: #8c9890;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.az-footer-desc {
+  color: #8d9891;
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 0 0 18px;
+  text-align: justify;
+}
+
+.az-footer-badge-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(46, 213, 115, 0.08);
+  border: 1px solid rgba(46, 213, 115, 0.25);
+  color: #61e89a;
+  font-size: 11px;
+  font-weight: 800;
+  width: fit-content;
+}
+
+.az-beacon-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2ed573;
+  box-shadow: 0 0 8px #2ed573;
+  animation: azBeaconPulse 2s infinite ease-in-out;
+}
+
+@keyframes azBeaconPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.55; }
+}
+
+.az-footer-heading {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0 0 18px;
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.az-footer-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 2px;
+  background: #f5b900;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.az-footer-col:hover .az-footer-heading::after {
+  width: 44px;
+}
+
+.az-footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.az-footer-list a {
+  color: #929d95;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.az-footer-list a:hover {
+  color: #ffd84f;
+  transform: translateX(-4px);
+}
+
+.az-footer-list a::before {
+  content: '›';
+  color: #f5b900;
+  font-weight: 900;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.az-footer-list a:hover::before {
+  opacity: 1;
+  transform: translateX(-2px);
+}
+
+.az-footer-contact-items {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.az-contact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #8c9790;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.az-contact-row svg {
+  color: #f5b900;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.az-phone-link {
+  color: #ffd84f;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  direction: ltr;
+  display: inline-block;
+}
+.az-phone-link:hover {
+  color: #fff;
+}
+
+/* Bottom Bar */
+.az-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #030504;
+  padding: 18px 20px;
+}
+
+.az-fbottom-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11.5px;
+  color: #717c75;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.az-fbottom-inner strong {
+  color: #c4cdc7;
+}
+
+.az-fbottom-sub {
+  color: #556059;
+}
+
+/* Responsive Rules */
+@media (max-width: 980px) {
+  .az-footer-features-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .az-footer-main { grid-template-columns: 1fr 1fr; gap: 30px; }
+  .az-col-about { grid-column: span 2; }
+}
+
+@media (max-width: 580px) {
+  .az-footer-features-grid { grid-template-columns: 1fr; gap: 14px; padding: 0 16px; }
+  .az-footer-main { grid-template-columns: 1fr; gap: 28px; padding: 32px 16px 24px; }
+  .az-col-about { grid-column: auto; }
+  .az-fbottom-inner { flex-direction: column; text-align: center; gap: 6px; }
+  .az-footer-desc { text-align: right; }
+}

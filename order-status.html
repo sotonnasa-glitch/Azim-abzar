@@ -3,352 +3,1092 @@
 <head>
   <meta charset="utf-8">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="پیگیری وضعیت سفارش در عظیم ابزار با استفاده از شناسه سفارش.">
-  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="پیگیری وضعیت سفارش و رهگیری مرسولات در عظیم ابزار.">
   <title>پیگیری سفارش | عظیم ابزار</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./azim-footer.css?v=1">
   <style>
-    :root{
-      --bg:#050806;--panel:rgba(15,21,17,.9);--panel2:#0b100d;--line:rgba(255,255,255,.08);
-      --text:#f6f8f5;--muted:#8f9b93;--gold:#f5b900;--gold2:#ffe06a;--green:#45e28a;--red:#ff7d83;
+    :root {
+      --bg: #070908;
+      --card-bg: #0f1411;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f5f8f5;
+      --muted: #8e9b92;
+      --gold: #f5b900;
+      --gold-light: #ffd84f;
+      --green: #2ed573;
+      --red: #ff5252;
+      --orange: #ff6a00;
     }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;min-height:100vh;color:var(--text);font-family:Vazirmatn,system-ui,sans-serif;
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #070908;
+      color: var(--text);
+      font-family: Vazirmatn, system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ambient soft background gradient */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
       background:
-        radial-gradient(60% 45% at 85% -5%,rgba(245,185,0,.13),transparent 70%),
-        radial-gradient(45% 35% at 0 35%,rgba(69,226,138,.05),transparent 70%),
-        linear-gradient(180deg,#050806 0%,#09100c 42%,#050806 100%);
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(245, 185, 0, 0.08), transparent 70%),
+        radial-gradient(ellipse 40% 30% at 100% 50%, rgba(255, 106, 0, 0.04), transparent 60%);
+      pointer-events: none;
+      z-index: 0;
     }
-    body:before{
-      content:"";position:fixed;inset:0;pointer-events:none;opacity:.2;
-      background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
-      background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 80%);
+
+    a { color: inherit; text-decoration: none; }
+    .wrap {
+      width: min(640px, calc(100% - 32px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
-    a{color:inherit;text-decoration:none}
-    .wrap{width:min(980px,calc(100% - 28px));margin:auto;position:relative;z-index:1}
-    header{position:sticky;top:0;z-index:50;background:rgba(5,8,6,.78);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.065)}
-    .head{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px}.mark{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#ffe06a,#d38b00);color:#111;font-size:18px;box-shadow:0 0 26px rgba(245,185,0,.18)}
-    .brand strong{display:block;font-size:16px;font-weight:950}.brand small{display:block;color:#78847b;font-size:8px;margin-top:2px}
-    .nav{display:flex;gap:7px;flex-wrap:wrap}.nav a{padding:9px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.035);font-size:9px;font-weight:850;color:#dce1dd}.nav a:hover{border-color:rgba(245,185,0,.3)}
-    main{padding:36px 0 72px}
-    .hero{padding:30px;border:1px solid rgba(245,185,0,.18);border-radius:27px;background:radial-gradient(circle at 88% 10%,rgba(245,185,0,.13),transparent 31%),linear-gradient(145deg,rgba(18,25,21,.95),rgba(8,12,10,.92));box-shadow:0 28px 80px rgba(0,0,0,.35)}
-    .kicker{font-size:9px;letter-spacing:2px;color:#d5ad35;font-weight:950}.hero h1{margin:5px 0 7px;font-size:clamp(27px,5vw,43px);line-height:1.15}.hero p{margin:0;color:#a0aaa3;font-size:10px;line-height:2}
-    .search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:22px}
-    .input{width:100%;border:1px solid #2d3830;background:#080c0a;color:#fff;border-radius:12px;padding:13px 13px;font:800 11px Vazirmatn;outline:none;transition:.2s}
-    .input::placeholder{color:#566158}.input:focus{border-color:#d8a70e;box-shadow:0 0 0 3px rgba(245,185,0,.08)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 15px;border-radius:12px;border:1px solid rgba(245,185,0,.34);background:linear-gradient(145deg,#ffe06a,#f5b900);color:#111;font:950 10px Vazirmatn;cursor:pointer;transition:.2s}.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn.secondary{background:#121813;color:#edf1ee;border-color:#344038}
-    .hint{margin-top:9px;color:#69756d;font-size:8px;line-height:1.9}.hint strong{color:#b9c0bb}
-    #status{margin-top:15px}.message{padding:13px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.07);background:#0e1410;color:#909b93;font-size:9px;line-height:1.9}.message.err{border-color:rgba(255,125,131,.2);background:rgba(255,125,131,.05);color:#ff9a9f}
-    .result{margin-top:15px;padding:18px;border:1px solid rgba(255,255,255,.075);border-radius:22px;background:linear-gradient(160deg,rgba(17,23,19,.96),rgba(10,15,12,.95));box-shadow:0 18px 50px rgba(0,0,0,.24)}
-    .result-top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.06)}
-    .code-label{color:#7b867e;font-size:8px}.code{display:block;margin-top:4px;direction:ltr;font:950 16px ui-monospace,monospace;color:#ffd84f;letter-spacing:.4px;word-break:break-all}
-    .last{font-size:8px;color:#69756d;text-align:left;white-space:nowrap}.last b{display:block;color:#dce2dd;font-size:9px;margin-top:4px}
-    .current{margin:16px 0 18px;padding:13px 14px;border-radius:15px;background:rgba(245,185,0,.055);border:1px solid rgba(245,185,0,.14);display:flex;align-items:center;justify-content:space-between;gap:10px}.current-label{font-size:8px;color:#858f88}.current strong{font-size:15px;color:#ffe06a}
-    .current.cancelled{background:rgba(255,125,131,.055);border-color:rgba(255,125,131,.2)}.current.cancelled strong{color:#ff989d}
-    .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:16px 0 20px}.step{position:relative;padding:11px 7px;text-align:center;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:rgba(255,255,255,.018);color:#5f6962}.step .dot{width:27px;height:27px;border-radius:9px;margin:0 auto 7px;display:grid;place-items:center;background:#101612;border:1px solid #2a342e;font-size:9px;font-weight:950}.step strong{display:block;font-size:8px;line-height:1.7}.step.active{border-color:rgba(245,185,0,.22);background:rgba(245,185,0,.045);color:#e6d27c}.step.active .dot{background:rgba(245,185,0,.15);border-color:rgba(245,185,0,.35);color:#ffd84f}.step.done{color:#8edeb0}.step.done .dot{background:rgba(69,226,138,.1);border-color:rgba(69,226,138,.2);color:#66e49b}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.info{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.018)}.info span{display:block;color:#69756d;font-size:8px;margin-bottom:4px}.info b{font-size:10px;color:#eef1ee}.info.highlight b{color:#ffe06a}
-    .tracking{margin-top:10px;padding:12px 13px;border:1px dashed rgba(245,185,0,.2);border-radius:13px;background:rgba(245,185,0,.035);font-size:8px;color:#777f79}.tracking b{display:block;color:#f1d25e;font:950 12px ui-monospace,monospace;margin-top:4px;direction:ltr;text-align:right}.tracking span{display:block;color:#777f79;font-size:8px}.tracking small{display:block;margin-top:6px;color:#c5ccc7;font-size:8px}
-    .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
-    .items{margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:14px}.items h3{margin:0 0 9px;font-size:10px}
-    .item{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:14px;background:rgba(255,255,255,.018);margin-bottom:8px}.item-top{display:flex;justify-content:space-between;gap:10px}.item-name{font-size:10px;font-weight:900}.item-meta{margin-top:4px;color:#727d75;font-size:8px;line-height:1.8}.item-total{font-size:10px;color:#ffe06a;font-weight:900;white-space:nowrap}.item-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.item-actions .btn{padding:8px 10px;font-size:8px}
-    .badge{display:inline-flex;padding:4px 7px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:#b7c0ba;font-size:7px}
-    .action-box{margin-top:12px;padding:14px;border:1px solid rgba(245,185,0,.16);border-radius:15px;background:rgba(245,185,0,.035)}.action-box h3{margin:0 0 10px;font-size:10px}.action-box p{margin:0 0 10px;color:#828d85;font-size:8px;line-height:1.8}
-    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-grid .full{grid-column:1/-1}.action-box label{display:block;font-size:8px;color:#7d887f;margin-bottom:4px}.action-box input,.action-box textarea,.action-box select{width:100%;border:1px solid #2d3830;background:#080c0a;color:#fff;border-radius:10px;padding:10px;font:800 10px Vazirmatn}.action-box textarea{min-height:75px;resize:vertical}.action-actions{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
-    .empty{padding:24px;color:#747f77;font-size:9px;line-height:1.9}
-    @media(max-width:640px){.wrap{width:min(100% - 14px,980px)}.head{min-height:66px}.brand small{display:none}.nav a{padding:8px 9px}.nav a span{display:none}.hero{padding:20px;border-radius:21px}.search{grid-template-columns:1fr}.result{border-radius:18px;padding:13px}.result-top{flex-direction:column}.last{text-align:right}.steps{grid-template-columns:1fr}.step{text-align:right;display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center}.step .dot{margin:0}.step strong{font-size:9px}.grid{grid-template-columns:1fr}.actions{justify-content:stretch}.actions .btn{flex:1 1 180px}}
-    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+    /* Clean, Single-Line Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(7, 9, 8, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+    }
+    .head-wrap {
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ffd84f, #d48b00);
+      display: grid;
+      place-items: center;
+      color: #111;
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(245, 185, 0, 0.25);
+    }
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-text strong {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .brand-text small {
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 10px;
+      background: rgba(255, 106, 0, 0.12);
+      border: 1px solid rgba(255, 106, 0, 0.4);
+      color: #ff914d;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-back:hover {
+      background: #ff6a00;
+      color: #fff;
+    }
+    .btn-home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      color: #d1d8d3;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .btn-home-link:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      padding: 32px 0 60px;
+    }
+
+    /* Search Box Section */
+    .tracking-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    }
+    .page-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-title svg {
+      color: var(--gold);
+    }
+    .page-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #d4dad6;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-input {
+      width: 100%;
+      height: 52px;
+      background: #080c09;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 0 16px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+      letter-spacing: 0.5px;
+    }
+    .search-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(245, 185, 0, 0.15);
+      background: #0a0f0c;
+    }
+    .search-input::placeholder {
+      color: #5d6761;
+      font-weight: 400;
+      font-size: 13.5px;
+      letter-spacing: normal;
+    }
+
+    .submit-btn {
+      width: 100%;
+      height: 48px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #ffd84f 0%, #f5b900 100%);
+      color: #0b110e;
+      font-size: 14.5px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(245, 185, 0, 0.25);
+    }
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 185, 0, 0.4);
+    }
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .hint-text {
+      margin-top: 14px;
+      font-size: 11.5px;
+      color: #717d75;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Status Alert Box */
+    #status {
+      margin-top: 16px;
+    }
+    .status-msg {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .status-msg.loading {
+      background: rgba(245, 185, 0, 0.08);
+      border: 1px solid rgba(245, 185, 0, 0.25);
+      color: var(--gold-light);
+    }
+    .status-msg.err {
+      background: rgba(255, 82, 82, 0.08);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+      color: #ff9191;
+    }
+    .status-msg.success {
+      background: rgba(46, 213, 115, 0.08);
+      border: 1px solid rgba(46, 213, 115, 0.3);
+      color: #6fe398;
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(245, 185, 0, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Result Card */
+    .result-card {
+      margin-top: 22px;
+      background: var(--card-bg);
+      border: 1px solid rgba(245, 185, 0, 0.22);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.35s ease-out;
+    }
+
+    .order-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+      flex-wrap: wrap;
+    }
+    .order-code-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .order-code-title {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .order-code-text {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold-light);
+      font-family: ui-monospace, monospace;
+      direction: ltr;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-copy-code {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #d1d8d3;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-copy-code:hover {
+      background: rgba(245, 185, 0, 0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Current Status Pill */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 800;
+      background: rgba(245, 185, 0, 0.12);
+      border: 1px solid rgba(245, 185, 0, 0.35);
+      color: var(--gold-light);
+    }
+    .status-badge.delivered {
+      background: rgba(46, 213, 115, 0.12);
+      border-color: rgba(46, 213, 115, 0.35);
+      color: var(--green);
+    }
+    .status-badge.cancelled {
+      background: rgba(255, 82, 82, 0.12);
+      border-color: rgba(255, 82, 82, 0.35);
+      color: var(--red);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Clean Timeline Stepper */
+    .timeline {
+      margin: 24px 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .timeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      position: relative;
+      padding-bottom: 20px;
+    }
+    .timeline-step:last-child {
+      padding-bottom: 0;
+    }
+    .timeline-line {
+      position: absolute;
+      right: 15px;
+      top: 32px;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .timeline-step.done .timeline-line {
+      background: var(--green);
+    }
+    .timeline-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #111813;
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      color: #6a776e;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+    .timeline-step.done .timeline-icon {
+      background: rgba(46, 213, 115, 0.15);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .timeline-step.active .timeline-icon {
+      background: rgba(245, 185, 0, 0.2);
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 0 0 12px rgba(245, 185, 0, 0.4);
+    }
+    .timeline-content {
+      padding-top: 3px;
+    }
+    .timeline-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #c9d2cc;
+    }
+    .timeline-step.done .timeline-title {
+      color: #fff;
+    }
+    .timeline-step.active .timeline-title {
+      color: var(--gold-light);
+      font-weight: 800;
+    }
+    .timeline-desc {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Details Grid */
+    .details-table {
+      background: #080c0a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    .detail-lbl {
+      color: var(--muted);
+    }
+    .detail-val {
+      font-weight: 700;
+      color: #fff;
+    }
+    .detail-val.price {
+      color: var(--gold-light);
+      font-size: 14.5px;
+    }
+
+    /* Tracking Code Block */
+    .tracking-code-banner {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(245, 185, 0, 0.06);
+      border: 1px dashed rgba(245, 185, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .tracking-code-text {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--gold-light);
+      font-family: ui-monospace, monospace;
+      direction: ltr;
+    }
+
+    /* Bottom Action Buttons */
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      flex: 1;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: #d1d8d3;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border-color: rgba(245, 185, 0, 0.3);
+    }
+
+    /* Help & Support Card */
+    .support-card {
+      margin-top: 24px;
+      padding: 18px 20px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 13px;
+    }
+    .support-text {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .support-text strong {
+      color: #fff;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .support-link {
+      color: var(--gold);
+      font-weight: 700;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .support-link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .tracking-card {
+        padding: 22px 18px;
+        border-radius: 18px;
+      }
+      .page-title {
+        font-size: 20px;
+      }
+      .support-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Header: Single Row on All Screen Sizes -->
   <header>
-    <div class="wrap head">
-      <a class="brand" href="index.html"><span class="mark">⚙</span><span><strong>عظیم ابزار</strong><small>پیگیری آنلاین سفارش</small></span></a>
-      <nav class="nav">
-        <a href="index.html">صفحه اصلی</a>
-        <a href="products-v4.html">محصولات</a>
-        <a href="cart.html">سبد سفارش</a>
-      </nav>
+    <div class="head-wrap">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">⚙</span>
+        <div class="brand-text">
+          <strong>عظیم ابزار</strong>
+          <small>پیگیری سفارش</small>
+        </div>
+      </a>
+      <div class="nav-actions">
+        <a class="btn-home-link" href="index.html">صفحه اصلی</a>
+        <a class="btn-back" href="cart.html" onclick="return handleSmartBack(event);" id="btn-back-prev" title="بازگشت به صفحه قبل">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 19 12 12 5"></polyline>
+          </svg>
+          <span>بازگشت</span>
+        </a>
+      </div>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="hero">
-      <div class="kicker">AZIM ABZAR · ORDER TRACKING</div>
-      <h1>پیگیری سفارش</h1>
-      <p>شناسه‌ای را که بعد از ثبت سفارش دریافت کردی وارد کن تا آخرین وضعیت سفارش، پرداخت و ارسال را ببینی.</p>
-      <div class="search">
-        <input id="orderCode" class="input" dir="ltr" autocomplete="off" spellcheck="false" maxlength="50" placeholder="مثلاً AZ-20260919-152857-C7716" aria-label="شناسه سفارش">
-        <button id="trackBtn" class="btn" type="button">بررسی وضعیت ←</button>
+    <!-- Clean Search Card -->
+    <section class="tracking-card">
+      <h1 class="page-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>پیگیری سفارش</span>
+      </h1>
+      <p class="page-desc">برای مشاهده آخرین وضعیت آماده‌سازی، ارسال و کد رهگیری مرسوله، کد سفارش خود را وارد کنید.</p>
+
+      <form id="trackForm" onsubmit="event.preventDefault(); doLookup();">
+        <div class="form-group">
+          <label class="form-label" for="orderCode">کد سفارش</label>
+          <div class="input-wrapper">
+            <input
+              id="orderCode"
+              class="search-input"
+              dir="auto"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="مثال: AZ-20260921-152857"
+              aria-label="کد سفارش"
+            >
+          </div>
+        </div>
+
+        <button id="trackBtn" class="submit-btn" type="submit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+          <span>استعلام وضعیت سفارش</span>
+        </button>
+      </form>
+
+      <div class="hint-text">
+        <span>💡 کد سفارش بعد از ثبت خرید برای شما پیامک شده است.</span>
       </div>
-      <div class="hint">شناسه سفارش به فرم <strong>AZ-YYYYMMDD-HHMMSS-XXXXX…</strong> است؛ سفارش‌های جدید شناسه بلندتری دارند. برای امنیت، اطلاعات شخصی مشتری در صفحه عمومی نمایش داده نمی‌شود.</div>
+
       <div id="status" aria-live="polite"></div>
     </section>
 
-    <section id="result" class="result" hidden></section>
+    <!-- Results Section -->
+    <section id="result" class="result-card" hidden></section>
+
+    <!-- Support Help -->
+    <div class="support-card">
+      <div class="support-text">
+        <strong>نیاز به راهنمایی دارید؟</strong>
+        <span>در صورت بروز مشکل در رهگیری سفارش، با واحد فروش و پشتیبانی کارگاه تماس بگیرید.</span>
+      </div>
+      <a class="support-link" href="contact.html">
+        <span>تماس با پشتیبانی</span>
+        <span>←</span>
+      </a>
+    </div>
   </main>
+
+  <!-- Rich Comprehensive Footer (فوتر جامع و معتبر عظیم ابزار) -->
+  <footer class="az-main-footer" id="mainFooter">
+    <!-- 4 Guarantees Strip -->
+    <div class="az-footer-features-strip">
+      <div class="az-footer-features-grid">
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>اصالت ۱۰۰٪ و تضمین فیزیکی ابزار</strong>
+            <p>تضمین کیفیت، تطابق قطعات و اصالت کلیه ابزارهای صنعتی و کارگاهی</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>ارسال سریع و مطمئن به سراسر ایران</strong>
+            <p>تحویل فوری در تهران و ارسال سریع با تیپاکس و باربری به تمام شهرستان‌ها</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>مشاوره فنی رایگان پیش از خرید</strong>
+            <p>پشتیبانی و راهنمایی تخصصی استادکاران جهت انتخاب ابزار متناسب با نوع کاربری</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>صدور آنی پیش‌فاکتور و پیگیری آنلاین</strong>
+            <p>ثبت سفارش آسان در سایت، استعلام لحظه‌ای موجودی و رهگیری وضعیت سفارش</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Footer Body -->
+    <div class="az-footer-main">
+      <div class="az-footer-col az-col-about">
+        <div class="az-footer-brand">
+          <span class="az-fbrand-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <div class="az-fbrand-text">
+            <strong>عظیم ابزار</strong>
+            <small>مرجع تخصصی ابزارهای مکانیکی و صنعتی</small>
+          </div>
+        </div>
+        <p class="az-footer-desc">
+          عظیم ابزار به عنوان مرکز معتبر تأمین و توزیع تخصصی ابزارهای کارگاهی، تعمیرگاهی، صنعتی و خودرویی، با سال‌ها سابقه درخشان در بازار ابزار تهران (میدان حسن‌آباد)، ارائه‌دهنده کامل‌ترین سبد ابزارهای تخصصی با بالاترین استاندارد کیفی، قیمت منصفانه و ضمانت سلامت فیزیکی است.
+        </p>
+        <div class="az-footer-badge-online">
+          <span class="az-beacon-live"></span>
+          <span>سامانه فعال استعلام قیمت و سفارش کالا</span>
+        </div>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسته‌بندی‌های تخصصی</h3>
+        <ul class="az-footer-list">
+          <li><a href="products-v4.html?cat=ابزار دستی">ابزار دستی و آچارهای کارگاهی</a></li>
+          <li><a href="products-v4.html?cat=تست باتری">تست باتری و ابزار تست دینام خودرو</a></li>
+          <li><a href="products-v4.html?cat=ابزار گاراژی">ابزار گاراژی و تجهیزات تعمیرگاهی</a></li>
+          <li><a href="products-v4.html?cat=ابزار مکانیکی">ابزارآلات تخصصی مکانیکی و موتور</a></li>
+          <li><a href="products-v4.html?cat=بکس و ترکمتر">جعبه‌بکس، ترکمترها و بکس بادی</a></li>
+          <li><a href="products-v4.html">مشاهده کاتالوگ جامع محصولات</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسترسی سریع و خدمات</h3>
+        <ul class="az-footer-list">
+          <li><a href="index.html">صفحه اصلی فروشگاه</a></li>
+          <li><a href="products-v4.html">کاتالوگ و لیست کامل محصولات</a></li>
+          <li><a href="cart.html">سبد خرید و صدور پیش‌فاکتور</a></li>
+          <li><a href="order-status.html">پیگیری وضعیت و رهگیری سفارش</a></li>
+          <li><a href="contact.html">مشاوره فنی و ارتباط با مدیریت</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col az-col-contact">
+        <h3 class="az-footer-heading">نشانی و راه‌های ارتباطی</h3>
+        <div class="az-footer-contact-items">
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>تهران، خیابان امام خمینی (ره)، میدان حسن‌آباد، بازار ابزار و یراق‌آلات، فروشگاه عظیم ابزار</span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>مشاوره و استعلام تلفنی: <a href="tel:09122394597" class="az-phone-link">۰۹۱۲-۲۳۹۴۵۹۷</a></span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>ساعات کاری: شنبه تا چهارشنبه ۹:۰۰ الی ۱۸:۰۰ | پنج‌شنبه‌ها ۹:۰۰ الی ۱۴:۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="az-footer-bottom">
+      <div class="az-fbottom-inner">
+        <span>© تمامی حقوق مادی و معنوی متعلق به <strong>عظیم ابزار</strong> است.</span>
+        <span class="az-fbottom-sub">مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و خودرویی کشور</span>
+      </div>
+    </div>
+  </footer>
 
   <script src="./supabase-config.js"></script>
   <script>
   (function(){
-    const $=id=>document.getElementById(id);
-    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]||m));
-    const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
-    const money=n=>fmt(n)+' تومان';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m] || m));
+    const fmt = n => new Intl.NumberFormat('fa-IR').format(Math.max(0, Number(n) || 0));
+    const money = n => fmt(n) + ' تومان';
 
-    const orderStatus={
-      pending:{label:'در انتظار تأیید',index:0},
-      confirmed:{label:'تأیید شد',index:1},
-      processing:{label:'در حال آماده‌سازی',index:2},
-      shipped:{label:'ارسال شد',index:3},
-      delivered:{label:'تحویل شد',index:4},
-      cancelled:{label:'لغو شد',index:-1}
-    };
-    const paymentStatus={
-      unpaid:'پرداخت نشده',
-      pending:'در انتظار پرداخت',
-      paid:'پرداخت شده',
-      refunded:'مسترد شده'
-    };
-    const shippingStatus={
-      pending:'در انتظار ارسال',
-      packed:'آماده‌سازی',
-      shipped:'تحویل به ارسال',
-      delivered:'تحویل شد'
+    const orderStatus = {
+      pending: { label: 'در انتظار تأیید', desc: 'سفارش ثبت شده و در انتظار تأیید کارشناسان است.', step: 1 },
+      confirmed: { label: 'تأیید شد', desc: 'سفارش تأیید و فاکتور نهایی صادر گردید.', step: 2 },
+      processing: { label: 'در حال آماده‌سازی', desc: 'کالا در کارگاه در حال بسته‌بندی و تست کیفی است.', step: 3 },
+      shipped: { label: 'تحویل به باربری و ارسال', desc: 'مرسوله به شرکت حمل‌ونقل تحویل داده شد.', step: 4 },
+      delivered: { label: 'تحویل داده شد', desc: 'سفارش با موفقیت به مشتری گرامی تحویل شد.', step: 5 },
+      cancelled: { label: 'لغو شده', desc: 'این سفارش لغو شده است.', step: -1 }
     };
 
-    let currentCode='';
-    let timer=null;
-    let currentData=null;
+    const paymentStatus = {
+      unpaid: 'پرداخت نشده',
+      pending: 'در انتظار پرداخت',
+      paid: 'پرداخت شده',
+      refunded: 'مسترد شده'
+    };
+
+    const shippingStatus = {
+      pending: 'در انتظار ارسال',
+      packed: 'بسته‌بندی در کارگاه',
+      shipped: 'ارسال شده',
+      delivered: 'تحویل شد'
+    };
+
+    let currentCode = '';
+    let timer = null;
 
     function normalizeCode(v){
-      return String(v||'').trim().toUpperCase().replace(/\s+/g,'');
+      return String(v || '').trim().toUpperCase().replace(/\s+/g, '');
     }
 
     function faDate(v){
       if(!v) return '—';
-      const d=new Date(v);
+      const d = new Date(v);
       if(Number.isNaN(d.getTime())) return '—';
-      return new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium',timeStyle:'short'}).format(d);
+      return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
     }
 
-    function setMessage(text,isErr=false){
-      $('status').innerHTML='<div class="message'+(isErr?' err':'')+'">'+esc(text)+'</div>';
+    function setMessage(text, type = 'normal'){
+      const isErr = type === 'error';
+      const isLoading = type === 'loading';
+      const isSuccess = type === 'success';
+
+      let icon = '';
+      if(isLoading){
+        icon = '<span class="spinner" aria-hidden="true"></span>';
+      } else if(isErr){
+        icon = '<span>⚠️</span>';
+      } else if(isSuccess){
+        icon = '<span>✓</span>';
+      }
+
+      $('status').innerHTML =
+        '<div class="status-msg ' + (isErr ? 'err' : (isLoading ? 'loading' : 'success')) + '">' +
+          icon + '<span>' + esc(text) + '</span>' +
+        '</div>';
     }
+
+    window.copyText = function(text, btnId){
+      if(!navigator.clipboard){
+        const t = document.createElement('textarea');
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+      } else {
+        navigator.clipboard.writeText(text);
+      }
+      const b = $(btnId);
+      if(b){
+        const orig = b.innerText;
+        b.innerText = 'کپی شد ✓';
+        setTimeout(() => { b.innerText = orig; }, 2000);
+      }
+    };
 
     function render(data){
-      currentData=data;
-      const s=orderStatus[data.status]||{label:data.status||'نامشخص',index:0};
-      const cancelled=data.status==='cancelled';
-      const labels=['ثبت سفارش','تأیید فروشگاه','آماده‌سازی','ارسال','تحویل'];
-      const nums=['۱','۲','۳','۴','۵'];
-      let steps='';
-      labels.forEach((label,i)=>{
-        let cls='';
-        if(!cancelled && i<s.index) cls='done';
-        else if(!cancelled && i===s.index) cls='active';
-        steps+='<div class="step '+cls+'"><span class="dot">'+(i<s.index&&!cancelled?'✓':nums[i])+'</span><strong>'+label+'</strong></div>';
+      const s = orderStatus[data.status] || { label: data.status || 'نامشخص', desc: 'وضعیت بررسی شد.', step: 1 };
+      const cancelled = data.status === 'cancelled';
+      const delivered = data.status === 'delivered';
+
+      const steps = [
+        { num: 1, title: 'ثبت سفارش', desc: 'ثبت اولیه در سیستم' },
+        { num: 2, title: 'تأیید فروشگاه', desc: 'بررسی موجودی و صدور حواله' },
+        { num: 3, title: 'آماده‌سازی در کارگاه', desc: 'کنترل کیفی و بسته‌بندی ایمن' },
+        { num: 4, title: 'تحویل به پست / باربری', desc: 'صدور بارنامه و ارسال' },
+        { num: 5, title: 'تحویل نهایی', desc: 'تحویل کالا به خریدار' }
+      ];
+
+      let stepsHtml = '';
+      steps.forEach((st, i) => {
+        let cls = '';
+        let iconContent = st.num;
+        if(cancelled){
+          cls = '';
+        } else if(st.num < s.step){
+          cls = 'done';
+          iconContent = '✓';
+        } else if(st.num === s.step){
+          cls = 'active';
+          iconContent = '●';
+        }
+
+        stepsHtml +=
+          '<div class="timeline-step ' + cls + '">' +
+            (i < steps.length - 1 ? '<div class="timeline-line"></div>' : '') +
+            '<div class="timeline-icon">' + iconContent + '</div>' +
+            '<div class="timeline-content">' +
+              '<div class="timeline-title">' + st.title + '</div>' +
+              '<div class="timeline-desc">' + st.desc + '</div>' +
+            '</div>' +
+          '</div>';
       });
 
-      const method={phone:'تماس تلفنی',message:'پیام',online:'پرداخت آنلاین'}[data.payment_method]||data.payment_method||'—';
-      const items=Array.isArray(data.items)?data.items:[];
-      const returnStatus={pending:'در حال بررسی',approved:'تأیید شد',rejected:'رد شد',received:'کالا دریافت شد',closed:'بسته شد'};
-      let itemHtml='';
-      if(items.length){
-        itemHtml=items.map(item=>{
-          const reqs=Array.isArray(item.return_requests)?item.return_requests:[];
-          const latest=reqs[0];
-          let reqBadge='';
-          if(latest){
-            reqBadge='<span class="badge">مرجوعی: '+esc(returnStatus[latest.status]||latest.status||'—')+(latest.refund_status==='pending'?' • عودت وجه در انتظار':'')+'</span>';
-          }
-          const canReturn=(data.status==='delivered'||data.shipping_status==='delivered') && Number(item.returnable_quantity||0)>0 && !['pending','approved','received'].includes(latest?.status);
-          const action=canReturn?'<button class="btn secondary" type="button" data-return-item="'+esc(item.id)+'">↩️ درخواست مرجوعی</button>':'';
-          const variant=item.variant?.label?'<div>مدل/سایز: '+esc(item.variant.label)+'</div>':'';
-          return '<div class="item"><div class="item-top"><div><div class="item-name">'+esc(item.product_name||'محصول')+'</div><div class="item-meta"><div>تعداد: '+fmt(item.quantity)+'</div>'+variant+'<div>تعداد قابل مرجوعی: '+fmt(item.returnable_quantity||0)+'</div></div></div><div class="item-total">'+money(item.line_total)+'</div></div>'+ (reqBadge?'<div style="margin-top:7px">'+reqBadge+'</div>':'') +'<div class="item-actions">'+action+'</div></div>';
-        }).join('');
-      }else{
-        itemHtml='<div class="empty">جزئیات اقلام این سفارش در دسترس نیست.</div>';
+      const trackingBlock = data.tracking_code ?
+        '<div class="tracking-code-banner">' +
+          '<div>' +
+            '<div style="font-size: 11.5px; color: #8e9a91; margin-bottom: 2px;">کد رهگیری مرسوله (پست / تیپاکس):</div>' +
+            '<div class="tracking-code-text">' + esc(data.tracking_code) + '</div>' +
+          '</div>' +
+          '<button class="btn-copy-code" id="btnCopyTrack" type="button" onclick="copyText(\'' + esc(data.tracking_code) + '\', \'btnCopyTrack\')">کپی کد</button>' +
+        '</div>' : '';
+
+      $('result').innerHTML =
+        '<div class="order-head">' +
+          '<div class="order-code-block">' +
+            '<span class="order-code-title">شناسه سفارش</span>' +
+            '<div class="order-code-text">' +
+              '<span>' + esc(data.order_code) + '</span>' +
+              '<button class="btn-copy-code" id="btnCopyCode" type="button" onclick="copyText(\'' + esc(data.order_code) + '\', \'btnCopyCode\')">کپی</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="status-badge ' + (delivered ? 'delivered' : (cancelled ? 'cancelled' : '')) + '">' +
+            '<span class="status-dot"></span>' +
+            '<span>' + esc(s.label) + '</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="timeline">' + stepsHtml + '</div>' +
+
+        '<div class="details-table">' +
+          '<div class="detail-row">' +
+            '<span class="detail-lbl">مبلغ کل سفارش</span>' +
+            '<span class="detail-val price">' + money(data.total) + '</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+            '<span class="detail-lbl">وضعیت پرداخت</span>' +
+            '<span class="detail-val">' + esc(paymentStatus[data.payment_status] || data.payment_status || '—') + '</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+            '<span class="detail-lbl">مرحله ارسال</span>' +
+            '<span class="detail-val">' + esc(shippingStatus[data.shipping_status] || data.shipping_status || '—') + '</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+            '<span class="detail-lbl">زمان ثبت سفارش</span>' +
+            '<span class="detail-val">' + esc(faDate(data.created_at)) + '</span>' +
+          '</div>' +
+        '</div>' +
+
+        trackingBlock +
+
+        '<div class="result-actions">' +
+          '<button class="action-btn" type="button" onclick="doLookup(true)">↻ بروزرسانی وضعیت</button>' +
+          '<a class="action-btn" href="products-v4.html">مشاهده محصولات</a>' +
+        '</div>';
+
+      $('result').hidden = false;
+    }
+
+    async function lookup(isRefresh = false){
+      const code = normalizeCode($('orderCode').value);
+      if(!code){
+        setMessage('لطفاً کد سفارش خود را وارد کنید.', 'error');
+        $('result').hidden = true;
+        return;
       }
 
-      let cancelAction='';
-      if(data.can_cancel && data.cancel_request_status!=='pending'){
-        cancelAction='<button class="btn secondary" id="cancelOrderBtn" type="button">❌ درخواست لغو سفارش</button>';
-      }else if(data.cancel_request_status==='pending'){
-        cancelAction='<span class="badge">درخواست لغو در حال بررسی است</span>';
-      }
+      currentCode = code;
+      setMessage(isRefresh ? 'در حال بروزرسانی اطلاعات…' : 'در حال دریافت اطلاعات سفارش…', 'loading');
+      if(!isRefresh) $('result').hidden = true;
+      $('trackBtn').disabled = true;
 
-      $('result').innerHTML=
-        '<div class="result-top">'+
-          '<div><span class="code-label">شناسه سفارش</span><strong class="code">'+esc(data.order_code)+'</strong></div>'+
-          '<div class="last">آخرین بروزرسانی<b>'+esc(faDate(data.updated_at||data.created_at))+'</b></div>'+
-        '</div>'+
-        '<div class="current '+(cancelled?'cancelled':'')+'"><span class="current-label">وضعیت فعلی</span><strong>'+esc(s.label)+'</strong></div>'+
-        '<div class="steps">'+steps+'</div>'+
-        '<div class="grid">'+
-          '<div class="info"><span>وضعیت پرداخت</span><b>'+esc(paymentStatus[data.payment_status]||data.payment_status||'—')+'</b></div>'+
-          '<div class="info"><span>روش پرداخت</span><b>'+esc(method)+'</b></div>'+
-          '<div class="info highlight"><span>مبلغ سفارش</span><b>'+money(data.total)+'</b></div>'+
-        '</div>'+
-        '<div class="grid" style="margin-top:8px">'+
-          '<div class="info"><span>وضعیت ارسال</span><b>'+esc(shippingStatus[data.shipping_status]||data.shipping_status||'—')+'</b></div>'+
-          '<div class="info"><span>کد مرسوله</span><b>'+esc(data.tracking_code||'—')+'</b></div>'+
-          '<div class="info"><span>شرکت ارسال</span><b>'+esc(data.shipping_carrier||'—')+'</b></div>'+
-        '</div>'+
-        (data.tracking_url?'<div class="tracking"><span>لینک پیگیری مرسوله</span><a class="btn secondary" style="margin-top:9px;width:100%" href="'+esc(data.tracking_url)+'" target="_blank" rel="noopener noreferrer">پیگیری مرسوله ←</a></div>':'')+
-        '<div class="items"><h3>اقلام این سفارش</h3>'+itemHtml+'</div>'+
-        '<div class="actions">'+cancelAction+'<button class="btn" id="refreshTrack" type="button">↻ بروزرسانی وضعیت</button><a class="btn secondary" href="products-v4.html">مشاهده محصولات</a><a class="btn secondary" href="cart.html">سبد سفارش</a></div>'+
-        '<div id="actionBox" class="action-box" hidden></div>'+
-        '<div class="hint">زمان ثبت: <strong>'+esc(faDate(data.created_at))+'</strong></div>';
-
-      $('result').hidden=false;
-
-      const refresh=$('refreshTrack');
-      if(refresh) refresh.onclick=()=>lookup(true);
-      const cancelBtn=$('cancelOrderBtn');
-      if(cancelBtn) cancelBtn.onclick=()=>openCancelForm();
-      document.querySelectorAll('[data-return-item]').forEach(btn=>{
-        btn.onclick=()=>openReturnForm(items.find(x=>String(x.id)===String(btn.dataset.returnItem)));
-      });
-    }
-
-    function closeActionBox(){
-      const box=$('actionBox');
-      if(!box) return;
-      box.hidden=true;
-      box.innerHTML='';
-    }
-
-    function openCancelForm(){
-      const box=$('actionBox');
-      if(!box) return;
-      box.hidden=false;
-      box.innerHTML='<h3>درخواست لغو سفارش</h3><p>لغو فقط تا قبل از ارسال بسته امکان‌پذیر است. درخواست ابتدا برای بررسی فروشگاه ثبت می‌شود.</p><form id="cancelForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>دلیل لغو</label><input id="cancelReason" maxlength="300" required placeholder="مثلاً منصرف شدم"></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست لغو</button><button class="btn secondary" type="button" id="cancelActionClose">بستن</button></div></form>';
-      $('cancelActionClose').onclick=closeActionBox;
-      $('cancelForm').onsubmit=async e=>{
-        e.preventDefault();
-        await submitCancel($('actionMobile').value,$('cancelReason').value);
-      };
-      box.scrollIntoView({behavior:'smooth',block:'nearest'});
-    }
-
-    function openReturnForm(item){
-      const box=$('actionBox');
-      if(!box||!item) return;
-      box.hidden=false;
-      const max=Math.max(1,Number(item.returnable_quantity||1));
-      box.innerHTML='<h3>↩️ درخواست مرجوعی: '+esc(item.product_name||'محصول')+'</h3><p>فقط همین کالا به درخواست مرجوعی اضافه می‌شود. نتیجه درخواست را بعداً در همین صفحه می‌بینی.</p><form id="returnForm"><div class="action-grid"><div><label>شماره موبایل سفارش</label><input id="actionMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div><div><label>تعداد</label><input id="returnQty" type="number" min="1" max="'+max+'" value="1" required></div><div class="full"><label>دلیل مرجوعی</label><select id="returnReason" required><option value="">انتخاب کنید</option><option>کالا معیوب است</option><option>کالای اشتباه ارسال شده</option><option>کالا با سفارش مغایرت دارد</option><option>کالا آسیب‌دیده به دستم رسیده</option><option>سایر</option></select></div><div class="full"><label>توضیحات بیشتر</label><textarea id="returnDetails" maxlength="1000" placeholder="توضیح کوتاه برای بررسی فروشگاه..."></textarea></div></div><div class="action-actions"><button class="btn" type="submit">ثبت درخواست مرجوعی</button><button class="btn secondary" type="button" id="returnActionClose">بستن</button></div></form>';
-      $('returnActionClose').onclick=closeActionBox;
-      $('returnForm').onsubmit=async e=>{
-        e.preventDefault();
-        await submitReturn(item,$('actionMobile').value,Number($('returnQty').value),$('returnReason').value,$('returnDetails').value);
-      };
-      box.scrollIntoView({behavior:'smooth',block:'nearest'});
-    }
-
-    async function callRpc(name,payload){
-      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/'+name,{
-        method:'POST',
-        headers:{
-          apikey:window.AZIM_SUPABASE_ANON_KEY,
-          Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify(payload)
-      });
-      const body=await r.json();
-      if(!r.ok) throw new Error(body?.message||body?.hint||'درخواست ناموفق بود.');
-      return body;
-    }
-
-    async function submitCancel(mobile,reason){
-      try{
-        setMessage('در حال ثبت درخواست لغو…');
-        const body=await callRpc('azim_request_order_cancel',{
-          p_order_code:currentCode,p_mobile:mobile,p_reason:reason
-        });
-        if(!body?.ok) throw new Error(body?.message||'ثبت درخواست لغو ناموفق بود.');
-        closeActionBox();
-        await lookup(true);
-        setMessage(body.message||'درخواست لغو ثبت شد.');
-      }catch(err){
-        setMessage(err?.message||'ثبت درخواست لغو ناموفق بود.',true);
-      }
-    }
-
-    async function submitReturn(item,mobile,quantity,reason,details){
-      try{
-        setMessage('در حال ثبت درخواست مرجوعی…');
-        const body=await callRpc('azim_request_order_return',{
-          p_order_code:currentCode,
-          p_mobile:mobile,
-          p_order_item_id:item.id,
-          p_quantity:quantity,
-          p_reason:reason,
-          p_details:details||null
-        });
-        if(!body?.ok) throw new Error(body?.message||'ثبت درخواست مرجوعی ناموفق بود.');
-        closeActionBox();
-        await lookup(true);
-        setMessage(body.message||'درخواست مرجوعی ثبت شد.');
-      }catch(err){
-        setMessage(err?.message||'ثبت درخواست مرجوعی ناموفق بود.',true);
-      }
-    }
-    async function lookup(isRefresh=false){
-      const code=normalizeCode($('orderCode').value);
-      if(!code){setMessage('شناسه سفارش را وارد کن.',true);$('result').hidden=true;return;}
-      if(currentCode===code && isRefresh){ setMessage('در حال بروزرسانی وضعیت…'); }
-      else { setMessage(isRefresh?'در حال بروزرسانی وضعیت…':'در حال دریافت وضعیت سفارش…');$('result').hidden=true; }
-      currentCode=code;
-      $('trackBtn').disabled=true;
-      try{
-        const url=(window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_order_status';
-        const r=await fetch(url,{
-          method:'POST',
-          headers:{
-            apikey:window.AZIM_SUPABASE_ANON_KEY,
-            Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,
-            'Content-Type':'application/json'
+      try {
+        const url = (window.AZIM_SUPABASE_URL || '') + '/rest/v1/rpc/azim_order_status';
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: {
+            apikey: window.AZIM_SUPABASE_ANON_KEY,
+            Authorization: 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json'
           },
-          body:JSON.stringify({p_order_code:code})
+          body: JSON.stringify({ p_order_code: code })
         });
-        const body=await r.json();
-        if(!r.ok) throw new Error(body?.message||body?.hint||'دریافت وضعیت سفارش ناموفق بود.');
+        const body = await r.json();
+        if(!r.ok) throw new Error(body?.message || body?.hint || 'خطا در ارتباط با سرور.');
+
         if(!body?.found){
-          $('result').hidden=true;
-          setMessage(body?.message||'سفارشی با این شناسه پیدا نشد.',true);
+          $('result').hidden = true;
+          setMessage(body?.message || 'سفارشی با این کد یافت نشد. لطفاً در درج صحیح حروف و اعداد دقت کنید.', 'error');
           return;
         }
+
         render(body);
-        setMessage('وضعیت سفارش به‌روز شد.');
-      }catch(err){
-        $('result').hidden=true;
-        setMessage(err?.message||'خطا در دریافت وضعیت سفارش.',true);
-      }finally{
-        $('trackBtn').disabled=false;
+        setMessage('اطلاعات سفارش دریافت شد.', 'success');
+      } catch(err) {
+        $('result').hidden = true;
+        setMessage(err?.message || 'خطا در دریافت اطلاعات سفارش.', 'error');
+      } finally {
+        $('trackBtn').disabled = false;
       }
     }
+
+    window.doLookup = lookup;
 
     function startAutoRefresh(){
       if(timer) clearInterval(timer);
       if(!currentCode) return;
-      timer=setInterval(()=>lookup(true),60000);
+      timer = setInterval(() => lookup(true), 60000);
     }
 
-    $('trackBtn').onclick=()=>{ lookup(false).finally(startAutoRefresh); };
-    $('orderCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('trackBtn').click();}});
-    const urlCode=new URLSearchParams(location.search).get('code');
+    const urlCode = new URLSearchParams(location.search).get('code');
     if(urlCode){
-      $('orderCode').value=normalizeCode(urlCode);
+      $('orderCode').value = normalizeCode(urlCode);
       lookup(false).finally(startAutoRefresh);
     }
   })();
+
+  function handleSmartBack(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const ref = document.referrer;
+    if (ref && ref.indexOf(window.location.host) !== -1 && ref.indexOf('order-status.html') === -1) {
+      window.location.href = ref;
+      return false;
+    }
+    if (window.history && window.history.length > 1) {
+      const cur = window.location.href;
+      window.history.back();
+      setTimeout(function() {
+        if (window.location.href === cur) {
+          window.location.href = 'cart.html';
+        }
+      }, 280);
+      return false;
+    }
+    window.location.href = 'cart.html';
+    return false;
+  }
+  window.handleSmartBack = handleSmartBack;
   </script>
 </body>
 </html>

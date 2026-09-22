@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./azim-footer.css?v=1">
   
   <style>
     :root {
@@ -74,7 +75,7 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(8, 11, 9, 0.92);
+      background: rgba(8, 11, 9, 0.94);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(245, 185, 0, 0.16);
@@ -82,7 +83,7 @@
     }
 
     .head-inner {
-      height: 70px;
+      height: 68px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -94,17 +95,19 @@
       align-items: center;
       gap: 10px;
       flex-shrink: 0;
+      text-decoration: none;
     }
 
     .brand-mark {
       width: 40px;
       height: 40px;
       border-radius: 11px;
-      background: linear-gradient(145deg, #ffd84f, #c78600);
+      background: linear-gradient(135deg, rgba(245, 185, 0, 0.22), rgba(245, 185, 0, 0.06));
+      border: 1px solid rgba(245, 185, 0, 0.38);
       display: grid;
       place-items: center;
-      color: #0b0e0c;
-      box-shadow: 0 0 20px rgba(245, 185, 0, 0.3);
+      color: var(--gold-light);
+      box-shadow: 0 0 16px rgba(245, 185, 0, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.2);
       transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
       flex-shrink: 0;
     }
@@ -115,7 +118,7 @@
 
     .brand strong {
       display: block;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 900;
       color: #fff;
       line-height: 1.2;
@@ -124,7 +127,7 @@
     .brand small {
       display: block;
       color: #8c948e;
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 600;
       margin-top: 2px;
     }
@@ -132,63 +135,87 @@
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .az-nav-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 15px;
-      border-radius: 11px;
-      font-size: 13px;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12.5px;
       font-weight: 800;
-      color: #d2dbd4;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.25s ease;
+      color: #d6ded8;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      transition: all 0.22s ease;
       white-space: nowrap;
+      text-decoration: none;
+      position: relative;
     }
 
     .az-nav-btn:hover {
+      background: rgba(245, 185, 0, 0.12);
+      border-color: rgba(245, 185, 0, 0.45);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .az-nav-btn.az-nav-btn-highlight {
       background: rgba(245, 185, 0, 0.14);
-      border-color: rgba(245, 185, 0, 0.5);
+      border-color: rgba(245, 185, 0, 0.42);
       color: var(--gold-light);
-      transform: translateY(-2px);
     }
 
-    .az-nav-btn.primary {
-      background: linear-gradient(135deg, #ffd84f, #f5b900);
+    .az-nav-btn.az-nav-btn-highlight:hover {
+      background: rgba(245, 185, 0, 0.25);
+      border-color: var(--gold);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(245, 185, 0, 0.25);
+    }
+
+    .az-nav-btn.az-nav-btn-cart .az-cart-badge {
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #f5b900;
       color: #111;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 4px 18px rgba(245, 185, 0, 0.3);
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     }
 
-    .az-nav-btn.primary:hover {
-      background: linear-gradient(135deg, #ffeaa7, #ffd033);
-      box-shadow: 0 6px 24px rgba(245, 185, 0, 0.45);
+    .az-nav-btn.az-nav-btn-cart .az-cart-badge[hidden] {
+      display: none !important;
     }
 
     /* Filter & Controls Workspace */
     .controls-wrapper {
-      margin: 28px 0 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 20px 22px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      margin: 22px 0 14px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
     }
 
     .search-sort-row {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       align-items: center;
-      flex-wrap: wrap;
     }
 
     .search-box {
       flex: 1;
-      min-width: 260px;
+      min-width: 220px;
       position: relative;
     }
 
@@ -197,7 +224,7 @@
       right: 14px;
       top: 50%;
       transform: translateY(-50%);
-      color: #7b857e;
+      color: #6f7b73;
       pointer-events: none;
       display: grid;
       place-items: center;
@@ -205,74 +232,107 @@
 
     .search-input {
       width: 100%;
-      height: 48px;
-      background: #080b09;
-      border: 1px solid #2c362f;
+      height: 46px;
+      background: #0b0f0d;
+      border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: 12px;
       color: #fff;
-      padding: 0 44px 0 40px;
+      padding: 0 42px 0 38px;
       font: inherit;
       font-size: 13.5px;
       outline: none;
-      transition: all 0.25s ease;
+      transition: all 0.22s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .search-input:focus {
       border-color: var(--gold);
-      box-shadow: 0 0 0 3px rgba(245, 185, 0, 0.12);
-      background: #0d120f;
+      box-shadow: 0 0 0 3px rgba(245, 185, 0, 0.12), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      background: #0e1411;
     }
 
     .clear-search-btn {
       position: absolute;
-      left: 12px;
+      left: 11px;
       top: 50%;
       transform: translateY(-50%);
-      background: none;
+      background: rgba(255, 255, 255, 0.08);
       border: none;
-      color: #727c75;
+      color: #929d96;
       cursor: pointer;
       display: none;
-      padding: 4px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
-      transition: color 0.2s;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
     }
 
     .clear-search-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
       color: #fff;
     }
 
     .sort-box {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 8px;
       flex-shrink: 0;
+      width: 220px;
     }
 
-    .sort-label {
-      font-size: 12px;
-      color: #8c9790;
-      font-weight: 700;
-      white-space: nowrap;
+    .sort-icon {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #79857d;
+      pointer-events: none;
+      display: grid;
+      place-items: center;
+    }
+
+    .sort-arrow {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #79857d;
+      pointer-events: none;
+      display: grid;
+      place-items: center;
     }
 
     .sort-select {
-      height: 48px;
-      background: #080b09;
-      border: 1px solid #2c362f;
+      width: 100%;
+      height: 46px;
+      background: #0b0f0d;
+      border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: 12px;
-      color: #e5ece7;
-      padding: 0 14px;
+      color: #dbe3dd;
+      padding: 0 36px 0 32px;
       font: inherit;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 700;
       outline: none;
       cursor: pointer;
-      transition: border-color 0.25s;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: all 0.22s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .sort-select:focus {
       border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(245, 185, 0, 0.12);
+      background: #0e1411;
+    }
+
+    .sort-select option {
+      background: #111713;
+      color: #fff;
+      padding: 8px;
     }
 
     /* Category Chips */
@@ -280,49 +340,61 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-top: 16px;
+      margin-top: 12px;
       overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: thin;
-      scrollbar-color: #242c27 transparent;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .category-chips-row::-webkit-scrollbar {
+      display: none;
     }
 
     .cat-chip {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid #28332c;
-      color: #c0cb63;
-      color: #c1ccc4;
-      padding: 8px 15px;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #b0bbb3;
+      padding: 7px 14px;
+      border-radius: 9px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      font-family: inherit;
+      flex-shrink: 0;
     }
 
     .cat-chip:hover {
-      background: rgba(245, 185, 0, 0.12);
-      border-color: rgba(245, 185, 0, 0.4);
+      background: rgba(245, 185, 0, 0.09);
+      border-color: rgba(245, 185, 0, 0.35);
       color: #ffd84f;
     }
 
     .cat-chip.active {
-      background: var(--gold);
-      border-color: var(--gold);
-      color: #0c0f0d;
-      box-shadow: 0 4px 14px rgba(245, 185, 0, 0.25);
+      background: linear-gradient(135deg, rgba(245, 185, 0, 0.18), rgba(245, 185, 0, 0.08));
+      border: 1.5px solid var(--gold);
+      color: #ffd84f;
+      font-weight: 800;
+      box-shadow: 0 0 14px rgba(245, 185, 0, 0.16);
     }
 
     .cat-chip .chip-count {
-      font-size: 10px;
-      opacity: 0.8;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 1px 6px;
+      font-size: 10.5px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #8c9790;
+      padding: 1px 7px;
       border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .cat-chip.active .chip-count {
+      background: rgba(245, 185, 0, 0.24);
+      color: #fff;
     }
 
     /* Result Status Row */
@@ -586,44 +658,179 @@
       transform: translateX(-4px);
     }
 
-    /* Pagination */
-    .pages {
+    /* Enhanced Living Pagination (طراحی خوشگل و انیمیشن‌های زنده برای صفحه‌بندی) */
+    .pages-container {
+      margin: 40px 0 24px;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .pages {
+      display: inline-flex;
       justify-content: center;
       align-items: center;
       gap: 6px;
-      flex-wrap: wrap;
-      margin: 36px 0;
+      background: linear-gradient(180deg, rgba(19, 25, 21, 0.92) 0%, rgba(10, 13, 11, 0.98) 100%);
+      border: 1px solid rgba(245, 185, 0, 0.25);
+      border-radius: 16px;
+      padding: 7px 10px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 185, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      max-width: 100%;
+      box-sizing: border-box;
+      position: relative;
     }
 
+    /* Page Button Base */
     .pages button {
-      background: #131815;
-      border: 1px solid #2f3832;
-      color: #fff;
-      border-radius: 10px;
-      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #e1e8e3;
+      border-radius: 11px;
+      min-width: 38px;
+      height: 38px;
+      padding: 0 10px;
       font-size: 13px;
       font-weight: 800;
       font-family: inherit;
       cursor: pointer;
-      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .pages button:hover:not(:disabled) {
-      border-color: var(--gold);
-      color: var(--gold-light);
+    /* Living Hover & Press Animation on Numbers */
+    .pages button:hover:not(:disabled):not(.active) {
+      background: rgba(245, 185, 0, 0.14);
+      border-color: rgba(245, 185, 0, 0.55);
+      color: #fff;
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 4px 14px rgba(245, 185, 0, 0.25);
+    }
+
+    .pages button:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    /* Active Page Button with Breathing Gold Glow and Living Radar Animation */
+    .pages button.active {
+      background: linear-gradient(135deg, #f5b900 0%, #d89000 100%);
+      border-color: #ffd84f;
+      color: #0b100c;
+      font-weight: 900;
+      box-shadow: 0 0 0 0 rgba(245, 185, 0, 0.7), 0 6px 18px rgba(245, 185, 0, 0.45);
+      animation: azPageActivePulse 2.4s infinite ease-in-out;
+      cursor: default;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Living light sweep across active button */
+    .pages button.active::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 40%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      transform: rotate(25deg);
+      animation: azActiveSweep 3.2s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    @keyframes azPageActivePulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 185, 0, 0.6), 0 4px 14px rgba(245, 185, 0, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 5px rgba(245, 185, 0, 0), 0 6px 22px rgba(245, 185, 0, 0.6);
+      }
+    }
+
+    @keyframes azActiveSweep {
+      0%, 65% { left: -60%; }
+      100% { left: 160%; }
+    }
+
+    /* Prev & Next Directional Living Animation */
+    .pages button.btn-nav-prev,
+    .pages button.btn-nav-next {
+      padding: 0 13px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .pages button.btn-nav-prev .page-arrow-svg {
+      transition: transform 0.25s ease;
+      color: var(--gold);
+    }
+    .pages button.btn-nav-prev:hover:not(:disabled) .page-arrow-svg {
+      transform: translateX(4px);
+      animation: azArrowBounceR 0.8s infinite ease-in-out;
+    }
+
+    .pages button.btn-nav-next .page-arrow-svg {
+      transition: transform 0.25s ease;
+      color: var(--gold);
+    }
+    .pages button.btn-nav-next:hover:not(:disabled) .page-arrow-svg {
+      transform: translateX(-4px);
+      animation: azArrowBounceL 0.8s infinite ease-in-out;
+    }
+
+    @keyframes azArrowBounceR {
+      0%, 100% { transform: translateX(2px); }
+      50% { transform: translateX(5px); }
+    }
+    @keyframes azArrowBounceL {
+      0%, 100% { transform: translateX(-2px); }
+      50% { transform: translateX(-5px); }
     }
 
     .pages button:disabled {
-      opacity: 0.35;
+      opacity: 0.26;
       cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.05);
+      background: transparent;
+      transform: none !important;
+      box-shadow: none !important;
     }
 
-    .pages button.active {
-      background: var(--gold);
-      border-color: var(--gold);
-      color: #111;
-      box-shadow: 0 4px 14px rgba(245, 185, 0, 0.3);
+    /* Living Dots Ellipsis */
+    .pages .page-dots {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 0 4px;
+      color: rgba(245, 185, 0, 0.6);
+      user-select: none;
+    }
+    .pages .page-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(245, 185, 0, 0.5);
+      display: inline-block;
+      animation: azDotBreathe 1.8s infinite ease-in-out;
+    }
+    .pages .page-dots span:nth-child(2) { animation-delay: 0.3s; }
+    .pages .page-dots span:nth-child(3) { animation-delay: 0.6s; }
+
+    @keyframes azDotBreathe {
+      0%, 100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.3); background: #f5b900; }
     }
 
     /* Enlarged High-End Detail Modal */
@@ -921,37 +1128,289 @@
       box-shadow: 0 12px 30px rgba(245, 185, 0, 0.5);
     }
 
-    /* Footer */
-    footer {
-      border-top: 1px solid var(--line);
-      background: #060807;
-      padding: 28px 0;
-      color: #7d8780;
-      font-size: 12px;
-      margin-top: 48px;
+    /* Rich Comprehensive Footer (فوتر جامع، پرمحتوا و صنعتی عظیم ابزار) */
+    .az-main-footer {
+      border-top: 1px solid rgba(245, 185, 0, 0.22);
+      background: linear-gradient(180deg, #070a08 0%, #030504 100%);
+      color: #9da8a1;
+      margin-top: 60px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .footer-inner {
+    .az-main-footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(245, 185, 0, 0.6), transparent);
+    }
+
+    /* 4 Guarantees & Features Strip */
+    .az-footer-features-strip {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(245, 185, 0, 0.025);
+      padding: 24px 0;
+    }
+
+    .az-footer-features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .az-feat-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .az-feat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(245, 185, 0, 0.08);
+      border: 1px solid rgba(245, 185, 0, 0.25);
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .az-feat-item:hover .az-feat-icon {
+      transform: translateY(-2px) scale(1.05);
+      border-color: var(--gold);
+      color: #fff;
+    }
+
+    .az-feat-info strong {
+      display: block;
+      color: #f0f4f1;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .az-feat-info p {
+      margin: 0;
+      color: #7e8a82;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    /* Main 4-Column Footer */
+    .az-footer-main {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+      gap: 36px;
+      padding: 48px 0 40px;
+    }
+
+    .az-footer-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .az-footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .az-fbrand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, rgba(245, 185, 0, 0.25), rgba(245, 185, 0, 0.06));
+      border: 1px solid rgba(245, 185, 0, 0.4);
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      box-shadow: 0 0 16px rgba(245, 185, 0, 0.15);
+      flex-shrink: 0;
+    }
+
+    .az-fbrand-text strong {
+      display: block;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+    }
+
+    .az-fbrand-text small {
+      display: block;
+      color: #8c9890;
+      font-size: 10.5px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .az-footer-desc {
+      color: #8d9891;
+      font-size: 12px;
+      line-height: 1.9;
+      margin: 0 0 18px;
+      text-align: justify;
+    }
+
+    .az-footer-badge-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(46, 213, 115, 0.08);
+      border: 1px solid rgba(46, 213, 115, 0.25);
+      color: #61e89a;
+      font-size: 11px;
+      font-weight: 800;
+      width: fit-content;
+    }
+
+    .az-beacon-live {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2ed573;
+      box-shadow: 0 0 8px #2ed573;
+      animation: azBeaconPulse 2s infinite ease-in-out;
+    }
+
+    .az-footer-heading {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0 0 18px;
+      position: relative;
+      padding-bottom: 8px;
+    }
+
+    .az-footer-heading::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .az-footer-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .az-footer-list a {
+      color: #929d95;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .az-footer-list a:hover {
+      color: var(--gold-light);
+      transform: translateX(-4px);
+    }
+
+    .az-footer-list a::before {
+      content: '›';
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 14px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .az-footer-list a:hover::before {
+      opacity: 1;
+    }
+
+    .az-footer-contact-items {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .az-contact-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: #8c9790;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .az-contact-row svg {
+      color: var(--gold);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .az-phone-link {
+      color: #ffd84f;
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      direction: ltr;
+      display: inline-block;
+    }
+    .az-phone-link:hover {
+      color: #fff;
+    }
+
+    /* Bottom Bar */
+    .az-footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: #030504;
+      padding: 18px 0;
+    }
+
+    .az-fbottom-inner {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 12px;
+      font-size: 11.5px;
+      color: #717c75;
     }
 
-    .footer-links {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
+    .az-fbottom-inner strong {
+      color: #c4cdc7;
     }
 
-    .footer-links a {
-      color: #a0aba3;
-      transition: color 0.2s;
+    .az-fbottom-sub {
+      color: #556059;
     }
 
-    .footer-links a:hover {
-      color: var(--gold);
+    @media (max-width: 980px) {
+      .az-footer-features-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .az-footer-main { grid-template-columns: 1fr 1fr; gap: 30px; }
+      .az-col-about { grid-column: span 2; }
+    }
+
+    @media (max-width: 580px) {
+      .az-footer-features-grid { grid-template-columns: 1fr; gap: 14px; }
+      .az-footer-main { grid-template-columns: 1fr; gap: 28px; padding: 32px 0 24px; }
+      .az-col-about { grid-column: auto; }
+      .az-fbottom-inner { flex-direction: column; text-align: center; gap: 6px; }
+      .az-footer-desc { text-align: right; }
     }
 
     /* Floating Toast */
@@ -1004,33 +1463,194 @@
 
     @media (max-width: 760px) {
       .grid { grid-template-columns: 1fr; }
-      .search-sort-row { align-items: stretch; }
-      .search-box { min-width: 0; width: 100%; }
-      .sort-box { width: 100%; justify-content: space-between; }
-      .sort-select { flex: 1; min-width: 0; }
-      .head-inner { height: 62px; padding: 0; }
-      .brand-mark { width: 36px; height: 36px; border-radius: 10px; }
-      .brand-mark svg { width: 20px; height: 20px; }
-      .brand strong { font-size: 15px; }
+      .search-sort-row {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+      }
+      .search-box { width: 100%; min-width: 0; }
+      .search-input { height: 44px; font-size: 13px; padding: 0 38px 0 34px; }
+      .sort-box { width: 100%; }
+      .sort-select { width: 100%; height: 40px; font-size: 12px; padding: 0 34px 0 28px; }
+      .head-inner { height: 58px; padding: 0; }
+      .brand-mark { width: 34px; height: 34px; border-radius: 9px; }
+      .brand-mark svg { width: 18px; height: 18px; }
+      .brand strong { font-size: 14px; }
       .brand small { display: none; }
-      .az-nav-btn { padding: 7px 10px; font-size: 11px; border-radius: 9px; gap: 6px; }
-      .az-nav-btn span:not(.az-cart-icon) { display: none; }
-      .az-nav-btn svg { width: 14px; height: 14px; }
+      .nav-actions { gap: 6px; }
+      .az-nav-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 9px;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .az-nav-btn .btn-text { display: none; }
+      .az-nav-btn svg { width: 16px; height: 16px; }
+
+      /* Button with 'پیگیری سفارش' requested by user (red arrow) */
+      .az-nav-btn.az-nav-btn-tracking {
+        width: auto;
+        min-width: 36px;
+        padding: 0 10px;
+        gap: 6px;
+      }
+      .az-nav-btn.az-nav-btn-tracking .btn-text {
+        display: inline-block !important;
+        font-size: 11.5px;
+        font-weight: 800;
+        color: #d6ded8;
+        white-space: nowrap;
+      }
+
+      /* Cart button and badge inside frame without overflow (yellow arrow) */
+      .az-nav-btn.az-nav-btn-cart {
+        width: auto;
+        min-width: 36px;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .az-nav-btn.az-nav-btn-cart .az-cart-badge {
+        position: static;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #f5b900;
+        color: #111;
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 17px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        flex-shrink: 0;
+        box-sizing: border-box;
+      }
+      .az-nav-btn.az-nav-btn-cart .az-cart-badge[hidden] {
+        display: none !important;
+      }
       .modal-box { padding: 20px 16px; border-radius: 20px; }
     }
 
     @media (max-width: 580px) {
       .head-inner { flex-direction: row; align-items: center; justify-content: space-between; }
-      .brand-mark { width: 36px; height: 36px; border-radius: 10px; }
-      .brand-mark svg { width: 20px; height: 20px; }
-      .brand strong { font-size: 15px; }
+      .brand-mark { width: 34px; height: 34px; border-radius: 9px; }
+      .brand-mark svg { width: 18px; height: 18px; }
+      .brand strong { font-size: 13.5px; }
       .brand small { display: none; }
-      .az-nav-btn { padding: 7px 12px; font-size: 12px; border-radius: 9px; gap: 6px; }
-      .az-nav-btn svg { width: 14px; height: 14px; }
+      .nav-actions { gap: 5px; }
+      .az-nav-btn {
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        border-radius: 8px;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .az-nav-btn .btn-text { display: none; }
+      .az-nav-btn svg { width: 15px; height: 15px; }
+
+      /* Button with 'پیگیری سفارش' requested by user (red arrow) */
+      .az-nav-btn.az-nav-btn-tracking {
+        width: auto;
+        min-width: 35px;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .az-nav-btn.az-nav-btn-tracking .btn-text {
+        display: inline-block !important;
+        font-size: 11px;
+        font-weight: 800;
+        color: #d6ded8;
+        white-space: nowrap;
+      }
+
+      /* Cart button and badge inside frame without overflow (yellow arrow) */
+      .az-nav-btn.az-nav-btn-cart {
+        width: auto;
+        min-width: 35px;
+        padding: 0 7px;
+        gap: 4px;
+      }
+      .az-nav-btn.az-nav-btn-cart .az-cart-badge {
+        position: static;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #f5b900;
+        color: #111;
+        font-size: 9.5px;
+        font-weight: 900;
+        line-height: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        flex-shrink: 0;
+        box-sizing: border-box;
+      }
+      .az-nav-btn.az-nav-btn-cart .az-cart-badge[hidden] {
+        display: none !important;
+      }
       .modal-box { padding: 20px 16px; border-radius: 20px; }
       .modal-close-btn { top: 14px; left: 14px; width: 38px; height: 38px; }
       .modal-specs-grid { grid-template-columns: 1fr; }
       .footer-inner { flex-direction: column; text-align: center; }
+
+      /* Responsive Living Pagination */
+      .pages-container { margin: 28px 0 16px; }
+      .pages {
+        gap: 4px;
+        padding: 6px 8px;
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
+        border-radius: 13px;
+      }
+      .pages button {
+        min-width: 33px;
+        height: 34px;
+        padding: 0 6px;
+        font-size: 12px;
+        border-radius: 8px;
+        gap: 3px;
+      }
+      .pages button.btn-nav-prev,
+      .pages button.btn-nav-next {
+        padding: 0 8px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .nav-actions { gap: 4px; }
+      .az-nav-btn { width: 32px; height: 32px; }
+      .az-nav-btn.az-nav-btn-tracking { padding: 0 6px; gap: 4px; }
+      .az-nav-btn.az-nav-btn-tracking .btn-text { font-size: 10px; }
+      .az-nav-btn.az-nav-btn-cart { padding: 0 5px; }
+      .brand-mark { width: 30px; height: 30px; }
+      .brand strong { font-size: 12.5px; }
+
+      .pages button {
+        min-width: 29px;
+        height: 31px;
+        padding: 0 4px;
+        font-size: 11px;
+        border-radius: 7px;
+      }
+      .pages button.btn-nav-prev,
+      .pages button.btn-nav-next {
+        padding: 0 5px;
+        font-size: 10px;
+      }
+      .pages button.btn-nav-prev .btn-nav-label,
+      .pages button.btn-nav-next .btn-nav-label {
+        font-size: 9.5px;
+      }
     }
   </style>
 <style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style></head>
@@ -1041,32 +1661,50 @@
     <div class="wrap head-inner">
       <a class="brand" href="index.html#home" title="عظیم ابزار">
         <span class="brand-mark">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
         </span>
-        <span>
+        <span class="brand-info">
           <strong>عظیم ابزار</strong>
-          <small>ابزار حرفه‌ای، انتخاب حرفه‌ای</small>
+          <small>کاتالوگ تخصصی محصولات</small>
         </span>
       </a>
 
       <div class="nav-actions">
-        <a class="az-nav-btn" href="index.html">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="az-nav-btn az-nav-btn-home" href="index.html" title="صفحه اصلی" id="nav-btn-home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
           </svg>
-          <span>صفحه اصلی</span>
+          <span class="btn-text">صفحه اصلی</span>
         </a>
 
-        <a class="az-nav-btn" href="cart.html" data-cart-link aria-label="سبد سفارش"><span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span><span>سبد سفارش</span><b data-cart-count hidden>۰</b></a>
-        <a class="az-nav-btn" href="order-status.html"><span aria-hidden="true">⌁</span><span>پیگیری سفارش</span></a>
-        <a class="az-nav-btn primary" href="contact.html">
+        <a class="az-nav-btn az-nav-btn-cart" href="cart.html" data-cart-link aria-label="سبد سفارش" title="سبد سفارش" id="nav-btn-cart">
+          <span class="az-cart-icon" aria-hidden="true">
+            <svg class="az-cart-svg" viewBox="0 0 32 32" fill="none">
+              <path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="btn-text">سبد سفارش</span>
+          <b data-cart-count class="az-cart-badge" hidden>۰</b>
+        </a>
+
+        <a class="az-nav-btn az-nav-btn-tracking" href="order-status.html" title="پیگیری سفارش" id="nav-btn-order-tracking">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+            <path d="M6 15h2M10 15h4"></path>
+          </svg>
+          <span class="btn-text az-btn-text-tracking">پیگیری سفارش</span>
+        </a>
+
+        <a class="az-nav-btn az-nav-btn-contact az-nav-btn-highlight" href="contact.html" title="مشاوره تخصصی و تماس" id="nav-btn-contact">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
           </svg>
-          <span>ارتباط و سفارش</span>
+          <span class="btn-text">تماس و مشاوره</span>
         </a>
       </div>
     </div>
@@ -1078,15 +1716,15 @@
       <div class="search-sort-row">
         <!-- Search -->
         <div class="search-box">
-          <span class="search-icon">
+          <span class="search-icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </span>
-          <input type="text" id="q" class="search-input" placeholder="جست‌وجوی نام کالا یا شناسه (مثلاً: P0042 یا ترکمتر)..." autocomplete="off">
+          <input type="text" id="q" class="search-input" placeholder="جست‌وجوی نام کالا یا شناسه (مثلاً: P0042 یا ترکمتر)..." autocomplete="off" spellcheck="false">
           <button type="button" id="clearSearch" class="clear-search-btn" title="پاک کردن جستجو" aria-label="پاک کردن جستجو">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -1095,14 +1733,25 @@
 
         <!-- Sort Select -->
         <div class="sort-box">
-          <label for="sortSelect" class="sort-label">مرتب‌سازی:</label>
-          <select id="sortSelect" class="sort-select">
-            <option value="code_asc">شناسه (پیش‌فرض)</option>
-            <option value="price_asc">ارزان‌ترین ابتدا</option>
-            <option value="price_desc">گران‌ترین ابتدا</option>
-            <option value="variants_first">دارای سایزبندی</option>
-            <option value="name_asc">حروف الفبا (الف-ی)</option>
+          <span class="sort-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="7" y1="12" x2="17" y2="12"></line>
+              <line x1="10" y1="18" x2="14" y2="18"></line>
+            </svg>
+          </span>
+          <select id="sortSelect" class="sort-select" aria-label="مرتب‌سازی محصولات">
+            <option value="code_asc">مرتب‌سازی: شناسه (پیش‌فرض)</option>
+            <option value="price_asc">مرتب‌سازی: ارزان‌ترین ابتدا</option>
+            <option value="price_desc">مرتب‌سازی: گران‌ترین ابتدا</option>
+            <option value="variants_first">مرتب‌سازی: دارای سایزبندی</option>
+            <option value="name_asc">مرتب‌سازی: الفبا (الف-ی)</option>
           </select>
+          <span class="sort-arrow" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
         </div>
       </div>
 
@@ -1121,17 +1770,153 @@
     <!-- Product Grid -->
     <div id="grid" class="grid" aria-live="polite"></div>
 
-    <!-- Pagination -->
-    <div id="pages" class="pages" role="navigation" aria-label="صفحه‌بندی نتایج"></div>
+    <!-- Living Animated Pagination (صفحه‌بندی با انیمیشن زنده) -->
+    <div class="pages-container">
+      <div id="pages" class="pages" role="navigation" aria-label="صفحه‌بندی نتایج"></div>
+    </div>
   </main>
 
-  <!-- Footer -->
-  <footer>
-    <div class="wrap footer-inner">
-      <span>© عظیم ابزار · مرجع تخصصی ابزارهای مکانیکی، صنعتی و کارگاهی</span>
-      <div class="footer-links">
-        <a href="index.html">صفحه اصلی</a>
-        <a href="contact.html">ارتباط و سفارش</a>
+  <!-- Rich Comprehensive Footer (فوتر جامع و معتبر عظیم ابزار با نوشته‌ها و بخش‌های غنی) -->
+  <footer class="az-main-footer" id="mainFooter">
+    <!-- 4 Guarantees Strip -->
+    <div class="az-footer-features-strip">
+      <div class="wrap az-footer-features-grid">
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>اصالت ۱۰۰٪ و تضمین فیزیکی ابزار</strong>
+            <p>تضمین کیفیت، تطابق قطعات و اصالت کلیه ابزارهای صنعتی و کارگاهی</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>ارسال سریع و مطمئن به سراسر ایران</strong>
+            <p>تحویل فوری در تهران و ارسال سریع با تیپاکس و باربری به تمام شهرستان‌ها</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>مشاوره فنی رایگان پیش از خرید</strong>
+            <p>پشتیبانی و راهنمایی تخصصی استادکاران جهت انتخاب ابزار متناسب با نوع کاربری</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>صدور آنی پیش‌فاکتور و پیگیری آنلاین</strong>
+            <p>ثبت سفارش آسان در سایت، استعلام لحظه‌ای موجودی و رهگیری وضعیت سفارش</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Footer Body -->
+    <div class="wrap az-footer-main">
+      <div class="az-footer-col az-col-about">
+        <div class="az-footer-brand">
+          <span class="az-fbrand-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <div class="az-fbrand-text">
+            <strong>عظیم ابزار</strong>
+            <small>مرجع تخصصی ابزارهای مکانیکی و صنعتی</small>
+          </div>
+        </div>
+        <p class="az-footer-desc">
+          عظیم ابزار به عنوان مرکز معتبر تأمین و توزیع تخصصی ابزارهای کارگاهی، تعمیرگاهی، صنعتی و خودرویی، با سال‌ها سابقه درخشان در بازار ابزار تهران (میدان حسن‌آباد)، ارائه‌دهنده کامل‌ترین سبد ابزارهای تخصصی با بالاترین استاندارد کیفی، قیمت منصفانه و ضمانت سلامت فیزیکی است.
+        </p>
+        <div class="az-footer-badge-online">
+          <span class="az-beacon-live"></span>
+          <span>سامانه فعال استعلام قیمت و سفارش کالا</span>
+        </div>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسته‌بندی‌های تخصصی</h3>
+        <ul class="az-footer-list">
+          <li><a href="products-v4.html?cat=ابزار دستی">ابزار دستی و آچارهای کارگاهی</a></li>
+          <li><a href="products-v4.html?cat=تست باتری">تست باتری و ابزار تست دینام خودرو</a></li>
+          <li><a href="products-v4.html?cat=ابزار گاراژی">ابزار گاراژی و تجهیزات تعمیرگاهی</a></li>
+          <li><a href="products-v4.html?cat=ابزار مکانیکی">ابزارآلات تخصصی مکانیکی و موتور</a></li>
+          <li><a href="products-v4.html?cat=بکس و ترکمتر">جعبه‌بکس، ترکمترها و بکس بادی</a></li>
+          <li><a href="products-v4.html">مشاهده کاتالوگ جامع محصولات</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسترسی سریع و خدمات</h3>
+        <ul class="az-footer-list">
+          <li><a href="index.html">صفحه اصلی فروشگاه</a></li>
+          <li><a href="products-v4.html">کاتالوگ و لیست کامل محصولات</a></li>
+          <li><a href="cart.html">سبد خرید و صدور پیش‌فاکتور</a></li>
+          <li><a href="order-status.html">پیگیری وضعیت و رهگیری سفارش</a></li>
+          <li><a href="contact.html">مشاوره فنی و ارتباط با مدیریت</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col az-col-contact">
+        <h3 class="az-footer-heading">نشانی و راه‌های ارتباطی</h3>
+        <div class="az-footer-contact-items">
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>تهران، خیابان امام خمینی (ره)، میدان حسن‌آباد، بازار ابزار و یراق‌آلات، فروشگاه عظیم ابزار</span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>مشاوره و استعلام تلفنی: <a href="tel:09122394597" class="az-phone-link">۰۹۱۲-۲۳۹۴۵۹۷</a></span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>ساعات کاری: شنبه تا چهارشنبه ۹:۰۰ الی ۱۸:۰۰ | پنج‌شنبه‌ها ۹:۰۰ الی ۱۴:۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="az-footer-bottom">
+      <div class="wrap az-fbottom-inner">
+        <span>© تمامی حقوق مادی و معنوی متعلق به <strong>عظیم ابزار</strong> است.</span>
+        <span class="az-fbottom-sub">مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و خودرویی کشور</span>
       </div>
     </div>
   </footer>
@@ -1753,30 +2538,42 @@
         bindCardEvents();
       }
 
-      // Pagination
+      // Enhanced Living Pagination
       const p = document.getElementById('pages');
       p.innerHTML = '';
 
       if (total > 1) {
+        // Prev button (صفحه قبلی)
         const prev = document.createElement('button');
-        prev.innerHTML = '← صفحه قبلی';
+        prev.className = 'btn-nav-prev';
+        prev.setAttribute('aria-label', 'صفحه قبلی');
+        prev.innerHTML = `
+          <svg class="page-arrow-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+          <span class="btn-nav-label">قبلی</span>
+        `;
         prev.disabled = page === 1;
         prev.onclick = () => { page--; render(); window.scrollTo({ top: 300, behavior: 'smooth' }); };
         p.appendChild(prev);
 
-        let startPage = Math.max(1, page - 2);
-        let endPage = Math.min(total, page + 2);
+        // Dynamic window: 1 neighbor on mobile screens so it stays compact on a single row
+        const isMobile = window.innerWidth <= 600;
+        const delta = isMobile ? 1 : 2;
+        let startPage = Math.max(1, page - delta);
+        let endPage = Math.min(total, page + delta);
 
         if (startPage > 1) {
           const b = document.createElement('button');
           b.textContent = fmt(1);
           b.onclick = () => { page = 1; render(); window.scrollTo({ top: 300, behavior: 'smooth' }); };
           p.appendChild(b);
+
           if (startPage > 2) {
-            const dots = document.createElement('span');
-            dots.textContent = '...';
-            dots.style.color = '#777';
-            dots.style.padding = '0 4px';
+            const dots = document.createElement('div');
+            dots.className = 'page-dots';
+            dots.setAttribute('aria-hidden', 'true');
+            dots.innerHTML = '<span></span><span></span><span></span>';
             p.appendChild(dots);
           }
         }
@@ -1784,17 +2581,20 @@
         for (let i = startPage; i <= endPage; i++) {
           const b = document.createElement('button');
           b.textContent = fmt(i);
-          if (i === page) b.className = 'active';
+          if (i === page) {
+            b.className = 'active';
+            b.setAttribute('aria-current', 'page');
+          }
           b.onclick = () => { page = i; render(); window.scrollTo({ top: 300, behavior: 'smooth' }); };
           p.appendChild(b);
         }
 
         if (endPage < total) {
           if (endPage < total - 1) {
-            const dots = document.createElement('span');
-            dots.textContent = '...';
-            dots.style.color = '#777';
-            dots.style.padding = '0 4px';
+            const dots = document.createElement('div');
+            dots.className = 'page-dots';
+            dots.setAttribute('aria-hidden', 'true');
+            dots.innerHTML = '<span></span><span></span><span></span>';
             p.appendChild(dots);
           }
           const b = document.createElement('button');
@@ -1803,8 +2603,16 @@
           p.appendChild(b);
         }
 
+        // Next button (صفحه بعدی)
         const next = document.createElement('button');
-        next.innerHTML = 'صفحه بعدی →';
+        next.className = 'btn-nav-next';
+        next.setAttribute('aria-label', 'صفحه بعدی');
+        next.innerHTML = `
+          <span class="btn-nav-label">بعدی</span>
+          <svg class="page-arrow-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        `;
         next.disabled = page === total;
         next.onclick = () => { page++; render(); window.scrollTo({ top: 300, behavior: 'smooth' }); };
         p.appendChild(next);

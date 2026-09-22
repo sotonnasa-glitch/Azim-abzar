@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="ارتباط مستقیم با عظیم ابزار؛ مشاوره فنی ابزارهای مکانیکی و گاراژی، استعلام قیمت و صدور پیش‌فاکتور">
+  <meta name="description" content="ارتباط مستقیم با عظیم ابزار؛ مشاوره فنی و ثبت سفارش ابزارهای مکانیکی و گاراژی">
   <title>ارتباط و سفارش مستقیم | عظیم ابزار</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./azim-footer.css?v=1">
   <style>
     :root {
       --bg: #070908;
@@ -140,32 +141,32 @@
       margin-top: 2px;
     }
 
-    /* Dedicated Back Button (دکمه بازگشت به صفحه قبل) */
+    /* Dedicated Back Button (دکمه بازگشت به صفحه قبل با تم نارنجی صنعتی و ضربدر) */
     .az-back-btn {
       display: inline-flex;
       align-items: center;
       gap: 9px;
       padding: 9px 18px;
       border-radius: 12px;
-      background: rgba(245, 185, 0, 0.08);
-      border: 1px solid rgba(245, 185, 0, 0.35);
-      color: #ffd84f;
+      background: rgba(255, 106, 0, 0.15);
+      border: 1.5px solid #ff6a00;
+      color: #ff8533;
       font-size: 13.5px;
       font-weight: 800;
       text-decoration: none;
       cursor: pointer;
       flex-shrink: 0;
       transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 16px rgba(255, 106, 0, 0.2);
     }
 
     .az-back-btn:hover,
     .az-back-btn:active {
-      background: rgba(245, 185, 0, 0.18);
-      border-color: rgba(245, 185, 0, 0.7);
+      background: #ff6a00;
+      border-color: #ff8533;
       color: #ffffff;
-      transform: translateX(-2px);
-      box-shadow: 0 6px 20px rgba(245, 185, 0, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(255, 106, 0, 0.45);
     }
 
     .az-back-icon {
@@ -174,17 +175,18 @@
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: rgba(245, 185, 0, 0.12);
-      border: 1px solid rgba(245, 185, 0, 0.25);
-      color: #ffd84f;
+      background: rgba(255, 106, 0, 0.25);
+      border: 1px solid #ff6a00;
+      color: #ff8533;
       transition: all 0.25s ease;
       flex-shrink: 0;
     }
 
     .az-back-btn:hover .az-back-icon {
-      background: var(--gold);
-      color: #0b0e0c;
-      transform: translateX(2px);
+      background: #ffffff;
+      border-color: #ffffff;
+      color: #ff6a00;
+      transform: rotate(90deg);
     }
 
     /* Hero Section: Clean, Aesthetic, Typography-Focused */
@@ -761,8 +763,8 @@
     }
 
     .form-submit-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
       margin-top: 6px;
     }
@@ -1274,11 +1276,11 @@
       </a>
 
       <!-- دکمه اختصاصی بازگشت به صفحه قبل -->
-      <a class="az-back-btn" href="index.html" onclick="if(window.history.length>1){window.history.back();return false;}else{window.location.href='index.html';return false;}" id="btn-back-prev" title="بازگشت به صفحه قبل">
+      <a class="az-back-btn" href="products-v4.html" onclick="return handleSmartBack(event);" id="btn-back-prev" title="بازگشت به صفحه قبل">
         <span class="az-back-icon" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14"></path>
-            <path d="M12 5l7 7-7 7"></path>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 19 12 12 5"></polyline>
           </svg>
         </span>
         <span>بازگشت به صفحه قبل</span>
@@ -1292,25 +1294,17 @@
     <section class="hero">
       <div class="wrap">
         <div class="hero-card">
-          <h1 class="hero-title">ارتباط مستقیم، استعلام قیمت و مشاوره فنی <span>عظیم ابزار</span></h1>
+          <h1 class="hero-title">مشاوره تخصصی و ارتباط مستقیم <span>عظیم ابزار</span></h1>
           <p class="hero-desc">
-            پیش از خرید تجهیزات کارگاهی و ابزارهای صنعتی سنگین، با کارشناسان فروش عظیم ابزار در ارتباط باشید. استعلام قیمت فعلی، مشاوره انتخاب سایز و کاربرد مناسب، و هماهنگی برای صدور پیش‌فاکتور.
+            جهت دریافت مشاوره فنی انتخاب ابزارآلات کارگاهی، بررسی شرایط محیطی یا استعلام مشخصات، پیام خود را در بخش زیر ثبت نمایید تا کارشناسان فنی پاسخگو باشند.
           </p>
           <div class="hero-actions">
-            <!-- Fast Call Button with Pure Animated SVG -->
-            <a class="hero-action-btn hero-action-phone" href="tel:+982133900000">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path class="az-contact-phone" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              <span>تماس مستقیم با فروشگاه</span>
-            </a>
-
-            <!-- Fast Online RFQ Button -->
+            <!-- Fast Online Consultation Button -->
             <a class="hero-action-btn hero-action-online" href="#contactForm">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
-              <span>ثبت آنلاین استعلام و پیش‌فاکتور</span>
+              <span>مشاوره تخصصی</span>
             </a>
           </div>
         </div>
@@ -1328,10 +1322,8 @@
               <div class="panel-head">
                 <div class="panel-head-title">
                   <div class="panel-head-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                     </svg>
                   </div>
                   <span>راه‌های ارتباط مستقیم و رسمی</span>
@@ -1339,45 +1331,10 @@
                 <p>تمامی خطوط در ساعات کاری کارگاه فعال و پاسخگوی مراجعین هستند.</p>
               </div>
 
-              <!-- Channel Cards Stack (4 Boxes: تلفن فروشگاه / پشتیبانی / ایمیل / آدرس مغازه) -->
+              <!-- Channel Cards Stack (مشاوره / تلفن / آدرس / ایمیل) -->
               <div class="channels-stack">
 
-                <!-- کادر یک: تلفن فروشگاه -->
-                <div class="channel-card" id="card-channel-phone">
-                  <div class="channel-meta">
-                    <div class="channel-svg-box" title="تماس تلفنی فروشگاه">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <g class="az-anim-phone-handset">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                        </g>
-                        <path class="az-anim-phone-wave1" d="M14 4a6 6 0 0 1 6 6" stroke="#ffd84f" stroke-width="1.6" stroke-linecap="round"/>
-                        <path class="az-anim-phone-wave2" d="M14 1a9.5 9.5 0 0 1 9.5 9.5" stroke="#ffd84f" stroke-width="1.4" stroke-linecap="round"/>
-                      </svg>
-                    </div>
-                    <div class="channel-text">
-                      <div class="channel-title-row">
-                        <h3 class="channel-title">تلفن فروشگاه</h3>
-                        <span class="channel-pill">خط ثابت فروشگاه</span>
-                      </div>
-                      <span class="channel-value">۰۲۱-۳۳۹۰۰۰۰۰</span>
-                      <span class="channel-sub">مشاوره فنی، استعلام قیمت به‌روز و ثبت سفارش تلفنی</span>
-                    </div>
-                  </div>
-                  <div class="channel-actions">
-                    <button type="button" class="channel-action-btn primary" onclick="copyValue('02133900000', 'شماره تماس فروشگاه کپی شد')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                      </svg>
-                      <span>کپی شماره</span>
-                    </button>
-                    <a class="channel-action-btn" href="tel:+982133900000">
-                      <span>تماس</span>
-                    </a>
-                  </div>
-                </div>
-
-                <!-- کادر دو: پشتیبانی -->
+                <!-- کادر یک: پشتیبانی و مشاوره -->
                 <div class="channel-card" id="card-channel-support">
                   <div class="channel-meta">
                     <div class="channel-svg-box" title="مرکز پشتیبانی">
@@ -1390,16 +1347,16 @@
                     </div>
                     <div class="channel-text">
                       <div class="channel-title-row">
-                        <h3 class="channel-title">پشتیبانی</h3>
-                        <span class="channel-pill live">پاسخگویی سریع</span>
+                        <h3 class="channel-title">مشاوره فنی و کارگاهی</h3>
+                        <span class="channel-pill live">پاسخگویی مستقیم</span>
                       </div>
-                      <span class="channel-value">مشاوره فنی و پیگیری فوری سفارشات</span>
-                      <span class="channel-sub">بررسی عکس قطعات و ابزارهای درخواستی شما توسط کارشناسان</span>
+                      <span class="channel-value">بررسی و مشاوره ابزارآلات</span>
+                      <span class="channel-sub">بررسی تخصصی کدهای درخواستی، گشتاور و شرایط کارگاهی</span>
                     </div>
                   </div>
                   <div class="channel-actions">
                     <a class="channel-action-btn primary" href="#contactForm">
-                      <span>ارسال درخواست</span>
+                      <span>درخواست مشاوره</span>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="7" y1="17" x2="17" y2="7"></line>
                         <polyline points="7 7 17 7 17 17"></polyline>
@@ -1408,7 +1365,75 @@
                   </div>
                 </div>
 
-                <!-- کادر سه: ایمیل -->
+                <!-- کادر دو: شماره تلفن تماس -->
+                <div class="channel-card" id="card-channel-phone">
+                  <div class="channel-meta">
+                    <div class="channel-svg-box" title="تماس تلفنی مستقیم">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path class="az-anim-phone-handset" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        <path class="az-anim-phone-wave1" d="M14 3.5a7 7 0 0 1 6.5 6.5" stroke="#ffd84f" stroke-width="1.6"/>
+                        <path class="az-anim-phone-wave2" d="M14 7a3.5 3.5 0 0 1 3 3" stroke="#ffd84f" stroke-width="1.6"/>
+                      </svg>
+                    </div>
+                    <div class="channel-text">
+                      <div class="channel-title-row">
+                        <h3 class="channel-title">تلفن‌های تماس مستقیم</h3>
+                        <span class="channel-pill">خطوط کارگاه و فروشگاه</span>
+                      </div>
+                      <span class="channel-value" dir="ltr" style="text-align:right">۰۲۱-۵۵۳۶۸۲۴۰ | ۰۹۱۲-۳۴۵۶۷۸۹</span>
+                      <span class="channel-sub">پاسخگویی به سوالات فنی، راهنمایی خرید و استعلام قیمت روز</span>
+                    </div>
+                  </div>
+                  <div class="channel-actions">
+                    <a class="channel-action-btn primary" href="tel:02155368240">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                      <span>تماس تلفنی</span>
+                    </a>
+                    <button type="button" class="channel-action-btn" onclick="copyValue('02155368240', 'شماره تلفن فروشگاه کپی شد')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      <span>کپی شماره</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- کادر سه: آدرس فروشگاه و انبار مرکزی -->
+                <div class="channel-card" id="card-channel-address">
+                  <div class="channel-meta">
+                    <div class="channel-svg-box" title="آدرس و موقعیت مکانی">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <g class="az-anim-pin-body">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="#ffd84f" stroke-width="1.8"/>
+                          <circle cx="12" cy="10" r="3" fill="#2ed573"/>
+                        </g>
+                        <circle class="az-anim-pin-ripple" cx="12" cy="21" r="2" stroke="#2ed573" stroke-width="1" fill="none"/>
+                      </svg>
+                    </div>
+                    <div class="channel-text">
+                      <div class="channel-title-row">
+                        <h3 class="channel-title">آدرس فروشگاه و انبار مرکزی</h3>
+                        <span class="channel-pill">مراجعه با هماهنگی</span>
+                      </div>
+                      <span class="channel-value" style="direction:rtl;text-align:right;font-size:13.5px;color:#e8f0eb;">تهران، میدان حسن‌آباد، خیابان امام خمینی، روبروی بیمارستان سینا، مجتمع تجاری ابزار یراق، پلاک ۲۸</span>
+                      <span class="channel-sub">امکان مراجعه حضوری و تحویل ابزار با هماهنگی قبلی واحد فروش</span>
+                    </div>
+                  </div>
+                  <div class="channel-actions">
+                    <button type="button" class="channel-action-btn primary" onclick="copyValue('تهران، میدان حسن‌آباد، خیابان امام خمینی، روبروی بیمارستان سینا، مجتمع تجاری ابزار یراق، پلاک ۲۸، عظیم ابزار', 'آدرس فروشگاه کپی شد')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      <span>کپی آدرس</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- کادر چهار: ایمیل -->
                 <div class="channel-card" id="card-channel-email">
                   <div class="channel-meta">
                     <div class="channel-svg-box" title="مکاتبات ایمیلی">
@@ -1422,11 +1447,11 @@
                     </div>
                     <div class="channel-text">
                       <div class="channel-title-row">
-                        <h3 class="channel-title">ایمیل</h3>
-                        <span class="channel-pill">مکاتبات رسمی و سازمانی</span>
+                        <h3 class="channel-title">ایمیل سازمانی</h3>
+                        <span class="channel-pill">مکاتبات سازمانی و کارگاهی</span>
                       </div>
                       <span class="channel-value">info@azimabzar.ir</span>
-                      <span class="channel-sub">ارسال اسناد مناقصات، درخواست‌های سازمانی و پیش‌فاکتور رسمی</span>
+                      <span class="channel-sub">ارسال لیست ابزار، درخواست‌های کارگاهی و سازمانی</span>
                     </div>
                   </div>
                   <div class="channel-actions">
@@ -1443,101 +1468,33 @@
                   </div>
                 </div>
 
-                <!-- کادر چهار: آدرس مغازه -->
-                <div class="channel-card" id="card-channel-address">
-                  <div class="channel-meta">
-                    <div class="channel-svg-box" title="موقعیت مکانی و آدرس مغازه">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle class="az-anim-pin-ripple" cx="12" cy="21" r="3.5" stroke="#ffd84f" stroke-width="1.2" fill="none"/>
-                        <g class="az-anim-pin-body">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="#ffd84f" stroke-width="1.8" fill="rgba(245,185,0,0.12)"/>
-                          <circle cx="12" cy="10" r="3" fill="#ffd84f"/>
-                        </g>
-                      </svg>
-                    </div>
-                    <div class="channel-text">
-                      <div class="channel-title-row">
-                        <h3 class="channel-title">آدرس مغازه</h3>
-                        <span class="channel-pill">تحویل حضوری بار</span>
-                      </div>
-                      <span class="channel-value">تهران، خیابان خیام، مجتمع ابزار و یراق</span>
-                      <span class="channel-sub">شرایط مراجعه و تحویل حضوری با فروشگاه هماهنگ می‌شود</span>
-                    </div>
-                  </div>
-                  <div class="channel-actions">
-                    <a class="channel-action-btn primary location-primary" href="https://nshn.ir/?lat=35.6719&lng=51.4220" target="_blank" rel="noopener noreferrer">
-                      <span>مسیریابی با نشان</span>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="7" y1="17" x2="17" y2="7"></line>
-                        <polyline points="7 7 17 7 17 17"></polyline>
-                      </svg>
-                    </a>
-                    <a class="channel-action-btn location-secondary" href="https://balad.ir/" target="_blank" rel="noopener noreferrer"><span>مسیریابی با بلد</span></a>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- Working Hours and Status -->
-              <div class="hours-card">
-                <div class="hours-header">
-                  <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    ساعات کاری و تحویل بار در بازار تهران
-                  </h3>
-                  <div class="status-badge">
-                    <span class="status-beacon"></span>
-                    <span>انبار فعال است</span>
-                  </div>
-                </div>
-                <div class="hours-grid">
-                  <div class="hours-row">
-                    <span>شنبه تا چهارشنبه</span>
-                    <b>۹:۰۰ صبح تا ۱۸:۳۰ عصر (یک‌سره)</b>
-                  </div>
-                  <div class="hours-row">
-                    <span>پنجشنبه‌ها</span>
-                    <b>۹:۰۰ صبح تا ۱۴:۰۰ ظهر</b>
-                  </div>
-                  <div class="hours-row">
-                    <span>جمعه‌ها و تعطیلات</span>
-                    <b>تعطیلات رسمی (ثبت و پیگیری سفارش آنلاین فعال است)</b>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
 
-          <!-- Right Column: Smart RFQ & Quotation Consultation Form -->
+          <!-- Right Column: Consultation Form (مشاوره) -->
           <div>
             <div class="panel">
               <div class="panel-head">
                 <div class="panel-head-title">
                   <div class="panel-head-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" y1="13" x2="8" y2="13"></line>
-                      <line x1="16" y1="17" x2="8" y2="17"></line>
-                      <polyline points="10 9 9 9 8 9"></polyline>
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </div>
-                  <span>فرم استعلام قیمت و صدور پیش‌فاکتور</span>
+                  <span>مشاوره</span>
                 </div>
-                <p>درخواست خود را ثبت نمایید؛ کارشناس فنی در اسرع وقت پاسخ خواهد داد.</p>
+                <p>درخواست مشاوره خود را ثبت نمایید؛ کارشناس فنی در اسرع وقت پاسخگو خواهد بود.</p>
               </div>
 
               <!-- Quick Inquiry Topic Preset Chips -->
               <div class="quick-chips-wrapper">
                 <span class="quick-chips-label">موضوعات پرتکرار برای انتخاب سریع:</span>
                 <div class="quick-chips">
-                  <button type="button" class="chip-btn" onclick="fillTopic('استعلام قیمت آچار و بکس کارگاهی')">آچار و بکس صنعتی</button>
-                  <button type="button" class="chip-btn" onclick="fillTopic('استعلام تجهیزات تعمیرگاهی و جک')">تجهیزات گاراژی و جک</button>
-                  <button type="button" class="chip-btn" onclick="fillTopic('خرید عمده ویژه فروشگاه و همکار')">خرید عمده همکاران</button>
-                  <button type="button" class="chip-btn" onclick="fillTopic('درخواست پیش‌فاکتور رسمی شرکتی')">پیش‌فاکتور رسمی</button>
+                  <button type="button" class="chip-btn" onclick="fillTopic('مشاوره آچار و بکس کارگاهی')">آچار و بکس صنعتی</button>
+                  <button type="button" class="chip-btn" onclick="fillTopic('مشاوره تجهیزات تعمیرگاهی و جک')">تجهیزات گاراژی و جک</button>
+                  <button type="button" class="chip-btn" onclick="fillTopic('مشاوره خرید عمده ویژه کارگاه و همکار')">خرید عمده همکاران</button>
+                  <button type="button" class="chip-btn" onclick="fillTopic('مشاوره تخصصی انتخاب ابزار')">انتخاب ابزار مناسب</button>
                 </div>
               </div>
 
@@ -1555,12 +1512,12 @@
 
                 <div class="form-row">
                   <div class="input-field">
-                    <label for="frm-subject">دسته‌بندی درخواست</label>
+                    <label for="frm-subject">دسته‌بندی درخواست مشاوره</label>
                     <select id="frm-subject">
-                      <option value="استعلام قیمت و پیش‌فاکتور">استعلام قیمت و صدور پیش‌فاکتور فوری</option>
-                      <option value="مشاوره فنی ابزارآلات">مشاوره تخصصی انتخاب ابزار مناسب</option>
-                      <option value="خرید عمده و همکاری">سفارش عمده و تیراژ ویژه پخش</option>
-                      <option value="پیگیری سفارش باربری">پیگیری ارسال مرسوله و بارنامه</option>
+                      <option value="مشاوره تخصصی ابزارآلات">مشاوره تخصصی انتخاب ابزار مناسب</option>
+                      <option value="مشاوره فنی و گشتاور">مشاوره فنی، گشتاور و شرایط کارگاهی</option>
+                      <option value="استعلام قیمت روز">استعلام قیمت روز و موجودی کالا</option>
+                      <option value="مشاوره خرید عمده و کارگاهی">مشاوره تجهیز کارگاه و خرید عمده</option>
                     </select>
                   </div>
                   <div class="input-field">
@@ -1570,30 +1527,22 @@
                 </div>
 
                 <div class="input-field">
-                  <label for="frm-details">شرح درخواست یا نام و کد ابزار مورد نیاز *</label>
-                  <textarea id="frm-details" placeholder="نام ابزار، کد اختصاصی، سایز یا تعداد مورد نیاز خود را در این بخش بنویسید..." required></textarea>
+                  <label for="frm-details">شرح درخواست یا سوال فنی درباره ابزار *</label>
+                  <textarea id="frm-details" placeholder="نام ابزار مورد نظر، شرایط کارگاهی، سایز یا هرگونه سوال فنی خود را در این بخش بنویسید..." required></textarea>
                 </div>
 
                 <div class="form-feedback" id="formAlert">
-                  درخواست شما ثبت شد؛ نتیجه پیگیری پس از بررسی کارشناسان اعلام می‌شود.
+                  درخواست مشاوره شما ثبت شد؛ کارشناسان فنی عظیم ابزار به زودی با شما تماس خواهند گرفت.
                 </div>
 
                 <div class="form-submit-row">
-                  <!-- Submit to Server -->
+                  <!-- Submit Button Only (WhatsApp button removed as requested) -->
                   <button type="submit" class="submit-btn-primary" id="btnSubmitForm">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="22" y1="2" x2="11" y2="13"></line>
                       <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
-                    <span>ارسال پیام به کارشناسان</span>
-                  </button>
-
-                  <!-- Direct Instant Messenger Transfer -->
-                  <button type="button" class="submit-btn-wa" onclick="sendFormDataToWhatsApp()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>باز کردن واتساپ با پیام آماده</span>
+                    <span>ثبت درخواست مشاوره</span>
                   </button>
                 </div>
               </form>
@@ -1709,7 +1658,7 @@
                 </svg>
               </button>
               <div class="faq-answer">
-                در صورت نیاز به پیش‌فاکتور یا فاکتور، شرایط صدور را با واحد فروش هماهنگ کنید.
+                در صورت نیاز به فاکتور، شرایط صدور را با واحد فروش هماهنگ کنید.
               </div>
             </div>
 
@@ -1739,45 +1688,40 @@
               <div class="faq-answer">
                 از صفحه پیگیری سفارش، برای همان کالای تحویل‌شده درخواست مرجوعی ثبت کنید و دلیل و توضیحات را وارد کنید تا فروشگاه بررسی و نتیجه را اعلام کند.
               </div>
-            </div>            </div>
+            </div>
           </div>
         </div>
 
-        <!-- Dedicated Store Address Banner (آدرس مغازه در پایین بخش ارتباطات) -->
+        <!-- Store Address & Location Banner -->
         <div class="store-address-banner" id="bottom-store-address">
-          <div class="store-address-icon" aria-hidden="true">
+          <div class="store-address-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle class="az-anim-pin-ripple" cx="12" cy="21" r="4" stroke="#ffd84f" stroke-width="1.4" fill="none"/>
-              <g class="az-anim-pin-body">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="#ffd84f" stroke-width="2" fill="rgba(245,185,0,0.15)"/>
-                <circle cx="12" cy="10" r="3" fill="#ffd84f"/>
-              </g>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
             </svg>
           </div>
           <div class="store-address-content">
             <div class="store-address-title-wrap">
-              <h3 class="store-address-title">آدرس مغازه</h3>
-              <span class="store-address-badge">فروشگاه و انبار مرکزی تهران</span>
+              <h3 class="store-address-title">مرکز توزیع و انبار مرکزی عظیم ابزار</h3>
+              <span class="store-address-badge">تحویل و مراجعه حضوری</span>
             </div>
-            <p class="store-address-text">
-              تهران، خیابان خیام، مجتمع ابزار و یراق، طبقه همکف، فروشگاه عظیم ابزار
-            </p>
+            <p class="store-address-text">تهران، میدان حسن‌آباد، خیابان امام خمینی، روبروی بیمارستان سینا، مجتمع تجاری ابزار یراق، پلاک ۲۸، عظیم ابزار</p>
             <div class="store-address-meta">
-              <span>شرایط تحویل و هماهنگی مراجعه با فروشگاه</span>
+              <span>تلفن تماس ثابت: ۰۲۱-۵۵۳۶۸۲۴۰</span>
               <span class="sep">•</span>
-              <span>اطلاعات موقعیت فروشگاه در بخش مسیریابی</span>
+              <span>تلفن همراه و کارگاه: ۰۹۱۲-۳۴۵۶۷۸۹</span>
               <span class="sep">•</span>
-              <span>تلفن فروشگاه: ۰۲۱-۳۳۹۰۰۰۰۰</span>
+              <span>ساعات کاری: شنبه تا چهارشنبه ۹:۰۰ الی ۱۸:۰۰ | پنجشنبه تا ۱۴:۰۰</span>
             </div>
           </div>
           <div class="store-address-action">
-            <a class="store-address-btn location-primary" href="https://nshn.ir/?lat=35.6719&lng=51.4220" target="_blank" rel="noopener noreferrer">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+            <button type="button" class="store-address-btn" onclick="copyValue('تهران، میدان حسن‌آباد، خیابان امام خمینی، روبروی بیمارستان سینا، مجتمع تجاری ابزار یراق، پلاک ۲۸، عظیم ابزار', 'آدرس فروشگاه کپی شد')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
-              <span>مسیریابی با نشان</span>
-            </a>
-            <a class="store-address-btn location-secondary" href="https://balad.ir/" target="_blank" rel="noopener noreferrer"><span>مسیریابی با بلد</span></a>
+              <span>کپی آدرس کامل</span>
+            </button>
           </div>
         </div>
 
@@ -1785,14 +1729,147 @@
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <span>© ۱۴۰۵ عظیم ابزار — مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و گاراژی</span>
-      <div class="footer-links">
-        <a href="index.html#home">صفحه اصلی</a>
-        <a href="products-v4.html">کاتالوگ محصولات</a>
-        <a href="contact.html">ارتباط و سفارش</a>
+  <!-- Rich Comprehensive Footer (فوتر جامع و معتبر عظیم ابزار) -->
+  <footer class="az-main-footer" id="mainFooter">
+    <!-- 4 Guarantees Strip -->
+    <div class="az-footer-features-strip">
+      <div class="az-footer-features-grid">
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>اصالت ۱۰۰٪ و تضمین فیزیکی ابزار</strong>
+            <p>تضمین کیفیت، تطابق قطعات و اصالت کلیه ابزارهای صنعتی و کارگاهی</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>ارسال سریع و مطمئن به سراسر ایران</strong>
+            <p>تحویل فوری در تهران و ارسال سریع با تیپاکس و باربری به تمام شهرستان‌ها</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>مشاوره فنی رایگان پیش از خرید</strong>
+            <p>پشتیبانی و راهنمایی تخصصی استادکاران جهت انتخاب ابزار متناسب با نوع کاربری</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>صدور آنی پیش‌فاکتور و پیگیری آنلاین</strong>
+            <p>ثبت سفارش آسان در سایت، استعلام لحظه‌ای موجودی و رهگیری وضعیت سفارش</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Footer Body -->
+    <div class="az-footer-main">
+      <div class="az-footer-col az-col-about">
+        <div class="az-footer-brand">
+          <span class="az-fbrand-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <div class="az-fbrand-text">
+            <strong>عظیم ابزار</strong>
+            <small>مرجع تخصصی ابزارهای مکانیکی و صنعتی</small>
+          </div>
+        </div>
+        <p class="az-footer-desc">
+          عظیم ابزار به عنوان مرکز معتبر تأمین و توزیع تخصصی ابزارهای کارگاهی، تعمیرگاهی، صنعتی و خودرویی، با سال‌ها سابقه درخشان در بازار ابزار تهران (میدان حسن‌آباد)، ارائه‌دهنده کامل‌ترین سبد ابزارهای تخصصی با بالاترین استاندارد کیفی، قیمت منصفانه و ضمانت سلامت فیزیکی است.
+        </p>
+        <div class="az-footer-badge-online">
+          <span class="az-beacon-live"></span>
+          <span>سامانه فعال استعلام قیمت و سفارش کالا</span>
+        </div>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسته‌بندی‌های تخصصی</h3>
+        <ul class="az-footer-list">
+          <li><a href="products-v4.html?cat=ابزار دستی">ابزار دستی و آچارهای کارگاهی</a></li>
+          <li><a href="products-v4.html?cat=تست باتری">تست باتری و ابزار تست دینام خودرو</a></li>
+          <li><a href="products-v4.html?cat=ابزار گاراژی">ابزار گاراژی و تجهیزات تعمیرگاهی</a></li>
+          <li><a href="products-v4.html?cat=ابزار مکانیکی">ابزارآلات تخصصی مکانیکی و موتور</a></li>
+          <li><a href="products-v4.html?cat=بکس و ترکمتر">جعبه‌بکس، ترکمترها و بکس بادی</a></li>
+          <li><a href="products-v4.html">مشاهده کاتالوگ جامع محصولات</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسترسی سریع و خدمات</h3>
+        <ul class="az-footer-list">
+          <li><a href="index.html">صفحه اصلی فروشگاه</a></li>
+          <li><a href="products-v4.html">کاتالوگ و لیست کامل محصولات</a></li>
+          <li><a href="cart.html">سبد خرید و صدور پیش‌فاکتور</a></li>
+          <li><a href="order-status.html">پیگیری وضعیت و رهگیری سفارش</a></li>
+          <li><a href="contact.html">مشاوره فنی و ارتباط با مدیریت</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col az-col-contact">
+        <h3 class="az-footer-heading">نشانی و راه‌های ارتباطی</h3>
+        <div class="az-footer-contact-items">
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>تهران، خیابان امام خمینی (ره)، میدان حسن‌آباد، بازار ابزار و یراق‌آلات، فروشگاه عظیم ابزار</span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>مشاوره و استعلام تلفنی: <a href="tel:09122394597" class="az-phone-link">۰۹۱۲-۲۳۹۴۵۹۷</a></span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>ساعات کاری: شنبه تا چهارشنبه ۹:۰۰ الی ۱۸:۰۰ | پنج‌شنبه‌ها ۹:۰۰ الی ۱۴:۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="az-footer-bottom">
+      <div class="az-fbottom-inner">
+        <span>© تمامی حقوق مادی و معنوی متعلق به <strong>عظیم ابزار</strong> است.</span>
+        <span class="az-fbottom-sub">مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و خودرویی کشور</span>
       </div>
     </div>
   </footer>
@@ -1806,6 +1883,31 @@
   </div>
 
   <script>
+    // Safe and robust back button handler
+    function handleSmartBack(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const ref = document.referrer;
+      if (ref && ref.indexOf(window.location.host) !== -1 && ref.indexOf('contact.html') === -1) {
+        window.location.href = ref;
+        return false;
+      }
+      if (window.history && window.history.length > 1) {
+        const cur = window.location.href;
+        window.history.back();
+        setTimeout(function() {
+          if (window.location.href === cur) {
+            window.location.href = 'products-v4.html';
+          }
+        }, 280);
+        return false;
+      }
+      window.location.href = 'products-v4.html';
+      return false;
+    }
+
     // Copy Text to Clipboard with visual feedback toast
     function copyValue(text, msg) {
       if (navigator.clipboard && window.isSecureContext) {
@@ -1854,18 +1956,18 @@
       const details = document.getElementById('frm-details').value.trim();
 
       return [
-        'سلام و درود، درخواست استعلام از عظیم ابزار:',
-        'نام: ' + (name || 'ذکر نشده'),
+        'درخواست مشاوره فنی از عظیم ابزار:',
+        'نام و نام خانوادگی: ' + (name || 'ذکر نشده'),
         'شماره همراه: ' + (phone || 'ذکر نشده'),
-        'موضوع: ' + (subject || 'ذکر نشده'),
-        'نوع کارگاه: ' + (business || 'ذکر نشده'),
+        'موضوع مشاوره: ' + (subject || 'ذکر نشده'),
+        'کارگاه / زمینه کاری: ' + (business || 'ذکر نشده'),
         '',
-        'شرح ابزار یا درخواست:',
-        details || 'درخواست استعلام قیمت و موجودی ابزارآلات'
+        'شرح سوال و درخواست فنی:',
+        details || 'درخواست مشاوره انتخاب ابزارآلات و مشخصات فنی'
       ].join('\n');
     }
 
-    // Store the request in Supabase, then open the verified email channel.
+    // Store the consultation request in Supabase, then trigger direct mail.
     async function handleFormSubmission(e) {
       e.preventDefault();
       const form = document.getElementById('contactForm');
@@ -1880,7 +1982,7 @@
 
       btn.disabled = true;
       btn.style.opacity = '0.65';
-      btn.innerHTML = '<span>در حال ثبت درخواست...</span>';
+      btn.innerHTML = '<span>در حال ثبت درخواست مشاوره...</span>';
 
       let saved = false;
       try {
@@ -1900,29 +2002,22 @@
         console.warn('Inquiry save failed; falling back to email.', err);
       }
 
-      const subjectText = encodeURIComponent('درخواست استعلام / مشاوره از عظیم ابزار');
+      const subjectText = encodeURIComponent('درخواست مشاوره فنی از عظیم ابزار');
       const body = encodeURIComponent(buildContactMessage());
       window.location.href = 'mailto:info@azimabzar.ir?subject=' + subjectText + '&body=' + body;
 
       const alert = document.getElementById('formAlert');
       if (alert) {
         alert.textContent = saved
-          ? 'درخواست شما در سیستم ثبت شد. ایمیل آماده ارسال است.'
-          : 'ایمیل آماده شده است؛ ارسال درخواست را از برنامه ایمیل خود تکمیل کنید.';
+          ? 'درخواست مشاوره شما با موفقیت ثبت گردید. کارشناسان فنی عظیم ابزار به زودی با شما تماس می‌گیرند.'
+          : 'درخواست مشاوره آماده ارسال است؛ لطفاً برنامه ایمیل را تأیید فرمایید.';
         alert.style.display = 'block';
       }
       setTimeout(function() {
         btn.disabled = false;
         btn.style.opacity = '1';
-        btn.innerHTML = '<span>ارسال پیام به کارشناسان</span>';
+        btn.innerHTML = '<span>ثبت درخواست مشاوره</span>';
       }, 1200);
-    }
-
-    // No verified WhatsApp number is configured in the project, so do not use a placeholder recipient.
-    function sendFormDataToWhatsApp() {
-      const messageBody = buildContactMessage();
-      const waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(messageBody);
-      window.open(waUrl, '_blank', 'noopener,noreferrer');
     }
   </script>
 <script>
@@ -1935,13 +2030,13 @@
   const subject = document.getElementById('frm-subject');
   if (!product && !code && !size) return;
 
-  if (subject) subject.value = 'استعلام قیمت و پیش‌فاکتور';
+  if (subject) subject.value = 'مشاوره تخصصی ابزارآلات';
   if (details && !details.value.trim()) {
-    const lines = ['استعلام محصول از کاتالوگ'];
+    const lines = ['درخواست مشاوره فنی و استعلام ابزار از کاتالوگ:'];
     if (product) lines.push('نام محصول: ' + product);
     if (code) lines.push('کد کالا: ' + code);
     if (size) lines.push('سایز / مدل: ' + size);
-    lines.push('', 'درخواست: ');
+    lines.push('', 'پرسش فنی و شرایط کاری: ');
     details.value = lines.join('\n');
     details.focus();
   }

@@ -98,27 +98,28 @@
     .az-scanline-card::before {
       content: "";
       position: absolute;
-      top: -100%;
+      top: -60px;
       left: 0;
       width: 100%;
-      height: 35%;
-      background: linear-gradient(180deg, transparent, rgba(245,185,0,.22), rgba(255,216,79,.4), transparent);
+      height: 48px;
+      background: linear-gradient(180deg, transparent, rgba(245,185,0,.15) 30%, rgba(255,216,79,.75) 50%, rgba(245,185,0,.25) 70%, transparent);
+      box-shadow: 0 0 16px rgba(245,185,0,.6), 0 0 32px rgba(255,216,79,.35);
       opacity: 0;
       pointer-events: none;
       z-index: 5;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.25s ease;
     }
     .az-scanline-card:hover::before {
       opacity: 1;
-      animation: azLaserSweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      animation: azLaserSweep 1.35s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
     }
     @keyframes azLaserSweep {
-      0% { top: -40%; }
-      100% { top: 120%; }
+      0% { top: -60px; }
+      100% { top: 110%; }
     }
 
     /* === Smooth Mouse Glow on Cards === */
-    .card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento {
+    .card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-cat-card-item {
       position: relative;
       transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease !important;
     }
@@ -129,14 +130,15 @@
       border-radius: inherit;
       opacity: 0;
       transition: opacity 0.3s ease;
-      background: radial-gradient(circle 280px at var(--mx, 50%) var(--my, 50%), rgba(245,185,0,.18), transparent 75%);
+      background: radial-gradient(circle 320px at var(--mx, 50%) var(--my, 50%), rgba(245,185,0,.22), transparent 75%);
       z-index: 4;
     }
     .card:hover .az-card-glow, 
     .az-choice:hover .az-card-glow, 
     .az-feat-card:hover .az-card-glow,
     .az-showcase-card:hover .az-card-glow,
-    .az-cat-bento:hover .az-card-glow {
+    .az-cat-bento:hover .az-card-glow,
+    .az-cat-card-item:hover .az-card-glow {
       opacity: 1;
     }
 
@@ -173,23 +175,38 @@
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
+    let mouseX = -1000;
+    let mouseY = -1000;
+
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     }, { passive: true });
 
-    // Particle count: 28 particles (super lightweight, 60fps)
-    const count = 28;
+    window.addEventListener('pointermove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+
+    window.addEventListener('pointerleave', () => {
+      mouseX = -1000;
+      mouseY = -1000;
+    }, { passive: true });
+
+    // Particle count: 50 rich glowing industrial embers and sparks
+    const count = 50;
     const particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        r: Math.random() * 1.5 + 0.8,
-        vx: (Math.random() - 0.5) * 0.25 + 0.15, // gentle drift to right
-        vy: (Math.random() - 0.5) * 0.2 - 0.15, // gentle drift up
-        alpha: Math.random() * 0.4 + 0.1,
-        color: Math.random() > 0.4 ? 'rgba(245,185,0,' : 'rgba(255,255,255,'
+        r: Math.random() * 1.8 + 1.1,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -(Math.random() * 0.45 + 0.2), // buoyant drift upwards like workshop embers
+        baseAlpha: Math.random() * 0.45 + 0.35,
+        twinkleSpeed: Math.random() * 0.03 + 0.015,
+        twinklePhase: Math.random() * Math.PI * 2,
+        color: Math.random() > 0.35 ? '255, 216, 79' : (Math.random() > 0.5 ? '245, 185, 0' : '255, 244, 184')
       });
     }
 
@@ -198,28 +215,52 @@
       isVisible = !document.hidden;
     });
 
+    let time = 0;
     function draw() {
       if (!isVisible) {
         requestAnimationFrame(draw);
         return;
       }
       ctx.clearRect(0, 0, width, height);
+      time += 0.02;
 
       for (let i = 0; i < count; i++) {
         const p = particles[i];
-        p.x += p.vx;
+        p.twinklePhase += p.twinkleSpeed;
+        const currentAlpha = Math.max(0.12, p.baseAlpha + Math.sin(p.twinklePhase) * 0.25);
+
+        // Sinusoidal sway
+        const sway = Math.sin(time + i) * 0.25;
+        p.x += p.vx + sway;
         p.y += p.vy;
 
-        if (p.x < 0) p.x = width;
-        if (p.x > width) p.x = 0;
-        if (p.y < 0) p.y = height;
-        if (p.y > height) p.y = 0;
+        // Interactive mouse disturbance
+        const dx = p.x - mouseX;
+        const dy = p.y - mouseY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 120 && dist > 0) {
+          const force = (120 - dist) / 120;
+          p.x += (dx / dist) * force * 1.8;
+          p.y += (dy / dist) * force * 1.8;
+        }
+
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+        if (p.y < -10) {
+          p.y = height + 10;
+          p.x = Math.random() * width;
+        }
+        if (p.y > height + 10) p.y = -10;
+
+        // Glowing halo gradient for each spark
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2.6);
+        grad.addColorStop(0, `rgba(${p.color}, ${Math.min(1, currentAlpha * 1.3)})`);
+        grad.addColorStop(0.4, `rgba(${p.color}, ${currentAlpha * 0.6})`);
+        grad.addColorStop(1, `rgba(${p.color}, 0)`);
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.color}${p.alpha})`;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = '#f5b900';
+        ctx.arc(p.x, p.y, p.r * 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
         ctx.fill();
       }
 
@@ -343,7 +384,7 @@
 
   // 5. Card Glow with Mouse Follow
   function setupCardGlow() {
-    const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-photo-card');
+    const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-photo-card, .az-cat-card-item');
     cards.forEach(card => {
       if (card.querySelector('.az-card-glow')) return;
 
@@ -369,7 +410,7 @@
 
   // 6. Scroll Reveal for Sections and Cards
   function setupScrollReveal() {
-    const targets = document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card');
+    const targets = document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card, .az-cat-showcase-grid > *, .az-cat-card-item');
     if (!targets.length || !('IntersectionObserver' in window)) return;
 
     const observer = new IntersectionObserver((entries, obs) => {

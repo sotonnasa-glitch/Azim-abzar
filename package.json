@@ -7,10 +7,15 @@
     "dev": "node server.js",
     "start": "node server.js",
     "build": "node -e \"console.log('Build complete')\"",
-    "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js"
+    "lint": "npm run check",
+    "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js",
+    "test": "node test-automated.mjs"
   },
   "dependencies": {
     "express": "4.22.3",
     "@google/genai": "2.23.0"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
   }
 }

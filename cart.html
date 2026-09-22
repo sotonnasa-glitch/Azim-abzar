@@ -2,188 +2,643 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="سبد سفارش آنلاین عظیم ابزار؛ مدیریت محصولات، اعمال کد تخفیف و ثبت درخواست سفارش.">
-  <title>سبد سفارش | عظیم ابزار</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="سبد سفارش و صدور پیش‌فاکتور رسمی عظیم ابزار؛ استعلام و بررسی ابزارآلات تراشکاری و صنعتی.">
+  <title>سبد سفارش و پیش‌فاکتور | عظیم ابزار</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./azim-footer.css?v=1">
   <style>
 :root{
-  --bg:#050806;--bg2:#0a100d;--panel:rgba(15,21,17,.82);--panel2:rgba(10,15,12,.9);
-  --line:rgba(255,255,255,.08);--line2:rgba(245,185,0,.22);
-  --text:#f7f8f6;--muted:#8f9a93;--muted2:#68736c;--gold:#f5b900;--gold2:#ffe06a;
-  --green:#45e28a;--red:#ff7d83;--shadow:0 28px 80px rgba(0,0,0,.42);
+  --bg:#030604;--bg2:#070d09;--panel:rgba(12,18,14,.92);--panel2:rgba(8,13,10,.96);
+  --line:rgba(255,255,255,.08);--line2:rgba(245,185,0,.26);
+  --text:#f5f8f5;--muted:#8e9b91;--muted2:#647268;--gold:#f5b900;--gold2:#ffe06a;
+  --orange:#ff6a00;--orange-light:#ff8838;
+  --green:#3fe084;--red:#ff656b;--shadow:0 30px 90px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
   margin:0;min-height:100vh;color:var(--text);font-family:Vazirmatn,system-ui,sans-serif;
   background:
-    radial-gradient(60% 45% at 85% -5%,rgba(245,185,0,.13),transparent 70%),
-    radial-gradient(45% 35% at 0 35%,rgba(69,226,138,.055),transparent 70%),
-    linear-gradient(180deg,#050806 0%,#09100c 42%,#050806 100%);
+    radial-gradient(75% 55% at 85% -5%,rgba(245,185,0,.16),transparent 70%),
+    radial-gradient(55% 45% at 5% 45%,rgba(255,106,0,.1),transparent 70%),
+    radial-gradient(60% 45% at 50% 100%,rgba(63,224,132,.07),transparent 75%),
+    linear-gradient(180deg,#030604 0%,#08100c 45%,#030604 100%);
+  position:relative;overflow-x:hidden;
 }
+
+/* Ambient Floating Live Light Particles */
+.az-ambient-orb{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px);opacity:0.26;
+  animation:azFloatOrb 18s ease-in-out infinite alternate;
+}
+.az-ambient-orb.orb-1{top:-90px;right:8%;width:360px;height:360px;background:rgba(245,185,0,0.5);animation-duration:14s;}
+.az-ambient-orb.orb-2{bottom:25%;left:-90px;width:400px;height:400px;background:rgba(255,106,0,0.38);animation-duration:20s;animation-delay:-5s;}
+.az-ambient-orb.orb-3{top:50%;right:-110px;width:320px;height:320px;background:rgba(63,224,132,0.28);animation-duration:16s;animation-delay:-10s;}
+
+@keyframes azFloatOrb{
+  0%{transform:translate(0,0) scale(1);}
+  50%{transform:translate(-35px,45px) scale(1.1);}
+  100%{transform:translate(30px,-40px) scale(0.92);}
+}
+
 body:before{
-  content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;
-  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
-  background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 75%);
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.36;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:36px 36px;mask-image:linear-gradient(to bottom,black 20%,transparent 85%);
+  z-index:0;
 }
-a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}
+
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1160px,calc(100% - 32px));margin:auto;position:relative;z-index:1}
+
+/* Modern Sticky Header */
 header{
-  position:sticky;top:0;z-index:80;background:rgba(5,8,6,.76);backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,.065)
+  position:sticky;top:0;z-index:80;background:rgba(5,9,7,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 12px 36px rgba(0,0,0,.5);
 }
-.head{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.brand{display:flex;align-items:center;gap:11px}.mark{
-  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+.head{min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
+
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;position:relative}
+.mark{
+  width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
   background:linear-gradient(145deg,#ffe06a,#d38b00);color:#111;font-size:19px;
-  box-shadow:0 0 30px rgba(245,185,0,.2),inset 0 1px rgba(255,255,255,.45)
+  box-shadow:0 0 26px rgba(245,185,0,.35),inset 0 1px rgba(255,255,255,.6);
+  transition:all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position:relative;flex-shrink:0;
 }
-.brand strong{display:block;font-size:17px;font-weight:950}.brand small{display:block;color:#79847c;font-size:9px;margin-top:2px}
-.nav{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.nav a{
-  display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid rgba(255,255,255,.07);
-  border-radius:12px;background:rgba(255,255,255,.035);font-size:10px;font-weight:850;color:#dce1dd;transition:.22s ease
-}.nav a:hover{transform:translateY(-1px);border-color:rgba(245,185,0,.3);background:rgba(255,255,255,.055)}
-.nav a.primary{background:linear-gradient(135deg,#ffe06a,#f5b900);color:#111;border-color:rgba(255,255,255,.22);box-shadow:0 10px 26px rgba(245,185,0,.12)}
-main{position:relative;padding:34px 0 72px}
-.hero{
-  position:relative;overflow:hidden;padding:29px;border:1px solid rgba(245,185,0,.18);border-radius:28px;
+.mark svg{animation:azSlowSpin 24s linear infinite;transform-origin:center;}
+.brand:hover .mark{transform:scale(1.06) rotate(6deg);box-shadow:0 0 35px rgba(245,185,0,.6)}
+.brand:hover .mark svg{animation-duration:5s;}
+@keyframes azSlowSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+.brand-text{display:flex;flex-direction:column}
+.brand strong{
+  display:block;font-size:17px;font-weight:950;letter-spacing:-.3px;line-height:1.2;
+  background:linear-gradient(135deg,#ffffff 35%,#ffd84f 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.brand small{display:block;color:#88968c;font-size:9.5px;margin-top:2px;font-weight:700}
+
+/* Live Header System Pulse Beacon */
+.az-live-header-badge{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;
+  background:rgba(63,224,132,.09);border:1px solid rgba(63,224,132,.25);
+  color:#6ee6a1;font-size:10px;font-weight:850;
+  box-shadow:0 0 16px rgba(63,224,132,.12);
+}
+.az-live-dot{
+  width:8px;height:8px;border-radius:50%;background:#3fe084;position:relative;
+  box-shadow:0 0 10px #3fe084;flex-shrink:0;
+}
+.az-live-dot::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid #3fe084;
+  animation:azPulseBeacon 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+@keyframes azPulseBeacon{
+  0%{transform:scale(0.8);opacity:1;}
+  100%{transform:scale(2.2);opacity:0;}
+}
+
+/* Dedicated Back Button with Rotating Orange Industrial Accent */
+.az-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 12px;
+  background: rgba(255, 106, 0, 0.12);
+  border: 1.5px solid #ff6a00;
+  color: #ff9147;
+  font-size: 11.5px;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 14px rgba(255, 106, 0, 0.18);
+}
+.az-back-btn:hover,
+.az-back-btn:active {
+  background: #ff6a00;
+  border-color: #ff8533;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 106, 0, 0.45);
+}
+.az-back-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: rgba(255, 106, 0, 0.25);
+  border: 1px solid #ff6a00;
+  color: #ff8533;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+.az-back-btn:hover .az-back-icon {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #ff6a00;
+  transform: rotate(90deg);
+}
+
+.nav{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.nav a{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;background:rgba(255,255,255,.035);font-size:11px;font-weight:850;color:#dce1dd;
+  transition:all .22s ease;white-space:nowrap;
+}
+.nav a:hover{transform:translateY(-1px);border-color:rgba(245,185,0,.35);background:rgba(255,255,255,.07);color:#fff}
+
+main{position:relative;padding:20px 0 64px}
+
+/* Sleek & Thoughtful Top Bar (جایگزین متن طولانی و باکس‌های حجیم قبلی) */
+.order-header-bar{
+  position:relative;overflow:hidden;padding:18px 24px;border:1px solid rgba(245,185,0,.25);border-radius:20px;
   background:
-    radial-gradient(circle at 92% 18%,rgba(245,185,0,.16),transparent 25%),
-    radial-gradient(circle at 10% 100%,rgba(69,226,138,.07),transparent 28%),
-    linear-gradient(145deg,rgba(18,25,21,.92),rgba(8,12,10,.9));
-  box-shadow:var(--shadow);margin-bottom:18px
+    radial-gradient(circle at 95% 20%,rgba(245,185,0,.15),transparent 38%),
+    radial-gradient(circle at 5% 100%,rgba(255,106,0,.1),transparent 38%),
+    linear-gradient(160deg,rgba(16,24,19,.96),rgba(6,10,8,.97));
+  box-shadow:var(--shadow);margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
 }
-.hero:after{content:"";position:absolute;width:180px;height:180px;left:-60px;bottom:-95px;border-radius:50%;border:1px solid rgba(255,255,255,.06);box-shadow:0 0 0 24px rgba(255,255,255,.012),0 0 0 48px rgba(255,255,255,.008)}
-.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:25px;position:relative;z-index:1}
-.kicker{font-size:9px;letter-spacing:2.1px;color:#d5ad35;font-weight:950}
-.hero h1{margin:4px 0 7px;font-size:clamp(27px,5vw,43px);letter-spacing:-.7px;line-height:1.15}
-.hero p{max-width:720px;margin:0;color:#a0aaa3;font-size:11px;line-height:2}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:360px}
-.step{
-  padding:11px 10px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.025);
-  min-width:0
+.order-header-bar::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(245,185,0,.06) 50%,transparent 100%);
+  background-size:200% 100%;
+  animation:azSweepShimmer 7s linear infinite;
+  pointer-events:none;
 }
-.step .n{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:8px;background:rgba(245,185,0,.13);color:#ffd952;font-size:9px;font-weight:950;margin-bottom:7px}
-.step strong{display:block;font-size:10px}.step small{display:block;color:#727d75;font-size:8px;margin-top:3px;line-height:1.7}
-.layout{display:grid;grid-template-columns:minmax(0,1.52fr) minmax(335px,.75fr);gap:18px;align-items:start}
+@keyframes azSweepShimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* Animated subtle border laser */
+.order-header-bar::after{
+  content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;
+  background:conic-gradient(from var(--az-angle,0deg),transparent 70%,#ffd84f 85%,#ff6a00 96%,transparent 100%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
+  animation:azRotateBorder 6s linear infinite;
+}
+@property --az-angle{syntax:'<angle>';initial-value:0deg;inherits:false;}
+@keyframes azRotateBorder{to{--az-angle:360deg;}}
+
+.order-header-info{display:flex;flex-direction:column;gap:4px;position:relative;z-index:2}
+.order-header-tag{
+  display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#d5ad35;font-weight:900;
+}
+.order-header-title{
+  margin:0;font-size:20px;font-weight:950;letter-spacing:-.4px;color:#fff;
+  display:flex;align-items:center;gap:8px;
+}
+.order-header-title span{
+  background:linear-gradient(135deg,#ffe06a,#f5b900);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.order-header-desc{
+  margin:0;font-size:11.5px;color:#919f96;line-height:1.7;
+}
+
+/* Quick Guarantee Badges Bar (یک خطی، شیک و بدون شکستگی متن) */
+.order-guarantee-pills{
+  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;position:relative;z-index:2;
+}
+.guarantee-pill{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  font-size:10.5px;font-weight:800;color:#cad3cc;white-space:nowrap;
+  transition:all 0.22s ease;
+}
+.guarantee-pill:hover{
+  background:rgba(245,185,0,.08);border-color:rgba(245,185,0,.3);color:#ffd84f;
+}
+.guarantee-pill svg{color:#3fe084;flex-shrink:0}
+
+/* Main Two-Column Layout (کاملاً هماهنگ و متناسب برای دسکتاپ و موبایل) */
+.layout{
+  display:grid;grid-template-columns:minmax(0,1.55fr) 350px;gap:22px;align-items:start;
+}
+
 .panel{
-  border:1px solid var(--line);background:linear-gradient(160deg,rgba(17,23,19,.9),rgba(10,15,12,.92));
-  border-radius:22px;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden
+  border:1px solid var(--line);background:linear-gradient(160deg,rgba(15,22,17,.92),rgba(8,13,10,.95));
+  border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.35);overflow:hidden;
+  transition:border-color 0.3s ease;
 }
-.panel-head{padding:17px 19px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.panel-head h2{font-size:14px;margin:0;font-weight:950}.panel-head .meta{display:flex;align-items:center;gap:7px}
-.count-pill{padding:5px 9px;border-radius:999px;background:rgba(245,185,0,.09);border:1px solid rgba(245,185,0,.17);color:#e4bd42;font-size:9px;font-weight:900}
-.panel-body{padding:13px 19px}
+.panel:hover{border-color:rgba(255,255,255,.12)}
+
+.panel-head{
+  padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:rgba(255,255,255,.015);
+}
+.panel-head h2{font-size:14.5px;margin:0;font-weight:950;display:flex;align-items:center;gap:9px}
+.panel-head .meta{display:flex;align-items:center;gap:9px}
+
+.count-pill{
+  padding:4px 10px;border-radius:999px;background:rgba(245,185,0,.1);border:1px solid rgba(245,185,0,.25);
+  color:#fbd859;font-size:10px;font-weight:900;letter-spacing:-.1px;
+}
+.count-pill.live-badge{
+  background:rgba(63,224,132,.1);border-color:rgba(63,224,132,.3);color:#6de6a1;
+  display:inline-flex;align-items:center;gap:6px;
+}
+
+.panel-body{padding:12px 20px}
+
+/* Cart Row Cards with Industrial Precision */
 .cart-row{
-  display:grid;grid-template-columns:108px minmax(0,1fr) auto;gap:15px;padding:17px 0;
-  border-bottom:1px solid rgba(255,255,255,.055);align-items:center;transition:.22s ease
+  display:grid;grid-template-columns:92px minmax(0,1fr) 140px;gap:16px;padding:16px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);align-items:center;
+  transition:all 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius:14px;
 }
-.cart-row:last-child{border-bottom:0}.cart-row:hover{transform:translateX(-2px)}
+.cart-row:last-child{border-bottom:0}
+.cart-row:hover{
+  transform:translateX(-3px);
+  background:rgba(255,255,255,.015);
+}
+
 .cart-img{
-  width:108px;height:94px;border-radius:17px;background:linear-gradient(145deg,#fff,#edf1ec);display:grid;place-items:center;overflow:hidden;
-  border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 0 0 1px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.18)
+  width:92px;height:84px;border-radius:14px;background:linear-gradient(145deg,#ffffff,#ebf0ea);
+  display:grid;place-items:center;overflow:hidden;position:relative;
+  border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04),0 8px 20px rgba(0,0,0,.22);
+  transition:transform 0.25s ease;
 }
-.cart-img img{width:100%;height:100%;object-fit:contain;padding:9px}.cart-info{min-width:0}
-.cart-name{font-size:13px;font-weight:950;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cart-code{color:#6e7971;font-size:9px;margin-top:3px;direction:ltr;text-align:right}
-.cart-variant{display:inline-flex;margin-top:7px;padding:5px 8px;border-radius:8px;background:rgba(245,185,0,.07);border:1px solid rgba(245,185,0,.17);font-size:8px;color:#f8d860}
-.cart-price{font-size:12px;font-weight:950;color:#f7cf48;margin-top:8px}.cart-price .label{font-size:8px;color:#778179;font-weight:700;margin-left:5px}
+.cart-row:hover .cart-img{transform:scale(1.03);}
+.cart-img img{width:100%;height:100%;object-fit:contain;padding:7px;transition:transform 0.3s ease;}
+.cart-row:hover .cart-img img{transform:scale(1.07);}
+
+.cart-info{min-width:0}
+.cart-name{font-size:13px;font-weight:950;line-height:1.7;color:#fdfefe;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cart-code{
+  display:inline-block;color:#7d8980;font-size:9.5px;margin-top:3px;direction:ltr;text-align:right;
+  font-family:ui-monospace,monospace;background:rgba(255,255,255,.03);padding:2px 6px;border-radius:5px;
+}
+.cart-variant{display:inline-flex;margin-top:6px;padding:4px 8px;border-radius:8px;background:rgba(245,185,0,.08);border:1px solid rgba(245,185,0,.2);font-size:9px;color:#f8d860;font-weight:800}
+
+.cart-price{font-size:12px;font-weight:950;color:#ffd84f;margin-top:7px;display:flex;align-items:baseline;gap:5px}
+.cart-price .label{font-size:9.5px;color:#859088;font-weight:700}
+
+/* Qty Stepper with Responsive Touch Sizes */
 .qty{
-  display:inline-flex;align-items:center;gap:5px;padding:4px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#0a0f0c
+  display:inline-flex;align-items:center;gap:6px;padding:3px;border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;background:#070b09;box-shadow:inset 0 2px 4px rgba(0,0,0,.4);
 }
-.qty button{width:30px;height:30px;border:1px solid #29322c;background:#111713;color:#fff;border-radius:9px;font:950 14px Vazirmatn;cursor:pointer;transition:.2s}
-.qty button:hover{border-color:#f5b900;color:#ffd84f;background:#161c17}.qty span{min-width:25px;text-align:center;font-weight:950;font-size:11px}
-.row-total{text-align:left;direction:rtl;font-size:12px;font-weight:950;white-space:nowrap}.row-actions{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:10px}
-.ghost{border:0;background:none;color:#7f8982;cursor:pointer;font:850 9px Vazirmatn;padding:4px 0}.ghost:hover{color:#fff}
-.unavailable{padding:6px 8px;background:rgba(255,125,131,.08);border:1px solid rgba(255,125,131,.19);color:#ff9b9f;border-radius:8px;font-size:8px;margin-top:6px}
-.empty{padding:62px 18px;text-align:center;color:#7f8982}.empty-cart-svg{width:52px;height:52px;color:#f5b900;margin:auto;opacity:.92;filter:drop-shadow(0 0 15px rgba(245,185,0,.16))}
-.empty h3{margin:11px 0 5px;color:#fff;font-size:16px}.empty p{margin:0;line-height:1.9;font-size:10px}
+.qty button{
+  width:32px;height:32px;border:1px solid #2b362f;background:#131a15;color:#fff;border-radius:9px;
+  font:950 15px Vazirmatn;cursor:pointer;transition:all 0.18s ease;display:grid;place-items:center;
+}
+.qty button:hover{
+  border-color:#f5b900;color:#ffd84f;background:#1c241e;transform:scale(1.08);
+  box-shadow:0 0 10px rgba(245,185,0,.25);
+}
+.qty button:active{transform:scale(0.92)}
+.qty span{min-width:26px;text-align:center;font-weight:950;font-size:12px;color:#fff}
+
+.row-total{text-align:left;direction:rtl;font-size:13.5px;font-weight:950;white-space:nowrap;color:#ffe06a}
+.row-actions{display:flex;align-items:center;gap:10px;justify-content:flex-start;margin-top:8px}
+
+.ghost{
+  border:0;background:none;color:#849087;cursor:pointer;font:850 10.5px Vazirmatn;padding:5px 8px;
+  border-radius:8px;transition:all 0.2s;display:inline-flex;align-items:center;gap:5px;
+}
+.ghost:hover{color:#ff656b;background:rgba(255,101,107,.1)}
+
+/* Empty State */
+.empty{padding:60px 20px;text-align:center;color:#859188}
+.empty-cart-anim-box{
+  width:90px;height:90px;margin:0 auto 16px;border-radius:24px;display:grid;place-items:center;
+  background:radial-gradient(circle,rgba(245,185,0,.16),rgba(255,106,0,.06));
+  border:1.5px solid rgba(245,185,0,.35);box-shadow:0 0 40px rgba(245,185,0,.18);
+  animation:azCartFloat 4s ease-in-out infinite;position:relative;
+}
+.empty-cart-anim-box::after{
+  content:"";position:absolute;inset:-6px;border-radius:28px;border:1px dashed rgba(245,185,0,.2);
+  animation:azSlowSpin 30s linear infinite;
+}
+@keyframes azCartFloat{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  50%{transform:translateY(-8px) rotate(2deg);}
+}
+.empty-cart-svg{width:44px;height:44px;color:#f5b900;filter:drop-shadow(0 0 12px rgba(245,185,0,.4))}
+.empty h3{margin:12px 0 6px;color:#fff;font-size:18px;font-weight:950}
+.empty p{margin:0 0 16px;line-height:2;font-size:11.5px;max-width:400px;margin-inline:auto;color:#8e9b92}
+.empty-quick-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.empty-quick-tags a{
+  padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  font-size:10px;font-weight:800;color:#9ca7a0;transition:all .2s;
+}
+.empty-quick-tags a:hover{border-color:rgba(245,185,0,.35);color:#ffd84f;background:rgba(245,185,0,.08)}
+
+/* Buttons with Shimmer & Glow */
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 15px;border-radius:12px;
-  border:1px solid rgba(245,185,0,.34);background:linear-gradient(145deg,#ffe06a,#f5b900);color:#111;
-  font:950 10px Vazirmatn;cursor:pointer;transition:.22s ease;box-shadow:0 12px 28px rgba(245,185,0,.11)
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:13px;
+  border:1px solid rgba(245,185,0,.45);background:linear-gradient(145deg,#ffe06a,#f5b900);color:#111;
+  font:950 11.5px Vazirmatn;cursor:pointer;transition:all 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow:0 12px 28px rgba(245,185,0,.22);position:relative;overflow:hidden;
 }
-.btn:hover{transform:translateY(-1px);filter:brightness(1.03)}.btn.secondary{background:#121813;color:#edf1ee;border-color:#344038;box-shadow:none}.btn.secondary:hover{border-color:#58655b}.btn:disabled{opacity:.48;cursor:not-allowed;transform:none}
-.summary{position:sticky;top:91px}
-.summary-glow{position:relative}.summary-glow:before{content:"";position:absolute;inset:-1px -1px auto;height:140px;background:radial-gradient(circle at 75% 0,rgba(245,185,0,.11),transparent 62%);pointer-events:none}
+.btn::before{
+  content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);
+  transform:skewX(-20deg);
+  animation:azBtnShimmer 4s infinite;
+}
+@keyframes azBtnShimmer{
+  0%{left:-100%;}
+  25%{left:160%;}
+  100%{left:160%;}
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(245,185,0,.35);filter:brightness(1.05)}
+.btn:active{transform:translateY(0)}
+.btn.secondary{
+  background:#121914;color:#edf2ef;border-color:#36433b;box-shadow:none;
+}
+.btn.secondary::before{display:none}
+.btn.secondary:hover{border-color:#5c6b61;background:#18221b;color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Summary Panel with Active Glow Border */
+.summary{position:sticky;top:86px}
+.summary-glow{position:relative}
+.summary-glow::after{
+  content:"";position:absolute;inset:-1px;border-radius:22px;padding:1px;
+  background:linear-gradient(135deg,rgba(245,185,0,.4),transparent 45%,rgba(255,106,0,.3));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
+}
+
 .summary-inner{position:relative}
-.coupon{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06)}.coupon label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:950;margin-bottom:8px}.coupon-row{display:grid;grid-template-columns:1fr auto;gap:7px}
+
+.coupon{padding:15px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+.coupon label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:950;margin-bottom:8px;color:#e8ede9}
+.coupon-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+
 .input,.textarea{
-  width:100%;border:1px solid #2d3830;background:#080c0a;color:#fff;border-radius:11px;padding:11px 11px;
-  font:750 10px Vazirmatn;outline:none;transition:.2s
+  width:100%;border:1px solid #2e3a31;background:#080c09;color:#fff;border-radius:12px;padding:11px 13px;
+  font:750 11px Vazirmatn;outline:none;transition:all .22s ease;
 }
-.input::placeholder,.textarea::placeholder{color:#566158}.input:focus,.textarea:focus{border-color:#d8a70e;box-shadow:0 0 0 3px rgba(245,185,0,.08)}
-.coupon-status{margin-top:8px;font-size:9px;color:#7f8a83;line-height:1.8}.coupon-status.ok{color:#70e6a1}.coupon-status.err{color:#ff9297}
-.summary-body{padding:15px 18px}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.07);font-size:10px;color:#9aa49d}.summary-line strong{color:#f5f6f4}.summary-line.discount strong{color:#6ee79f}
-.summary-total{display:flex;justify-content:space-between;gap:10px;padding:15px 0 10px;font-size:13px;font-weight:950}.summary-total strong{color:#ffe06a;font-size:22px;letter-spacing:-.4px}
-.total-caption{font-size:8px;color:#6f7972;line-height:1.8;margin-bottom:4px}.submit{width:100%;margin-top:9px;min-height:44px;font-size:11px}
-.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}.trust>div{
-  padding:10px 8px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(255,255,255,.02);
-  text-align:center;color:#727d75;font-size:8px;line-height:1.7
-}.trust b{display:block;color:#e7ebe8;font-size:8px;margin-bottom:2px}
-.form{padding:17px 18px;border-top:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(245,185,0,.035),transparent 40%)}.form h3{margin:0 0 11px;font-size:12px;font-weight:950}
-.form-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}.form-badge{width:25px;height:25px;border-radius:9px;display:grid;place-items:center;background:rgba(69,226,138,.09);color:#68e69c;border:1px solid rgba(69,226,138,.15);font-size:11px}
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field label{display:block;font-size:9px;color:#9da79f;margin-bottom:5px}.field.full{grid-column:1/-1}.field .required{color:#ffd84f}
-.field input,.field textarea{min-height:40px}.textarea{resize:vertical;min-height:82px}
-.notice{margin-top:9px;padding:9px 10px;border:1px solid rgba(255,255,255,.05);border-radius:10px;color:#69746c;background:rgba(255,255,255,.018);font-size:8px;line-height:1.9}
-.payment-box{margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.018)}
-.payment-title{font-size:9px;font-weight:950;margin-bottom:8px}.payment-options{display:grid;gap:7px}
-.payment-option{display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.012);cursor:pointer}
-.payment-option:has(input:checked){border-color:rgba(245,185,0,.28);background:rgba(245,185,0,.04)}
-.payment-option input{margin-top:2px;accent-color:#f5b900}.payment-option strong{display:block;font-size:9px}.payment-option span{display:block;margin-top:2px;color:#6f7972;font-size:8px;line-height:1.7}
-.payment-note{margin-top:7px;color:#78837b;font-size:8px;line-height:1.8}
-.success{padding:54px 24px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(69,226,138,.09),transparent 34%)}
-.success-check{width:58px;height:58px;margin:0 auto 12px;border-radius:19px;display:grid;place-items:center;background:rgba(69,226,138,.1);border:1px solid rgba(69,226,138,.2);color:#64e59b;font-size:25px;box-shadow:0 0 35px rgba(69,226,138,.08)}
-.success .order-code{display:inline-flex;margin:13px 0;padding:10px 15px;border:1px dashed #8b7020;background:#151308;color:#ffd84f;border-radius:11px;font:950 15px ui-monospace,monospace;direction:ltr}
-.success h2{font-size:22px;margin:0}.success p{font-size:10px;color:#909b93;line-height:2}.success .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-.bottom-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.bottom-trust>div{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.02);font-size:8px;color:#778178;line-height:1.8}.bottom-trust b{color:#e4e9e5;display:block;font-size:9px;margin-bottom:2px}
-@media(max-width:950px){.hero-top{flex-direction:column}.steps{width:100%;min-width:0}.layout{grid-template-columns:1fr}.summary{position:static}.summary .summary-body{padding-bottom:16px}}
-@media(max-width:620px){
-  .wrap{width:min(100% - 14px,1180px)}.head{min-height:66px}.brand small{display:none}.brand strong{font-size:15px}.mark{width:40px;height:40px}
-  .nav a{padding:8px 9px}.nav a span{display:none}
-  main{padding:22px 0 48px}.hero{padding:20px;border-radius:22px}.hero h1{font-size:28px}.steps{grid-template-columns:1fr}
-  .step{display:grid;grid-template-columns:22px 1fr;column-gap:8px;align-items:center}.step .n{grid-row:span 2;margin:0}
-  .panel{border-radius:18px}.panel-head,.panel-body,.coupon,.summary-body,.form{padding-left:13px;padding-right:13px}
-  .cart-row{grid-template-columns:70px minmax(0,1fr);gap:10px;padding:14px 0}.cart-img{width:70px;height:68px;border-radius:13px}.row-total{grid-column:2;text-align:right;margin-top:-2px;font-size:11px}.cart-name{font-size:11px}.cart-price{font-size:10px}.row-actions{justify-content:flex-start;margin-top:8px}
-  .qty button{width:28px;height:28px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.trust,.bottom-trust{grid-template-columns:1fr}.success{padding:40px 17px}
+.input::placeholder,.textarea::placeholder{color:#5a665d}
+.input:focus,.textarea:focus{border-color:#f5b900;box-shadow:0 0 0 3px rgba(245,185,0,.18);background:#0b110e}
+
+.coupon-status{margin-top:8px;font-size:10px;color:#859188;line-height:1.7;transition:all .2s}
+.coupon-status.ok{color:#6ee6a1;font-weight:800}
+.coupon-status.err{color:#ff8e93;font-weight:800}
+
+.summary-body{padding:16px 18px}
+.summary-line{
+  display:flex;justify-content:space-between;gap:10px;padding:9px 0;
+  border-bottom:1px dashed rgba(255,255,255,.075);font-size:11.5px;color:#9ca7a0
 }
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.summary-line strong{color:#f6f8f5;font-weight:900}
+.summary-line.discount strong{color:#6ee6a1}
+
+.summary-total{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 0 8px;
+  font-size:13.5px;font-weight:950;
+}
+.summary-total strong{
+  color:#ffe06a;font-size:22px;letter-spacing:-.5px;font-weight:950;
+  text-shadow:0 0 25px rgba(245,185,0,.25);
+}
+
+.total-caption{font-size:9.5px;color:#758077;line-height:1.7;margin-bottom:6px}
+.submit{width:100%;margin-top:10px;min-height:46px;font-size:12px;font-weight:950}
+
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px}
+.trust>div{
+  padding:9px 6px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:rgba(255,255,255,.025);
+  text-align:center;color:#7b867e;font-size:9px;line-height:1.6;transition:background 0.2s;
+}
+.trust>div:hover{background:rgba(255,255,255,.05)}
+.trust b{display:block;color:#e8ede9;font-size:9.5px;margin-bottom:2px;font-weight:900}
+
+/* Checkout Form */
+.form{
+  padding:20px 18px;border-top:1px solid rgba(245,185,0,.26);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(245,185,0,.08),transparent 42%),
+    linear-gradient(180deg,rgba(245,185,0,.04),transparent 60%);
+  animation:azSlideDown 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius:0 0 22px 22px;position:relative;
+}
+@keyframes azSlideDown{
+  from{opacity:0;transform:translateY(-14px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.form-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.form-badge{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(135deg,rgba(63,224,132,.18),rgba(63,224,132,.08));
+  color:#6ee6a1;border:1.5px solid rgba(63,224,132,.32);
+  font-size:12px;font-weight:950;box-shadow:0 0 16px rgba(63,224,132,.2);
+}
+.form h3{margin:0 0 2px;font-size:13.5px;font-weight:950;color:#fff}
+
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.field label{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#a6b2a9;margin-bottom:5px;font-weight:800}
+.field.full{grid-column:1/-1}.field .required{color:#ffd84f;font-weight:950}
+.field input,.field textarea{min-height:42px}
+.field input:focus,.field textarea:focus{
+  border-color:#f5b900;
+  box-shadow:0 0 0 3px rgba(245,185,0,.2),0 0 20px rgba(245,185,0,.18);
+  background:#0c130f;
+}
+.textarea{resize:vertical;min-height:80px}
+
+.notice{
+  margin-top:11px;padding:10px 12px;border:1px solid rgba(255,255,255,.07);border-radius:11px;
+  color:#7e8b81;background:rgba(255,255,255,.02);font-size:9.5px;line-height:1.8
+}
+
+/* Success State */
+.success{
+  padding:60px 24px;text-align:center;
+  background:radial-gradient(circle at 50% 0,rgba(63,224,132,.14),transparent 48%);
+  animation:azFadeInSuccess 0.4s ease-out;
+}
+@keyframes azFadeInSuccess{from{opacity:0;transform:scale(0.97);}to{opacity:1;transform:scale(1);}}
+
+.success-check{
+  width:64px;height:64px;margin:0 auto 16px;border-radius:20px;display:grid;place-items:center;
+  background:linear-gradient(135deg,rgba(63,224,132,.2),rgba(63,224,132,.08));
+  border:1.5px solid rgba(63,224,132,.38);color:#66e59c;font-size:28px;
+  box-shadow:0 0 40px rgba(63,224,132,.25);position:relative;
+}
+.success-check::before{
+  content:"";position:absolute;inset:-5px;border-radius:24px;border:1.5px solid rgba(63,224,132,.25);
+  animation:azSuccessPulse 2.5s infinite;
+}
+@keyframes azSuccessPulse{
+  0%{transform:scale(0.95);opacity:1;}
+  100%{transform:scale(1.3);opacity:0;}
+}
+
+.success .order-code{
+  display:inline-flex;align-items:center;gap:8px;margin:14px 0;padding:10px 16px;
+  border:1.5px dashed #a08428;background:#17150a;color:#ffd84f;border-radius:12px;
+  font:950 15px ui-monospace,monospace;direction:ltr;box-shadow:0 6px 20px rgba(0,0,0,.3);
+}
+.success h2{font-size:22px;margin:0 0 8px;font-weight:950;color:#fff}
+.success p{font-size:11.5px;color:#96a29a;line-height:2;max-width:520px;margin-inline:auto}
+.success .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+
+.bottom-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.bottom-trust>div{
+  padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.025);
+  font-size:9.5px;color:#808b82;line-height:1.8;transition:all 0.2s;
+}
+.bottom-trust>div:hover{border-color:rgba(255,255,255,.1);transform:translateY(-1px)}
+.bottom-trust b{color:#e8ede9;display:block;font-size:10px;margin-bottom:3px;font-weight:900}
+
+/* RESPONSIVE DESIGN FOR DESKTOP & MOBILE */
+@media(max-width:980px){
+  .order-header-bar{flex-direction:column;align-items:flex-start;gap:14px}
+  .order-guarantee-pills{width:100%;overflow-x:auto;padding-bottom:4px}
+  .layout{grid-template-columns:1fr;gap:18px}
+  .summary{position:static}.summary .summary-body{padding-bottom:16px}
+}
+
+@media(max-width:640px){
+  .wrap{width:calc(100% - 20px)}
+  .head{min-height:56px;gap:8px}
+  .brand{gap:7px}
+  .brand strong{font-size:14px}
+  .brand small{display:none}
+  .mark{width:34px;height:34px;border-radius:10px}
+  .mark svg{width:17px;height:17px}
+  .az-live-header-badge{padding:3px 8px;font-size:9px}
+  .az-live-text{display:none}
+  
+  .nav{gap:5px}
+  .nav a{padding:5px 8px;font-size:10.5px;border-radius:9px}
+  .az-back-btn{padding:5px 9px;font-size:10.5px;gap:5px;border-radius:9px}
+  .az-back-icon{width:16px;height:16px;border-radius:4px}
+  .az-back-icon svg{width:12px;height:12px}
+  
+  main{padding:12px 0 40px}
+  .order-header-bar{padding:14px 14px;border-radius:16px;margin-bottom:14px}
+  .order-header-title{font-size:17px}
+  .order-header-desc{font-size:11px;line-height:1.6}
+  .order-guarantee-pills{gap:6px;flex-wrap:wrap}
+  .guarantee-pill{padding:5px 9px;font-size:9.5px;border-radius:8px}
+  
+  .panel{border-radius:16px}
+  .panel-head,.panel-body,.coupon,.summary-body,.form{padding-left:14px;padding-right:14px}
+  
+  /* Mobile-first Product Card */
+  .cart-row{
+    grid-template-columns:70px minmax(0,1fr);
+    gap:12px;padding:12px 0;position:relative;
+  }
+  .cart-img{width:70px;height:70px;border-radius:12px}
+  .cart-name{font-size:12px;line-height:1.6}
+  .cart-price{font-size:11px}
+  
+  /* Mobile Row Actions & Price Placement */
+  .row-total{
+    grid-column:1 / -1;
+    display:flex;align-items:center;justify-content:space-between;
+    padding-top:8px;border-top:1px dashed rgba(255,255,255,.05);margin-top:4px;
+    font-size:13px;
+  }
+  .row-actions{margin-top:6px;gap:8px}
+  .qty button{width:30px;height:30px;font-size:14px}
+  .qty span{min-width:24px;font-size:11.5px}
+  
+  .fields{grid-template-columns:1fr;gap:10px}
+  .field.full{grid-column:auto}
+  .trust{grid-template-columns:repeat(3,1fr);gap:4px}
+  .trust>div{padding:8px 4px;font-size:8.5px}
+  .bottom-trust{grid-template-columns:1fr;gap:8px}
+  .success{padding:36px 14px}
+  .success h2{font-size:19px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
 </style>
 </head>
 <body>
+
+  <!-- Ambient Floating Orbs for Live Dynamic Background -->
+  <div class="az-ambient-orb orb-1" aria-hidden="true"></div>
+  <div class="az-ambient-orb orb-2" aria-hidden="true"></div>
+  <div class="az-ambient-orb orb-3" aria-hidden="true"></div>
+
   <header>
     <div class="wrap head">
-      <a class="brand" href="index.html">
-        <span class="mark">⚙</span>
-        <span><strong>عظیم ابزار</strong><small>ثبت سفارش حرفه‌ای و سریع</small></span>
-      </a>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="brand" href="index.html" title="صفحه اصلی عظیم ابزار">
+          <span class="mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </span>
+          <span class="brand-text"><strong>عظیم ابزار</strong><small>سبد سفارش و صدور پیش‌فاکتور</small></span>
+        </a>
+
+        <!-- Live Server Status Badge -->
+        <span class="az-live-header-badge" title="ثبت سفارش آنلاین فعال است">
+          <span class="az-live-dot"></span>
+          <span class="az-live-text">سرور آنلاین</span>
+        </span>
+      </div>
+
       <nav class="nav">
-        <a href="index.html"><span>⌂</span>صفحه اصلی</a>
-        <a href="products-v4.html"><span>▣</span>محصولات</a>
-        <a href="order-status.html"><span>⌁</span>پیگیری سفارش</a>
-        <a href="cart.html" class="primary" data-cart-link aria-label="سبد سفارش">
-          <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>
-          <span>سفارش من</span><b data-cart-count hidden>۰</b>
+        <!-- دکمه بازگشت به صفحه قبل -->
+        <a class="az-back-btn" href="products-v4.html" onclick="return handleSmartBack(event);" id="btn-back-prev" title="بازگشت به صفحه قبل">
+          <span class="az-back-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 19 12 12 5"></polyline>
+            </svg>
+          </span>
+          <span class="az-btn-label">بازگشت</span>
+        </a>
+
+        <a href="products-v4.html" title="کاتالوگ ابزارآلات">
+          <span style="font-size:12px">▣</span>
+          <span class="az-btn-label">کاتالوگ ابزارها</span>
+        </a>
+        <a href="order-status.html" title="پیگیری سفارش آنلاین">
+          <span style="font-size:13px">⌁</span>
+          <span class="az-btn-label">پیگیری سفارش</span>
         </a>
       </nav>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="hero">
-      <div class="hero-top">
-        <div>
-          <div class="kicker">AZIM ABZAR · ORDER EXPERIENCE</div>
-          <h1>سفارش شما، آماده‌ی ثبت است.</h1>
-          <p>محصولات انتخابی را یک‌جا ببین، تعداد و تخفیف را کنترل کن و در چند قدم کوتاه درخواستت را برای عظیم ابزار بفرست. قیمت و اطلاعات کالا هنگام ثبت نهایی دوباره بررسی می‌شود.</p>
+    <!-- بخش هدر جدید، خلوت، سنجیده و متناسب موبایل و دسکتاپ -->
+    <section class="order-header-bar">
+      <div class="order-header-info">
+        <div class="order-header-tag">
+          <span class="az-live-dot" style="width:6px;height:6px"></span>
+          <span>استعلام آنلاین موجودی و فاکتور</span>
         </div>
-        <div class="steps" aria-label="مراحل ثبت سفارش">
-          <div class="step"><span class="n">۰۱</span><div><strong>انتخاب</strong><small>محصولات و تعداد</small></div></div>
-          <div class="step"><span class="n">۰۲</span><div><strong>بررسی</strong><small>قیمت و تخفیف</small></div></div>
-          <div class="step"><span class="n">۰۳</span><div><strong>ثبت</strong><small>اطلاعات تماس</small></div></div>
+        <h1 class="order-header-title">سبد سفارش و <span>صدور پیش‌فاکتور رسمی</span></h1>
+        <p class="order-header-desc">اقلام انتخابی خود را بازبینی نموده و با تکمیل اطلاعات تحویل، پیش‌فاکتور معتبر و کد رهگیری سفارش دریافت کنید.</p>
+      </div>
+
+      <div class="order-guarantee-pills" aria-label="تضمین‌های خرید از عظیم ابزار">
+        <div class="guarantee-pill" title="موجودی قطعی">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>تطبیق آنلاین انبار</span>
+        </div>
+        <div class="guarantee-pill" title="اصالت کالا">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>ضمانت اصالت فنی</span>
+        </div>
+        <div class="guarantee-pill" title="ارسال باربری">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+          <span>ارسال سریع سراسری</span>
         </div>
       </div>
     </section>
@@ -191,78 +646,106 @@ main{position:relative;padding:34px 0 72px}
     <div id="cartSuccess" class="panel" hidden></div>
 
     <div id="cartWorkspace" class="layout">
+      <!-- ستون محصولات انتخاب شده -->
       <section class="panel">
         <div class="panel-head">
-          <div class="meta"><h2>محصولات انتخاب‌شده</h2><span id="cartCountLabel" class="count-pill">۰ قلم</span></div>
-          <button class="ghost" id="clearCartBtn" type="button">پاک کردن همه</button>
+          <div class="meta">
+            <h2>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              اقلام انتخابی سفارش
+            </h2>
+            <span id="cartCountLabel" class="count-pill">۰ قلم</span>
+          </div>
+          <button class="ghost" id="clearCartBtn" type="button" title="پاک کردن تمام ابزارهای سبد">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            پاک کردن همه
+          </button>
         </div>
         <div class="panel-body" id="cartItems"></div>
       </section>
 
+      <!-- ستون پیش‌فاکتور و تسویه -->
       <aside class="panel summary summary-glow">
         <div class="summary-inner">
           <div class="panel-head">
-            <div class="meta"><h2>خلاصه سفارش</h2></div>
-            <span class="count-pill">قیمت زنده</span>
+            <div class="meta">
+              <h2>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                خلاصه پیش‌فاکتور
+              </h2>
+            </div>
+            <span class="count-pill live-badge">
+              <span class="az-live-dot" style="width:6px;height:6px"></span>
+              <span>محاسبه زنده</span>
+            </span>
           </div>
 
           <div class="coupon">
-            <label for="couponInput"><span aria-hidden="true">✦</span> کد تخفیف</label>
+            <label for="couponInput">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              کد تخفیف سفارش
+            </label>
             <div class="coupon-row">
               <input id="couponInput" class="input" dir="ltr" autocomplete="off" placeholder="مثلاً AZIM20">
-              <button id="applyCouponBtn" class="btn secondary" type="button">اعمال</button>
+              <button id="applyCouponBtn" class="btn secondary" type="button">اعمال کد</button>
             </div>
-            <div id="couponStatus" class="coupon-status">کد تخفیف می‌تواند برای کل سبد، محصول، دسته، برند یا مشتری تعریف شده باشد.</div>
+            <div id="couponStatus" class="coupon-status">کد تخفیف ویژه خرید عمده یا همکاری را وارد نمایید.</div>
           </div>
 
           <div class="summary-body">
-            <div class="summary-line"><span>جمع کالاها</span><strong id="subtotal">۰ تومان</strong></div>
-            <div class="summary-line discount"><span>تخفیف</span><strong id="discount">۰ تومان</strong></div>
-            <div class="summary-line"><span>ارسال</span><strong>هماهنگی با فروشگاه</strong></div>
-            <div class="summary-total"><span>مبلغ فعلی سفارش</span><strong id="total">۰ تومان</strong></div>
-            <div class="total-caption">مبلغ نمایش‌داده‌شده قبل از هماهنگی نهایی ارسال و شرایط تحویل است.</div>
-            <button id="startCheckoutBtn" class="btn submit" type="button">ادامه برای ثبت سفارش ←</button>
+            <div class="summary-line"><span>جمع اقلام سفارش</span><strong id="subtotal">۰ تومان</strong></div>
+            <div class="summary-line discount"><span>تخفیف اعمال‌شده</span><strong id="discount">۰ تومان</strong></div>
+            <div class="summary-line"><span>نحوه و هزینه ارسال</span><strong>هماهنگی با واحد فروش</strong></div>
+            <div class="summary-total"><span>مبلغ نهایی سفارش</span><strong id="total">۰ تومان</strong></div>
+            <div class="total-caption">مبلغ فوق پس از تأیید سفارش و هماهنگی ارسال کالا قطعی خواهد شد.</div>
+            
+            <button id="startCheckoutBtn" class="btn submit" type="button">
+              <span>تکمیل مشخصات و صدور فاکتور</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
 
             <div class="trust">
-              <div><b>قیمت زنده</b>بازبینی هنگام ثبت</div>
-              <div><b>تخفیف معتبر</b>محاسبه سمت سرور</div>
-              <div><b>پرداخت</b>پس از هماهنگی</div>
+              <div><b>محاسبه زنده</b>قیمت روز کالا</div>
+              <div><b>اعتبارسنجی</b>تخفیف سرور</div>
+              <div><b>تأیید فوری</b>تماس کارشناس</div>
             </div>
           </div>
 
+          <!-- فرم مشخصات ثبت سفارش -->
           <div id="checkoutBox" class="form" hidden>
             <div class="form-head">
               <span class="form-badge">✓</span>
-              <div><h3>اطلاعات تماس و تحویل</h3><span class="coupon-status" style="margin:0">برای نهایی‌کردن درخواست کافی است.</span></div>
+              <div><h3>اطلاعات تحویل و صدور پیش‌فاکتور</h3><span class="coupon-status" style="margin:0">جهت هماهنگی بارنامه و ارسال</span></div>
             </div>
             <form id="checkoutForm">
               <div class="fields">
-                <div class="field"><label>نام و نام خانوادگی <span class="required">*</span></label><input id="fullName" class="input" required maxlength="120" placeholder="مثلاً علی رضایی"></div>
-                <div class="field"><label>موبایل <span class="required">*</span></label><input id="mobile" class="input" required inputmode="tel" maxlength="20" dir="ltr" placeholder="0912..."></div>
-                <div class="field"><label>ایمیل</label><input id="email" class="input" type="email" maxlength="180" dir="ltr" placeholder="you@example.com"></div>
-                <div class="field"><label>شهر</label><input id="city" class="input" maxlength="80" placeholder="مثلاً تهران"></div>
-                <div class="field full"><label>آدرس / توضیحات تحویل</label><textarea id="address" class="textarea" rows="3" maxlength="600" placeholder="آدرس، زمان مناسب تماس یا توضیحات سفارش..."></textarea></div>
+                <div class="field"><label>نام و نام خانوادگی خریدار / کارگاه <span class="required">*</span></label><input id="fullName" class="input" required maxlength="120" placeholder="مثلاً مهدی حاتمی"></div>
+                <div class="field"><label>شماره تماس همراه <span class="required">*</span></label><input id="mobile" class="input" required inputmode="tel" maxlength="20" dir="ltr" placeholder="0912..."></div>
+                <div class="field"><label>ایمیل (اختیاری)</label><input id="email" class="input" type="email" maxlength="180" dir="ltr" placeholder="info@example.com"></div>
+                <div class="field"><label>شهر / استان</label><input id="city" class="input" maxlength="80" placeholder="مثلاً تهران / اصفهان"></div>
+                <div class="field full"><label>آدرس یا توضیحات باربری و تحویل</label><textarea id="address" class="textarea" rows="3" maxlength="600" placeholder="آدرس دقیق کارگاه یا انبار، نام باربری مدنظر یا ساعت تماس..."></textarea></div>
               </div>
-              <div class="payment-box">
-                <div class="payment-title">روش پرداخت</div>
-                <div class="payment-options">
-                  <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="phone" checked>
-                    <div><strong>📞 تماس تلفنی</strong><span>فروشگاه برای هماهنگی پرداخت و ارسال با شما تماس می‌گیرد.</span></div>
-                  </label>
-                  <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="message">
-                    <div><strong>💬 پیام</strong><span>هماهنگی پرداخت و ارسال از طریق پیام انجام می‌شود.</span></div>
-                  </label>
-                  <label class="payment-option" id="onlinePaymentOption" hidden>
-                    <input type="radio" name="paymentMethod" value="online">
-                    <div><strong>💳 پرداخت آنلاین</strong><span>پس از فعال شدن درگاه، به درگاه پرداخت منتقل می‌شوید.</span></div>
-                  </label>
-                </div>
-                <div id="paymentNote" class="payment-note">درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام قابل استفاده است.</div>
-              </div>
-              <button id="submitOrderBtn" class="btn submit" type="submit">ثبت نهایی درخواست سفارش</button>
-              <div class="notice">روش پرداخت انتخابی در سفارش ذخیره می‌شود. درگاه آنلاین فقط وقتی نمایش داده می‌شود که در سیستم فعال و آماده تأیید پرداخت باشد.</div>
+              <button id="submitOrderBtn" class="btn submit" type="submit">
+                <span>ثبت نهایی و صدور کد رهگیری</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+              <div class="notice">پس از ثبت، کد اختصاصی پیگیری دریافت می‌کنید و وضعیت در بخش «پیگیری سفارش» قابل ردیابی خواهد بود.</div>
               <div id="checkoutStatus" class="coupon-status"></div>
             </form>
           </div>
@@ -271,11 +754,156 @@ main{position:relative;padding:34px 0 72px}
     </div>
 
     <div class="bottom-trust">
-      <div><b>سبد شما از بین نمی‌رود</b>تا وقتی حافظه مرورگر پاک نشده باشد، اقلام سفارش در دستگاه نگه داشته می‌شوند.</div>
-      <div><b>قیمت‌ها دوباره کنترل می‌شوند</b>اطلاعات سفارش قبل از ثبت نهایی با کاتالوگ فروشگاه تطبیق داده می‌شود.</div>
-      <div><b>فرآیند ساده و مستقیم است</b>فعلاً پرداخت آنلاین نداریم؛ سفارش بعد از ثبت با فروشگاه هماهنگ می‌شود.</div>
+      <div><b>ذخیره‌سازی پایدار سبد سفارش</b>تا زمان پاک نشدن حافظه مرورگر، اقلام در حافظه امن دستگاه شما حفظ می‌شوند.</div>
+      <div><b>تطابق فنی و کیفی کالاها</b>سفارش شما پیش از ارسال با مستندات فنی و کاتالوگ سازنده کنترل کیفی می‌شود.</div>
+      <div><b>روال رسمی و بدون واسطه</b>پس از ثبت، کارشناس فنی با شما تماس می‌گیرد و شرایط بارنامه نهایی می‌شود.</div>
     </div>
   </main>
+
+  <!-- Rich Comprehensive Footer (فوتر جامع و معتبر عظیم ابزار) -->
+  <footer class="az-main-footer" id="mainFooter">
+    <!-- 4 Guarantees Strip -->
+    <div class="az-footer-features-strip">
+      <div class="az-footer-features-grid">
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>اصالت ۱۰۰٪ و تضمین فیزیکی ابزار</strong>
+            <p>تضمین کیفیت، تطابق قطعات و اصالت کلیه ابزارهای صنعتی و کارگاهی</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>ارسال سریع و مطمئن به سراسر ایران</strong>
+            <p>تحویل فوری در تهران و ارسال سریع با تیپاکس و باربری به تمام شهرستان‌ها</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>مشاوره فنی رایگان پیش از خرید</strong>
+            <p>پشتیبانی و راهنمایی تخصصی استادکاران جهت انتخاب ابزار متناسب با نوع کاربری</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>صدور آنی پیش‌فاکتور و پیگیری آنلاین</strong>
+            <p>ثبت سفارش آسان در سایت، استعلام لحظه‌ای موجودی و رهگیری وضعیت سفارش</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Footer Body -->
+    <div class="az-footer-main">
+      <div class="az-footer-col az-col-about">
+        <div class="az-footer-brand">
+          <span class="az-fbrand-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <div class="az-fbrand-text">
+            <strong>عظیم ابزار</strong>
+            <small>مرجع تخصصی ابزارهای مکانیکی و صنعتی</small>
+          </div>
+        </div>
+        <p class="az-footer-desc">
+          عظیم ابزار به عنوان مرکز معتبر تأمین و توزیع تخصصی ابزارهای کارگاهی، تعمیرگاهی، صنعتی و خودرویی، با سال‌ها سابقه درخشان در بازار ابزار تهران (میدان حسن‌آباد)، ارائه‌دهنده کامل‌ترین سبد ابزارهای تخصصی با بالاترین استاندارد کیفی، قیمت منصفانه و ضمانت سلامت فیزیکی است.
+        </p>
+        <div class="az-footer-badge-online">
+          <span class="az-beacon-live"></span>
+          <span>سامانه فعال استعلام قیمت و سفارش کالا</span>
+        </div>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسته‌بندی‌های تخصصی</h3>
+        <ul class="az-footer-list">
+          <li><a href="products-v4.html?cat=ابزار دستی">ابزار دستی و آچارهای کارگاهی</a></li>
+          <li><a href="products-v4.html?cat=تست باتری">تست باتری و ابزار تست دینام خودرو</a></li>
+          <li><a href="products-v4.html?cat=ابزار گاراژی">ابزار گاراژی و تجهیزات تعمیرگاهی</a></li>
+          <li><a href="products-v4.html?cat=ابزار مکانیکی">ابزارآلات تخصصی مکانیکی و موتور</a></li>
+          <li><a href="products-v4.html?cat=بکس و ترکمتر">جعبه‌بکس، ترکمترها و بکس بادی</a></li>
+          <li><a href="products-v4.html">مشاهده کاتالوگ جامع محصولات</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسترسی سریع و خدمات</h3>
+        <ul class="az-footer-list">
+          <li><a href="index.html">صفحه اصلی فروشگاه</a></li>
+          <li><a href="products-v4.html">کاتالوگ و لیست کامل محصولات</a></li>
+          <li><a href="cart.html">سبد خرید و صدور پیش‌فاکتور</a></li>
+          <li><a href="order-status.html">پیگیری وضعیت و رهگیری سفارش</a></li>
+          <li><a href="contact.html">مشاوره فنی و ارتباط با مدیریت</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col az-col-contact">
+        <h3 class="az-footer-heading">نشانی و راه‌های ارتباطی</h3>
+        <div class="az-footer-contact-items">
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>تهران، خیابان امام خمینی (ره)، میدان حسن‌آباد، بازار ابزار و یراق‌آلات، فروشگاه عظیم ابزار</span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>مشاوره و استعلام تلفنی: <a href="tel:09122394597" class="az-phone-link">۰۹۱۲-۲۳۹۴۵۹۷</a></span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>ساعات کاری: شنبه تا چهارشنبه ۹:۰۰ الی ۱۸:۰۰ | پنج‌شنبه‌ها ۹:۰۰ الی ۱۴:۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="az-footer-bottom">
+      <div class="az-fbottom-inner">
+        <span>© تمامی حقوق مادی و معنوی متعلق به <strong>عظیم ابزار</strong> است.</span>
+        <span class="az-fbottom-sub">مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و خودرویی کشور</span>
+      </div>
+    </div>
+  </footer>
 
   <script src="./supabase-config.js"></script>
   <script src="./azim-cart.js?v=5"></script>
@@ -286,59 +914,63 @@ main{position:relative;padding:34px 0 72px}
     const $=id=>document.getElementById(id);
     const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
     const money=n=>fmt(n)+' تومان';
-    function normalizeMobile(v){
-      let s=String(v||'').trim().replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\s()-]/g,'');
-      if(s.startsWith('0098')) s='0'+s.slice(4);
-      else if(s.startsWith('+98')) s='0'+s.slice(3);
-      else if(s.startsWith('98')) s='0'+s.slice(2);
-      return s;
-    }
     let coupon=null;
-    let paymentOptions={online_enabled:false};
-
-    async function loadPaymentOptions(){
-      try{
-        const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/rest/v1/rpc/azim_checkout_options',{
-          method:'POST',
-          headers:{
-            apikey:window.AZIM_SUPABASE_ANON_KEY,
-            Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,
-            'Content-Type':'application/json'
-          },
-          body:'{}'
-        });
-        const d=await r.json();
-        if(!r.ok) throw new Error(d?.message||'');
-        paymentOptions=d||{online_enabled:false};
-      }catch{
-        paymentOptions={online_enabled:false};
-      }
-      const onlineBox=$('onlinePaymentOption');
-      const onlineInput=document.querySelector('input[name="paymentMethod"][value="online"]');
-      if(onlineBox && onlineInput){
-        onlineBox.hidden=!Boolean(paymentOptions.online_enabled);
-        if(!paymentOptions.online_enabled && onlineInput.checked){
-          document.querySelector('input[name="paymentMethod"][value="phone"]').checked=true;
-        }
-      }
-      const note=$('paymentNote');
-      if(note) note.textContent=paymentOptions.online_enabled
-        ? 'درگاه آنلاین فعال است؛ بعد از تأیید پرداخت، وضعیت پرداخت سفارش به «پرداخت شده» تغییر می‌کند.'
-        : 'درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام قابل استفاده است.';
-    }
 
     function render(){
       const items=C.items();
       const box=$('cartItems');
-      $('cartCountLabel').textContent=items.reduce((s,x)=>s+x.qty,0).toLocaleString('fa-IR')+' قلم';
+      $('cartCountLabel').textContent=items.reduce((s,x)=>s+x.qty,0).toLocaleString('fa-IR')+' قلم ابزار';
       if(!items.length){
-        box.innerHTML='<div class="empty"><div class="empty-icon"><svg class="az-cart-svg empty-cart-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></div><h3>سبد سفارش خالی است</h3><p>از کاتالوگ محصولات، ابزار موردنظرت را به سبد اضافه کن.</p><a href="products-v4.html" class="btn" style="margin-top:12px">مشاهده محصولات</a></div>';
+        box.innerHTML=
+          '<div class="empty">'+
+            '<div class="empty-cart-anim-box">'+
+              '<svg class="az-cart-svg empty-cart-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">'+
+                '<path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+
+                '<path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/>'+
+              '</svg>'+
+            '</div>'+
+            '<h3>سبد سفارش شما خالی است</h3>'+
+            '<p>هنوز هیچ ابزاری از کاتالوگ انتخاب نکرده‌اید. با مراجعه به کاتالوگ محصولات، ابزارهای مدنظرتان را به سبد اضافه کنید.</p>'+
+            '<a href="products-v4.html" class="btn" style="margin-top:4px">'+
+              '<span>مشاهده کاتالوگ محصولات</span>'+
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>'+
+            '</a>'+
+            '<div class="empty-quick-tags">'+
+              '<a href="products-v4.html">ابزار تراشکاری</a>'+
+              '<a href="products-v4.html">هلدر و اینسرت</a>'+
+              '<a href="products-v4.html">مته و قلاویز</a>'+
+              '<a href="products-v4.html">ابزار اندازه‌گیری</a>'+
+            '</div>'+
+          '</div>';
         $('startCheckoutBtn').disabled=true;
       }else{
         box.innerHTML=items.map(x=>{
           const total=x.unit_price*x.qty;
-          const image=x.img?'<img src="'+escapeHtml(x.img)+'" alt="'+escapeHtml(x.name)+'">':'<span>⚙️</span>';
-          return '<article class="cart-row"><div class="cart-img">'+image+'</div><div class="cart-info"><div class="cart-name">'+escapeHtml(x.name)+'</div><div class="cart-code">'+escapeHtml(x.code||x.product_id)+'</div>'+(x.variant_label?'<div class="cart-variant">مدل / سایز: '+escapeHtml(x.variant_label)+'</div>':'')+'<div class="cart-price"><span class="label">قیمت واحد</span>'+money(x.unit_price)+'</div><div class="row-actions"><div class="qty"><button type="button" data-qty="-1" data-key="'+escapeHtml(x.key)+'" aria-label="کاهش تعداد">−</button><span>'+fmt(x.qty)+'</span><button type="button" data-qty="1" data-key="'+escapeHtml(x.key)+'" aria-label="افزایش تعداد">+</button></div><button class="ghost" type="button" data-remove="'+escapeHtml(x.key)+'">حذف از سفارش</button></div></div><div class="row-total">'+money(total)+'</div></article>';
+          const image=x.img?'<img src="'+escapeHtml(x.img)+'" alt="'+escapeHtml(x.name)+'">':'<span style="font-size:30px">⚙️</span>';
+          return '<article class="cart-row">'+
+            '<div class="cart-img">'+image+'</div>'+
+            '<div class="cart-info">'+
+              '<div class="cart-name">'+escapeHtml(x.name)+'</div>'+
+              '<div class="cart-code">کد: '+escapeHtml(x.code||x.product_id)+'</div>'+
+              (x.variant_label?'<div class="cart-variant">مدل: '+escapeHtml(x.variant_label)+'</div>':'')+
+              '<div class="cart-price"><span class="label">واحد:</span>'+money(x.unit_price)+'</div>'+
+              '<div class="row-actions">'+
+                '<div class="qty">'+
+                  '<button type="button" data-qty="-1" data-key="'+escapeHtml(x.key)+'" aria-label="کاهش تعداد">−</button>'+
+                  '<span>'+fmt(x.qty)+'</span>'+
+                  '<button type="button" data-qty="1" data-key="'+escapeHtml(x.key)+'" aria-label="افزایش تعداد">+</button>'+
+                '</div>'+
+                '<button class="ghost" type="button" data-remove="'+escapeHtml(x.key)+'" title="حذف این کالا از سفارش">'+
+                  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'+
+                  '<span>حذف</span>'+
+                '</button>'+
+              '</div>'+
+            '</div>'+
+            '<div class="row-total">'+
+              '<span style="font-size:10px;color:#859088;font-weight:700">جمع:</span>'+
+              '<strong>'+money(total)+'</strong>'+
+            '</div>'+
+          '</article>';
         }).join('');
         $('startCheckoutBtn').disabled=false;
       }
@@ -388,22 +1020,20 @@ main{position:relative;padding:34px 0 72px}
     $('couponInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCoupon();}});
     $('mobile').addEventListener('change',()=>{if($('couponInput').value.trim()) applyCoupon();});
 
-    $('startCheckoutBtn').onclick=()=>{ $('checkoutBox').hidden=false; $('checkoutBox').scrollIntoView({behavior:'smooth',block:'nearest'}); $('fullName').focus(); };
+    $('startCheckoutBtn').onclick=()=>{
+      $('checkoutBox').hidden=false;
+      $('checkoutBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+      $('fullName').focus();
+    };
 
     $('checkoutForm').onsubmit=async e=>{
       e.preventDefault();
       const items=C.items();
       if(!items.length) return;
       const btn=$('submitOrderBtn'), status=$('checkoutStatus');
-      const normalizedMobile=normalizeMobile($('mobile').value);
-      if(!/^09\d{9}$/.test(normalizedMobile)) {
-        status.textContent='شماره موبایل معتبر وارد کنید.';
-        status.className='coupon-status err';
-        btn.disabled=false;
-        btn.textContent='ثبت نهایی درخواست سفارش';
-        return;
-      }
-      btn.disabled=true; btn.textContent='در حال ثبت سفارش…'; status.textContent='';
+      btn.disabled=true;
+      btn.innerHTML='<span style="display:inline-block;animation:azSlowSpin 1s linear infinite">⚙</span> در حال ثبت سفارش…';
+      status.textContent='';
       try{
         await C.syncPrices();
         const freshItems=C.items();
@@ -413,38 +1043,95 @@ main{position:relative;padding:34px 0 72px}
           body:JSON.stringify({
             p_mode:'submit',
             p_full_name:$('fullName').value.trim(),
-            p_mobile:normalizedMobile,
+            p_mobile:$('mobile').value.trim(),
             p_email:$('email').value.trim()||null,
             p_address:$('address').value.trim()||null,
             p_city:$('city').value.trim()||null,
             p_discount_code:$('couponInput').value.trim().toUpperCase().replace(/\s+/g,'')||null,
-            p_items:freshItems.map(x=>({product_id:x.product_id,variant_label:x.variant_label||null,quantity:x.qty})),
-            p_payment_method:document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone'
+            p_items:freshItems.map(x=>({product_id:x.product_id,variant_label:x.variant_label||null,quantity:x.qty}))
           })
         }).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d?.message||d?.hint||'ثبت سفارش ناموفق بود.');return d;});
         C.clear();
         coupon=null;
         $('cartWorkspace').hidden=true;
         $('cartSuccess').hidden=false;
-        const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
-        const paymentLabel={phone:'تماس تلفنی',message:'پیام',online:'پرداخت آنلاین'}[selectedPayment]||selectedPayment;
-        const paymentText=selectedPayment==='online'
-          ? 'روش پرداخت: پرداخت آنلاین'
-          : 'روش پرداخت: '+paymentLabel+'؛ فروشگاه برای هماهنگی با شما ارتباط می‌گیرد.';
-        $('cartSuccess').innerHTML='<div class="success"><div class="success-check">✓</div><h2>درخواست سفارش ثبت شد</h2><p>سفارش شما با موفقیت در سیستم عظیم ابزار ثبت شد. '+paymentText+'</p><div class="order-code">'+escapeHtml(data.order_code||'AZ-ORDER')+'</div><p>مبلغ فعلی سفارش: <strong>'+money(data.total||0)+'</strong></p><div class="actions"><a class="btn" href="order-status.html?code='+encodeURIComponent(data.order_code||'')+'">پیگیری وضعیت سفارش</a><a class="btn secondary" href="products-v4.html">بازگشت به محصولات</a><a class="btn secondary" href="index.html">صفحه اصلی</a></div></div>';
+        const codeStr=escapeHtml(data.order_code||'AZ-ORDER');
+        $('cartSuccess').innerHTML=
+          '<div class="success">'+
+            '<div class="success-check">✓</div>'+
+            '<h2>پیش‌فاکتور با موفقیت ثبت شد</h2>'+
+            '<p>سفارش شما در سیستم عظیم ابزار ثبت شد. جهت هماهنگی، ارسال و دریافت بارنامه با شماره همراه شما تماس گرفته می‌شود.</p>'+
+            '<div style="margin:14px 0;">'+
+              '<div class="order-code" id="orderCodeBox" title="کلیک برای کپی">'+
+                '<span>کد پیگیری:</span> <b style="letter-spacing:1px">'+codeStr+'</b>'+
+              '</div>'+
+              '<div style="margin-top:6px">'+
+                '<button type="button" class="btn secondary" id="copyCodeBtn" style="padding:7px 14px;font-size:10px;gap:6px">'+
+                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'+
+                  '<span id="copyTextLabel">کپی کد پیگیری</span>'+
+                '</button>'+
+              '</div>'+
+            '</div>'+
+            '<p style="margin-top:8px">مبلغ نهایی برآورد شده: <strong style="color:#ffd84f;font-size:16px">'+money(data.total||0)+'</strong></p>'+
+            '<div class="actions">'+
+              '<a class="btn" href="order-status.html?code='+encodeURIComponent(data.order_code||'')+'">'+
+                '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'+
+                '<span>پیگیری آنلاین وضعیت سفارش</span>'+
+              '</a>'+
+              '<a class="btn secondary" href="products-v4.html">مشاهده و افزودن ابزارهای دیگر</a>'+
+              '<a class="btn secondary" href="index.html">صفحه اصلی</a>'+
+            '</div>'+
+          '</div>';
+        
+        const copyBtn=$('copyCodeBtn');
+        if(copyBtn){
+          copyBtn.onclick=()=>{
+            navigator.clipboard.writeText(data.order_code||'').then(()=>{
+              const lbl=$('copyTextLabel');
+              if(lbl){ lbl.textContent='کپی شد! ✓'; lbl.style.color='#3fe084'; }
+              setTimeout(()=>{ if(lbl){ lbl.textContent='کپی کد پیگیری'; lbl.style.color=''; } },2500);
+            }).catch(()=>{});
+          };
+        }
+
         window.scrollTo({top:0,behavior:'smooth'});
       }catch(err){
         status.textContent=err.message||'خطا در ثبت سفارش.';
         status.className='coupon-status err';
       }finally{
-        btn.disabled=false; btn.textContent='ثبت درخواست سفارش';
+        btn.disabled=false;
+        btn.innerHTML='<span>ثبت نهایی و صدور کد رهگیری</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
       }
     };
 
     C.syncPrices().finally(render);
-    loadPaymentOptions().finally(render);
     render();
   })();
+
+  function handleSmartBack(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const ref = document.referrer;
+    if (ref && ref.indexOf(window.location.host) !== -1 && ref.indexOf('cart.html') === -1) {
+      window.location.href = ref;
+      return false;
+    }
+    if (window.history && window.history.length > 1) {
+      const cur = window.location.href;
+      window.history.back();
+      setTimeout(function() {
+        if (window.location.href === cur) {
+          window.location.href = 'products-v4.html';
+        }
+      }, 280);
+      return false;
+    }
+    window.location.href = 'products-v4.html';
+    return false;
+  }
+  window.handleSmartBack = handleSmartBack;
   </script>
 </body>
 </html>

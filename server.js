@@ -24,24 +24,7 @@ app.set('json spaces', 0);
 
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'Cross-Origin-Resource-Policy': 'same-site',
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "form-action 'self' mailto:",
-    "img-src 'self' data: https:",
-    "font-src 'self' https://fonts.gstatic.com data:",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-    "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com",
-    "upgrade-insecure-requests"
-  ].join('; ')
+  'Referrer-Policy': 'strict-origin-when-cross-origin'
 };
 
 app.use((req, res, next) => {
@@ -100,7 +83,15 @@ app.get('/ai', (req, res) => {
   res.sendFile(path.join(__dirname, 'ai.html'));
 });
 
-app.get('/contact', (req, res) => {
+app.get(['/cart', '/cart.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'cart.html'));
+});
+
+app.get(['/order-status', '/order-status.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'order-status.html'));
+});
+
+app.get(['/contact', '/contact.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'contact.html'));
 });
 

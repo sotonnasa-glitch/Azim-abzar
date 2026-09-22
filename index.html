@@ -11,6 +11,7 @@
   <title>عظیم ابزار (Azim Abzar) | مرجع تخصصی ابزارهای مکانیکی و کارگاهی</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./azim-footer.css?v=1">
   <style>
     :root {
       --g: #f5b900;
@@ -234,183 +235,344 @@
       transform: translateY(0);
     }
 
-    /* Icon Animation Wrappers */
+    /* Icon Animation Wrappers & Tactile Spring */
     .az-anim-icon-wrap {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 9px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(245, 185, 0, 0.28);
       position: relative;
       flex-shrink: 0;
-      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       overflow: visible;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    }
+    .az-nav-btn {
+      padding: 9px 16px;
+      font-size: 13.5px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .az-nav-btn:hover {
+      background: rgba(245, 185, 0, 0.16);
+      border-color: rgba(245, 185, 0, 0.65);
+      color: #ffd84f;
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(245, 185, 0, 0.3), 0 0 16px rgba(245, 185, 0, 0.15);
     }
     .az-nav-btn:hover .az-anim-icon-wrap {
-      background: rgba(245, 185, 0, 0.22);
-      border-color: rgba(245, 185, 0, 0.6);
-      transform: scale(1.15);
-      box-shadow: 0 0 16px rgba(245, 185, 0, 0.35);
+      background: rgba(245, 185, 0, 0.26);
+      border-color: #ffd84f;
+      transform: scale(1.16) rotate(-2deg);
+      box-shadow: 0 0 20px rgba(245, 185, 0, 0.5), inset 0 0 8px rgba(255, 216, 79, 0.3);
     }
 
-    /* 1. Animation for Home (صفحه اصلی - کارگاه و فورج صنعتی) */
+    /* 1. Animation for Home (صفحه اصلی - کارگاه، کوره فورج شعله‌ور، جرقه‌ها و دودکش صنعتی) */
     .az-anim-home svg {
-      width: 19px;
-      height: 19px;
+      width: 22px;
+      height: 22px;
       overflow: visible;
+      filter: drop-shadow(0 0 2px rgba(245, 185, 0, 0.35));
     }
-    .az-home-smoke-1 {
-      animation: azSmokeDrift 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-      transform-origin: 17px 6px;
+    .az-home-spark-1 {
+      animation: azSparkFloat 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      transform-origin: 17.5px 5px;
     }
-    .az-home-smoke-2 {
-      animation: azSmokeDrift 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.7s;
-      transform-origin: 17px 6px;
+    .az-home-spark-2 {
+      animation: azSparkFloat 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 0.55s;
+      transform-origin: 16.5px 3px;
     }
-    @keyframes azSmokeDrift {
+    .az-home-spark-3 {
+      animation: azSparkFloat 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 1.1s;
+      transform-origin: 18.5px 2px;
+    }
+    @keyframes azSparkFloat {
       0% { transform: translateY(0) scale(0.6); opacity: 0; }
-      30% { opacity: 0.85; }
-      80% { opacity: 0.3; }
-      100% { transform: translateY(-7px) translateX(-2.5px) scale(1.4); opacity: 0; }
+      25% { opacity: 1; transform: translateY(-3px) translateX(1px) scale(1.15); }
+      75% { opacity: 0.7; transform: translateY(-7px) translateX(-2px) scale(1.3); }
+      100% { transform: translateY(-12px) translateX(1px) scale(0.4); opacity: 0; }
     }
-    .az-home-lantern {
-      animation: azLanternGlow 2s ease-in-out infinite;
-      transform-origin: 12px 10px;
+    .az-home-fire {
+      transform-box: fill-box;
+      transform-origin: bottom center;
+      animation: azForgeFlicker 1.4s ease-in-out infinite alternate;
     }
-    @keyframes azLanternGlow {
-      0%, 100% { filter: drop-shadow(0 0 2px #ffd84f); opacity: 0.75; }
-      50% { filter: drop-shadow(0 0 7px #ffe685); opacity: 1; transform: scale(1.2); }
+    @keyframes azForgeFlicker {
+      0% { transform: scaleY(0.9) scaleX(0.95); filter: drop-shadow(0 0 2px #ff9f1a); }
+      50% { transform: scaleY(1.15) scaleX(1.05); filter: drop-shadow(0 0 6px #ffd84f); }
+      100% { transform: scaleY(1) scaleX(1); filter: drop-shadow(0 0 4px #ff793f); }
     }
-    .az-home-door-slat {
-      animation: azDoorShimmer 3s ease-in-out infinite;
+    .az-home-fire-core {
+      transform-box: fill-box;
+      transform-origin: bottom center;
+      animation: azForgeCore 0.9s ease-in-out infinite alternate;
     }
-    @keyframes azDoorShimmer {
-      0%, 100% { opacity: 0.35; }
-      50% { opacity: 0.85; stroke: #ffd84f; }
+    @keyframes azForgeCore {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      100% { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 4px #fff); }
     }
-    .az-nav-btn-home:hover .az-home-smoke-1,
-    .az-nav-btn-home:hover .az-home-smoke-2 {
-      animation-duration: 1.1s;
+    .az-home-beacon {
+      animation: azBeaconPulse 1.8s ease-in-out infinite;
+      transform-origin: 12px 7px;
+    }
+    @keyframes azBeaconPulse {
+      0%, 100% { opacity: 0.55; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.35); filter: drop-shadow(0 0 5px #ffd84f); }
+    }
+    .az-nav-btn-home:hover .az-home-spark-1,
+    .az-nav-btn-home:hover .az-home-spark-2,
+    .az-nav-btn-home:hover .az-home-spark-3 {
+      animation-duration: 0.9s;
+    }
+    .az-nav-btn-home:hover .az-home-fire {
+      animation-duration: 0.7s;
+      filter: drop-shadow(0 0 8px #ffd84f) brightness(1.2);
     }
     .az-nav-btn-home:hover svg {
-      animation: azWorkshopBounce 0.6s cubic-bezier(0.3, 1.4, 0.6, 1);
+      animation: azWorkshopBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes azWorkshopBounce {
       0%, 100% { transform: translateY(0) scale(1); }
-      35% { transform: translateY(-3px) scale(1.08); }
-      70% { transform: translateY(1px) scale(0.98); }
+      35% { transform: translateY(-4px) scale(1.12); }
+      70% { transform: translateY(1px) scale(0.97); }
     }
 
-    /* 2. Animation for Catalog (کاتالوگ محصولات - چرخ‌دنده‌های دوگانه متقارن و آچار) */
+    /* 2. Animation for Catalog & Category (دسته‌بندی و کاتالوگ محصولات - ماتریس ۳بعدی، اسکنر لیزری طلایی و الماس مهندسی) */
     .az-anim-catalog svg {
-      width: 19px;
-      height: 19px;
+      width: 22px;
+      height: 22px;
       overflow: visible;
+      filter: drop-shadow(0 0 2px rgba(245, 185, 0, 0.35));
     }
-    .az-gear-drive {
-      transform-origin: 10px 14px;
-      animation: azGearDriveSpin 7s linear infinite;
+    .az-cat-grid-group {
+      transform-box: fill-box;
+      transform-origin: center;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    @keyframes azGearDriveSpin {
+    .az-cat-cell {
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.3s ease, stroke 0.3s ease;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .az-cat-cell-1, .az-cat-cell-4 {
+      animation: azCatCellPulse 2.8s ease-in-out infinite;
+    }
+    .az-cat-cell-2, .az-cat-cell-3 {
+      animation: azCatCellPulse 2.8s ease-in-out infinite 1.4s;
+    }
+    @keyframes azCatCellPulse {
+      0%, 100% { fill: rgba(245, 185, 0, 0.2); stroke: #ffd84f; }
+      50% { fill: rgba(245, 185, 0, 0.45); stroke: #fff2a3; filter: drop-shadow(0 0 4px rgba(245, 185, 0, 0.6)); }
+    }
+    .az-cat-scanline {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azCatLaserScan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      filter: drop-shadow(0 0 4px #ffd84f);
+    }
+    .az-cat-laser-head {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azCatLaserScan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      filter: drop-shadow(0 0 6px #fff);
+    }
+    @keyframes azCatLaserScan {
+      0% { transform: translateY(-7px); opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { transform: translateY(7px); opacity: 0; }
+    }
+    .az-cat-radar-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azCatRadarRing 2.2s linear infinite;
+    }
+    @keyframes azCatRadarRing {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    .az-gear-pinion {
-      transform-origin: 18px 7px;
-      animation: azGearPinionSpin 3.5s linear infinite;
+    .az-cat-diamond {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azDiamondPulse 1.8s ease-in-out infinite;
     }
-    @keyframes azGearPinionSpin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(-360deg); }
+    @keyframes azDiamondPulse {
+      0%, 100% { transform: scale(0.9) rotate(0deg); filter: drop-shadow(0 0 2px #ffd84f); }
+      50% { transform: scale(1.35) rotate(45deg); filter: drop-shadow(0 0 7px #ffeaa7); fill: #fff; }
     }
-    .az-gear-spark {
-      animation: azSparkBlink 2.4s ease-in-out infinite;
-      transform-origin: 14px 10px;
+    .az-cat-bracket {
+      animation: azBracketPing 2.5s ease-in-out infinite alternate;
     }
-    @keyframes azSparkBlink {
-      0%, 85%, 100% { opacity: 0; transform: scale(0.3); }
-      90% { opacity: 1; transform: scale(1.35); filter: drop-shadow(0 0 5px #ffd84f); }
-      95% { opacity: 0.4; transform: scale(0.8); }
+    @keyframes azBracketPing {
+      0% { opacity: 0.4; }
+      100% { opacity: 0.95; stroke: #fff; filter: drop-shadow(0 0 3px #ffd84f); }
     }
-    .az-wrench-ratchet {
-      transform-origin: 10px 14px;
-      animation: azRatchetStroke 2.8s ease-in-out infinite;
+    /* Catalog Hover: 3D Isometric Burst & Turbo Laser */
+    .az-nav-btn-catalog:hover .az-cat-cell-1,
+    .btn:hover .az-cat-cell-1 {
+      transform: translate(2px, -2px);
+      fill: rgba(245, 185, 0, 0.55);
+      stroke: #fff;
     }
-    @keyframes azRatchetStroke {
-      0%, 100% { transform: rotate(0deg); }
-      20% { transform: rotate(-18deg); }
-      40% { transform: rotate(4deg); }
-      60% { transform: rotate(-12deg); }
-      80% { transform: rotate(2deg); }
+    .az-nav-btn-catalog:hover .az-cat-cell-2,
+    .btn:hover .az-cat-cell-2 {
+      transform: translate(-2px, -2px);
+      fill: rgba(245, 185, 0, 0.4);
+      stroke: #ffd84f;
     }
-    .az-nav-btn-catalog:hover .az-gear-drive {
-      animation: azGearDriveSpin 1.1s linear infinite;
+    .az-nav-btn-catalog:hover .az-cat-cell-3,
+    .btn:hover .az-cat-cell-3 {
+      transform: translate(2px, 2px);
+      fill: rgba(245, 185, 0, 0.4);
+      stroke: #ffd84f;
     }
-    .az-nav-btn-catalog:hover .az-gear-pinion {
-      animation: azGearPinionSpin 0.55s linear infinite;
+    .az-nav-btn-catalog:hover .az-cat-cell-4,
+    .btn:hover .az-cat-cell-4 {
+      transform: translate(-2px, 2px);
+      fill: rgba(245, 185, 0, 0.55);
+      stroke: #fff;
     }
-    .az-nav-btn-catalog:hover .az-gear-spark {
-      animation: azSparkBlink 0.6s ease-in-out infinite;
+    .az-nav-btn-catalog:hover .az-cat-scanline,
+    .az-nav-btn-catalog:hover .az-cat-laser-head,
+    .btn:hover .az-cat-scanline,
+    .btn:hover .az-cat-laser-head {
+      animation-duration: 0.9s;
+      stroke: #fff;
+      filter: drop-shadow(0 0 8px #ffd84f);
     }
-    .az-nav-btn-catalog:hover .az-wrench-ratchet {
-      animation: azRatchetStroke 0.7s ease-in-out infinite;
+    .az-nav-btn-catalog:hover .az-cat-diamond,
+    .btn:hover .az-cat-diamond {
+      transform: scale(1.5) rotate(90deg);
+      fill: #fff;
+      filter: drop-shadow(0 0 10px #ffd84f);
     }
 
-    /* 4. Animation for Contact (ارتباط و سفارش - فرستنده صوتی رادیویی و گوشی تلفن) */
+    /* 3. Animation for Contact (ارتباط و سفارش - فرستنده صوتی رادیویی و امواج مخابراتی) */
     .az-anim-contact svg {
-      width: 19px;
-      height: 19px;
+      width: 22px;
+      height: 22px;
+      overflow: visible;
+      filter: drop-shadow(0 0 2px rgba(245, 185, 0, 0.35));
     }
     .az-contact-phone {
       transform-box: fill-box;
       transform-origin: center;
-      animation: azPhoneGentleFloat 3s ease-in-out infinite;
+      animation: azPhoneGentleFloat 2.8s ease-in-out infinite;
     }
     @keyframes azPhoneGentleFloat {
       0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-1.5px) rotate(3deg); }
+      50% { transform: translateY(-2px) rotate(4deg); }
     }
     .az-signal-w1 {
-      animation: azSignalPulseW1 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      animation: azSignalPulseW1 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
     }
     @keyframes azSignalPulseW1 {
-      0%, 100% { opacity: 0.25; stroke: #e69c00; }
-      50% { opacity: 1; stroke: #fff4b8; filter: drop-shadow(0 0 2px #ffd84f); }
+      0%, 100% { opacity: 0.3; stroke: #e69c00; transform: scale(0.9); }
+      50% { opacity: 1; stroke: #fff4b8; transform: scale(1.05); filter: drop-shadow(0 0 4px #ffd84f); }
     }
     .az-signal-w2 {
-      animation: azSignalPulseW2 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.45s;
+      animation: azSignalPulseW2 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 0.35s;
     }
     @keyframes azSignalPulseW2 {
-      0%, 100% { opacity: 0.15; stroke: #e69c00; }
-      50% { opacity: 1; stroke: #ffd84f; filter: drop-shadow(0 0 3px #ffd84f); }
+      0%, 100% { opacity: 0.2; stroke: #e69c00; transform: scale(0.9); }
+      50% { opacity: 1; stroke: #ffd84f; transform: scale(1.08); filter: drop-shadow(0 0 5px #ffd84f); }
     }
-    .az-signal-beacon {
+    .az-signal-w3 {
+      animation: azSignalPulseW3 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 0.7s;
+    }
+    @keyframes azSignalPulseW3 {
+      0%, 100% { opacity: 0.1; stroke: #e69c00; }
+      50% { opacity: 0.85; stroke: #ffeaa7; filter: drop-shadow(0 0 6px #ffd84f); }
+    }
+    .az-signal-beacon-core {
+      animation: azBeaconDot 1.4s ease-in-out infinite;
+    }
+    @keyframes azBeaconDot {
+      0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 2px #2ed573); }
+      50% { opacity: 1; filter: drop-shadow(0 0 6px #2ed573); }
+    }
+    .az-signal-beacon-ripple {
       transform-box: fill-box;
       transform-origin: center;
-      animation: azSignalBeaconSmooth 1.6s ease-in-out infinite;
+      animation: azBeaconRipple 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
     }
-    @keyframes azSignalBeaconSmooth {
-      0%, 100% { opacity: 0.5; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.3); filter: drop-shadow(0 0 3px #2ed573); }
+    @keyframes azBeaconRipple {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
     }
     .az-nav-btn-contact:hover .az-contact-phone,
     .btn:hover .az-contact-phone {
-      animation: azPhoneCleanVibrate 0.45s ease-in-out infinite;
+      animation: azPhoneCleanVibrate 0.38s ease-in-out infinite;
     }
     @keyframes azPhoneCleanVibrate {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-9deg); }
-      50% { transform: rotate(9deg); }
-      75% { transform: rotate(-5deg); }
+      0%, 100% { transform: rotate(0deg) scale(1.05); }
+      25% { transform: rotate(-10deg) scale(1.1); }
+      50% { transform: rotate(10deg) scale(1.1); }
+      75% { transform: rotate(-6deg) scale(1.08); }
     }
     .az-nav-btn-contact:hover .az-signal-w1,
     .az-nav-btn-contact:hover .az-signal-w2,
+    .az-nav-btn-contact:hover .az-signal-w3,
     .btn:hover .az-signal-w1,
-    .btn:hover .az-signal-w2 {
-      animation-duration: 0.8s;
+    .btn:hover .az-signal-w2,
+    .btn:hover .az-signal-w3 {
+      animation-duration: 0.7s;
+      stroke: #fff;
+    }
+
+    /* 4. Animation for Tracking (پیگیری سفارش - رادار متحرک ۳۶۰ درجه و سیگنال سونار آنلاین) */
+    .az-anim-tracking svg {
+      width: 22px;
+      height: 22px;
+      overflow: visible;
+      filter: drop-shadow(0 0 2px rgba(245, 185, 0, 0.35));
+    }
+    .az-track-sweep-group {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azRadarScan 3.2s linear infinite;
+    }
+    @keyframes azRadarScan {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .az-track-shockwave {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azRadarShockwave 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    @keyframes azRadarShockwave {
+      0% { transform: scale(0.5); opacity: 1; stroke-width: 2px; }
+      100% { transform: scale(2.2); opacity: 0; stroke-width: 0.8px; }
+    }
+    .az-track-ping {
+      animation: azTargetGpsPulse 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes azTargetGpsPulse {
+      0% { opacity: 0.7; filter: drop-shadow(0 0 2px #2ed573); transform: scale(0.9); }
+      100% { opacity: 1; filter: drop-shadow(0 0 7px #2ed573); transform: scale(1.25); }
+    }
+    .az-track-ping-halo {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azTargetGpsHalo 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    @keyframes azTargetGpsHalo {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .az-nav-btn-tracking:hover .az-track-sweep-group {
+      animation-duration: 0.9s;
+    }
+    .az-nav-btn-tracking:hover .az-track-shockwave {
+      animation-duration: 0.9s;
+    }
+    .az-nav-btn-tracking:hover .az-track-ping {
+      filter: drop-shadow(0 0 10px #2ed573);
     }
 
     .cta {
@@ -473,7 +635,10 @@
       top: 0;
       left: 0;
       will-change: transform;
-      animation: azSlidePhotoRight 55s linear infinite;
+      animation: azSlidePhotoRight 32s linear infinite;
+    }
+    .az-hero-photo-track:hover {
+      animation-play-state: paused;
     }
     .az-photo-panel {
       flex: 0 0 760px;
@@ -609,7 +774,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(18,24,20,.72);
+      background: rgba(18,24,20,.76);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(245,185,0,.28);
@@ -619,17 +784,27 @@
       font-weight: 800;
       color: #e5ece7;
       box-shadow: 0 4px 14px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.08);
-      transition: all .25s ease;
+      transition:
+        transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.26s ease,
+        box-shadow 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: default;
     }
     .trust-badge:hover {
-      border-color: rgba(245,185,0,.6);
-      transform: translateY(-2px);
-      background: rgba(26,34,28,.85);
-      box-shadow: 0 6px 20px rgba(0,0,0,.45), 0 0 16px rgba(245,185,0,.2);
+      border-color: rgba(245,185,0,.65);
+      transform: translateY(-3px);
+      background: rgba(26,34,28,.9);
+      box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 18px rgba(245,185,0,.22);
     }
     .trust-badge svg {
       color: var(--g);
       flex-shrink: 0;
+      transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+    }
+    .trust-badge:hover svg {
+      transform: scale(1.22);
+      color: #ffd84f;
     }
 
     .actions {
@@ -645,13 +820,22 @@
       font-weight: 800;
       line-height: 1.6;
       border: 1px solid #4a514c;
-      transition: all .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition:
+        transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.24s ease,
+        border-color 0.24s ease;
       display: inline-flex;
       align-items: center;
       gap: 10px;
       position: relative;
       white-space: nowrap;
       flex-shrink: 0;
+      cursor: pointer;
+    }
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+      transition-duration: 0.08s;
     }
     .btn span {
       line-height: 1.6;
@@ -660,7 +844,7 @@
     }
     .btn .az-arrow {
       display: inline-block;
-      transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn:hover .az-arrow {
       transform: translateX(-5px);
@@ -680,34 +864,48 @@
       content: "";
       position: absolute;
       top: 0;
-      left: -120%;
+      left: -130%;
       width: 60%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
       transform: skewX(-25deg);
-      transition: left 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: left 0.65s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
     }
     .primary:hover::after {
-      left: 150%;
+      left: 160%;
     }
     .primary:hover {
       background: linear-gradient(135deg, #ffeaa7 0%, #ffd033 100%);
-      box-shadow: 0 10px 35px rgba(245,185,0,.55);
+      box-shadow: 0 12px 35px rgba(245,185,0,.55), 0 0 20px rgba(245,185,0,.3);
     }
     .secondary {
-      background: rgba(14,18,15,.65);
+      background: rgba(14,18,15,.7);
       color: #fff;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.16);
       box-shadow: 0 6px 20px rgba(0,0,0,.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .secondary::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(245,185,0,0.12), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+    .secondary:hover::before {
+      transform: translateX(100%);
     }
     .secondary:hover {
-      border-color: rgba(245,185,0,.6);
+      border-color: rgba(245,185,0,.65);
       color: #ffd84f;
       background: rgba(245,185,0,.1);
-      box-shadow: 0 8px 26px rgba(0,0,0,.5), 0 0 20px rgba(245,185,0,.2);
+      box-shadow: 0 10px 28px rgba(0,0,0,.5), 0 0 22px rgba(245,185,0,.25);
     }
 
     /* پنل ابزارسنج مکانیکی و چیپ‌های شناور داخل هیرو */
@@ -725,19 +923,35 @@
     }
     .az-hud-card {
       width: 260px;
-      background: rgba(10,14,11,.86);
+      background: linear-gradient(165deg, rgba(14,20,16,.92) 0%, rgba(8,11,9,.94) 100%);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       border: 1px solid rgba(245,185,0,.35);
       border-radius: 20px;
       padding: 16px 18px;
       box-shadow: 0 16px 36px rgba(0,0,0,.65), 0 0 24px rgba(245,185,0,.12);
-      transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+      transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    /* خط لیزری کالیبراسیون در بالای کارت HUD */
+    .az-hud-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, #ffd84f, transparent);
+      box-shadow: 0 0 8px rgba(245,185,0,.8);
     }
     .az-hud-card:hover {
       transform: translateY(-4px) scale(1.02);
-      border-color: rgba(245,185,0,.65);
-      box-shadow: 0 20px 45px rgba(0,0,0,.75), 0 0 30px rgba(245,185,0,.25);
+      border-color: rgba(245,185,0,.7);
+      box-shadow: 0 22px 50px rgba(0,0,0,.75), 0 0 35px rgba(245,185,0,.28);
     }
     .az-hud-top {
       display: flex;
@@ -783,9 +997,14 @@
       display: block;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,.5));
     }
+    .az-gauge-progress {
+      stroke-dasharray: 180;
+      stroke-dashoffset: 0;
+      animation: azGaugeArcPulse 4.5s ease-in-out infinite alternate;
+    }
     .az-gauge-needle {
       transform-origin: 80px 80px;
-      animation: azNeedleSwing 4.5s ease-in-out infinite alternate;
+      animation: azNeedleSwing 4.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite alternate;
     }
     .az-gauge-info {
       margin-top: -12px;
@@ -798,6 +1017,7 @@
       display: block;
       line-height: 1;
       text-shadow: 0 0 12px rgba(245,185,0,.4);
+      animation: azGaugeValGlow 4.5s ease-in-out infinite alternate;
     }
     .az-gauge-unit {
       font-size: 10px;
@@ -834,17 +1054,23 @@
       align-items: center;
       gap: 10px;
       padding: 9px 14px;
-      background: rgba(12,17,14,.9);
+      background: rgba(12,17,14,.92);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(245,185,0,.3);
       border-radius: 12px;
       box-shadow: 0 10px 24px rgba(0,0,0,.45);
-      transition: all .25s ease;
+      transition:
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
     }
     .az-floating-chip:hover {
-      transform: translateX(4px) scale(1.02);
-      border-color: rgba(245,185,0,.6);
+      transform: translateX(5px) scale(1.02);
+      border-color: rgba(245,185,0,.65);
+      box-shadow: 0 12px 28px rgba(0,0,0,.55), 0 0 18px rgba(245,185,0,.2);
     }
     .az-floating-chip strong {
       display: block;
@@ -873,7 +1099,7 @@
       inset: -3px;
       border-radius: 50%;
       border: 1px solid #4cd964;
-      animation: azRadarPing 2s infinite;
+      animation: azRadarPing 2s infinite cubic-bezier(0.16, 1, 0.3, 1);
     }
     .az-chip-gear {
       font-size: 15px;
@@ -881,28 +1107,46 @@
       animation: azGearSpinSlow 12s linear infinite;
     }
 
-    /* انیمیشن‌های مربوط به المان‌های هیرو */
+    /* انیمیشن‌های کالیبره‌شده ابزارسنج و المان‌های هیرو */
     @keyframes azHudFloat {
       0% { transform: translateY(-50%) translate3d(0, 0, 0); }
       100% { transform: translateY(-50%) translate3d(0, -12px, 0); }
     }
     @keyframes azNeedleSwing {
-      0% { transform: rotate(-18deg); }
-      35% { transform: rotate(12deg); }
-      70% { transform: rotate(-6deg); }
-      100% { transform: rotate(16deg); }
+      0% { transform: rotate(-22deg); }
+      12% { transform: rotate(14deg); }
+      15% { transform: rotate(10deg); }
+      28% { transform: rotate(10deg); }
+      40% { transform: rotate(26deg); }
+      43% { transform: rotate(23deg); }
+      58% { transform: rotate(23deg); }
+      72% { transform: rotate(-5deg); }
+      75% { transform: rotate(-3deg); }
+      88% { transform: rotate(8deg); }
+      90% { transform: rotate(6deg); }
+      100% { transform: rotate(-22deg); }
+    }
+    @keyframes azGaugeArcPulse {
+      0% { stroke-dashoffset: 35; opacity: 0.85; }
+      40%, 60% { stroke-dashoffset: 0; opacity: 1; filter: drop-shadow(0 0 6px rgba(245,185,0,.8)); }
+      100% { stroke-dashoffset: 35; opacity: 0.85; }
+    }
+    @keyframes azGaugeValGlow {
+      0%, 100% { text-shadow: 0 0 10px rgba(245,185,0,.35); color: #ffd84f; }
+      40%, 60% { text-shadow: 0 0 18px rgba(245,185,0,.7), 0 0 28px rgba(255,216,79,.4); color: #ffffff; }
     }
     @keyframes azLedBlink {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: .4; transform: scale(0.85); }
+      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px #4cd964, 0 0 20px rgba(76, 217, 100, 0.6); }
+      50% { opacity: 0.45; transform: scale(0.85); box-shadow: 0 0 4px #4cd964; }
     }
     @keyframes azGearSpinSlow {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
     @keyframes azRadarPing {
-      0% { transform: scale(0.7); opacity: 0.9; }
-      100% { transform: scale(2.2); opacity: 0; }
+      0% { transform: scale(0.4); opacity: 1; border-color: #4cd964; }
+      50% { opacity: 0.6; }
+      100% { transform: scale(2.8); opacity: 0; border-color: rgba(76, 217, 100, 0); }
     }
 
     @media (max-width: 1040px) {
@@ -994,12 +1238,96 @@
       margin-top: 8px;
     }
 
-    /* === تصاویر منتخب ابزار و کارگاه === */
+    /* === تصاویر منتخب و دسته‌بندی‌های تخصصی ابزار === */
+    .az-cat-showcase-grid,
     .az-simple-photos-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-top: 10px;
+      margin-top: 14px;
+    }
+    .az-cat-card-item {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      height: 240px;
+      background: #0d120f;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      text-decoration: none;
+    }
+    .az-cat-card-item:hover {
+      transform: translateY(-5px);
+      border-color: rgba(245, 185, 0, 0.55);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.55), 0 0 20px rgba(245, 185, 0, 0.16);
+    }
+    .az-cat-card-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.72) contrast(1.1);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+      z-index: 1;
+    }
+    .az-cat-card-item:hover .az-cat-card-bg {
+      transform: scale(1.06);
+      filter: brightness(0.85) contrast(1.15);
+    }
+    .az-cat-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(6,9,7,0.08) 0%, rgba(6,9,7,0.65) 55%, rgba(6,9,7,0.96) 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .az-cat-card-content {
+      position: relative;
+      z-index: 3;
+      padding: 16px 18px;
+    }
+    .az-cat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #ffd84f;
+      background: rgba(245, 185, 0, 0.14);
+      border: 1px solid rgba(245, 185, 0, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 7px;
+      letter-spacing: -0.2px;
+    }
+    .az-cat-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 6px;
+      line-height: 1.4;
+      transition: color 0.25s ease;
+    }
+    .az-cat-card-item:hover .az-cat-card-title {
+      color: #ffd84f;
+    }
+    .az-cat-card-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #a1aaa3;
+      font-weight: 600;
+      transition: color 0.25s ease, transform 0.25s ease;
+    }
+    .az-cat-card-item:hover .az-cat-card-action {
+      color: #fff;
+      transform: translateX(-3px);
     }
     .az-simple-photo-item {
       position: relative;
@@ -1027,11 +1355,14 @@
       transform: scale(1.04);
     }
     @media (max-width: 960px) {
+      .az-cat-showcase-grid,
       .az-simple-photos-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 540px) {
+      .az-cat-showcase-grid,
       .az-simple-photos-grid { grid-template-columns: 1fr; }
-      .az-simple-photo-item { height: 200px; }
+      .az-cat-card-item,
+      .az-simple-photo-item { height: 210px; }
     }
 
     /* 3 Choice Paths (مسیرهای سه‌گانه خرید) with Smoked Glass & Ambient Highlights */
@@ -1239,18 +1570,9 @@
       .az-ticker-item { font-size: 11px; padding: 0 14px; }
     }
   </style>
-  <link rel="stylesheet" href="./azim-home-categories.css?v=1">\n</head>
+  <link rel="stylesheet" href="./azim-home-categories.css?v=1">
+</head>
 <body>
-  <div class="top">
-    <div class="wrap top-content" style="justify-content: center;">
-      <div class="top-right" style="gap: 24px; flex-wrap: wrap; justify-content: center;">
-        <span><span class="live-dot" aria-hidden="true"></span> نمایش اطلاعات و مشخصات کالا در کاتالوگ</span>
-        <span>شیوه و زمان ارسال با فروش هماهنگ می‌شود</span>
-        <span>مشاوره و پشتیبانی فنی کارگاهی</span>
-      </div>
-    </div>
-  </div>
-
   <header>
     <div class="wrap head">
       <a class="brand" href="#home">
@@ -1266,62 +1588,95 @@
         </span>
       </a>
       <nav class="nav" role="navigation" aria-label="منوی اصلی و دسترسی سریع">
-        <!-- دکمه ۱: صفحه اصلی همراه با کارگاه صنعتی، دودکش متحرک و فانوس درخشان -->
+        <!-- دکمه ۱: صفحه اصلی همراه با کارگاه صنعتی، کوره فورج شعله‌ور، جرقه‌ها و دودکش -->
         <a class="az-nav-btn az-nav-btn-home" href="#home" id="nav-btn-home">
           <span class="az-anim-icon-wrap az-anim-home" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
-              <circle class="az-home-smoke-1" cx="17" cy="4" r="1.4" fill="#ffd84f"/>
-              <circle class="az-home-smoke-2" cx="17.5" cy="5.5" r="1.1" fill="#fff4b8"/>
-              <path d="M15.5 8V4.5h3V9.5" stroke="#ffd84f" stroke-width="1.6" stroke-linecap="round"/>
-              <path d="M2.5 10L12 3l9.5 7V20.5a1.5 1.5 0 0 1-1.5 1.5H4a1.5 1.5 0 0 1-1.5-1.5V10z" stroke="#ffd84f" stroke-width="1.8" stroke-linejoin="round"/>
-              <rect x="8" y="12.5" width="8" height="9.5" rx="1" fill="rgba(245,185,0,0.12)" stroke="#ffd84f" stroke-width="1.4"/>
-              <line class="az-home-door-slat" x1="9.5" y1="15" x2="14.5" y2="15" stroke="#ffeaa7" stroke-width="1.2" stroke-linecap="round"/>
-              <line class="az-home-door-slat" x1="9.5" y1="17.5" x2="14.5" y2="17.5" stroke="#ffeaa7" stroke-width="1.2" stroke-linecap="round"/>
-              <line class="az-home-door-slat" x1="9.5" y1="20" x2="14.5" y2="20" stroke="#ffeaa7" stroke-width="1.2" stroke-linecap="round"/>
-              <circle class="az-home-lantern" cx="12" cy="9" r="1.8" fill="#ffd84f"/>
+              <!-- Animated smoke and sparks -->
+              <circle class="az-home-spark-1" cx="17.5" cy="4.5" r="1.3" fill="#ffd84f"/>
+              <circle class="az-home-spark-2" cx="16.5" cy="2.5" r="1.1" fill="#fff4b8"/>
+              <circle class="az-home-spark-3" cx="18.5" cy="1.5" r="0.9" fill="#ff9f1a"/>
+              <!-- Chimney -->
+              <path d="M15.5 8.5V4h3v5.5" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round"/>
+              <!-- Workshop Building Silhouette -->
+              <path d="M2.5 10L12 2.8l9.5 7.2V21a1.5 1.5 0 0 1-1.5 1.5H4a1.5 1.5 0 0 1-1.5-1.5V10z" stroke="#ffd84f" stroke-width="1.8" stroke-linejoin="round" fill="rgba(245,185,0,0.08)"/>
+              <!-- Active Forge Hearth (Flames & Embers) -->
+              <rect x="8" y="13" width="8" height="8.5" rx="1.5" fill="rgba(14,19,15,0.95)" stroke="#ffd84f" stroke-width="1.4"/>
+              <path class="az-home-fire" d="M9.8 19.5c0-1.8 1.2-2.8 2.2-4.2 1 1.4 2.2 2.4 2.2 4.2a2.2 2.2 0 0 1-4.4 0z" fill="#ff9f1a"/>
+              <path class="az-home-fire-core" d="M11 19.5c0-0.9 0.5-1.5 1-2.2 0.5 0.7 1 1.3 1 2.2a1 1 0 0 1-2 0z" fill="#fff4b8"/>
+              <!-- Rooftop Beacon Signal -->
+              <circle class="az-home-beacon" cx="12" cy="7" r="1.6" fill="#ffd84f"/>
             </svg>
           </span>
           <span>صفحه اصلی</span>
         </a>
 
-        <!-- دکمه ۲: کاتالوگ محصولات با چرخ‌دنده‌های دوگانه متقارن، جرقه و آچار رچت -->
+        <!-- دکمه ۲: دسته‌بندی و کاتالوگ محصولات با ماتریس مهندسی ۳بعدی، اسکنر لیزری طلایی و الماس -->
         <a class="az-nav-btn az-nav-btn-catalog" href="products-v4.html" id="nav-btn-catalog">
           <span class="az-anim-icon-wrap az-anim-catalog" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
-              <g class="az-gear-drive">
-                <circle cx="10" cy="14" r="5" stroke="#ffd84f" stroke-width="1.6" fill="rgba(245,185,0,0.18)"/>
-                <circle cx="10" cy="14" r="1.8" fill="#ffd84f"/>
-                <path d="M10 7.5v2m0 9v2M3.5 14h2m9 0h2m-2.1-5.4l-1.4 1.4m-6 6l-1.4 1.4m0-8.8l1.4 1.4m6 6l1.4 1.4" stroke="#ffd84f" stroke-width="1.6" stroke-linecap="round"/>
+              <!-- Technical Alignment Brackets -->
+              <path class="az-cat-bracket" d="M3 6.5V3.5h3 M18 3.5h3v3 M3 17.5v3h3 M18 20.5h3v-3" stroke="#ffd84f" stroke-width="1.2" stroke-linecap="round"/>
+              <!-- 4 Dimensional Blueprint Matrix Cells -->
+              <g class="az-cat-grid-group">
+                <rect class="az-cat-cell az-cat-cell-1" x="12.5" y="4" width="7" height="7" rx="2" stroke="#ffd84f" stroke-width="1.6" fill="rgba(245,185,0,0.22)"/>
+                <rect class="az-cat-cell az-cat-cell-2" x="4.5" y="4" width="7" height="7" rx="2" stroke="#ffd84f" stroke-width="1.6" fill="rgba(255,255,255,0.08)"/>
+                <rect class="az-cat-cell az-cat-cell-3" x="12.5" y="12.5" width="7" height="7" rx="2" stroke="#ffd84f" stroke-width="1.6" fill="rgba(255,255,255,0.08)"/>
+                <rect class="az-cat-cell az-cat-cell-4" x="4.5" y="12.5" width="7" height="7" rx="2" stroke="#ffd84f" stroke-width="1.6" fill="rgba(245,185,0,0.22)"/>
               </g>
-              <g class="az-gear-pinion">
-                <circle cx="18" cy="7" r="3.2" stroke="#ffeaa7" stroke-width="1.4" fill="rgba(255,255,255,0.1)"/>
-                <circle cx="18" cy="7" r="1.1" fill="#ffeaa7"/>
-                <path d="M18 2.5v1.4m0 6.2v1.4M13.5 7h1.4m6.2 0h1.4m-2.3-3.2l-1 1m-4.2 4.2l-1 1m0-6.2l1 1m4.2 4.2l1 1" stroke="#ffeaa7" stroke-width="1.3" stroke-linecap="round"/>
-              </g>
-              <path class="az-gear-spark" d="M13.8 10.2l.7-1.5.7 1.5 1.5.7-1.5.7-.7 1.5-.7-1.5-1.5-.7z" fill="#fff" stroke="#ffd84f" stroke-width="0.6"/>
-              <g class="az-wrench-ratchet">
-                <path d="M10 14l6-6a1.8 1.8 0 1 1 2.5 2.5l-6 6" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round"/>
-                <circle cx="17.5" cy="9.5" r="1.2" fill="#111"/>
-              </g>
+              <!-- Slicing Laser Scanning Beam & Head -->
+              <line class="az-cat-scanline" x1="2" y1="12" x2="22" y2="12" stroke="#fff4b8" stroke-width="1.8" stroke-linecap="round"/>
+              <circle class="az-cat-laser-head" cx="12" cy="12" r="2" fill="#ffd84f"/>
+              <!-- Central Diamond and Radar Ring -->
+              <circle class="az-cat-radar-ring" cx="12" cy="12" r="4.2" stroke="#ffd84f" stroke-width="1" stroke-dasharray="1.5 1.5" fill="none"/>
+              <polygon class="az-cat-diamond" points="12,9.8 14.2,12 12,14.2 9.8,12" fill="#ffd84f"/>
             </svg>
           </span>
           <span>کاتالوگ محصولات</span>
         </a>
-<!-- دکمه ۴: ارتباط و سفارش با گوشی تلفن و امواج رادیویی مخابراتی -->
-        <a class="az-nav-btn" href="order-status.html"><span aria-hidden="true">⌁</span><span>پیگیری سفارش</span></a>
+
+        <!-- دکمه ۳: پیگیری سفارش آنلاین با رادار متحرک ۳۶۰ درجه و سیگنال سونار -->
+        <a class="az-nav-btn az-nav-btn-tracking" href="order-status.html" id="nav-btn-tracking">
+          <span class="az-anim-icon-wrap az-anim-tracking" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- Sonar Rings Expanding -->
+              <circle cx="12" cy="12" r="9" stroke="#ffd84f" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.6"/>
+              <circle cx="12" cy="12" r="5.5" stroke="#ffeaa7" stroke-width="1.2" opacity="0.75"/>
+              <circle class="az-track-shockwave" cx="12" cy="12" r="3" stroke="#2ed573" stroke-width="1.5" fill="none"/>
+              <!-- Crosshair Grid Axes -->
+              <line x1="2.5" y1="12" x2="21.5" y2="12" stroke="#ffd84f" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+              <line x1="12" y1="2.5" x2="12" y2="21.5" stroke="#ffd84f" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+              <!-- Rotating Radar Sweep Hand & Fan Beam -->
+              <g class="az-track-sweep-group">
+                <line x1="12" y1="12" x2="12" y2="2.5" stroke="#ffd84f" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 12 L12 2.5 A9.5 9.5 0 0 1 18.5 5.5 Z" fill="rgba(245,185,0,0.28)"/>
+              </g>
+              <!-- Target Lock Reticle with Active GPS Ping -->
+              <circle class="az-track-ping" cx="16" cy="8" r="2.2" fill="#2ed573"/>
+              <circle class="az-track-ping-halo" cx="16" cy="8" r="4.2" stroke="#2ed573" stroke-width="1.2" fill="none"/>
+            </svg>
+          </span>
+          <span>پیگیری سفارش</span>
+        </a>
+
+        <!-- دکمه ۴: ارتباط و سفارش با تلفن رادیویی و امواج صوتی مخابراتی -->
         <a class="az-nav-btn az-nav-btn-contact" href="contact.html" id="nav-btn-contact">
           <span class="az-anim-icon-wrap az-anim-contact" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
-              <path class="az-contact-phone" d="M19 15.5v2.8a1.7 1.7 0 0 1-1.85 1.7 17 17 0 0 1-7.4-2.6 16.8 16.8 0 0 1-5.1-5.1A17 17 0 0 1 2 4.85 1.7 1.7 0 0 1 3.7 3h2.8a1.7 1.7 0 0 1 1.7 1.5 11 11 0 0 0 .6 2.4 1.7 1.7 0 0 1-.4 1.8l-1.2 1.2a13.7 13.7 0 0 0 5.1 5.1l1.2-1.2a1.7 1.7 0 0 1 1.8-.4c.8.2 1.6.4 2.4.6a1.7 1.7 0 0 1 1.5 1.7z" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="rgba(245,185,0,0.12)"/>
-              <path class="az-signal-w1" d="M14 6.5a4.5 4.5 0 0 1 4.5 4.5" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round"/>
-              <path class="az-signal-w2" d="M14 3a8 8 0 0 1 8 8" stroke="#ffeaa7" stroke-width="1.8" stroke-linecap="round"/>
-              <circle class="az-signal-beacon" cx="4.5" cy="4.5" r="1.6" fill="#2ed573"/>
+              <!-- Telephone Handset -->
+              <path class="az-contact-phone" d="M19 15.5v2.8a1.7 1.7 0 0 1-1.85 1.7 17 17 0 0 1-7.4-2.6 16.8 16.8 0 0 1-5.1-5.1A17 17 0 0 1 2 4.85 1.7 1.7 0 0 1 3.7 3h2.8a1.7 1.7 0 0 1 1.7 1.5 11 11 0 0 0 .6 2.4 1.7 1.7 0 0 1-.4 1.8l-1.2 1.2a13.7 13.7 0 0 0 5.1 5.1l1.2-1.2a1.7 1.7 0 0 1 1.8-.4c.8.2 1.6.4 2.4.6a1.7 1.7 0 0 1 1.5 1.7z" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="rgba(245,185,0,0.14)"/>
+              <!-- Radiating Acoustic Waves -->
+              <path class="az-signal-w1" d="M13.8 7.5a4 4 0 0 1 4 4" stroke="#ffd84f" stroke-width="1.8" stroke-linecap="round"/>
+              <path class="az-signal-w2" d="M14 4.2a7.5 7.5 0 0 1 7.5 7.5" stroke="#ffeaa7" stroke-width="1.8" stroke-linecap="round"/>
+              <path class="az-signal-w3" d="M14.5 1a11 11 0 0 1 8.5 8.5" stroke="#ffd84f" stroke-width="1.5" stroke-linecap="round" opacity="0.65"/>
+              <!-- Live Online Status Beacon -->
+              <circle class="az-signal-beacon-core" cx="4.5" cy="4.5" r="1.8" fill="#2ed573"/>
+              <circle class="az-signal-beacon-ripple" cx="4.5" cy="4.5" r="3.6" stroke="#2ed573" stroke-width="1.2" fill="none"/>
             </svg>
           </span>
           <span>ارتباط و سفارش</span>
         </a>
       </nav>
-      <a class="cta" href="cart.html" data-cart-link aria-label="سبد سفارش"><span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span><span>سبد سفارش</span> <b data-cart-count hidden>۰</b></a>
       <a class="cta" href="products-v4.html">مشاهده کاتالوگ آنلاین</a>
     </div>
   </header>
@@ -1361,7 +1716,7 @@
               <div class="trust-badges">
                 <span class="trust-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  فولاد کروم وانادیوم سخت‌کاری‌شده
+                  ابزارهای تخصصی و صنعتی کارگاهی
                 </span>
                 <span class="trust-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1381,17 +1736,14 @@
                 <a class="btn primary" href="products-v4.html">
                   <span class="az-anim-icon-wrap az-anim-catalog" style="width:22px;height:22px;background:transparent;border:none;" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none">
-                      <g class="az-gear-drive">
-                        <circle cx="10" cy="14" r="5" stroke="#111" stroke-width="1.8" fill="rgba(0,0,0,0.1)"/>
-                        <circle cx="10" cy="14" r="1.8" fill="#111"/>
-                        <path d="M10 7.5v2m0 9v2M3.5 14h2m9 0h2m-2.1-5.4l-1.4 1.4m-6 6l-1.4 1.4m0-8.8l1.4 1.4m6 6l1.4 1.4" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
+                      <g class="az-cat-grid-group">
+                        <rect class="az-cat-cell az-cat-cell-1" x="13" y="3.5" width="7.5" height="7.5" rx="2" stroke="#111" stroke-width="1.8" fill="rgba(0,0,0,0.15)"/>
+                        <rect class="az-cat-cell az-cat-cell-2" x="3.5" y="3.5" width="7.5" height="7.5" rx="2" stroke="#111" stroke-width="1.8" fill="rgba(0,0,0,0.06)"/>
+                        <rect class="az-cat-cell az-cat-cell-3" x="13" y="13" width="7.5" height="7.5" rx="2" stroke="#111" stroke-width="1.8" fill="rgba(0,0,0,0.06)"/>
+                        <rect class="az-cat-cell az-cat-cell-4" x="3.5" y="13" width="7.5" height="7.5" rx="2" stroke="#111" stroke-width="1.8" fill="rgba(0,0,0,0.15)"/>
                       </g>
-                      <g class="az-gear-pinion">
-                        <circle cx="18" cy="7" r="3.2" stroke="#111" stroke-width="1.5"/>
-                        <circle cx="18" cy="7" r="1.1" fill="#111"/>
-                        <path d="M18 2.5v1.4m0 6.2v1.4M13.5 7h1.4m6.2 0h1.4" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
-                      </g>
-                      <path class="az-gear-spark" d="M13.8 10.2l.7-1.5.7 1.5 1.5.7-1.5.7-.7 1.5-.7-1.5-1.5-.7z" fill="#fff" stroke="#111" stroke-width="0.6"/>
+                      <line class="az-cat-scanline" x1="2.5" y1="12" x2="21.5" y2="12" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
+                      <circle class="az-cat-core-node" cx="12" cy="12" r="1.3" fill="#111"/>
                     </svg>
                   </span>
                   <span>مشاهده کاتالوگ و قیمت‌های بروز</span>
@@ -1516,22 +1868,53 @@
       </div>
     </section>
 
-    <!-- بخش تصاویر کارگاهی و ابزارها -->
-    <section class="section" id="photos" style="padding-top:16px;padding-bottom:28px;">
+    <!-- بخش دسته‌بندی‌های تخصصی ابزار و کاتالوگ -->
+    <section class="section" id="categories" style="padding-top:16px;padding-bottom:28px;">
       <div class="wrap">
-        <div class="az-simple-photos-grid">
-          <div class="az-simple-photo-item">
-            <img src="./src/assets/images/garage_engine_work_1789760853632.jpg" alt="ابزارهای تخصصی مکانیکی در کارگاه" loading="lazy">
+        <div class="sectionHead" style="margin-bottom:12px;">
+          <div>
+            <div class="eyebrow">دسته‌بندی‌های تخصصی کاتالوگ</div>
+            <h2 class="title">گروه‌های اصلی ابزار صنعتی و کارگاهی</h2>
+            <p class="lead">دسترسی مستقیم و تفکیک‌شده به ۹۰۸ قلم ابزار مکانیکی، کارگاهی و تجهیزات حرفه‌ای:</p>
           </div>
-          <div class="az-simple-photo-item">
-            <img src="./src/assets/images/cat_wrenches_1789756566411.jpg" alt="ست آچارهای یکسر کارگاهی" loading="lazy">
-          </div>
-          <div class="az-simple-photo-item">
-            <img src="./src/assets/images/impact_air_wrench_1789760841938.jpg" alt="بکس بادی صنعتی سنگین" loading="lazy">
-          </div>
-          <div class="az-simple-photo-item">
-            <img src="./src/assets/images/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و چیدمان ابزار کارگاهی" loading="lazy">
-          </div>
+        </div>
+        <div class="az-cat-showcase-grid">
+          <a class="az-cat-card-item" href="products-v4.html?search=آچار">
+            <img class="az-cat-card-bg" src="./src/assets/images/cat_wrenches_1789756566411.jpg" alt="ست آچارهای یکسر و دوسر رینگی کارگاهی" loading="lazy">
+            <div class="az-cat-card-overlay"></div>
+            <div class="az-cat-card-content">
+              <span class="az-cat-badge">آلیاژ کروم وانادیوم</span>
+              <h3 class="az-cat-card-title">آچار، بکس و ترکمتر دقیق</h3>
+              <div class="az-cat-card-action">مشاهده اقلام دسته ←</div>
+            </div>
+          </a>
+          <a class="az-cat-card-item" href="products-v4.html?search=تعمیرگاهی">
+            <img class="az-cat-card-bg" src="./src/assets/images/garage_engine_work_1789760853632.jpg" alt="ابزارهای تخصصی مکانیکی و تعمیرگاهی موتور" loading="lazy">
+            <div class="az-cat-card-overlay"></div>
+            <div class="az-cat-card-content">
+              <span class="az-cat-badge">تجهیزات تخصصی گاراژ</span>
+              <h3 class="az-cat-card-title">ابزارهای موتور و تعمیرگاهی</h3>
+              <div class="az-cat-card-action">مشاهده اقلام دسته ←</div>
+            </div>
+          </a>
+          <a class="az-cat-card-item" href="products-v4.html?search=بادی">
+            <img class="az-cat-card-bg" src="./src/assets/images/impact_air_wrench_1789760841938.jpg" alt="بکس بادی صنعتی سنگین و ابزار پنوماتیک" loading="lazy">
+            <div class="az-cat-card-overlay"></div>
+            <div class="az-cat-card-content">
+              <span class="az-cat-badge">گشتاور سنگین نیوتن‌متر</span>
+              <h3 class="az-cat-card-title">بکس بادی و ابزار پنوماتیک</h3>
+              <div class="az-cat-card-action">مشاهده اقلام دسته ←</div>
+            </div>
+          </a>
+          <a class="az-cat-card-item" href="products-v4.html?search=ترولی">
+            <img class="az-cat-card-bg" src="./src/assets/images/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و چیدمان ابزار کارگاهی" loading="lazy">
+            <div class="az-cat-card-overlay"></div>
+            <div class="az-cat-card-content">
+              <span class="az-cat-badge">سامانه ذخیره‌سازی ابزار</span>
+              <h3 class="az-cat-card-title">ترولی و جعبه‌ابزار کارگاهی</h3>
+              <div class="az-cat-card-action">مشاهده اقلام دسته ←</div>
+            </div>
+          </a>
         </div>
       </div>
     </section>
@@ -1580,12 +1963,147 @@
     </section>
   </main>
 
-  <footer>
-    <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-      <span>© عظیم ابزار · مرجع تخصصی ابزارهای مکانیکی، صنعتی و کارگاهی</span>
-      <div style="display:flex;gap:18px">
-        <a href="products-v4.html" style="color:var(--g)">کاتالوگ محصولات</a>
-        <a href="contact.html">ارتباط با ما</a>
+  <!-- Rich Comprehensive Footer (فوتر جامع و پرمحتوا با انیمیشن‌های زنده) -->
+  <footer class="az-main-footer" id="mainFooter">
+    <!-- 4 Guarantees Strip -->
+    <div class="az-footer-features-strip">
+      <div class="az-footer-features-grid">
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>اصالت ۱۰۰٪ و تضمین فیزیکی ابزار</strong>
+            <p>تضمین کیفیت، تطابق قطعات و اصالت کلیه ابزارهای صنعتی و کارگاهی</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>ارسال سریع و مطمئن به سراسر ایران</strong>
+            <p>تحویل فوری در تهران و ارسال سریع با تیپاکس و باربری به تمام شهرستان‌ها</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>مشاوره فنی رایگان پیش از خرید</strong>
+            <p>پشتیبانی و راهنمایی تخصصی استادکاران جهت انتخاب ابزار متناسب با نوع کاربری</p>
+          </div>
+        </div>
+
+        <div class="az-feat-item">
+          <div class="az-feat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="az-feat-info">
+            <strong>صدور آنی پیش‌فاکتور و پیگیری آنلاین</strong>
+            <p>ثبت سفارش آسان در سایت، استعلام لحظه‌ای موجودی و رهگیری وضعیت سفارش</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Footer Body -->
+    <div class="az-footer-main">
+      <div class="az-footer-col az-col-about">
+        <div class="az-footer-brand">
+          <span class="az-fbrand-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <div class="az-fbrand-text">
+            <strong>عظیم ابزار</strong>
+            <small>مرجع تخصصی ابزارهای مکانیکی و صنعتی</small>
+          </div>
+        </div>
+        <p class="az-footer-desc">
+          عظیم ابزار به عنوان مرکز معتبر تأمین و توزیع تخصصی ابزارهای کارگاهی، تعمیرگاهی، صنعتی و خودرویی، با سال‌ها سابقه درخشان در بازار ابزار تهران (میدان حسن‌آباد)، ارائه‌دهنده کامل‌ترین سبد ابزارهای تخصصی با بالاترین استاندارد کیفی، قیمت منصفانه و ضمانت سلامت فیزیکی است.
+        </p>
+        <div class="az-footer-badge-online">
+          <span class="az-beacon-live"></span>
+          <span>سامانه فعال استعلام قیمت و سفارش کالا</span>
+        </div>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسته‌بندی‌های تخصصی</h3>
+        <ul class="az-footer-list">
+          <li><a href="products-v4.html?cat=ابزار دستی">ابزار دستی و آچارهای کارگاهی</a></li>
+          <li><a href="products-v4.html?cat=تست باتری">تست باتری و ابزار تست دینام خودرو</a></li>
+          <li><a href="products-v4.html?cat=ابزار گاراژی">ابزار گاراژی و تجهیزات تعمیرگاهی</a></li>
+          <li><a href="products-v4.html?cat=ابزار مکانیکی">ابزارآلات تخصصی مکانیکی و موتور</a></li>
+          <li><a href="products-v4.html?cat=بکس و ترکمتر">جعبه‌بکس، ترکمترها و بکس بادی</a></li>
+          <li><a href="products-v4.html">مشاهده کاتالوگ جامع محصولات</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col">
+        <h3 class="az-footer-heading">دسترسی سریع و خدمات</h3>
+        <ul class="az-footer-list">
+          <li><a href="index.html">صفحه اصلی فروشگاه</a></li>
+          <li><a href="products-v4.html">کاتالوگ و لیست کامل محصولات</a></li>
+          <li><a href="cart.html">سبد خرید و صدور پیش‌فاکتور</a></li>
+          <li><a href="order-status.html">پیگیری وضعیت و رهگیری سفارش</a></li>
+          <li><a href="contact.html">مشاوره فنی و ارتباط با مدیریت</a></li>
+        </ul>
+      </div>
+
+      <div class="az-footer-col az-col-contact">
+        <h3 class="az-footer-heading">نشانی و راه‌های ارتباطی</h3>
+        <div class="az-footer-contact-items">
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>تهران، خیابان امام خمینی (ره)، میدان حسن‌آباد، بازار ابزار و یراق‌آلات، فروشگاه عظیم ابزار</span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>مشاوره و استعلام تلفنی: <a href="tel:09122394597" class="az-phone-link">۰۹۱۲-۲۳۹۴۵۹۷</a></span>
+          </div>
+          <div class="az-contact-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>ساعات کاری: شنبه تا چهارشنبه ۹:۰۰ الی ۱۸:۰۰ | پنج‌شنبه‌ها ۹:۰۰ الی ۱۴:۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="az-footer-bottom">
+      <div class="az-fbottom-inner">
+        <span>© تمامی حقوق مادی و معنوی متعلق به <strong>عظیم ابزار</strong> است.</span>
+        <span class="az-fbottom-sub">مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و خودرویی کشور</span>
       </div>
     </div>
   </footer>
@@ -1594,6 +2112,7 @@
   <script src="./azim-home-copy.js?v=9" defer></script>
   <script src="./supabase-config.js"></script>
   <script src="./azim-cart.js?v=4"></script>
-  <script src="./azim-live-content.js?v=3" defer></script>\n  <script src="./azim-home-categories.js?v=1" defer></script>
+  <script src="./azim-live-content.js?v=3" defer></script>
+  <script src="./azim-home-categories.js?v=1" defer></script>
 </body>
 </html>

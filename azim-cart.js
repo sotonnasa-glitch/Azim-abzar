@@ -96,6 +96,11 @@
     document.querySelectorAll('[data-cart-count]').forEach(el => {
       el.textContent = n.toLocaleString('fa-IR');
       el.hidden = n < 1;
+      if (n < 1) {
+        el.style.display = 'none';
+      } else {
+        el.style.removeProperty('display');
+      }
     });
     document.querySelectorAll('[data-cart-empty-state]').forEach(el => {
       el.hidden = n > 0;
@@ -252,7 +257,8 @@
       '@keyframes azCartTrail{0%,100%{stroke-dashoffset:0;opacity:.9}45%{stroke-dashoffset:-28;opacity:1}70%{stroke-dashoffset:-8;opacity:.9}}',
       '@keyframes azCartHover{0%{transform:rotate(0) scale(1)}35%{transform:rotate(-9deg) scale(1.08)}70%{transform:rotate(7deg) scale(1.08)}100%{transform:rotate(0) scale(1)}}',
       '@media (prefers-reduced-motion:reduce){.az-cart-svg{animation:none!important}.az-cart-svg .az-cart-track{animation:none!important}}',
-      '.az-cart-badge{min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px;border-radius:999px;background:#f5b900;color:#111;font-size:10px;line-height:18px}',
+      '.az-cart-badge{min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;border-radius:999px;background:#f5b900;color:#111;font-size:10px;font-weight:900;line-height:1;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.35)}',
+      '.az-cart-badge[hidden]{display:none!important}',
       '.az-floating-cart{position:fixed;left:16px;bottom:18px;z-index:90;display:inline-flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid rgba(245,185,0,.45);border-radius:14px;background:rgba(12,16,13,.94);box-shadow:0 14px 34px rgba(0,0,0,.42);color:#fff;text-decoration:none;font:800 12px Vazirmatn,system-ui,sans-serif;backdrop-filter:blur(12px)}',
       '.az-floating-cart:hover{border-color:#ffd84f;box-shadow:0 16px 38px rgba(0,0,0,.48),0 0 18px rgba(245,185,0,.16)}',
       '.az-floating-cart-icon{display:inline-grid;place-items:center;width:18px;height:18px}.az-floating-cart b{min-width:20px;height:20px;display:grid;place-items:center;border-radius:999px;background:#f5b900;color:#111;font-size:10px}',
