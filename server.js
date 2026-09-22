@@ -103,6 +103,22 @@ app.get(['/', '/index.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+const BLOCKED_STATIC_PATHS = [
+  /^\\/(?:database|supabase|api|node_modules|\\.github)(?:\\/|$)/i,
+  /^\\/(?:server\\.js|wrangler\\.jsonc|\\.assetsignore|\\.gitignore|package(?:-lock)?\\.json)$/i,
+  /^\\/(?:HANDOVER|DEPLOYMENT_FA|AI_AUDIT[^/]*?)\\.md$/i,
+  /\\.(?:sql|b64|zip)$/i,
+  /(?:^|\\/)\\.env(?:\\.|$)/i
+];
+
+app.use((req, res, next) => {
+  const pathName = decodeURIComponent(req.path || '/');
+  if (BLOCKED_STATIC_PATHS.some((pattern) => pattern.test(pathName))) {
+    return res.status(404).end();
+  }
+  next();
+});
+
 app.use(express.static(__dirname, {
   etag: false,
   maxAge: 0,
