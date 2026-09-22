@@ -110,6 +110,17 @@ jobs:
           done
           echo 'REMOTE SUPABASE IMAGES VERIFIED'
 
+      - name: Validate Supabase Edge Function source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s supabase/functions/azim-telegram-admin/index.ts
+          test -s supabase/functions/azim-ai-chat/index.ts
+          grep -q 'TELEGRAM_BOT_TOKEN' supabase/functions/azim-telegram-admin/index.ts
+          grep -q 'tracking_code' supabase/functions/azim-telegram-admin/index.ts
+          grep -q 'azim-ai-chat' supabase-config.js
+          echo 'EDGE FUNCTIONS VERIFIED: Telegram admin + AI'
+
       - name: Validate backend source
         shell: bash
         run: |
