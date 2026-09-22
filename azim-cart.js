@@ -14,6 +14,14 @@
 
   const fmt = n => new Intl.NumberFormat('fa-IR').format(Math.max(0, Number(n) || 0));
   const money = n => fmt(n) + ' تومان';
+  function friendlyError(error, fallback){
+    const message = String(error?.message || '');
+    if(error instanceof TypeError || /Failed to fetch|Load failed|NetworkError|network request failed/i.test(message)){
+      return 'خطا در اتصال به سرور فروشگاه. اتصال اینترنت یا آدرس سرویس را بررسی کنید.';
+    }
+    return message || fallback;
+  }
+
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
   function read(){
@@ -186,22 +194,26 @@
 
   async function rpc(params){
     if(!SUPABASE_URL || !ANON_KEY) throw new Error('اتصال فروشگاه در دسترس نیست.');
-    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/azim_cart_checkout',{
-      method:'POST',
-      headers:{
-        apikey:ANON_KEY,
-        Authorization:'Bearer '+ANON_KEY,
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify(params)
-    });
-    let data=null;
-    try{ data=await r.json(); }catch(_){}
-    if(!r.ok){
-      const msg = data?.message || data?.error_description || data?.hint || 'خطا در ارتباط با فروشگاه.';
-      throw new Error(msg);
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/azim_cart_checkout',{
+        method:'POST',
+        headers:{
+          apikey:ANON_KEY,
+          Authorization:'Bearer '+ANON_KEY,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(params)
+      });
+      let data=null;
+      try{ data=await r.json(); }catch(_){}
+      if(!r.ok){
+        const msg = data?.message || data?.error_description || data?.hint || 'خطا در ارتباط با فروشگاه.';
+        throw new Error(msg);
+      }
+      return data;
+    }catch(error){
+      throw new Error(friendlyError(error,'خطا در ارتباط با فروشگاه.'));
     }
-    return data;
   }
 
   async function previewCoupon(code,mobile){
