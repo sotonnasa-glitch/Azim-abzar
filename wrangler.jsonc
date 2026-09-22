@@ -15,7 +15,22 @@
     ],
     "exclude": [
       "node_modules/**",
-      ".git/**"
+      ".git/**",
+      ".github/**",
+      "supabase/**",
+      "database/**",
+      "api/**",
+      "*.sql",
+      "*.md",
+      "*.b64",
+      "*.zip",
+      "server.js",
+      "package.json",
+      "package-lock.json",
+      ".env",
+      ".env.*",
+      "wrangler.jsonc",
+      ".assetsignore"
     ]
   }
 }
