@@ -10,7 +10,11 @@ alter table public.orders
 update public.orders set payment_method = 'phone' where payment_method is null;
 alter table public.orders alter column payment_method set default 'phone';
 
-do $$ begin
+alter table public.orders drop constraint if exists orders_payment_status_check;
+alter table public.orders add constraint orders_payment_status_check
+  check (payment_status = any (array['unpaid','pending','paid','partially_refunded','refunded']));
+
+do $ begin
   if not exists (select 1 from pg_constraint where conname = 'orders_payment_method_check') then
     alter table public.orders add constraint orders_payment_method_check
       check (payment_method is null or payment_method in ('online','phone','message'));
