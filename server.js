@@ -104,11 +104,11 @@ app.get(['/', '/index.html'], (req, res) => {
 });
 
 const BLOCKED_STATIC_PATHS = [
-  /^\\/(?:database|supabase|api|node_modules|\\.github)(?:\\/|$)/i,
-  /^\\/(?:server\\.js|wrangler\\.jsonc|\\.assetsignore|\\.gitignore|package(?:-lock)?\\.json)$/i,
-  /^\\/(?:HANDOVER|DEPLOYMENT_FA|AI_AUDIT[^/]*?)\\.md$/i,
-  /\\.(?:sql|b64|zip)$/i,
-  /(?:^|\\/)\\.env(?:\\.|$)/i
+  /^\/(?:database|supabase|api|node_modules|\.github)(?:\/|$)/i,
+  /^\/(?:server\.js|wrangler\.jsonc|\.assetsignore|\.gitignore|package(?:-lock)?\.json)$/i,
+  /^\/(?:HANDOVER|DEPLOYMENT_FA|AI_AUDIT[^/]*?)\.md$/i,
+  /\.(?:sql|b64|zip)$/i,
+  /(?:^|\/)\.env(?:\.|$)/i
 ];
 
 app.use((req, res, next) => {
