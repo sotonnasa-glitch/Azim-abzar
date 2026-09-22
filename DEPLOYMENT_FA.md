@@ -5,7 +5,9 @@
 - **Frontend استاتیک:** GitHub Pages
 - **Database / Storage / Auth:** Supabase
 - **Backend اختیاری:** Node.js + Express برای `/api/chat`
-- **AI secrets:** فقط در environment backend
+- **AI serverless:** Supabase Edge Function با نام `azim-ai-chat`
+- **Telegram admin:** Supabase Edge Function با نام `azim-telegram-admin`
+- **AI/Telegram secrets:** فقط در Secrets محیط Edge Function یا backend
 - **تصاویر کاتالوگ:** Supabase Storage در bucket `catalog-images`
 
 ## Frontend
@@ -44,9 +46,22 @@ GET /api/health
 
 ## AI
 
-صفحه AI به `/api/chat` وابسته است. بنابراین GitHub Pages به تنهایی backend AI را اجرا نمی‌کند.
+در GitHub Pages، صفحه AI به Edge Function زیر وصل است:
+`https://lzkrwtnylkordkwkdyzp.supabase.co/functions/v1/azim-ai-chat`
 
-در صورتی که frontend و backend روی دامنه‌های جدا باشند، مقدار `AZIM_ALLOWED_ORIGIN` را برابر origin واقعی frontend قرار دهید.
+Node/Express و `/api/chat` فقط برای استقرار self-hosted اختیاری هستند. در استقرار جداگانه، `AZIM_ALLOWED_ORIGIN` را برای backend Node روی origin واقعی frontend تنظیم کنید.
+
+## ربات تلگرام
+
+Edge Function `azim-telegram-admin` مدیر را به سفارش‌ها و وضعیت ارسال متصل می‌کند.
+
+Secrets:
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_ADMIN_CHAT_IDS`
+- برای تنظیم اولیه webhook، endpoint داخلی setup با header مخصوص توکن محافظت شده است.
+
+جریان ثبت مرسوله:
+سفارش → «ثبت کد مرسوله» → کد مرسوله → لینک پیگیری یا «بدون لینک» → شرکت ارسال → ذخیره در `orders` → نمایش خودکار در صفحه پیگیری مشتری.
 
 ## Supabase
 
