@@ -40,6 +40,9 @@ jobs:
           grep -q 'azim-cart.js' contact.html
           grep -q 'addCatalogItemToCart' products-v4.html
           grep -q 'azim_cart_checkout' cart.html
+          grep -q 'name="paymentMethod"' cart.html
+          grep -q 'p_payment_method:' cart.html
+          grep -q 'azim_checkout_options' cart.html
           grep -q 'data-cart-link' products-v4.html
       - name: Check order tracking page
         shell: bash
@@ -47,6 +50,9 @@ jobs:
           test -f order-status.html
           grep -q 'azim_order_status' order-status.html
           grep -q 'پیگیری سفارش' order-status.html
+          grep -q 'azim_request_order_cancel' order-status.html
+          grep -q 'azim_request_order_return' order-status.html
+          grep -q 'window.copyText' order-status.html
 
       - name: Check public cart SQL
         shell: bash
