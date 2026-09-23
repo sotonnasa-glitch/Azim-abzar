@@ -254,6 +254,12 @@
     document.body.appendChild(a);
   }
 
+  function shouldShowFloatingCart(){
+    const path=(location.pathname||'').toLowerCase();
+    const page=(document.body?.dataset?.page||'').toLowerCase();
+    return /product|products|محصول/.test(path) || /product|products|محصول/.test(page);
+  }
+
   function addSharedStyles(){
     if(document.getElementById('az-cart-shared-style')) return;
     const s=document.createElement('style');
