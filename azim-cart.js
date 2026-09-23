@@ -288,7 +288,7 @@
   function initShared(){
     read();
     addSharedStyles();
-    injectFloatingCart();
+    if(shouldShowFloatingCart()) injectFloatingCart();
     updateBadges();
     window.addEventListener('storage',()=>{read();updateBadges();});
   }
