@@ -83,6 +83,23 @@
     document.body.appendChild(button);
   }
 
+  function removeHomeFloatingCart() {
+    const selectors = [
+      '#floatingCart',
+      '#floating-cart',
+      '#cartFloating',
+      '.floating-cart',
+      '.floating-cart-button',
+      '.cart-floating',
+      '.az-floating-cart',
+      '[data-floating-cart]',
+      '[aria-label*="سبد خرید"]'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(el => {
+      if (el.id !== 'azimAiFab' && !el.closest('.az-ai-fab')) el.remove();
+    });
+  }
+
   function mountHomeButton() {
     if (!document.querySelector('#home')) return;
     const actions = document.querySelector('#home .hero .actions');
