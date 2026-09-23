@@ -1,10 +1,202 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>دستیار هوشمند عظیم ابزار</title><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800;900&display=swap" rel="stylesheet"><style>:root{--gold:#f5b900;--ink:#111312;--paper:#f4f1e9}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 10%,#fff7d6 0,#f4f1e9 32%,#e8e4d9 100%);font-family:Vazirmatn,Tahoma,sans-serif;color:var(--ink);min-height:100vh}.app{width:min(900px,calc(100% - 24px));margin:28px auto;background:#fff;border:1px solid #ddd8ca;border-radius:24px;overflow:hidden;box-shadow:0 25px 80px #1112}.head{background:#111312;color:#fff;padding:24px;display:flex;align-items:center;gap:14px}.logo{width:48px;height:48px;border-radius:13px;background:var(--gold);display:grid;place-items:center;font-weight:900;font-size:22px;box-shadow:4px 4px 0 #000}.head h1{font-size:20px;margin:0}.head p{font-size:10px;color:#bbb;margin:4px 0 0}.status{margin-right:auto;font-size:9px;color:#9fe870;display:flex;align-items:center;gap:6px}.status i{width:7px;height:7px;background:#70d64b;border-radius:50%;box-shadow:0 0 12px #70d64b}.chat{height:62vh;min-height:430px;overflow:auto;padding:22px;background:#faf9f5}.msg{max-width:78%;padding:13px 15px;border-radius:17px;margin:10px 0;line-height:2;font-size:12px;white-space:pre-wrap}.bot{background:#fff;border:1px solid #e2ded4;border-top-right-radius:5px}.user{background:#111312;color:#fff;margin-right:auto;border-top-left-radius:5px}.typing{display:none;color:#888;font-size:10px;padding:8px}.quick{display:flex;gap:8px;overflow:auto;padding:10px 18px;border-top:1px solid #eee}.quick button{white-space:nowrap;border:1px solid #ddd6c5;background:#fff;border-radius:999px;padding:9px 13px;font:inherit;font-size:10px;cursor:pointer}.quick button:hover{border-color:var(--gold);background:#fff8d9}.composer{display:flex;gap:10px;padding:16px;border-top:1px solid #ddd8ca;background:#fff}.composer textarea{flex:1;resize:none;border:1px solid #d8d3c8;border-radius:14px;padding:12px;font:inherit;font-size:12px;min-height:52px;outline:none}.composer textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px #f5b90022}.send{width:58px;border:0;border-radius:14px;background:var(--gold);font-weight:900;cursor:pointer}.note{text-align:center;font-size:9px;color:#888;padding:0 18px 15px}@media(max-width:600px){.app{margin:0;width:100%;min-height:100vh;border-radius:0}.chat{height:calc(100vh - 220px)}.msg{max-width:88%}}</style></head><body><div class="app"><header class="head"><div class="logo">AI</div><div><h1>دستیار هوشمند عظیم ابزار</h1><p>برای انتخاب ابزار، مشخصات و راهنمای خرید از من بپرس.</p></div><div style="margin-right:auto;display:flex;align-items:center;gap:12px"><span class="status"><i></i> آنلاین</span><a href="./" style="color:#f5b900;text-decoration:none;font-size:11px;font-weight:700;background:#1e2420;padding:6px 12px;border-radius:8px;border:1px solid #363d38">بازگشت ←</a></div></header><main class="chat" id="chat"><div class="msg bot">سلام 👋 من دستیار هوشمند عظیم ابزارم. بگو چه کاری انجام می‌دی یا چه ابزاری لازم داری تا راهنمایی‌ات کنم.</div></main><div class="typing" id="typing">دستیار در حال فکر کردن…</div><div class="quick"><button data-q="برای تعمیرگاه خودرو چه ابزارهایی پیشنهاد می‌کنی؟">ابزار تعمیرگاه</button><button data-q="برای خرید آچار چه نکاتی مهم است؟">راهنمای آچار</button><button data-q="یک ست ابزار اقتصادی پیشنهاد بده">ست اقتصادی</button></div><form class="composer" id="form"><textarea id="input" placeholder="مثلاً: برای باز کردن پیچ‌های سفت چه ابزاری بخرم؟" required></textarea><button class="send" type="submit">ارسال</button></form><div class="note">این دستیار به مدل هوش مصنوعی متصل می‌شود؛ پاسخ‌های ساختگی یا از پیش‌نوشته‌شده استفاده نمی‌کند.</div></div><script>
-const chat=document.getElementById('chat'),form=document.getElementById('form'),input=document.getElementById('input'),typing=document.getElementById('typing');
-const getAIEndpoint=()=>String(window.AZIM_AI_API_URL||'/api/chat').trim();
-function add(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
-async function ask(q){if(form.dataset.disabled==='1')return;add(q,'user');typing.style.display='block';try{const r=await fetch(getAIEndpoint(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});const data=await r.json();if(!r.ok)throw new Error(data.error||'خطا در اتصال');add(data.reply||'پاسخی دریافت نشد.','bot')}catch(e){add('اتصال دستیار هوشمند برقرار نشد. '+(e.message||''),'bot')}finally{typing.style.display='none'}}
-function wireQuick(){document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>ask(b.dataset.q))}
-window.__AZIM_AI_REWIRE=wireQuick;
-form.addEventListener('submit',e=>{e.preventDefault();const q=input.value.trim();if(!q)return;input.value='';ask(q)});
-wireQuick();
-</script><script src="./supabase-config.js"></script><script src="./azim-live-content.js?v=1"></script></body></html>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="دستیار هوشمند عظیم ابزار برای راهنمایی انتخاب ابزار، مشخصات فنی و مسیر خرید.">
+  <meta name="theme-color" content="#070908">
+  <title>دستیار هوشمند | عظیم ابزار</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="./supabase-config.js"></script>
+  <style>
+    :root{--bg:#070908;--panel:#101512;--panel2:#0c100e;--line:rgba(255,255,255,.09);--text:#f4f6f4;--muted:#929b95;--gold:#f5b900;--gold2:#ffd84f;--ok:#43d17d;--danger:#ff7777}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;background:
+      radial-gradient(circle at 14% 4%,rgba(245,185,0,.15),transparent 27%),
+      radial-gradient(circle at 90% 82%,rgba(29,88,52,.13),transparent 30%),
+      linear-gradient(160deg,#060807 0%,#0a0f0c 55%,#060807 100%);
+      color:var(--text);font-family:Vazirmatn,Tahoma,sans-serif;overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:
+      radial-gradient(rgba(245,185,0,.24) 1px,transparent 1px),
+      repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 1px,transparent 13px);
+      background-size:34px 34px,auto;mask-image:linear-gradient(to bottom,#000,transparent 90%);z-index:-1}
+    a{color:inherit;text-decoration:none}
+    .page{width:min(1120px,calc(100% - 28px));margin:22px auto 28px}
+    .shell{border:1px solid var(--line);border-radius:26px;overflow:hidden;background:linear-gradient(180deg,rgba(16,21,18,.96),rgba(10,14,12,.98));box-shadow:0 30px 90px rgba(0,0,0,.48)}
+    .head{display:flex;align-items:center;gap:14px;padding:19px 20px;border-bottom:1px solid var(--line);background:rgba(6,9,8,.76);backdrop-filter:blur(18px)}
+    .mark{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#ffe27a,#bd8000);color:#0a0d0b;font-weight:900;box-shadow:0 0 22px rgba(245,185,0,.22),inset 0 1px 1px rgba(255,255,255,.7)}
+    .head-copy{min-width:0}.head-copy h1{font-size:18px;margin:0;font-weight:900}.head-copy p{font-size:10px;color:var(--muted);margin:4px 0 0}
+    .head-actions{display:flex;align-items:center;gap:8px;margin-right:auto}.back,.reset{border:1px solid var(--line);background:rgba(255,255,255,.04);color:#dfe5e1;border-radius:11px;padding:9px 12px;font:800 11px Vazirmatn,Tahoma,sans-serif;cursor:pointer}
+    .back:hover,.reset:hover{border-color:rgba(245,185,0,.48);color:var(--gold2);background:rgba(245,185,0,.08)}
+    .status{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--ok);white-space:nowrap}.status i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px rgba(67,209,125,.6)}
+    .status.busy{color:var(--gold2)}.status.busy i{background:var(--gold);box-shadow:0 0 12px rgba(245,185,0,.6)}
+    .status.offline{color:var(--danger)}.status.offline i{background:var(--danger);box-shadow:0 0 12px rgba(255,119,119,.5)}
+    .intro{padding:18px 20px 8px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold2);font-size:9px;font-weight:900;letter-spacing:.7px}.eyebrow:before{content:"";width:18px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(245,185,0,.5)}
+    .intro h2{font-size:28px;line-height:1.3;margin:9px 0 7px;font-weight:900}.intro p{margin:0;color:#aeb6b1;font-size:11px;line-height:2}
+    .cap{border:1px solid rgba(245,185,0,.19);background:rgba(245,185,0,.06);border-radius:16px;padding:12px 14px;min-width:225px}.cap b{display:block;font-size:10px;color:#fff}.cap span{display:block;font-size:9px;color:#8f9992;margin-top:4px;line-height:1.8}
+    .chat{height:min(56vh,620px);min-height:430px;overflow:auto;margin:14px 20px 0;padding:18px;border:1px solid var(--line);border-radius:20px;background:
+      radial-gradient(circle at 80% 10%,rgba(245,185,0,.05),transparent 24%),
+      linear-gradient(180deg,#0b100d,#090d0b)}
+    .msg{max-width:min(82%,780px);margin:9px 0;padding:13px 15px;border:1px solid var(--line);border-radius:17px;line-height:2;font-size:12px;white-space:pre-wrap;word-break:break-word;box-shadow:0 8px 18px rgba(0,0,0,.12)}
+    .msg.bot{background:linear-gradient(180deg,#121916,#0f1411);border-top-right-radius:6px;color:#edf1ee}.msg.user{margin-right:auto;background:linear-gradient(145deg,#f5b900,#d29200);color:#10130f;border-color:rgba(255,222,118,.55);border-top-left-radius:6px;font-weight:700}
+    .typing{min-height:22px;display:none;padding:7px 20px;color:#8c958f;font-size:10px}.typing:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-left:7px;box-shadow:0 0 10px rgba(245,185,0,.45);animation:dot 1s infinite alternate}
+    @keyframes dot{from{transform:translateY(0);opacity:.35}to{transform:translateY(-3px);opacity:1}}
+    .quick{display:flex;gap:8px;overflow:auto;padding:10px 20px;border-top:1px solid rgba(255,255,255,.06);scrollbar-width:none}.quick::-webkit-scrollbar{display:none}
+    .quick button{white-space:nowrap;border:1px solid rgba(245,185,0,.2);background:rgba(255,255,255,.035);color:#dce2de;border-radius:999px;padding:9px 13px;font:700 10px Vazirmatn,Tahoma,sans-serif;cursor:pointer;transition:.2s}
+    .quick button:hover{border-color:rgba(245,185,0,.62);color:var(--gold2);background:rgba(245,185,0,.08);transform:translateY(-1px)}
+    .composer{display:flex;gap:10px;padding:15px 20px 11px;border-top:1px solid rgba(255,255,255,.06)}
+    .composer-wrap{position:relative;flex:1}.composer textarea{width:100%;min-height:58px;max-height:150px;resize:none;border:1px solid var(--line);border-radius:15px;padding:13px 14px 28px;background:#090d0b;color:#eef2ef;outline:none;font:600 12px/1.9 Vazirmatn,Tahoma,sans-serif}.composer textarea::placeholder{color:#707a73}.composer textarea:focus{border-color:rgba(245,185,0,.58);box-shadow:0 0 0 3px rgba(245,185,0,.08)}
+    .hint{position:absolute;bottom:8px;right:13px;font-size:8px;color:#66716a}
+    .send{width:92px;align-self:stretch;border:0;border-radius:15px;background:linear-gradient(145deg,#ffd84f,#e0a500);color:#10130e;font:900 12px Vazirmatn,Tahoma,sans-serif;cursor:pointer;box-shadow:0 10px 22px rgba(245,185,0,.15);transition:.2s}.send:hover{transform:translateY(-2px);box-shadow:0 15px 28px rgba(245,185,0,.23)}.send:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .note{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px 18px;color:#69726d;font-size:9px;line-height:1.8}.note strong{color:#aeb7b1;font-weight:700}
+    @media(max-width:760px){.page{width:100%;margin:0}.shell{border-radius:0;min-height:100vh}.head{padding:15px}.head-actions{gap:5px}.head-actions .reset{display:none}.status{font-size:9px}.intro{grid-template-columns:1fr;padding:16px 15px 4px}.intro h2{font-size:23px}.cap{min-width:0}.chat{height:calc(100vh - 360px);min-height:410px;margin:12px 12px 0;padding:12px}.msg{max-width:91%;font-size:11px}.quick{padding:9px 12px}.composer{padding:12px}.send{width:72px}.note{padding:0 12px 14px;display:block}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="shell" aria-label="دستیار هوشمند عظیم ابزار">
+      <header class="head">
+        <div class="mark" aria-hidden="true">AI</div>
+        <div class="head-copy">
+          <h1>دستیار هوشمند عظیم ابزار</h1>
+          <p>راهنمای انتخاب ابزار، مشخصات فنی و مسیر خرید</p>
+        </div>
+        <div class="head-actions">
+          <div class="status" role="status" aria-live="polite"><i></i><span>آماده پاسخ‌گویی</span></div>
+          <button class="reset" id="clearChat" type="button">گفت‌وگوی جدید</button>
+          <a class="back" href="./">بازگشت به سایت ←</a>
+        </div>
+      </header>
+
+      <div class="intro">
+        <div>
+          <span class="eyebrow">AZIM AI ASSISTANT</span>
+          <h2>ابزار مناسب کارت را پیدا کن.</h2>
+          <p>نوع کار، ابزار موردنیاز، مشخصات فنی یا هر سؤال مرتبط با محصولات عظیم ابزار را بنویس.</p>
+        </div>
+        <div class="cap">
+          <b>اتصال هوش مصنوعی از طریق Edge Function</b>
+          <span>کلید سرویس مدل در مرورگر قرار نمی‌گیرد و بعداً می‌توان API را از سمت سرور تنظیم یا تعویض کرد.</span>
+        </div>
+      </div>
+
+      <main class="chat" id="chat" aria-live="polite">
+        <div class="msg bot">سلام 👋 من دستیار هوشمند عظیم ابزارم. بگو چه کاری انجام می‌دی یا دنبال چه ابزاری هستی تا راهنمایی‌ات کنم.</div>
+      </main>
+
+      <div class="typing" id="typing">دستیار در حال آماده‌کردن پاسخ است…</div>
+
+      <div class="quick" aria-label="پیشنهادهای سریع">
+        <button type="button" data-q="برای تعمیرگاه خودرو چه ابزارهایی پیشنهاد می‌کنی؟">ابزار تعمیرگاه</button>
+        <button type="button" data-q="برای خرید آچار چه نکاتی مهم است؟">راهنمای آچار</button>
+        <button type="button" data-q="برای باز کردن پیچ سفت چه ابزاری مناسب است؟">پیچ سفت</button>
+        <button type="button" data-q="یک ست ابزار مناسب کارگاه پیشنهاد بده">ست ابزار کارگاهی</button>
+      </div>
+
+      <form class="composer" id="form">
+        <div class="composer-wrap">
+          <textarea id="input" rows="2" maxlength="1200" placeholder="مثلاً: برای تعویض لنت خودرو چه ابزارهایی لازم دارم؟" required aria-label="پیام به دستیار"></textarea>
+          <span class="hint">حداکثر ۱۲۰۰ کاراکتر</span>
+        </div>
+        <button class="send" id="sendBtn" type="submit">ارسال ↵</button>
+      </form>
+      <div class="note">
+        <span><strong>نکته:</strong> قیمت و موجودی قطعی باید از اطلاعات واقعی فروشگاه تأیید شود.</span>
+        <span>درخواست‌ها قبل از ارسال به مدل، از سمت سرور محدود می‌شوند.</span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const chat=document.getElementById('chat');
+    const form=document.getElementById('form');
+    const input=document.getElementById('input');
+    const typing=document.getElementById('typing');
+    const status=document.querySelector('.status');
+    const sendBtn=document.getElementById('sendBtn');
+    const clearBtn=document.getElementById('clearChat');
+    const quick=document.querySelector('.quick');
+    const getAIEndpoint=()=>String(window.AZIM_AI_API_URL||'/api/chat').trim();
+
+    function setStatus(label,mode){
+      const span=status?.querySelector('span');
+      if(span)span.textContent=label;
+      status?.classList.remove('busy','offline');
+      if(mode)status?.classList.add(mode);
+    }
+    function addMessage(text,who){
+      const d=document.createElement('div');
+      d.className='msg '+who;
+      d.textContent=String(text??'');
+      chat.appendChild(d);
+      chat.scrollTop=chat.scrollHeight;
+      return d;
+    }
+    function wireQuick(){
+      quick?.querySelectorAll('button').forEach(b=>{
+        b.onclick=()=>ask(b.dataset.q||'');
+      });
+    }
+    async function ask(q){
+      q=String(q||'').trim();
+      if(!q || form.dataset.disabled==='1' || form.dataset.busy==='1')return;
+      addMessage(q,'user');
+      typing.style.display='block';
+      form.dataset.busy='1';
+      sendBtn.disabled=true;
+      setStatus('در حال دریافت پاسخ…','busy');
+      try{
+        const r=await fetch(getAIEndpoint(),{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({message:q})
+        });
+        const data=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(data.error||'خطا در اتصال به دستیار');
+        addMessage(data.reply||'پاسخی دریافت نشد.','bot');
+        setStatus('آماده پاسخ‌گویی');
+      }catch(e){
+        addMessage('اتصال دستیار هوشمند برقرار نشد. '+(e.message||''),'bot');
+        setStatus('اتصال برقرار نیست','offline');
+      }finally{
+        typing.style.display='none';
+        form.dataset.busy='0';
+        sendBtn.disabled=false;
+        input.focus();
+      }
+    }
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const q=input.value.trim();
+      input.value='';
+      input.style.height='';
+      ask(q);
+    });
+    input.addEventListener('input',()=>{
+      input.style.height='auto';
+      input.style.height=Math.min(input.scrollHeight,150)+'px';
+    });
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Enter' && !e.shiftKey && !e.isComposing){
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    clearBtn?.addEventListener('click',()=>{
+      chat.innerHTML='<div class="msg bot">گفت‌وگوی جدید آماده است 👋 سؤال یا نیازت را بگو تا شروع کنیم.</div>';
+      setStatus('آماده پاسخ‌گویی');
+      input.focus();
+    });
+    wireQuick();
+    window.__AZIM_AI_REWIRE=wireQuick;
+  </script>
+  <script src="./azim-live-content.js?v=4" defer></script>
+  <script src="./azim-ai-widget.js?v=1" defer></script>
+</body>
+</html>
