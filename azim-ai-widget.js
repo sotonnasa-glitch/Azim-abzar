@@ -132,6 +132,7 @@
 
   ready(() => {
     mountStyle();
+    removeHomeFloatingCart();
     mountHomeButton();
     mountFab();
   });
