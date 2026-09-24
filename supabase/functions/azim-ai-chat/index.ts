@@ -8,6 +8,7 @@ const SUPABASE_KEY = PUBLISHABLE_KEYS.default ?? Deno.env.get("SUPABASE_ANON_KEY
 const RATE = new Map<string,{start:number,count:number}>();
 const WINDOW = 10 * 60 * 1000;
 const LIMIT = 12;
+const CONNECT_EXTERNAL_AI = false;
 
 const FALLBACK_SYSTEM =
   "تو دستیار هوشمند فروشگاه عظیم ابزار هستی. به زبان فارسی روان، کوتاه و کاربردی پاسخ بده. " +
@@ -236,6 +237,11 @@ Deno.serve(async (req) => {
 
     const settings = await getSettings();
     if (settings?.enabled === false) return response({ error: "دستیار هوشمند در حال حاضر توسط مدیریت غیرفعال است." }, 503, req);
+
+    if (!CONNECT_EXTERNAL_AI) {
+      const advisorReply = getKnowledgeAdvisorResponse(message);
+      return response({ reply: advisorReply, source: "advisor" }, 200, req);
+    }
 
     const systemInstruction = String(settings?.system_instruction || FALLBACK_SYSTEM);
     const primary = settings?.provider === "openai" ? "openai" : "gemini";
