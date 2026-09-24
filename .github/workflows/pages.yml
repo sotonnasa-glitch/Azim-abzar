@@ -41,30 +41,12 @@ jobs:
           print('IMAGE HOST: Supabase Storage / catalog-images')
           PY
 
-      - name: Restore archived catalog image fallbacks
+      - name: Verify catalog image fallback set
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p catalog_site_mapping_908/images
-          found=0
-          for archive_b64 in catalog_site_mapping_908/missing-images-*.b64 catalog_site_mapping_908/missing-mini-*.b64; do
-            [ -f "$archive_b64" ] || continue
-            archive_zip="${archive_b64%.b64}.zip"
-            if ! base64 --decode "$archive_b64" > "$archive_zip"; then
-              echo "IMAGE_FALLBACK_ARCHIVE_INVALID: $archive_b64"
-              rm -f "$archive_zip"
-              continue
-            fi
-            if ! unzip -o -q "$archive_zip" -d .; then
-              echo "IMAGE_FALLBACK_ARCHIVE_INVALID_ZIP: $archive_b64"
-              rm -f "$archive_zip"
-              continue
-            fi
-            found=$((found + 1))
-          done
-          echo "IMAGE_FALLBACK_ARCHIVES_RESTORED: $found"
           missing=0
-          for id in P0452 P0453 P0454 P0455 P0457 P0460 P0468 P0502 P0519 P0522 P0524 P0525 P0526 P0527 P0528 P0529 P0530 P0533 P0535 P0537 P0538 P0541 P0542 P0553 P0821 P0838 P0840; do
+          for id in P0452 P0453 P0454 P0455 P0456 P0457 P0460 P0468 P0501 P0520 P0521 P0524 P0525 P0526 P0528 P0529 P0530 P0531 P0532 P0533 P0537 P0538 P0539 P0540 P0551 P0821 P0838 P0840; do
             if [ -f "catalog_site_mapping_908/images/${id}.jpg" ]; then
               echo "FALLBACK_IMAGE_OK: ${id}"
             else
@@ -73,7 +55,7 @@ jobs:
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            echo "IMAGE_FALLBACKS_INCOMPLETE: $missing required archived images are missing after restore"
+            echo "IMAGE_FALLBACKS_INCOMPLETE: $missing required local fallback images are missing"
             exit 1
           fi
       - name: Verify existing Supabase product images
