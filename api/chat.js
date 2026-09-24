@@ -145,7 +145,7 @@ function getKnowledgeAdvisorResponse(query) {
 const SUPABASE_URL = process.env.AZIM_SUPABASE_URL || process.env.SUPABASE_URL || 'https://lzkrwtnylkordkwkdyzp.supabase.co';
 const CHAT_RATE = new Map();
 const RATE_WINDOW_MS = 10 * 60 * 1000;
-const RATE_LIMIT = 24;
+const RATE_LIMIT = 12;
 
 function getClientIp(req) {
   if (req.ip) return String(req.ip);
@@ -193,6 +193,7 @@ async function getAISettings() {
 }
 
 export default async function handler(req, res) {
+  let incomingMessage = '';
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
@@ -211,6 +212,7 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: 'تعداد درخواست‌های دستیار زیاد است؛ کمی بعد دوباره تلاش کنید.' });
     }
     const message = String(req.body?.message || '').trim();
+    incomingMessage = message;
     if (!message) {
       return res.status(400).json({ error: 'پیام خالی است' });
     }
@@ -298,7 +300,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: advisorReply, source: 'advisor' });
   } catch (error) {
     console.error('Chat handler exception:', error);
-    const advisorReply = getKnowledgeAdvisorResponse(req.body?.message || '');
+    const advisorReply = getKnowledgeAdvisorResponse(incomingMessage);
     return res.status(200).json({ reply: advisorReply, source: 'advisor' });
   }
 }
