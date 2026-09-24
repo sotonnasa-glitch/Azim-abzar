@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "azim",
+  "name": "azim-abzar20",
   "main": "worker.js",
   "compatibility_date": "2026-09-15",
   "observability": {
@@ -12,25 +12,6 @@
     "run_worker_first": [
       "/",
       "/index.html"
-    ],
-    "exclude": [
-      "node_modules/**",
-      ".git/**",
-      ".github/**",
-      "supabase/**",
-      "database/**",
-      "api/**",
-      "*.sql",
-      "*.md",
-      "*.b64",
-      "*.zip",
-      "server.js",
-      "package.json",
-      "package-lock.json",
-      ".env",
-      ".env.*",
-      "wrangler.jsonc",
-      ".assetsignore"
     ]
   }
 }
