@@ -252,6 +252,8 @@
   }
 
   function removeHomeFloatingCart() {
+    // فقط صفحه اصلی باید سبد شناور قدیمی را حذف کند؛ صفحات محصولات سبد شناور اختصاصی خودشان را نگه می‌دارند.
+    if (!document.querySelector('#home')) return;
     const selectors = [
       '#floatingCart',
       '#floating-cart',
