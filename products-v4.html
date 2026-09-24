@@ -2084,8 +2084,10 @@
       img.src = './catalog_site_mapping_908/images/' + encodeURIComponent(String(id)) + '.jpg';
       img.style.display = '';
       img.onerror = () => {
-        img.style.display = 'none';
-        if (img.parentElement) img.parentElement.innerHTML = '<div class="missing">تصویر ' + esc(id) + ' در دسترس نیست</div>';
+        img.onerror = null;
+        img.src = './catalog_site_mapping_908/images/placeholder.svg';
+        img.alt = 'تصویر ' + id + ' در دسترس نیست';
+        img.style.display = '';
       };
     }
 
