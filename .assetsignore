@@ -16,3 +16,14 @@ package.json
 package-lock.json
 .env
 .env.*
+src/
+scripts/
+tools/
+test-*.mjs
+Dockerfile
+README.md
+MOTION_ENHANCEMENTS.md
+oops*.txt
+dummy-delete-later*.txt
+__deploy_trigger*.txt
+__verification_marker*.txt
