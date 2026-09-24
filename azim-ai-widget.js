@@ -201,7 +201,10 @@
     }
   }
 
+  function isProductCatalogPage() { const path=(location.pathname||"").toLowerCase(); return /(?:^|\/)products(?:-v\d+)?(?:\.html)?$/i.test(path); }
+
   function mountFab() {
+    if (isProductCatalogPage()) return;
     if (isAiPage()) {
       const existing = document.getElementById('azimAiFab');
       if (existing) existing.remove();
