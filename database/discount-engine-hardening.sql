@@ -271,8 +271,100 @@ begin
     where id=v_order_id;
   end if;
 
-  delete from public.order_items where order_id=v_order_id;
+  if p_order_id is not null then
+    -- The admin editor must submit stable order_item_id values for existing lines.
+    -- This prevents silent loss of return-request history during an order edit.
+    if exists(select 1 from public.order_items where order_id=v_order_id)
+       and not exists (
+         select 1
+         from jsonb_to_recordset(p_items) as it(
+           order_item_id uuid,product_id uuid,quantity bigint,unit_price bigint,variant jsonb
+         )
+         where it.order_item_id is not null
+       ) then
+      raise exception using message = 'برای ویرایش این سفارش، اقلام موجود باید با شناسه اصلی خود ارسال شوند.';
+    end if;
 
+    -- An item with any return history cannot be removed, re-bound to another product/variant,
+    -- or reduced below the quantity already covered by non-rejected return requests.
+    if exists (
+      select 1
+      from public.order_items oi
+      where oi.order_id=v_order_id
+        and exists (
+          select 1 from public.order_return_requests rr
+          where rr.order_item_id=oi.id
+        )
+        and not exists (
+          select 1
+          from jsonb_to_recordset(p_items) as it(
+            order_item_id uuid,product_id uuid,quantity bigint,unit_price bigint,variant jsonb
+          )
+          where it.order_item_id=oi.id
+        )
+    ) then
+      raise exception using message = 'این سفارش دارای سابقه مرجوعی است؛ قلم دارای سابقه را حذف نکنید.';
+    end if;
+
+    if exists (
+      select 1
+      from public.order_items oi
+      join jsonb_to_recordset(p_items) as it(
+        order_item_id uuid,product_id uuid,quantity bigint,unit_price bigint,variant jsonb
+      ) on it.order_item_id=oi.id
+      where oi.order_id=v_order_id
+        and exists (
+          select 1 from public.order_return_requests rr
+          where rr.order_item_id=oi.id
+        )
+        and (
+          oi.product_id is distinct from it.product_id
+          or oi.variant is distinct from it.variant
+          or coalesce(it.quantity,0) < coalesce((
+              select sum(rr.quantity)
+              from public.order_return_requests rr
+              where rr.order_item_id=oi.id
+                and rr.status<>'rejected'
+            ),0)
+        )
+    ) then
+      raise exception using message = 'قلم دارای سابقه مرجوعی قابل تغییر محصول، سایز/مدل یا کاهش تعداد نیست.';
+    end if;
+
+    -- Supplied order_item_id values must belong to this order.
+    if exists (
+      select 1
+      from jsonb_to_recordset(p_items) as it(
+        order_item_id uuid,product_id uuid,quantity bigint,unit_price bigint,variant jsonb
+      )
+      where it.order_item_id is not null
+        and not exists (
+          select 1 from public.order_items oi
+          where oi.id=it.order_item_id and oi.order_id=v_order_id
+        )
+    ) then
+      raise exception using message = 'شناسه یکی از اقلام سفارش معتبر نیست.';
+    end if;
+  end if;
+
+  -- Update existing lines in place so their UUID remains stable for return history.
+  update public.order_items oi
+  set product_id=it.product_id,
+      product_name=coalesce(nullif(trim(it.product_name),''),p.name,'محصول'),
+      sku=coalesce(nullif(trim(it.sku),''),p.code),
+      quantity=it.quantity,
+      unit_price=it.unit_price,
+      variant=it.variant,
+      line_total=it.quantity*it.unit_price
+  from jsonb_to_recordset(p_items) as it(
+    order_item_id uuid,product_id uuid,product_name text,sku text,quantity bigint,unit_price bigint,variant jsonb
+  )
+  join public.products p on p.id=it.product_id
+  where oi.order_id=v_order_id
+    and it.order_item_id is not null
+    and oi.id=it.order_item_id;
+
+  -- New lines have no stable order_item_id yet, so insert them.
   insert into public.order_items(
     order_id,product_id,product_name,sku,quantity,unit_price,variant,line_total
   )
@@ -282,9 +374,25 @@ begin
     coalesce(nullif(trim(it.sku),''),p.code),
     it.quantity,it.unit_price,it.variant,it.quantity*it.unit_price
   from jsonb_to_recordset(p_items) as it(
-    product_id uuid,product_name text,sku text,quantity bigint,unit_price bigint,variant jsonb
+    order_item_id uuid,product_id uuid,product_name text,sku text,quantity bigint,unit_price bigint,variant jsonb
   )
-  join public.products p on p.id=it.product_id;
+  join public.products p on p.id=it.product_id
+  where it.order_item_id is null;
+
+  -- Remove only lines that the editor explicitly omitted and that have no return history.
+  delete from public.order_items oi
+  where oi.order_id=v_order_id
+    and not exists (
+      select 1
+      from jsonb_to_recordset(p_items) as it(
+        order_item_id uuid,product_id uuid
+      )
+      where it.order_item_id=oi.id
+    )
+    and not exists (
+      select 1 from public.order_return_requests rr
+      where rr.order_item_id=oi.id
+    );
 
   delete from public.discount_redemptions where order_id=v_order_id;
 
