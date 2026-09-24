@@ -146,18 +146,6 @@
       opacity: 1;
     }
 
-    /* === Smooth Natural Scroll Reveal === */
-    .az-scroll-fade {
-      opacity: 0;
-      transform: translateY(22px);
-      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: opacity, transform;
-    }
-    .az-scroll-fade.az-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
     /* === Pause decorative motion while the document is actively scrolling === */
     body.az-is-scrolling * {
       animation-play-state: paused !important;
@@ -459,31 +447,7 @@
     });
   }
 
-  // 6. Scroll Reveal for Sections and Cards
-  function setupScrollReveal() {
-    const targets = document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card, .az-cat-showcase-grid > *, .az-cat-card-item');
-    if (!targets.length || !('IntersectionObserver' in window)) return;
-
-    const observer = new IntersectionObserver((entries, obs) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('az-visible');
-          entry.target.style.willChange = 'auto';
-          obs.unobserve(entry.target);
-        }
-      });
-    }, {
-      threshold: 0.1,
-      rootMargin: '0px 0px -30px 0px'
-    });
-
-    targets.forEach(el => {
-      el.classList.add('az-scroll-fade');
-      observer.observe(el);
-    });
-  }
-
-  // 7. Interactive Lightbox for Industrial Tool Photo Gallery
+  // 6. Interactive Lightbox for Industrial Tool Photo Gallery
   function setupLightbox() {
     const lightbox = document.getElementById('az-lightbox');
     if (!lightbox) return;
@@ -544,7 +508,6 @@
     setupHeroParallax();
     setupGaugeInteractivity();
     setupCardGlow();
-    setupScrollReveal();
     setupLightbox();
   }
 
