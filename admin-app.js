@@ -34,7 +34,8 @@
     admins: ['کاربران مدیر', 'نقش‌ها و سطح دسترسی'],
     audit: ['گزارش فعالیت', 'ردپای تغییرات پنل'],
     security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی'],
-    ai: ['دستیار هوشمند', 'مرکز کنترل، تست و تنظیمات AI فروشگاه']
+    ai: ['هوش مصنوعی', 'چت عمومی و تنظیمات سرویس AI فروشگاه'],
+    'ai-products': ['ربات محصولات', 'مشاوره خودکار بر اساس اطلاعات واقعی کاتالوگ']
   };
 
   const labels = {
@@ -516,7 +517,8 @@
       admins:['owner','admin'],
       audit:['owner','admin'],
       security:['owner','admin'],
-      ai:['owner','admin','editor']
+      ai:['owner','admin','editor'],
+      'ai-products':['owner','admin','editor']
     };
     document.querySelectorAll('[data-menu-view]').forEach((btn) => {
       btn.style.display = (allowed[btn.dataset.menuView] || []).includes(role) ? '' : 'none';
@@ -543,7 +545,8 @@
       ['admins','کاربران مدیر','نقش‌ها'],
       ['audit','گزارش فعالیت','Audit Log'],
       ['security','امنیت حساب','MFA، نشست و دسترسی'],
-      ['ai','دستیار هوشمند','مرکز کنترل AI']
+      ['ai-products','ربات محصولات','مشاوره خودکار محصولات'],
+      ['ai','هوش مصنوعی','چت عمومی و تنظیمات AI']
     ];
     let active = 0;
     function render(q='') {
@@ -823,6 +826,7 @@
   async function loadSection(name) {
     if (name === 'discounts') return loadDiscounts();
     if (name === 'discount-codes') return loadDiscountCodes();
+    if (name === 'ai-products') return loadAIProducts();
     const skeletons = {
       products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
       inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
@@ -3054,6 +3058,68 @@
     '</div>';
   }
 
+  function aiProductsView() {
+    return '<div class="az-ai-products-wrap"><div class="az-section-head"><div><span class="az-section-kicker">PRODUCT AI</span><h2>🤖 ربات محصولات</h2><p>هر محصول به‌صورت خودکار از دیتابیس خوانده می‌شود؛ سایز یا مدل انتخاب‌شده هم به AI می‌رسد.</p></div><span class="az-ai-live">LIVE</span></div><div class="az-ai-product-metrics"><div><span>کل محصولات</span><b id="aipTotal">—</b></div><div><span>فعال</span><b id="aipActive">—</b></div><div><span>دارای سایز/مدل</span><b id="aipVariants">—</b></div><div><span>درخواست امروز</span><b id="aipToday">—</b></div><div><span>توکن خروجی امروز</span><b id="aipOutputTokens">—</b></div></div><div class="az-ai-product-grid"><div class="az-ai-card"><div class="az-ai-card-head"><div><strong>تست واقعی ربات محصول</strong><small>محصول و واریانت واقعی را انتخاب کن.</small></div></div><div class="grid2"><div class="field full"><label>جستجوی محصول</label><div class="az-search-wrap"><span>⌕</span><input id="aipSearch" class="input" placeholder="نام یا کد محصول…" autocomplete="off"></div></div><div class="field full"><label>محصول</label><select id="aipProduct" class="select"><option value="">انتخاب محصول…</option></select></div><div class="field"><label>سایز / مدل</label><select id="aipVariant" class="select"><option value="">بدون واریانت</option></select></div><div class="field"><label>سؤال اختیاری</label><input id="aipQuestion" class="input" maxlength="600" placeholder="خالی = معرفی کوتاه و دقیق"></div><div class="field full"><button type="button" id="aipTestBtn" class="btn">🤖 تست ربات</button></div><div id="aipProductInfo" class="field full"></div><div id="aipResult" class="az-ai-product-result field full">هنوز تستی انجام نشده.</div><div id="aipStatus" class="status field full"></div></div></div><div class="az-ai-card"><div class="az-ai-card-head"><div><strong>اتصال خودکار</strong><small>نیازی به ساخت دستی برای هر محصول نیست.</small></div></div><div class="az-ai-product-rules"><div><b>۱</b><span>محصول جدید یا ویرایش‌شده ← اطلاعات زنده از دیتابیس.</span></div><div><b>۲</b><span>انتخاب سایز/مدل ← همان واریانت به AI.</span></div><div><b>۳</b><span>کلیک روی ربات ← فقط همان محصول خوانده می‌شود.</span></div><div><b>۴</b><span>پاسخ کوتاه و دقیق و بدون حدس.</span></div></div></div></div></div>';
+  }
+
+  async function loadAIProducts() {
+    const el=$('aiProductsEditor'); if(!el) return; el.innerHTML=aiProductsView();
+    const startOfDay=new Date(); startOfDay.setHours(0,0,0,0);
+    const [tot,active,variantCount,usage]=await Promise.all([
+      countTable('products'),
+      countTable('products', q=>q.eq('is_active',true)),
+      countTable('products', q=>q.not('variants','is',null)),
+      state.db.from('ai_usage_logs').select('output_tokens,success,created_at').gte('created_at',startOfDay.toISOString()).limit(5000)
+    ]);
+    $('aipTotal').textContent=Number(tot||0).toLocaleString('fa-IR');
+    $('aipActive').textContent=Number(active||0).toLocaleString('fa-IR');
+    $('aipVariants').textContent=Number(variantCount||0).toLocaleString('fa-IR');
+    const ur=usage?.data||[];
+    $('aipToday').textContent=ur.filter(x=>x.success).length.toLocaleString('fa-IR');
+    $('aipOutputTokens').textContent=ur.reduce((n,x)=>n+Number(x.output_tokens||0),0).toLocaleString('fa-IR');
+
+    const search=$('aipSearch'), sel=$('aipProduct'); let cache=[];
+    async function searchProducts(term=''){
+      let rq=state.db.from('products').select('id,code,name,brand,description,category_name,variants,is_active').order('name').limit(30);
+      term=String(term||'').trim().replace(/[(),]/g,' ');
+      if(term) rq=rq.or('name.ilike.%'+term+'%,code.ilike.%'+term+'%');
+      const rr=await rq;
+      if(rr.error){$('aipStatus').textContent='__AZICON_ERROR__ '+errorText(rr.error);return;}
+      cache=rr.data||[];
+      sel.innerHTML='<option value="">انتخاب محصول…</option>'+cache.map(p=>'<option value="'+esc(p.id)+'">'+esc((p.code||'')+' · '+(p.name||'محصول'))+'</option>').join('');
+      syncVariants();
+    }
+    function syncVariants(){
+      const p=cache.find(x=>x.id===sel.value);
+      const vs=Array.isArray(p?.variants)?p.variants.map(v=>String(v?.size??v?.label??v?.name??'').trim()).filter(Boolean):[];
+      const vsel=$('aipVariant');
+      vsel.innerHTML='<option value="">بدون واریانت / حالت پایه</option>'+vs.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+      $('aipProductInfo').innerHTML=p?'<div class="az-ai-product-info"><b>'+esc(p.name||'محصول')+'</b><span>'+esc(p.brand||p.category_name||'')+'</span><small>'+esc(p.description||'توضیح ثبت نشده')+'</small></div>':'';
+    }
+    await searchProducts('');
+    let t=null;
+    search.oninput=()=>{clearTimeout(t);t=setTimeout(()=>searchProducts(search.value),220);};
+    sel.onchange=syncVariants;
+    $('aipTestBtn').onclick=async()=>{
+      const p=cache.find(x=>x.id===sel.value),status=$('aipStatus'),out=$('aipResult');
+      if(!p){status.textContent='ابتدا محصول را انتخاب کن.';return;}
+      const variant=$('aipVariant').value||'',message=$('aipQuestion').value.trim();
+      status.textContent='در حال دریافت پاسخ واقعی AI…';out.textContent='در حال پاسخ‌گویی…';
+      try{
+        const rr=await fetch(String(window.AZIM_AI_API_URL||'/api/chat'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'product',product_id:p.id,product_code:p.code,variant_label:variant,message})});
+        const d=await rr.json().catch(()=>({}));
+        if(!rr.ok) throw Error(d.error||'HTTP '+rr.status);
+        out.textContent=String(d.reply||'پاسخی دریافت نشد.');
+        status.textContent='پاسخ '+(d.provider||'AI')+' برای '+(p.code||p.name)+(variant?' · '+variant:'')+' دریافت شد.';
+        await audit('ai_product_test','products',p.id,{product_code:p.code,variant_label:variant,provider:d.provider||'api',result:'success'});
+      }catch(e){
+        out.textContent='پاسخ دریافت نشد.';
+        status.textContent='__AZICON_ERROR__ '+errorText(e);
+        await audit('ai_product_test','products',p.id,{product_code:p.code,variant_label:variant,result:'error'});
+      }
+    };
+  }
+
   async function loadAI() {
     const r = await state.db.from('site_content').select('*').eq('section_key', 'ai_settings').maybeSingle();
     const row = r.data || null;
@@ -3166,7 +3232,7 @@
     input.value = '';
     status.textContent = 'در حال دریافت پاسخ…';
     try {
-      const r = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message}) });
+      const r = await fetch(String(window.AZIM_AI_API_URL||'/api/chat'), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode:'general',message}) });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
       const aiRow = document.createElement('div');
