@@ -333,17 +333,25 @@
 
   function applyAI(c) {
     const p=c.ai_settings||{};
-    const chat=document.getElementById('chat'),form=document.getElementById('form'),input=document.getElementById('input'),typing=document.getElementById('typing'),status=document.querySelector('.status'),quick=document.querySelector('.quick');
+    const chat=document.getElementById('chat') || document.getElementById('chatMessages'),form=document.getElementById('form') || document.getElementById('chatForm'),input=document.getElementById('input') || document.getElementById('chatInput'),typing=document.getElementById('typing'),status=document.querySelector('.status') || document.querySelector('.brand-status'),quick=document.querySelector('.quick') || document.querySelector('.quick-prompts-bar'),sendBtn=document.getElementById('sendBtn');
     if(p.enabled===false){
-      if(status){status.textContent='آفلاین';status.style.color='#ff8b8b';}
+      if(status){
+        const statusText = status.querySelector('span:last-child');
+        if(statusText) statusText.textContent='دستیار موقتاً آفلاین'; else status.textContent='آفلاین';
+        status.style.color='#ff8b8b';
+      }
       if(form){form.style.opacity='.55';form.dataset.disabled='1';}
       if(input){input.disabled=true;input.placeholder='دستیار هوشمند موقتاً غیرفعال است.';}
+      if(sendBtn) sendBtn.disabled=true;
       if(quick) quick.innerHTML='<span style="font-size:10px;color:#888;padding:8px 2px">دستیار فعلاً توسط مدیریت غیرفعال شده است.</span>';
       if(typing) typing.style.display='none'; return;
     }
-    if(chat&&p.greeting){const first=chat.querySelector('.msg.bot');if(first)first.textContent=p.greeting;}
+    if(chat&&p.greeting){
+      const first=chat.querySelector('.msg.bot') || chat.querySelector('.ai-intro-text');
+      if(first) first.textContent=p.greeting;
+    }
     if(quick&&Array.isArray(p.quick_prompts)&&p.quick_prompts.length){
-      quick.innerHTML=p.quick_prompts.map(q=>'<button type="button" data-q="'+esc(q)+'">'+esc(q)+'</button>').join('');
+      quick.innerHTML=p.quick_prompts.map(q=>'<button type="button" class="quick-prompt-chip" data-prompt="'+esc(q)+'">'+esc(q)+'</button>').join('');
       if(typeof window.__AZIM_AI_REWIRE==='function') window.__AZIM_AI_REWIRE();
     }
   }
