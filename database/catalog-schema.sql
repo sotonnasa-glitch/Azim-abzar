@@ -1,5 +1,5 @@
 -- عظیم ابزار: catalog database migration
--- Run in Supabase SQL Editor before importing the 2119-product seed.
+-- Run in Supabase SQL Editor before importing the active 908-product catalog.
 begin;
 alter table public.products add column if not exists original_price bigint;
 alter table public.products add column if not exists price bigint;
