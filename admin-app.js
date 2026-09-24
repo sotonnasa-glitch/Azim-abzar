@@ -1208,6 +1208,7 @@
   }
 
   async function deleteProduct(id) {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ این نقش اجازه حذف محصول ندارد.');
     if (!confirm('این محصول حذف شود؟')) return;
     const r = await state.db.from('products').delete().eq('id', id);
     if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
@@ -1666,7 +1667,7 @@
           '<div class="az-order-total"><span>مبلغ نهایی</span><strong>' + money(x.total) + '</strong>' + (discount ? '<small>پس از ' + money(discount) + ' تخفیف</small>' : '<small>بدون تخفیف</small>') + '</div>' +
           '<div class="az-order-meta">' +
             '<div><span>قبل تخفیف</span><b>' + money(x.subtotal) + '</b></div>' +
-            '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'رایگان') + '</b></div>' +
+            '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'هماهنگی با واحد فروش') + '</b></div>' +
             '<div><span>کد تخفیف</span><b dir="ltr">' + esc(x.discount_code || '—') + '</b></div>' +
             '<div><span>رهگیری</span><b dir="ltr">' + esc(x.tracking_code || '—') + '</b></div>' +
           '</div>' +
@@ -1749,7 +1750,7 @@
     const existingVariant = typeof it?.variant === 'string'
       ? it.variant
       : (it?.variant?.label || it?.variant?.size || it?.variant?.name || '');
-    return '<div class="grid2 order-item-row" data-idx="' + idx + '" style="padding:10px 0;border-bottom:1px solid #202722">' +
+    return '<div class="grid2 order-item-row" data-idx="' + idx + '" data-item-id="' + esc(it?.id || '') + '" style="padding:10px 0;border-bottom:1px solid #202722">' +
       '<div class="field"><label>محصول</label><select class="select item-product"><option value="">انتخاب محصول</option>' + productOptions + '</select></div>' +
       '<div class="field"><label>تعداد</label><input class="input item-qty" type="number" min="1" value="' + esc(it?.quantity || 1) + '"></div>' +
       '<div class="field"><label>قیمت واحد</label><input class="input item-price" type="number" min="0" value="' + esc(it?.unit_price ?? 0) + '"></div>' +
@@ -1789,7 +1790,9 @@
       const price = Number(row.querySelector('.item-price')?.value || 0);
       const variantLabel = String(row.querySelector('.item-variant')?.value || '').trim();
       const product = state.products.find((p) => p.id === productId);
+      const orderItemId = row.dataset.itemId || null;
       return productId ? {
+        order_item_id: orderItemId,
         product_id: productId,
         product_name: product?.name || 'محصول',
         sku: product?.code || null,
