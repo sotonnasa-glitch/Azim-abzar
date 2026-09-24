@@ -18,10 +18,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -43,7 +43,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -RniE 'sb_secret_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}|postgresql://[^[:space:]]+:[^@[:space:]]+@' --exclude-dir=.git --exclude='*.zip' --exclude='*.b64' .
+          ! grep -RniE 'sb_secret_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}|postgresql://[^[:space:]]+:[^@[:space:]]+@' --exclude-dir=.git --exclude='*.zip' --exclude='*.b64' --exclude='security-audit.yml' .
           grep -q "X-Content-Type-Options" server.js
           grep -q "Content-Security-Policy" server.js
           grep -q "express.json({ limit: '8kb' })" server.js
