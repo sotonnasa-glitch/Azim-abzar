@@ -1631,6 +1631,30 @@
       .heroBox { min-height: 500px; }
       .az-ticker-item { font-size: 11px; padding: 0 14px; }
     }
+
+    /* === Scroll performance: compositor-friendly layers, same visuals === */
+    .az-hero-photo-track,
+    .az-hero-interactive-hud {
+      will-change: transform;
+    }
+    .az-motion-stage {
+      contain: paint;
+    }
+    @media (max-width: 768px) {
+      .top,
+      header {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .az-motion-stage {
+        opacity: .62;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .az-ambient-canvas {
+        display: none;
+      }
+    }
   </style>
   <link rel="stylesheet" href="./azim-home-categories.css?v=1">
 </head>
@@ -1776,16 +1800,16 @@
             <div class="az-hero-photo-canvas" aria-hidden="true">
               <div class="az-hero-photo-track">
                 <!-- دور اول: ۴ تصویر عریض کارگاهی و ابزار تخصصی صنعتی با کیفیت فوق‌العاده بالا -->
-                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" decoding="async" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" decoding="async" referrerPolicy="no-referrer"></div>
 
                 <!-- تکرار دقیق دور اول برای چرخه بی‌نهایت و کاملاً نامرئی به سمت راست -->
-                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" decoding="async" referrerPolicy="no-referrer"></div>
               </div>
               <div class="az-hero-photo-overlay"></div>
             </div>
