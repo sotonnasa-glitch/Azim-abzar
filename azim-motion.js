@@ -51,10 +51,6 @@
       border-radius: 50%;
       box-shadow: inset 0 0 40px rgba(245,185,0,.03);
     }
-    .az-motion-stage .r1,
-    .az-motion-stage .r2 {
-      will-change: transform;
-    }
     .az-motion-stage .r1 {
       width: 540px;
       height: 540px;
@@ -146,14 +142,16 @@
       opacity: 1;
     }
 
-    /* === Pause decorative motion while the document is actively scrolling === */
-    body.az-is-scrolling * {
-      animation-play-state: paused !important;
+    /* === Smooth Natural Scroll Reveal === */
+    .az-scroll-fade {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
     }
-    .az-hero-photo-track,
-    .az-motion-stage,
-    .az-hero-interactive-hud {
-      contain: layout paint;
+    .az-scroll-fade.az-visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     @media (max-width: 1040px) {
@@ -195,24 +193,8 @@
       mouseY = -1000;
     }, { passive: true });
 
-    let scrollPauseRaf = 0;
-    let scrollResumeTimer = 0;
-    window.addEventListener('scroll', () => {
-      if (scrollPauseRaf) return;
-      scrollPauseRaf = requestAnimationFrame(() => {
-        scrollPauseRaf = 0;
-        document.body.classList.add('az-is-scrolling');
-      });
-      clearTimeout(scrollResumeTimer);
-      scrollResumeTimer = window.setTimeout(() => {
-        document.body.classList.remove('az-is-scrolling');
-      }, 160);
-    }, { passive: true });
-
-
-
     // Particle count: 50 rich glowing industrial embers and sparks
-    const count = Math.min(28, Math.max(14, Math.round(window.innerWidth / 45)));
+    const count = 50;
     const particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -229,37 +211,16 @@
     }
 
     let isVisible = true;
-    let lastFrame = 0;
-    let lastScrollAt = 0;
     document.addEventListener('visibilitychange', () => {
       isVisible = !document.hidden;
     });
-    window.addEventListener('scroll', () => {
-      lastScrollAt = performance.now();
-    }, { passive: true });
 
     let time = 0;
-    function draw(now = performance.now()) {
+    function draw() {
       if (!isVisible) {
         requestAnimationFrame(draw);
         return;
       }
-
-      // Scrolling is the expensive moment: freeze the decorative canvas while
-      // the browser is moving the document, then resume automatically.
-      if (now - lastScrollAt < 140) {
-        requestAnimationFrame(draw);
-        return;
-      }
-
-      // Decorative particles do not need 60fps. ~30fps keeps the effect smooth
-      // while cutting canvas work roughly in half.
-      if (now - lastFrame < 33) {
-        requestAnimationFrame(draw);
-        return;
-      }
-      lastFrame = now;
-
       ctx.clearRect(0, 0, width, height);
       time += 0.02;
 
@@ -447,7 +408,30 @@
     });
   }
 
-  // 6. Interactive Lightbox for Industrial Tool Photo Gallery
+  // 6. Scroll Reveal for Sections and Cards
+  function setupScrollReveal() {
+    const targets = document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card, .az-cat-showcase-grid > *, .az-cat-card-item');
+    if (!targets.length || !('IntersectionObserver' in window)) return;
+
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('az-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -30px 0px'
+    });
+
+    targets.forEach(el => {
+      el.classList.add('az-scroll-fade');
+      observer.observe(el);
+    });
+  }
+
+  // 7. Interactive Lightbox for Industrial Tool Photo Gallery
   function setupLightbox() {
     const lightbox = document.getElementById('az-lightbox');
     if (!lightbox) return;
@@ -508,6 +492,7 @@
     setupHeroParallax();
     setupGaugeInteractivity();
     setupCardGlow();
+    setupScrollReveal();
     setupLightbox();
   }
 
