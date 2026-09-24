@@ -210,6 +210,20 @@ jobs:
           print('AI RUNTIME VERIFIED: Supabase Edge Function + live CMS + redesigned DOM')
           PY
 
+      - name: Validate GitHub Pages security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          pages = ['index.html','products-v4.html','cart.html','contact.html','order-status.html','ai.html','admin.html','404.html']
+          marker = '<meta http-equiv="Content-Security-Policy"'
+          for name in pages:
+              html = Path('_site', name).read_text(encoding='utf-8')
+              assert marker in html, f'CSP_META_MISSING: {name}'
+          print('GITHUB_PAGES_CSP_VERIFIED: all active HTML entry points contain a CSP meta policy')
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
