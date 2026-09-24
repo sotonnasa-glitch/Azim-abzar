@@ -30,6 +30,7 @@ declare
   v_subtotal bigint := 0;
   v_eligible bigint := 0;
   v_total bigint := 0;
+  -- Shipping is quoted separately by the sales team at checkout; the provisional total excludes it.
   v_shipping bigint := 0;
   v_usage bigint := 0;
   v_customer_usage bigint := 0;
