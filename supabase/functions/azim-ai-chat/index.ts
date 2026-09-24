@@ -149,6 +149,68 @@ function productContext(product: any, selectedVariant: any) {
   return lines.filter(Boolean).join("\n");
 }
 
+async function searchProductsForMessage(message: string) {
+  if (!SUPABASE_URL || !SERVICE_KEY) return [];
+  const raw = String(message || "").trim();
+  if (!raw) return [];
+
+  // Keep the query narrow and cheap: use the user's meaningful words against name/code/brand/category.
+  const tokens = raw
+    .replace(/[^\p{L}\p{N}A-Za-z0-9]+/gu, " ")
+    .split(/\s+/)
+    .map(x => x.trim())
+    .filter(x => x.length >= 2)
+    .slice(0, 6);
+
+  if (!tokens.length) return [];
+
+  const select = "id,code,name,brand,cat,category_name,description,variants,price,is_active";
+  const clauses = tokens.flatMap(t => {
+    const v = t.replace(/[*(),]/g, " ");
+    return [
+      "name.ilike.*" + encodeURIComponent(v) + "*",
+      "code.ilike.*" + encodeURIComponent(v.toUpperCase()) + "*",
+      "brand.ilike.*" + encodeURIComponent(v) + "*",
+      "category_name.ilike.*" + encodeURIComponent(v) + "*",
+    ];
+  }).join(",");
+
+  try {
+    const url = SUPABASE_URL + "/rest/v1/products?select=" + encodeURIComponent(select) +
+      "&is_active=eq.true&or=(" + clauses + ")&limit=8";
+    const r = await fetch(url, { headers: restHeaders() });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    return Array.isArray(rows) ? rows.filter((x: any) => x?.is_active !== false) : [];
+  } catch {
+    return [];
+  }
+}
+
+function catalogContext(rows: any[]) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return "نتیجه جستجوی زنده دیتابیس برای محصول مرتبط پیدا نشد.";
+  }
+
+  return "نتایج مرتبط از دیتابیس زنده فروشگاه (فقط همین موارد را به‌عنوان محصول واقعی فروشگاه در نظر بگیر):\n" +
+    rows.map((p: any) => {
+      const variants = Array.isArray(p?.variants)
+        ? p.variants.map(normalizeVariant).filter((v: any) => v.label).slice(0, 12)
+        : [];
+      const parts = [
+        "کد=" + String(p?.code || ""),
+        "نام=" + String(p?.name || ""),
+        "برند=" + String(p?.brand || ""),
+        "دسته=" + String(p?.category_name || p?.cat || ""),
+        "قیمت پایه=" + (p?.price == null ? "ثبت نشده" : String(p.price)),
+      ];
+      if (variants.length) {
+        parts.push("سایز/مدل=" + variants.map((v: any) => v.price != null ? v.label + ":" + v.price : v.label).join(" | "));
+      }
+      return parts.join(" · ");
+    }).join("\n");
+}
+
 async function logUsage(data: Record<string, unknown>) {
   try {
     if (!SUPABASE_URL || !SERVICE_KEY) return;
@@ -355,7 +417,11 @@ Deno.serve(async (req) => {
     if (!message) return response({ error: "پیام خالی است." }, 400, req);
     if (message.length > 1200) return response({ error: "پیام بیش از حد طولانی است." }, 413, req);
 
-    const systemInstruction = String(settings?.system_instruction || FALLBACK_SYSTEM);
+    const catalogRows = await searchProductsForMessage(message);
+    const liveCatalogContext = catalogContext(catalogRows);
+    const systemInstruction = String(settings?.system_instruction || FALLBACK_SYSTEM) +
+      "\n\nبرای پاسخ‌های مرتبط با محصولات، فقط اطلاعات زیر از دیتابیس زنده فروشگاه را مبنا قرار بده و چیزی را که در آن نیست به‌عنوان محصول موجود ادعا نکن:\n" +
+      liveCatalogContext;
     const primaryProvider = settings?.provider === "openai" ? "openai" : "gemini";
     const geminiModel = String(settings?.model || "gemini-3.5-flash-lite");
     const geminiFallbackModel = String(settings?.fallback_model || "gemini-2.5-flash-lite");
@@ -375,6 +441,7 @@ Deno.serve(async (req) => {
       await logUsage({
         mode: "general",
         provider: result.provider,
+        matched_products: catalogRows.length,
         model: result.model,
         prompt_chars: message.length,
         reply_chars: result.reply.length,
