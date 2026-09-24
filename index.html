@@ -1673,8 +1673,22 @@
       .nav {
         background: rgba(14,19,16,.96);
       }
+      /* On touch devices the moving hero strip is decorative; keep the
+         imagery, but stop the continuous compositor workload. */
+      .az-hero-photo-track {
+        animation: none !important;
+        transform: translate3d(0,0,0) !important;
+      }
+      .az-ambient-canvas {
+        display: none !important;
+      }
+      /* Remove all backdrop sampling on touch screens. */
+      * {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+      }
       .az-motion-stage {
-        opacity: .55;
+        opacity: .48;
       }
     }
     @media (prefers-reduced-motion: reduce) {
