@@ -108,6 +108,8 @@ const BLOCKED_STATIC_PATHS = [
   /^\/(?:server\.js|wrangler\.jsonc|\.assetsignore|\.gitignore|package(?:-lock)?\.json)$/i,
   /^\/(?:HANDOVER|DEPLOYMENT_FA|AI_AUDIT[^/]*?)\.md$/i,
   /\.(?:sql|b64|zip)$/i,
+  /^(?:\/(?:test-automated\.mjs|Dockerfile|README\.md|MOTION_ENHANCEMENTS\.md|oops[^/]*\.txt|dummy-delete-later[^/]*\.txt|__[^/]*\.txt))$/i,
+  /^\/(?:src|scripts|tools)(?:\/|$)/i,
   /(?:^|\/)\.env(?:\.|$)/i
 ];
 
