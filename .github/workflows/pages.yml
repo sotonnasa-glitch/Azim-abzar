@@ -154,6 +154,15 @@ jobs:
           node --check _site/admin-app.js
           node --check _site/azim-live-content.js
 
+      - name: Validate homepage asset files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in workshop_tools_hero_1789756528479.jpg industrial_garage_set_1789756545202.jpg cat_cabinet_trolley_1789756604644.jpg cat_wrenches_1789756566411.jpg garage_engine_work_1789760853632.jpg impact_air_wrench_1789760841938.jpg; do
+            test -s "_site/assets/homepage/$asset"
+          done
+          echo 'HOMEPAGE_ASSETS_VERIFIED: hero + category images are included in Pages artifact'
+
       - name: Validate homepage runtime scripts
         shell: bash
         run: |
