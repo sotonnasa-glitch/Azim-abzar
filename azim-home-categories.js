@@ -173,7 +173,15 @@
 
   function ready() {
     if (!document.querySelector('#home')) return;
-    load();
+
+    // This section is informative, not required for first paint or scrolling.
+    // Start it during idle time so the initial interaction stays responsive.
+    const start = () => load();
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(start, { timeout: 1400 });
+    } else {
+      window.setTimeout(start, 500);
+    }
   }
 
   if (document.readyState === 'loading') {
