@@ -222,6 +222,7 @@ async function openai(message:string, systemInstruction:string, model:string) {
 }
 
 Deno.serve(async (req) => {
+  let incomingMessage = "";
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   if (req.method !== "POST") return response({ error: "Method not allowed" }, 405, req);
   if (!allowed(req)) return response({ error: "تعداد درخواست‌های دستیار زیاد است؛ کمی بعد دوباره تلاش کنید." }, 429, req);
@@ -231,7 +232,8 @@ Deno.serve(async (req) => {
     if (contentLength > 8000) return response({ error: "درخواست بیش از حد بزرگ است." }, 413, req);
 
     const body = await req.json();
-    const message = String(body?.message ?? "").trim();
+    incomingMessage = String(body?.message ?? "").trim();
+    const message = incomingMessage;
     if (!message) return response({ error: "پیام خالی است." }, 400, req);
     if (message.length > 1200) return response({ error: "پیام بیش از حد طولانی است." }, 413, req);
 
@@ -262,6 +264,6 @@ Deno.serve(async (req) => {
     return response({ reply: advisorReply, source: "advisor" }, 200, req);
   } catch (error) {
     console.error("AI function error:", error);
-    return response({ reply: getKnowledgeAdvisorResponse(req.body?.message || ""), source: "advisor" }, 200, req);
+    return response({ reply: getKnowledgeAdvisorResponse(incomingMessage), source: "advisor" }, 200, req);
   }
 });
