@@ -240,54 +240,5 @@ revoke all on function public.azim_request_order_return(text,text,uuid,integer,t
 grant execute on function public.azim_request_order_return(text,text,uuid,integer,text,text) to anon;
 revoke execute on function public.azim_request_order_return(text,text,uuid,integer,text,text) from authenticated;
 
-create or replace function private.azim_order_status(p_order_code text)
-returns jsonb language plpgsql security definer set search_path to ''
-as $function$
-declare
-  v_code text := upper(trim(coalesce(p_order_code,'')));
-  v_ip inet := null;
-  v_ip_text text := split_part(coalesce(current_setting('request.headers',true)::json->>'x-forwarded-for',''),',',1);
-  v_result jsonb;
-begin
-  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$' and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$' then return jsonb_build_object('found',false,'message','شناسه سفارش نامعتبر است.'); end if;
-  begin v_ip := nullif(trim(v_ip_text),'')::inet; exception when others then v_ip:=null; end;
-  if v_ip is not null and (select count(*) from private.azim_order_tracking_rate_limits where ip=v_ip and created_at>now()-interval '10 minutes')>=30 then
-    return jsonb_build_object('found',false,'rate_limited',true,'message','تعداد درخواست‌های پیگیری زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.');
-  end if;
-  insert into private.azim_order_tracking_rate_limits(ip) values(v_ip);
-  select jsonb_build_object(
-    'found',true,'order_code',o.order_code,'status',o.status,'payment_status',o.payment_status,
-    'payment_method',o.payment_method,'payment_provider',o.payment_provider,'shipping_status',o.shipping_status,
-    'tracking_code',nullif(o.tracking_code,''),'tracking_url',nullif(o.tracking_url,''),'shipping_carrier',nullif(o.shipping_carrier,''),
-    'total',o.total,'created_at',o.created_at,'updated_at',o.updated_at,
-    'can_cancel',(o.status in ('pending','confirmed','processing') and o.shipping_status not in ('shipped','delivered')),
-    'cancel_request_status',coalesce((select r.status from public.order_action_requests r where r.order_id=o.id and r.request_type='cancel' order by r.created_at desc limit 1),null),
-    'items',coalesce((
-      select jsonb_agg(jsonb_build_object(
-        'id',i.id,'product_name',i.product_name,'sku',i.sku,'quantity',i.quantity,'unit_price',i.unit_price,'line_total',i.line_total,'variant',i.variant,
-        'returnable_quantity',greatest(0,i.quantity-coalesce((select sum(r.quantity) from public.order_return_requests r where r.order_item_id=i.id and r.status<>'rejected'),0)),
-        'return_requests',coalesce((
-          select jsonb_agg(jsonb_build_object('id',rr.id,'quantity',rr.quantity,'reason',rr.reason,'details',rr.details,'status',rr.status,'refund_status',rr.refund_status,'refund_amount',rr.refund_amount,'created_at',rr.created_at,'updated_at',rr.updated_at) order by rr.created_at desc)
-          from public.order_return_requests rr where rr.order_item_id=i.id
-        ),'[]'::jsonb)
-      ) order by i.id) from public.order_items i where i.order_id=o.id
-    ),'[]'::jsonb)
-  ) into v_result
-  from public.orders o where upper(o.order_code)=v_code limit 1;
-  if v_result is null then return jsonb_build_object('found',false,'message','سفارشی با این شناسه پیدا نشد.'); end if;
-  return v_result;
-end;
-$function$;
-
-create or replace function public.azim_order_status(p_order_code text)
-returns jsonb language sql security invoker set search_path to ''
-as $function$ select private.azim_order_status(p_order_code); $function$;
-revoke all on function public.azim_order_status(text) from public;
-grant execute on function public.azim_order_status(text) to anon;
-revoke execute on function public.azim_order_status(text) from authenticated;
-
-insert into public.site_content(section_key,title,payload,is_active)
-values('checkout_payment','روش‌های پرداخت سفارش','{"online_enabled":false,"provider":null,"offline_methods":["phone","message"]}'::jsonb,true)
-on conflict(section_key) do nothing;
-
-notify pgrst,'reload schema';
+-- Canonical order-tracking RPC lives only in database/order-tracking.sql.
+-- Keep this file focused on payment, cancellation and return workflows.
