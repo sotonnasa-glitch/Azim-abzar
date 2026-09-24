@@ -16,12 +16,14 @@ GitHub Pages از workflow موجود استفاده می‌کند و کاتال
 
 ## Backend
 
-برای اجرای Node:
+برای اجرای Node (Node.js 20.6+):
 
 ```bash
 npm install
 npm start
 ```
+
+اسکریپت `start`/ `dev` فایل `.env` را با `--env-file=.env` بارگذاری می‌کند. در استقرار Node، قبل از اجرای سرویس یک فایل `.env` بر اساس `.env.example` بسازید؛ secretها را داخل GitHub commit نکنید.
 
 پورت از `PORT` خوانده می‌شود و اگر تنظیم نشده باشد `3000` است.
 
