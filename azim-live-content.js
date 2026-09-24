@@ -361,6 +361,6 @@
     const copy=c.site_copy||{};
     if(document.querySelector('#home')){applyHomeLegacy(c);applyHomeCopy(copy,c);}
     if(document.querySelector('#card-channel-phone')){applyContactCopy(copy,c);}
-    if(document.querySelector('#chat')&&document.querySelector('#form')) applyAI(c);
+    if((document.querySelector('#chat')&&document.querySelector('#form')) || (document.querySelector('#chatMessages')&&document.querySelector('#chatForm'))) applyAI(c);
   });
 })();
