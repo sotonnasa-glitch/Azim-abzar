@@ -159,10 +159,7 @@
     }
 
     /* === Pause decorative motion while the document is actively scrolling === */
-    body.az-is-scrolling .az-hero-photo-track,
-    body.az-is-scrolling .az-motion-stage .ring,
-    body.az-is-scrolling .az-hero-interactive-hud,
-    body.az-is-scrolling .brand .mark svg {
+    body.az-is-scrolling * {
       animation-play-state: paused !important;
     }
     .az-hero-photo-track,
