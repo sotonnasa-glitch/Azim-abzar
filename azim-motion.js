@@ -158,6 +158,19 @@
       transform: translateY(0);
     }
 
+    /* === Pause decorative motion while the document is actively scrolling === */
+    body.az-is-scrolling .az-hero-photo-track,
+    body.az-is-scrolling .az-motion-stage .ring,
+    body.az-is-scrolling .az-hero-interactive-hud,
+    body.az-is-scrolling .brand .mark svg {
+      animation-play-state: paused !important;
+    }
+    .az-hero-photo-track,
+    .az-motion-stage,
+    .az-hero-interactive-hud {
+      contain: layout paint;
+    }
+
     @media (max-width: 1040px) {
       .az-cat-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -196,6 +209,22 @@
       mouseX = -1000;
       mouseY = -1000;
     }, { passive: true });
+
+    let scrollPauseRaf = 0;
+    let scrollResumeTimer = 0;
+    window.addEventListener('scroll', () => {
+      if (scrollPauseRaf) return;
+      scrollPauseRaf = requestAnimationFrame(() => {
+        scrollPauseRaf = 0;
+        document.body.classList.add('az-is-scrolling');
+      });
+      clearTimeout(scrollResumeTimer);
+      scrollResumeTimer = window.setTimeout(() => {
+        document.body.classList.remove('az-is-scrolling');
+      }, 160);
+    }, { passive: true });
+
+
 
     // Particle count: 50 rich glowing industrial embers and sparks
     const count = Math.min(28, Math.max(14, Math.round(window.innerWidth / 45)));
