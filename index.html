@@ -1652,13 +1652,29 @@
       contain: paint;
     }
     @media (max-width: 768px) {
+      /* Mobile: remove expensive backdrop sampling from the sticky UI.
+         The translucent surfaces stay; only the blur work is removed. */
       .top,
+      header,
+      .nav,
+      .az-hud-card,
+      .eyebrow,
+      .trust-badge,
+      .secondary,
+      .az-floating-chip,
+      .note,
+      footer {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
       header {
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(7,9,8,.97);
+      }
+      .nav {
+        background: rgba(14,19,16,.96);
       }
       .az-motion-stage {
-        opacity: .62;
+        opacity: .55;
       }
     }
     @media (prefers-reduced-motion: reduce) {
