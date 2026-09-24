@@ -849,6 +849,8 @@
       }
     }
   </style>
+  <script src="./supabase-config.js"></script>
+  <script src="./azim-live-content.js?v=3" defer></script>
 </head>
 <body data-page="ai" class="ai-assistant-page">
   <!-- بوم ذرات و خطوط نوری زنده متحرک در پس‌زمینه -->
@@ -1286,7 +1288,8 @@
       showThinkingIndicator();
 
       try {
-        const res = await fetch('/api/chat', {
+        const apiUrl = String(window.AZIM_AI_API_URL || '/api/chat').trim();
+        const res = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: q })
