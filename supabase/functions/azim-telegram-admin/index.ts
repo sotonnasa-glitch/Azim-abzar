@@ -1665,6 +1665,7 @@ Deno.serve(async (req) => {
     }
 
     const update = await req.json();
+    incomingUpdate = update;
     const updateId = Number(update?.update_id);
 
     if (Number.isSafeInteger(updateId)) {
