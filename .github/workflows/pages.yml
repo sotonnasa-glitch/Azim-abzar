@@ -204,6 +204,24 @@ jobs:
           PY
           node --check /tmp/contact-inline.js
 
+      - name: Validate AI assistant runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          ai = Path('_site/ai.html').read_text(encoding='utf-8')
+          cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
+          live = Path('_site/azim-live-content.js').read_text(encoding='utf-8')
+          assert 'supabase-config.js' in ai
+          assert 'azim-live-content.js?v=3' in ai
+          assert 'id="chatMessages"' in ai and 'id="chatForm"' in ai and 'id="chatInput"' in ai
+          assert 'window.AZIM_AI_API_URL' in ai
+          assert 'sb_publishable_' in cfg and 'functions/v1/azim-ai-chat' in cfg
+          assert 'chatMessages' in live and 'chatForm' in live and 'chatInput' in live
+          print('AI RUNTIME VERIFIED: Supabase Edge Function + live CMS + redesigned DOM')
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
