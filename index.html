@@ -128,8 +128,8 @@
       top: 0;
       z-index: 30;
       background: rgba(7,9,8,.86);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255,255,255,.07);
       box-shadow: 0 10px 30px rgba(0,0,0,.5);
       transition: background .2s ease;
@@ -986,8 +986,8 @@
     .az-hud-card {
       width: 260px;
       background: linear-gradient(165deg, rgba(14,20,16,.92) 0%, rgba(8,11,9,.94) 100%);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border: 1px solid rgba(245,185,0,.35);
       border-radius: 20px;
       padding: 16px 18px;
@@ -1632,6 +1632,17 @@
       .az-ticker-item { font-size: 11px; padding: 0 14px; }
     }
 
+
+    /* === Defer expensive below-the-fold rendering during scroll === */
+    #home > .section {
+      content-visibility: auto;
+      contain-intrinsic-size: 760px;
+    }
+    .az-simple-photos-grid img,
+    .az-cat-showcase-grid img {
+      content-visibility: auto;
+    }
+
     /* === Scroll performance: compositor-friendly layers, same visuals === */
     .az-hero-photo-track,
     .az-hero-interactive-hud {
@@ -1798,20 +1809,17 @@
           <div class="heroBox">
             <!-- بوم متحرک عکس هیرو: حرکت آرام، پیوسته و بدون پرش به سمت راست -->
             <div class="az-hero-photo-canvas" aria-hidden="true">
-              <div class="az-hero-photo-track">
-                <!-- دور اول: ۴ تصویر عریض کارگاهی و ابزار تخصصی صنعتی با کیفیت فوق‌العاده بالا -->
-                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" decoding="async" decoding="async" referrerPolicy="no-referrer"></div>
+                            <div class="az-hero-photo-track">
+                <!-- فقط دو دور یکسان؛ برای چرخه بی‌نهایت کافی است و لایه بسیار سبک‌تر می‌ماند. -->
+                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" decoding="async" referrerPolicy="no-referrer"></div>
                 <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" decoding="async" referrerPolicy="no-referrer"></div>
                 <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" decoding="async" referrerPolicy="no-referrer"></div>
                 <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" decoding="async" referrerPolicy="no-referrer"></div>
-
-                <!-- تکرار دقیق دور اول برای چرخه بی‌نهایت و کاملاً نامرئی به سمت راست -->
-                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" decoding="async" referrerPolicy="no-referrer"></div>
                 <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" decoding="async" referrerPolicy="no-referrer"></div>
                 <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" decoding="async" referrerPolicy="no-referrer"></div>
                 <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" decoding="async" referrerPolicy="no-referrer"></div>
-              </div>
-              <div class="az-hero-photo-overlay"></div>
+              </div>photo-overlay"></div>
             </div>
 
             <div class="copy">
