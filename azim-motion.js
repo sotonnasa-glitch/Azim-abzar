@@ -51,6 +51,10 @@
       border-radius: 50%;
       box-shadow: inset 0 0 40px rgba(245,185,0,.03);
     }
+    .az-motion-stage .r1,
+    .az-motion-stage .r2 {
+      will-change: transform;
+    }
     .az-motion-stage .r1 {
       width: 540px;
       height: 540px;
@@ -194,7 +198,7 @@
     }, { passive: true });
 
     // Particle count: 50 rich glowing industrial embers and sparks
-    const count = 50;
+    const count = Math.min(28, Math.max(14, Math.round(window.innerWidth / 45)));
     const particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -211,16 +215,37 @@
     }
 
     let isVisible = true;
+    let lastFrame = 0;
+    let lastScrollAt = 0;
     document.addEventListener('visibilitychange', () => {
       isVisible = !document.hidden;
     });
+    window.addEventListener('scroll', () => {
+      lastScrollAt = performance.now();
+    }, { passive: true });
 
     let time = 0;
-    function draw() {
+    function draw(now = performance.now()) {
       if (!isVisible) {
         requestAnimationFrame(draw);
         return;
       }
+
+      // Scrolling is the expensive moment: freeze the decorative canvas while
+      // the browser is moving the document, then resume automatically.
+      if (now - lastScrollAt < 140) {
+        requestAnimationFrame(draw);
+        return;
+      }
+
+      // Decorative particles do not need 60fps. ~30fps keeps the effect smooth
+      // while cutting canvas work roughly in half.
+      if (now - lastFrame < 33) {
+        requestAnimationFrame(draw);
+        return;
+      }
+      lastFrame = now;
+
       ctx.clearRect(0, 0, width, height);
       time += 0.02;
 
@@ -417,6 +442,7 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('az-visible');
+          entry.target.style.willChange = 'auto';
           obs.unobserve(entry.target);
         }
       });
