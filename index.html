@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="کاتالوگ ۹۰۸ محصول ابزارهای مکانیکی، کارگاهی و گاراژی با نمایش مشخصات، تصویر، سایزبندی و قیمت‌های ثبت‌شده؛ برای استعلام و سفارش با فروش در ارتباط باشید.">
+  <meta name="description" content="کاتالوگ تخصصی و جامع ابزارهای مکانیکی، کارگاهی و گاراژی با نمایش مشخصات، تصویر، سایزبندی و قیمت‌های ثبت‌شده؛ برای استعلام و سفارش با فروش در ارتباط باشید.">
   <meta property="og:title" content="عظیم ابزار (Azim Abzar) | مرجع تخصصی ابزار مکانیکی و کارگاهی">
-  <meta property="og:description" content="کاتالوگ ۹۰۸ محصول ابزارهای گاراژی، تعمیرگاهی و صنعتی؛ تصویر، شناسه، قیمت و سایزبندی محصولات را بررسی کنید و برای شرایط نهایی سفارش استعلام بگیرید.">
+  <meta property="og:description" content="کاتالوگ تخصصی ابزارهای گاراژی، تعمیرگاهی و صنعتی؛ تصویر، شناسه، مشخصات و سایزبندی محصولات را بررسی کنید و برای شرایط نهایی سفارش استعلام بگیرید.">
   <meta name="generator" content="Azim Abzar production build">
   <title>عظیم ابزار (Azim Abzar) | مرجع تخصصی ابزارهای مکانیکی و کارگاهی</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -573,6 +573,67 @@
     }
     .az-nav-btn-tracking:hover .az-track-ping {
       filter: drop-shadow(0 0 10px #2ed573);
+    }
+
+    /* 5. Animation for AI Assistant (دستیار هوش مصنوعی - تم طلایی هماهنگ با بقیه دکمه‌ها و انیمیشن مدار و ستاره جیمینی) */
+    .az-nav-btn-ai {
+      color: #d2dbd4;
+    }
+    .az-anim-ai {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(245, 185, 0, 0.28);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .az-anim-ai svg {
+      width: 22px;
+      height: 22px;
+      overflow: visible;
+    }
+    .az-ai-nav-orbit {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azAiNavOrbitSpin 4.5s linear infinite;
+    }
+    .az-ai-nav-orbit-spark {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azAiNavOrbitSpin 4.5s linear infinite;
+    }
+    .az-ai-nav-star {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azAiNavStarBreathe 2.4s ease-in-out infinite;
+      filter: drop-shadow(0 0 3px rgba(245, 185, 0, 0.6));
+    }
+    .az-ai-nav-ministar {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: azAiNavMiniTwinkle 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes azAiNavOrbitSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes azAiNavStarBreathe {
+      0%, 100% {
+        transform: scale(0.92) rotate(0deg);
+        filter: drop-shadow(0 0 3px rgba(245, 185, 0, 0.6));
+      }
+      50% {
+        transform: scale(1.15) rotate(16deg);
+        filter: drop-shadow(0 0 8px rgba(255, 216, 79, 0.95)) drop-shadow(0 0 12px rgba(245, 185, 0, 0.8));
+      }
+    }
+    @keyframes azAiNavMiniTwinkle {
+      0% { transform: scale(0.7); opacity: 0.5; }
+      100% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 6px #ffd84f); }
+    }
+    .az-nav-btn-ai:hover .az-ai-nav-orbit,
+    .az-nav-btn-ai:hover .az-ai-nav-orbit-spark {
+      animation-duration: 1.5s;
+    }
+    .az-nav-btn-ai:hover .az-ai-nav-star {
+      filter: drop-shadow(0 0 10px rgba(255, 216, 79, 1)) drop-shadow(0 0 16px rgba(245, 185, 0, 0.9));
     }
 
     .cta {
@@ -1635,7 +1696,7 @@
           <span>کاتالوگ محصولات</span>
         </a>
 
-        <!-- دکمه ۳: پیگیری سفارش آنلاین با رادار متحرک ۳۶۰ درجه و سیگنال سونار -->
+        <!-- دکمه ۴: پیگیری سفارش آنلاین با رادار متحرک ۳۶۰ درجه و سیگنال سونار -->
         <a class="az-nav-btn az-nav-btn-tracking" href="order-status.html" id="nav-btn-tracking">
           <span class="az-anim-icon-wrap az-anim-tracking" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
@@ -1657,6 +1718,29 @@
             </svg>
           </span>
           <span>پیگیری سفارش</span>
+        </a>
+
+        <!-- دکمه ۵: دستیار هوش مصنوعی با ستاره جیمینی طلایی، مدار چرخشی و تم هماهنگ -->
+        <a class="az-nav-btn az-nav-btn-ai" href="ai.html" id="nav-btn-ai">
+          <span class="az-anim-icon-wrap az-anim-ai" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- Orbit Ring with Spark Particle -->
+              <circle class="az-ai-nav-orbit" cx="12" cy="12" r="8.8" stroke="url(#azAiNavGoldGrad)" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85"/>
+              <circle class="az-ai-nav-orbit-spark" cx="12" cy="3.2" r="1.5" fill="#ffd84f"/>
+              <!-- Central 4-point Gemini AI Star in Gold -->
+              <path class="az-ai-nav-star" d="M12 3C12 7.8 8 12 3 12C8 12 12 16.2 12 21C12 16.2 16 12 21 12C16 12 12 7.8 12 3Z" fill="url(#azAiNavGoldGrad)"/>
+              <!-- Companion Mini Star in Gold -->
+              <path class="az-ai-nav-ministar" d="M18.5 2.5C18.5 4 17.2 5 15.8 5C17.2 5 18.5 6 18.5 7.5C18.5 6 19.8 5 21.2 5C19.8 5 18.5 4 18.5 2.5Z" fill="#ffeaa7"/>
+              <defs>
+                <linearGradient id="azAiNavGoldGrad" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff8db"/>
+                  <stop offset="45%" stop-color="#ffd84f"/>
+                  <stop offset="100%" stop-color="#f5b900"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </span>
+          <span>دستیار هوش مصنوعی</span>
         </a>
 
         <!-- دکمه ۴: ارتباط و سفارش با تلفن رادیویی و امواج صوتی مخابراتی -->
@@ -1711,13 +1795,9 @@
                 تأمین مستقیم و بی‌واسطه ابزار صنعتی
               </span>
               <h1>تجهیزات صنعتی و ابزار تخصصی مکانیکی؛<br><span>قدرت، دقت و دوام برای حرفه‌ای‌ها</span></h1>
-              <p>کاتالوگ تخصصی ۹۰۸ قلم ابزار گاراژی، تعمیرگاهی و صنعتی با نمایش تصویر، شناسه، سایزبندی و قیمت ثبت‌شده. برای موجودی و شرایط سفارش، استعلام بگیرید.</p>
+              <p>کاتالوگ جامع و تخصصی ابزارهای گاراژی، تعمیرگاهی و صنعتی با نمایش مشخصات، تصویر، سایزبندی و قیمت ثبت‌شده؛ برای موجودی و شرایط سفارش، استعلام بگیرید.</p>
               
               <div class="trust-badges">
-                <span class="trust-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  ابزارهای تخصصی و صنعتی کارگاهی
-                </span>
                 <span class="trust-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   قیمت و شرایط سفارش پس از استعلام
@@ -1791,8 +1871,8 @@
                     </g>
                   </svg>
                   <div class="az-gauge-info">
-                    <span class="az-gauge-val" id="az-gauge-num">۹۰۸</span>
-                    <span class="az-gauge-unit">محصول در کاتالوگ</span>
+                    <span class="az-gauge-val" id="az-gauge-num">کامل</span>
+                    <span class="az-gauge-unit">کاتالوگ تخصصی ابزار</span>
                   </div>
                 </div>
 
@@ -1806,7 +1886,7 @@
               <div class="az-floating-chip az-chip-inventory">
                 <span class="az-chip-ping"></span>
                 <div>
-                  <strong>۹۰۸ محصول در کاتالوگ</strong>
+                  <strong>کاتالوگ جامع و تخصصی</strong>
                   <small>وضعیت موجودی هنگام استعلام بررسی می‌شود</small>
                 </div>
               </div>
@@ -1827,13 +1907,13 @@
     <!-- Infinite Live Marquee Ticker -->
     <div class="az-ticker-section" aria-label="نوار زنده اطلاعات محصولات عظیم ابزار">
       <div class="az-ticker-track">
-        <span class="az-ticker-item"><b>۹۰۸</b> محصول صنعتی با تست دوام و گشتاور</span><span class="az-ticker-sep"></span>
+        <span class="az-ticker-item"><b>تنوع کامل</b> ابزارهای صنعتی با تست دوام و گشتاور</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>مشخصات متریال</b> طبق مشخصات هر کالا</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>قیمت و شرایط سفارش</b> با حاشیه سود منصفانه</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>هماهنگی ارسال</b> به تمامی کارگاه‌های کشور</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>ترکمتر و ابزارهای اندازه‌گیری</b> و پولی‌کش‌های تخصصی</span><span class="az-ticker-sep"></span>
         <!-- Duplicated for seamless marquee loop -->
-        <span class="az-ticker-item"><b>۹۰۸</b> محصول صنعتی با تست دوام و گشتاور</span><span class="az-ticker-sep"></span>
+        <span class="az-ticker-item"><b>تنوع کامل</b> ابزارهای صنعتی با تست دوام و گشتاور</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>مشخصات متریال</b> طبق مشخصات هر کالا</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>قیمت و شرایط سفارش</b> با حاشیه سود منصفانه</span><span class="az-ticker-sep"></span>
         <span class="az-ticker-item"><b>هماهنگی ارسال</b> به تمامی کارگاه‌های کشور</span><span class="az-ticker-sep"></span>
@@ -1855,7 +1935,7 @@
           <a class="az-choice" href="products-v4.html">
             <span class="az-choice-num">مسیر اول</span>
             <strong>جست‌وجوی مستقیم در کاتالوگ</strong>
-            <small>دسترسی سریع به تصاویر باکیفیت، کدهای فنی و قیمت‌های روز ۹۰۸ قلم ابزار به تفکیک سایز و مدل.</small>
+            <small>دسترسی سریع به تصاویر باکیفیت، کدهای فنی و قیمت‌های روز انواع ابزار به تفکیک سایز و مدل.</small>
             <b>ورود به کاتالوگ محصولات ←</b>
           </a>
 <a class="az-choice" href="contact.html">
@@ -1875,7 +1955,7 @@
           <div>
             <div class="eyebrow">دسته‌بندی‌های تخصصی کاتالوگ</div>
             <h2 class="title">گروه‌های اصلی ابزار صنعتی و کارگاهی</h2>
-            <p class="lead">دسترسی مستقیم و تفکیک‌شده به ۹۰۸ قلم ابزار مکانیکی، کارگاهی و تجهیزات حرفه‌ای:</p>
+            <p class="lead">دسترسی مستقیم و تفکیک‌شده به دسته‌بندی ابزارهای مکانیکی، کارگاهی و تجهیزات حرفه‌ای:</p>
           </div>
         </div>
         <div class="az-cat-showcase-grid">

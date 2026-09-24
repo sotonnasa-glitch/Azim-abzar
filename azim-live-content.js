@@ -20,6 +20,19 @@
 
   function latinDigits(v){return String(v??'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));}
 
+  function sanitizeProductCounts(v) {
+    if (v == null) return v;
+    return String(v)
+      .replace(/(?:کاتالوگ\s*)?۹۰۸\s*محصول(?:\s*در\s*کاتالوگ)?/gi, 'کاتالوگ جامع ابزار')
+      .replace(/(?:کاتالوگ\s*)?908\s*محصول(?:\s*در\s*کاتالوگ)?/gi, 'کاتالوگ جامع ابزار')
+      .replace(/۹۰۸\s*قلم/gi, 'انواع')
+      .replace(/908\s*قلم/gi, 'انواع')
+      .replace(/۹۰۸/g, '')
+      .replace(/908/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
   function setAttr(el, attr, value) {
     if (el && value != null && String(value).trim() !== '') el.setAttribute(attr, String(value));
   }
@@ -59,13 +72,19 @@
         }
         if (span && hero.highlight) span.textContent = hero.highlight;
       }
-      setText(heroRoot.querySelector('p'), hero.description);
-      if (Array.isArray(hero.trust_badges)) heroRoot.querySelectorAll('.trust-badge').forEach((el,i) => {
-        if (hero.trust_badges[i]) {
-          const textNode = Array.from(el.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-          if (textNode) textNode.textContent = ' ' + hero.trust_badges[i];
-        }
-      });
+      setText(heroRoot.querySelector('p'), sanitizeProductCounts(hero.description));
+      if (Array.isArray(hero.trust_badges)) {
+        const cleanBadges = hero.trust_badges.map(sanitizeProductCounts).filter(t => t && !/۹۰۸\s*محصول/i.test(String(t)));
+        heroRoot.querySelectorAll('.trust-badge').forEach((el, i) => {
+          if (cleanBadges[i]) {
+            const textNode = Array.from(el.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+            if (textNode) textNode.textContent = ' ' + cleanBadges[i];
+            el.style.display = '';
+          } else {
+            el.style.display = 'none';
+          }
+        });
+      }
       const links = heroRoot.querySelectorAll('.actions a.btn');
       [hero.primary_cta,hero.contact_cta].forEach((v,i) => {
         if (links[i] && v) {
@@ -124,13 +143,19 @@
           setText(span,hero.highlight,true);
         } else if(hero.title) setText(h1,hero.title);
       }
-      setText(heroRoot.querySelector('p'),hero.description);
-      if(Array.isArray(hero.trust)) heroRoot.querySelectorAll('.trust-badge').forEach((el,i)=>{
-        if(hero.trust[i]) {
-          const textNode=Array.from(el.childNodes).find(n=>n.nodeType===3 && n.textContent.trim());
-          if(textNode) textNode.textContent=' '+hero.trust[i];
-        }
-      });
+      setText(heroRoot.querySelector('p'),sanitizeProductCounts(hero.description));
+      if(Array.isArray(hero.trust)) {
+        const cleanTrust = hero.trust.map(sanitizeProductCounts).filter(t => t && !/۹۰۸\s*محصول/i.test(String(t)));
+        heroRoot.querySelectorAll('.trust-badge').forEach((el,i)=>{
+          if(cleanTrust[i]) {
+            const textNode=Array.from(el.childNodes).find(n=>n.nodeType===3 && n.textContent.trim());
+            if(textNode) textNode.textContent=' '+cleanTrust[i];
+            el.style.display = '';
+          } else {
+            el.style.display = 'none';
+          }
+        });
+      }
       const links=heroRoot.querySelectorAll('.actions a.btn');
       [hero.primary_cta,hero.contact_cta].forEach((v,i)=>{
         if(links[i] && v){
@@ -143,15 +168,26 @@
     const hud=h.hud||{};
     setText(document.querySelector('.az-hud-label'),hud.label);
     setText(document.querySelector('.az-hud-badge'),hud.badge);
-    setText(document.querySelector('#az-gauge-num'),hud.value);
-    setText(document.querySelector('.az-gauge-unit'),hud.unit);
-    document.querySelectorAll('.az-hud-tag').forEach((el,i)=>{if(hud.specs?.[i]) setText(el,hud.specs[i]);});
+    if (hud.value && !/۹۰۸|908/.test(String(hud.value))) {
+      setText(document.querySelector('#az-gauge-num'),hud.value);
+    } else {
+      setText(document.querySelector('#az-gauge-num'),'کامل');
+    }
+    if (hud.unit && !/۹۰۸|908/.test(String(hud.unit))) {
+      setText(document.querySelector('.az-gauge-unit'),hud.unit);
+    } else {
+      setText(document.querySelector('.az-gauge-unit'),'کاتالوگ تخصصی ابزار');
+    }
+    document.querySelectorAll('.az-hud-tag').forEach((el,i)=>{if(hud.specs?.[i]) setText(el,sanitizeProductCounts(hud.specs[i]));});
     document.querySelectorAll('.az-floating-chip').forEach((el,i)=>{
       const pair=hud.chips?.[i];
-      if(pair){setText(el.querySelector('strong'),pair[0]);setText(el.querySelector('small'),pair[1]);}
+      if(pair){
+        setText(el.querySelector('strong'),sanitizeProductCounts(pair[0]));
+        setText(el.querySelector('small'),sanitizeProductCounts(pair[1]));
+      }
     });
 
-    const ticker=(h.ticker||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v)));
+    const ticker=(h.ticker||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v))).map(sanitizeProductCounts);
     if(ticker.length){
       document.querySelectorAll('.az-ticker-track .az-ticker-item').forEach((el,i)=>setText(el,ticker[i%ticker.length],true));
     }
@@ -161,13 +197,13 @@
     if(cr){
       setText(cr.querySelector('.sectionHead .eyebrow'),choice.eyebrow);
       setText(cr.querySelector('.sectionHead .title'),choice.title);
-      setText(cr.querySelector('.sectionHead .lead'),choice.lead);
+      setText(cr.querySelector('.sectionHead .lead'),sanitizeProductCounts(choice.lead));
       const cards=cr.querySelectorAll('.az-choice');
       (choice.cards||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(JSON.stringify(v))).forEach((v,i)=>{
         const card=cards[i]; if(!card||!v) return;
         setText(card.querySelector('.az-choice-num'),v[0]);
-        setText(card.querySelector('strong'),v[1]);
-        setText(card.querySelector('small'),v[2]);
+        setText(card.querySelector('strong'),sanitizeProductCounts(v[1]));
+        setText(card.querySelector('small'),sanitizeProductCounts(v[2]));
         setText(card.querySelector('b'),v[3]);
       });
     }

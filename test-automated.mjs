@@ -426,10 +426,45 @@ function testContactForm() {
 }
 
 // ------------------------------------------------------------------------------
-// 5. Suite: Live Server Route Accessibility
+// 5. Suite: Order Tracking Flow
+// ------------------------------------------------------------------------------
+function testOrderTrackingFlow() {
+  suite('۵. تست سامانه پیگیری وضعیت و رهگیری سفارش (Order Tracking)');
+
+  const html = fs.readFileSync(path.join(__dirname, 'order-status.html'), 'utf8');
+  const dom = new JSDOM(html, { runScripts: 'outside-only' });
+  const doc = dom.window.document;
+
+  const trackForm = doc.getElementById('trackForm');
+  const orderCodeInput = doc.getElementById('orderCode');
+  const trackBtn = doc.getElementById('trackBtn');
+  const statusContainer = doc.getElementById('status');
+
+  if (trackForm && orderCodeInput && trackBtn) {
+    pass('فرم پیگیری وضعیت سفارش با فیلد کد سفارش و دکمه استعلام حاضر است');
+  } else {
+    fail('فرم پیگیری سفارش یا دکمه‌های آن یافت نشد');
+  }
+
+  if (statusContainer) {
+    pass('کانتینر نمایش نتایج و خطای استعلام در صفحه موجود است');
+  } else {
+    fail('کانتینر نتایج استعلام یافت نشد');
+  }
+
+  const homeBtn = doc.querySelector('.btn-home-link');
+  if (homeBtn && (homeBtn.getAttribute('href') === 'index.html' || homeBtn.getAttribute('href') === '/')) {
+    pass('دکمه بازگشت به صفحه اصلی در هدر پیگیری سفارش فعال است');
+  } else {
+    fail('دکمه بازگشت به صفحه اصلی در هدر پیگیری سفارش یافت نشد');
+  }
+}
+
+// ------------------------------------------------------------------------------
+// 6. Suite: Live Server Route Accessibility
 // ------------------------------------------------------------------------------
 async function testServerRoutes() {
-  suite('۵. تست سلامت و پاسخگویی سرور زنده Express (Live HTTP Routes)');
+  suite('۶. تست سلامت و پاسخگویی سرور زنده Express (Live HTTP Routes)');
 
   const routes = [
     { url: 'http://localhost:3000/api/health', title: 'API پایش سلامت سرور' },

@@ -3,200 +3,1351 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="دستیار هوشمند عظیم ابزار برای راهنمایی انتخاب ابزار، مشخصات فنی و مسیر خرید.">
+  <meta name="description" content="دستیار فوق‌پیشرفته هوش مصنوعی عظیم ابزار؛ مشاور تخصصی ابزارآلات صنعتی، تعمیرگاهی، ترکمتر، بکس و جعبه ابزار">
   <meta name="theme-color" content="#070908">
-  <title>دستیار هوشمند | عظیم ابزار</title>
+  <title>دستیار هوش مصنوعی | عظیم ابزار</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="./supabase-config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#070908;--panel:#101512;--panel2:#0c100e;--line:rgba(255,255,255,.09);--text:#f4f6f4;--muted:#929b95;--gold:#f5b900;--gold2:#ffd84f;--ok:#43d17d;--danger:#ff7777}
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;min-height:100vh;background:
-      radial-gradient(circle at 14% 4%,rgba(245,185,0,.15),transparent 27%),
-      radial-gradient(circle at 90% 82%,rgba(29,88,52,.13),transparent 30%),
-      linear-gradient(160deg,#060807 0%,#0a0f0c 55%,#060807 100%);
-      color:var(--text);font-family:Vazirmatn,Tahoma,sans-serif;overflow-x:hidden}
-    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:
-      radial-gradient(rgba(245,185,0,.24) 1px,transparent 1px),
-      repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 1px,transparent 13px);
-      background-size:34px 34px,auto;mask-image:linear-gradient(to bottom,#000,transparent 90%);z-index:-1}
-    a{color:inherit;text-decoration:none}
-    .page{width:min(1120px,calc(100% - 28px));margin:22px auto 28px}
-    .shell{border:1px solid var(--line);border-radius:26px;overflow:hidden;background:linear-gradient(180deg,rgba(16,21,18,.96),rgba(10,14,12,.98));box-shadow:0 30px 90px rgba(0,0,0,.48)}
-    .head{display:flex;align-items:center;gap:14px;padding:19px 20px;border-bottom:1px solid var(--line);background:rgba(6,9,8,.76);backdrop-filter:blur(18px)}
-    .mark{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#ffe27a,#bd8000);color:#0a0d0b;font-weight:900;box-shadow:0 0 22px rgba(245,185,0,.22),inset 0 1px 1px rgba(255,255,255,.7)}
-    .head-copy{min-width:0}.head-copy h1{font-size:18px;margin:0;font-weight:900}.head-copy p{font-size:10px;color:var(--muted);margin:4px 0 0}
-    .head-actions{display:flex;align-items:center;gap:8px;margin-right:auto}.back,.reset{border:1px solid var(--line);background:rgba(255,255,255,.04);color:#dfe5e1;border-radius:11px;padding:9px 12px;font:800 11px Vazirmatn,Tahoma,sans-serif;cursor:pointer}
-    .back:hover,.reset:hover{border-color:rgba(245,185,0,.48);color:var(--gold2);background:rgba(245,185,0,.08)}
-    .status{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--ok);white-space:nowrap}.status i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px rgba(67,209,125,.6)}
-    .status.busy{color:var(--gold2)}.status.busy i{background:var(--gold);box-shadow:0 0 12px rgba(245,185,0,.6)}
-    .status.offline{color:var(--danger)}.status.offline i{background:var(--danger);box-shadow:0 0 12px rgba(255,119,119,.5)}
-    .intro{padding:18px 20px 8px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end}
-    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold2);font-size:9px;font-weight:900;letter-spacing:.7px}.eyebrow:before{content:"";width:18px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(245,185,0,.5)}
-    .intro h2{font-size:28px;line-height:1.3;margin:9px 0 7px;font-weight:900}.intro p{margin:0;color:#aeb6b1;font-size:11px;line-height:2}
-    .cap{border:1px solid rgba(245,185,0,.19);background:rgba(245,185,0,.06);border-radius:16px;padding:12px 14px;min-width:225px}.cap b{display:block;font-size:10px;color:#fff}.cap span{display:block;font-size:9px;color:#8f9992;margin-top:4px;line-height:1.8}
-    .chat{height:min(56vh,620px);min-height:430px;overflow:auto;margin:14px 20px 0;padding:18px;border:1px solid var(--line);border-radius:20px;background:
-      radial-gradient(circle at 80% 10%,rgba(245,185,0,.05),transparent 24%),
-      linear-gradient(180deg,#0b100d,#090d0b)}
-    .msg{max-width:min(82%,780px);margin:9px 0;padding:13px 15px;border:1px solid var(--line);border-radius:17px;line-height:2;font-size:12px;white-space:pre-wrap;word-break:break-word;box-shadow:0 8px 18px rgba(0,0,0,.12)}
-    .msg.bot{background:linear-gradient(180deg,#121916,#0f1411);border-top-right-radius:6px;color:#edf1ee}.msg.user{margin-right:auto;background:linear-gradient(145deg,#f5b900,#d29200);color:#10130f;border-color:rgba(255,222,118,.55);border-top-left-radius:6px;font-weight:700}
-    .typing{min-height:22px;display:none;padding:7px 20px;color:#8c958f;font-size:10px}.typing:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-left:7px;box-shadow:0 0 10px rgba(245,185,0,.45);animation:dot 1s infinite alternate}
-    @keyframes dot{from{transform:translateY(0);opacity:.35}to{transform:translateY(-3px);opacity:1}}
-    .quick{display:flex;gap:8px;overflow:auto;padding:10px 20px;border-top:1px solid rgba(255,255,255,.06);scrollbar-width:none}.quick::-webkit-scrollbar{display:none}
-    .quick button{white-space:nowrap;border:1px solid rgba(245,185,0,.2);background:rgba(255,255,255,.035);color:#dce2de;border-radius:999px;padding:9px 13px;font:700 10px Vazirmatn,Tahoma,sans-serif;cursor:pointer;transition:.2s}
-    .quick button:hover{border-color:rgba(245,185,0,.62);color:var(--gold2);background:rgba(245,185,0,.08);transform:translateY(-1px)}
-    .composer{display:flex;gap:10px;padding:15px 20px 11px;border-top:1px solid rgba(255,255,255,.06)}
-    .composer-wrap{position:relative;flex:1}.composer textarea{width:100%;min-height:58px;max-height:150px;resize:none;border:1px solid var(--line);border-radius:15px;padding:13px 14px 28px;background:#090d0b;color:#eef2ef;outline:none;font:600 12px/1.9 Vazirmatn,Tahoma,sans-serif}.composer textarea::placeholder{color:#707a73}.composer textarea:focus{border-color:rgba(245,185,0,.58);box-shadow:0 0 0 3px rgba(245,185,0,.08)}
-    .hint{position:absolute;bottom:8px;right:13px;font-size:8px;color:#66716a}
-    .send{width:92px;align-self:stretch;border:0;border-radius:15px;background:linear-gradient(145deg,#ffd84f,#e0a500);color:#10130e;font:900 12px Vazirmatn,Tahoma,sans-serif;cursor:pointer;box-shadow:0 10px 22px rgba(245,185,0,.15);transition:.2s}.send:hover{transform:translateY(-2px);box-shadow:0 15px 28px rgba(245,185,0,.23)}.send:disabled{opacity:.45;cursor:not-allowed;transform:none}
-    .note{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px 18px;color:#69726d;font-size:9px;line-height:1.8}.note strong{color:#aeb7b1;font-weight:700}
-    @media(max-width:760px){.page{width:100%;margin:0}.shell{border-radius:0;min-height:100vh}.head{padding:15px}.head-actions{gap:5px}.head-actions .reset{display:none}.status{font-size:9px}.intro{grid-template-columns:1fr;padding:16px 15px 4px}.intro h2{font-size:23px}.cap{min-width:0}.chat{height:calc(100vh - 360px);min-height:410px;margin:12px 12px 0;padding:12px}.msg{max-width:91%;font-size:11px}.quick{padding:9px 12px}.composer{padding:12px}.send{width:72px}.note{padding:0 12px 14px;display:block}}
-    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+    /* مخفی‌سازی قطعی ویجت‌ها و دکمه‌های شناور مزاحم در محیط اختصاصی هوش مصنوعی */
+    #azimAiFab, .az-ai-fab, [data-floating-cart], .floating-cart, .floating-cart-button, .az-floating-cart {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transform: scale(0) !important;
+    }
+
+    :root {
+      --bg-dark: #060907;
+      --bg-surface: #0a0f0c;
+      --bg-card: rgba(12, 18, 14, 0.85);
+      --bg-card-hover: rgba(18, 26, 21, 0.95);
+      --gold: #f5b900;
+      --gold-light: #ffd84f;
+      --gold-glow: rgba(245, 185, 0, 0.3);
+      --gold-subtle: rgba(245, 185, 0, 0.08);
+      --emerald: #10b981;
+      --text-main: #f3f7f4;
+      --text-muted: #96a59d;
+      --text-dim: #607066;
+      --border-line: rgba(255, 255, 255, 0.08);
+      --border-gold: rgba(245, 185, 0, 0.32);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background:
+        radial-gradient(circle 800px at 50% -20%, rgba(245, 185, 0, 0.14), transparent 70%),
+        radial-gradient(circle 600px at 15% 85%, rgba(16, 185, 129, 0.08), transparent 70%),
+        linear-gradient(180deg, #060807 0%, #090e0b 50%, #050706 100%);
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+    }
+
+    /* بوم زنده پس‌زمینه */
+    #liveBgCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.45;
+    }
+
+    /* نوار هدر مدرن و شیشه‌ای (Sleek Glassmorphic Navbar) */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      background: rgba(8, 12, 10, 0.88);
+      border-bottom: 1px solid var(--border-line);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    /* هویت برند در سمت راست */
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-ai-badge {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1b261f, #0d1410);
+      border: 1px solid rgba(245, 185, 0, 0.35);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 16px rgba(245, 185, 0, 0.2);
+      flex-shrink: 0;
+    }
+
+    .brand-ai-badge svg {
+      width: 20px;
+      height: 20px;
+      color: var(--gold-light);
+      filter: drop-shadow(0 0 6px rgba(245, 185, 0, 0.6));
+    }
+
+    .pulse-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+      border: 1.5px solid #060907;
+      animation: pulseGlow 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+
+    .brand-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .brand-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .ai-pill-tag {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: rgba(245, 185, 0, 0.15);
+      border: 1px solid rgba(245, 185, 0, 0.4);
+      color: var(--gold-light);
+      text-transform: uppercase;
+    }
+
+    .brand-status {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .brand-status .dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--emerald);
+    }
+
+    /* دکمه‌های سمت چپ هدر (کاملاً شیک، مینیمال و بدون شکست زشت خط) */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* دکمه‌های آیکونی کمکی (کاتالوگ و پاکسازی) */
+    .nav-icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-line);
+      color: var(--text-muted);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+    }
+
+    .nav-icon-btn svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .nav-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: var(--text-main);
+      transform: translateY(-1px);
+    }
+
+    /* دکمه بازگشت به سایت با طراحی پیل لوکس و مینیمال (یک خطی و بسیار شیک) */
+    .nav-back-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, rgba(245, 185, 0, 0.12), rgba(245, 185, 0, 0.05));
+      border: 1px solid rgba(245, 185, 0, 0.35);
+      color: var(--gold-light);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-back-pill svg {
+      width: 15px;
+      height: 15px;
+      transition: transform 0.22s ease;
+      color: var(--gold);
+    }
+
+    .nav-back-pill:hover {
+      background: linear-gradient(135deg, rgba(245, 185, 0, 0.25), rgba(245, 185, 0, 0.12));
+      border-color: var(--gold-light);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(245, 185, 0, 0.25);
+    }
+
+    .nav-back-pill:hover svg {
+      transform: translateX(3px);
+    }
+
+    /* کانتینر اصلی تمام صفحه برای چت هوشمند */
+    .app-viewport {
+      position: relative;
+      z-index: 1;
+      width: min(880px, 100% - 24px);
+      margin: 0 auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+      height: calc(100dvh - 60px);
+      padding: 10px 0 14px;
+    }
+
+    .chat-card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(12, 17, 14, 0.94) 0%, rgba(8, 12, 10, 0.98) 100%);
+      border: 1px solid var(--border-line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(25px);
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0; /* حیاتی برای flex overflow در مرورگرها */
+    }
+
+    /* محتوای پیام‌ها */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 10px; }
+    .chat-messages::-webkit-scrollbar-thumb:hover { background: rgba(245, 185, 0, 0.4); }
+
+    /* بنر خوش‌آمدگویی و معرفی هوش مصنوعی (Sleek AI Welcome Card) */
+    .ai-intro-card {
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(18, 26, 21, 0.85), rgba(10, 15, 12, 0.95));
+      border: 1px solid rgba(245, 185, 0, 0.22);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .ai-intro-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, rgba(245, 185, 0, 0.6), transparent);
+    }
+
+    .ai-intro-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ai-intro-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(245, 185, 0, 0.12);
+      border: 1px solid rgba(245, 185, 0, 0.3);
+      color: var(--gold-light);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .ai-intro-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .ai-intro-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+
+    .ai-intro-text {
+      font-size: 13px;
+      line-height: 1.85;
+      color: var(--text-muted);
+    }
+
+    /* چیپ‌های افقی و باریک برای پرسش‌های فنی سریع (بدون اشغال فضای عمودی) */
+    .quick-prompts-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .quick-prompts-bar::-webkit-scrollbar { display: none; }
+
+    .quick-prompt-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-line);
+      border-radius: var(--radius-pill);
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #d1dad4;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit;
+    }
+
+    .quick-prompt-chip svg {
+      width: 13px;
+      height: 13px;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .quick-prompt-chip:hover {
+      background: rgba(245, 185, 0, 0.1);
+      border-color: rgba(245, 185, 0, 0.4);
+      color: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    /* ردیف و حباب پیام‌ها */
+    .msg-row {
+      display: flex;
+      gap: 12px;
+      max-width: min(88%, 740px);
+      animation: msgAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes msgAppear {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user {
+      align-self: flex-start;
+      flex-direction: row-reverse;
+    }
+
+    .msg-row.bot {
+      align-self: flex-end;
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .msg-avatar svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .msg-row.bot .msg-avatar {
+      background: linear-gradient(135deg, #ffd84f, #d59600);
+      color: #080c09;
+      box-shadow: 0 0 14px rgba(245, 185, 0, 0.3);
+    }
+
+    .msg-row.user .msg-avatar {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-line);
+      color: #dbe3dd;
+    }
+
+    .msg-bubble {
+      position: relative;
+      border-radius: 16px;
+      padding: 13px 18px;
+      font-size: 13.5px;
+      line-height: 1.85;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .msg-row.bot .msg-bubble {
+      background: linear-gradient(180deg, #131c16, #0e1511);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #eff3f0;
+      border-top-right-radius: 3px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .msg-row.user .msg-bubble {
+      background: linear-gradient(135deg, #f5b900, #d59600);
+      color: #080c09;
+      font-weight: 600;
+      border-top-left-radius: 3px;
+      box-shadow: 0 4px 18px rgba(245, 185, 0, 0.22);
+    }
+
+    .msg-bubble p { margin-bottom: 8px; }
+    .msg-bubble p:last-child { margin-bottom: 0; }
+    .msg-bubble strong { color: var(--gold-light); font-weight: 800; }
+    .msg-row.user .msg-bubble strong { color: #000000; }
+    .msg-bubble ul, .msg-bubble ol { margin: 8px 20px; padding: 0; }
+    .msg-bubble li { margin-bottom: 5px; }
+
+    /* لینک سریع کاتالوگ داخل پاسخ ربات */
+    .catalog-tag-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(245, 185, 0, 0.12);
+      border: 1px solid rgba(245, 185, 0, 0.35);
+      color: var(--gold-light);
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .catalog-tag-link svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .catalog-tag-link:hover {
+      background: var(--gold);
+      color: #080c09;
+    }
+
+    /* نوار اکشن کپی پیام */
+    .msg-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .msg-btn-action {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .msg-btn-action svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .msg-btn-action:hover {
+      color: var(--gold-light);
+    }
+
+    /* نشانگر فوق‌العاده شیک و زنده به سبک لوگو جیمینی گوگل (Gemini Sparkle Aesthetic) */
+    .msg-row.ai-thinking-row {
+      display: inline-flex !important;
+      align-items: center !important;
+      align-self: flex-end !important;
+      width: fit-content !important;
+      max-width: fit-content !important;
+      padding: 0 !important;
+      margin: 6px 0 !important;
+      animation: msgAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .gemini-pill-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 15px 7px 12px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, rgba(16, 24, 38, 0.92), rgba(12, 17, 26, 0.95));
+      border: 1px solid rgba(138, 110, 255, 0.45);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 0 20px rgba(124, 92, 255, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gemini-pill-indicator::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(154, 102, 255, 0.12), rgba(255, 255, 255, 0.08), transparent);
+      animation: geminiShimmerSweep 2.4s infinite linear;
+      pointer-events: none;
+    }
+
+    @keyframes geminiShimmerSweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* باکس لوگوی ستاره ۴‌پَر جیمینی */
+    .gemini-logo-box {
+      width: 22px;
+      height: 22px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .gemini-ambient-glow {
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(154, 102, 255, 0.6) 0%, rgba(66, 133, 244, 0.3) 50%, transparent 70%);
+      filter: blur(5px);
+      animation: geminiGlowPulse 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes geminiGlowPulse {
+      0% { opacity: 0.5; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1.25); filter: blur(7px); }
+    }
+
+    .gemini-sparkle-svg {
+      width: 22px;
+      height: 22px;
+      position: relative;
+      z-index: 1;
+      animation: geminiStarAlive 3s infinite ease-in-out;
+      filter: drop-shadow(0 0 6px rgba(124, 92, 255, 0.7));
+    }
+
+    @keyframes geminiStarAlive {
+      0% {
+        transform: scale(0.92) rotate(0deg);
+        filter: drop-shadow(0 0 6px rgba(66, 133, 244, 0.7));
+      }
+      50% {
+        transform: scale(1.15) rotate(18deg);
+        filter: drop-shadow(0 0 12px rgba(255, 94, 126, 0.85)) drop-shadow(0 0 16px rgba(154, 102, 255, 0.9));
+      }
+      100% {
+        transform: scale(0.92) rotate(0deg);
+        filter: drop-shadow(0 0 6px rgba(66, 133, 244, 0.7));
+      }
+    }
+
+    /* نقاط متحرک و خوش‌رنگ جیمینی */
+    .gemini-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .gemini-dots span {
+      width: 4.5px;
+      height: 4.5px;
+      border-radius: 50%;
+      animation: geminiDotDance 1.3s infinite ease-in-out;
+    }
+
+    .gemini-dots span:nth-child(1) {
+      background: #4285F4;
+      animation-delay: 0s;
+    }
+
+    .gemini-dots span:nth-child(2) {
+      background: #9B51E0;
+      animation-delay: 0.22s;
+    }
+
+    .gemini-dots span:nth-child(3) {
+      background: #FF5E7E;
+      animation-delay: 0.44s;
+    }
+
+    @keyframes geminiDotDance {
+      0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8) translateY(0);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.35) translateY(-3px);
+        box-shadow: 0 0 8px currentColor;
+      }
+    }
+
+    /* کادر ورودی پیام (Composer) */
+    .composer-wrapper {
+      padding: 12px 16px;
+      background: rgba(7, 10, 8, 0.96);
+      border-top: 1px solid var(--border-line);
+      flex-shrink: 0;
+    }
+
+    .composer-box {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: rgba(14, 20, 16, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-pill);
+      padding: 6px 12px;
+      transition: all 0.22s ease;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .composer-box:focus-within {
+      border-color: rgba(245, 185, 0, 0.6);
+      box-shadow: 0 0 0 3px rgba(245, 185, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.4);
+      background: rgba(19, 27, 22, 0.98);
+    }
+
+    .composer-textarea {
+      flex: 1;
+      min-height: 28px;
+      max-height: 120px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13.5px;
+      line-height: 1.7;
+      resize: none;
+      padding: 3px 6px;
+    }
+
+    .composer-textarea::placeholder {
+      color: #5c6a62;
+    }
+
+    .send-action-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffd84f, #d29100);
+      border: none;
+      color: #080c09;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 16px rgba(245, 185, 0, 0.25);
+      flex-shrink: 0;
+      margin-bottom: 1px;
+    }
+
+    .send-action-btn svg {
+      width: 17px;
+      height: 17px;
+      transform: rotate(180deg);
+      transition: transform 0.2s ease;
+    }
+
+    .send-action-btn:hover:not(:disabled) {
+      transform: translateY(-1px) scale(1.06);
+      box-shadow: 0 6px 20px rgba(245, 185, 0, 0.4);
+    }
+
+    .send-action-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .back-text-short { display: none; }
+    .back-text-full { display: inline; }
+
+    /* واکنش‌گرایی برای موبایل */
+    @media (max-width: 640px) {
+      .back-text-full { display: none; }
+      .back-text-short { display: inline; }
+      .navbar {
+        padding: 8px 10px;
+        gap: 6px;
+      }
+      .brand-wrap {
+        gap: 6px;
+      }
+      .brand-ai-badge {
+        width: 32px;
+        height: 32px;
+      }
+      .brand-ai-badge svg {
+        width: 17px;
+        height: 17px;
+      }
+      .brand-title {
+        font-size: 12.5px;
+      }
+      .brand-status {
+        display: none;
+      }
+      .nav-actions {
+        gap: 5px;
+      }
+      .nav-icon-btn {
+        width: 32px;
+        height: 32px;
+      }
+      .nav-back-pill {
+        padding: 5px 9px;
+        font-size: 11px;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .nav-back-pill svg {
+        width: 14px;
+        height: 14px;
+      }
+      .app-viewport {
+        width: 100%;
+        padding: 0;
+        height: calc(100vh - 50px);
+        height: calc(100dvh - 50px);
+      }
+      .chat-card {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+      }
+      .chat-messages {
+        padding: 10px 12px;
+        gap: 12px;
+      }
+      .ai-intro-card {
+        padding: 14px 16px;
+      }
+      .ai-intro-title {
+        font-size: 14px;
+      }
+      .ai-intro-text {
+        font-size: 12px;
+        line-height: 1.75;
+      }
+      .msg-row {
+        max-width: 95%;
+      }
+      .msg-row.ai-thinking-row {
+        max-width: fit-content !important;
+        width: fit-content !important;
+      }
+      .composer-wrapper {
+        padding: 8px 10px;
+      }
+    }
   </style>
 </head>
-<body>
-  <div class="page">
-    <section class="shell" aria-label="دستیار هوشمند عظیم ابزار">
-      <header class="head">
-        <div class="mark" aria-hidden="true">AI</div>
-        <div class="head-copy">
-          <h1>دستیار هوشمند عظیم ابزار</h1>
-          <p>راهنمای انتخاب ابزار، مشخصات فنی و مسیر خرید</p>
-        </div>
-        <div class="head-actions">
-          <div class="status" role="status" aria-live="polite"><i></i><span>آماده پاسخ‌گویی</span></div>
-          <button class="reset" id="clearChat" type="button">گفت‌وگوی جدید</button>
-          <a class="back" href="./">بازگشت به سایت ←</a>
-        </div>
-      </header>
+<body data-page="ai" class="ai-assistant-page">
+  <!-- بوم ذرات و خطوط نوری زنده متحرک در پس‌زمینه -->
+  <canvas id="liveBgCanvas" aria-hidden="true"></canvas>
 
-      <div class="intro">
-        <div>
-          <span class="eyebrow">AZIM AI ASSISTANT</span>
-          <h2>ابزار مناسب کارت را پیدا کن.</h2>
-          <p>نوع کار، ابزار موردنیاز، مشخصات فنی یا هر سؤال مرتبط با محصولات عظیم ابزار را بنویس.</p>
+  <!-- نوار هدر باریک و لوکس -->
+  <header class="navbar">
+    <!-- سمت راست: نشان و عنوان دستیار هوشمند -->
+    <a href="./" class="brand-wrap" title="فروشگاه تخصصی عظیم ابزار">
+      <div class="brand-ai-badge" aria-hidden="true">
+        <div class="pulse-dot"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+      <div class="brand-titles">
+        <div class="brand-name-row">
+          <span class="brand-title">دستیار هوش مصنوعی</span>
+          <span class="ai-pill-tag">AI</span>
         </div>
-        <div class="cap">
-          <b>اتصال هوش مصنوعی از طریق Edge Function</b>
-          <span>کلید سرویس مدل در مرورگر قرار نمی‌گیرد و بعداً می‌توان API را از سمت سرور تنظیم یا تعویض کرد.</span>
+        <div class="brand-status">
+          <span class="dot"></span>
+          <span>عظیم ابزار • مشاور فنی و تخصصی ابزارآلات</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- سمت چپ: دکمه‌های ناوبری شیک و بدون شکست خط -->
+    <div class="nav-actions">
+      <!-- دکمه پاکسازی گفتگو -->
+      <button type="button" class="nav-icon-btn" id="clearChatBtn" title="شروع گفتگوی تازه" aria-label="شروع گفتگوی تازه">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+
+      <!-- دکمه کاتالوگ ابزارها -->
+      <a href="./products-v4.html" class="nav-icon-btn" title="کاتالوگ محصولات" aria-label="کاتالوگ محصولات">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+      </a>
+
+      <!-- دکمه بازگشت به سایت اصلی (یکپارچه، پیل لوکس و بسیار زیبا) -->
+      <a href="./" class="nav-back-pill" title="بازگشت به سایت اصلی">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span class="back-text-full">بازگشت به سایت</span>
+        <span class="back-text-short">بازگشت</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- کانتینر اصلی تمام صفحه -->
+  <main class="app-viewport">
+    <div class="chat-card">
+      <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
+        <!-- کارت معرفی هوش مصنوعی با متن‌های دقیق و فاخر مهندسی -->
+        <div class="ai-intro-card" id="aiWelcomeCard">
+          <div class="ai-intro-header">
+            <div class="ai-intro-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>
+            <h1 class="ai-intro-title">دستیار هوش مصنوعی عظیم ابزار (Azim AI)</h1>
+          </div>
+          <p class="ai-intro-text">
+            سامانه تخصصی هوش مصنوعی تحلیل ابزارآلات و تجهیزات فنی؛ آماده پاسخگویی علمی و ارائه راهنمای مهندسی در انتخاب انواع آچار، ترکمترهای تقه‌ای، بکس‌های فشارقوی، ابزارهای تخصصی مکانیکی و تجهیز کارگاه. پرسش یا مشخصات کاربری خود را در کادر زیر بنویسید.
+          </p>
+
+          <!-- چیپ‌های پرسش سریع و فنی -->
+          <div class="quick-prompts-bar">
+            <button type="button" class="quick-prompt-chip" data-prompt="راهنمای انتخاب ترکمتر تقه‌ای مناسب و تفاوت رنج‌های نیوتن‌متر">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 7v5l3 3"/>
+              </svg>
+              <span>انتخاب ترکمتر</span>
+            </button>
+
+            <button type="button" class="quick-prompt-chip" data-prompt="برای باز کردن پیچ‌های هرز شده یا خیلی سفت چه ابزاری پیشنهاد می‌کنی؟">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 15l-6-6-6 6"/>
+                <path d="M12 9v12"/>
+              </svg>
+              <span>پیچ‌های سفت و هرز</span>
+            </button>
+
+            <button type="button" class="quick-prompt-chip" data-prompt="برای راه‌اندازی تعمیرگاه مکانیکی خودرو چه ابزارهایی نیاز است؟">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              <span>تجهیز تعمیرگاه</span>
+            </button>
+
+            <button type="button" class="quick-prompt-chip" data-prompt="تفاوت درایوهای بکس ۱/۲، ۳/۸ و ۱/۴ اینچ چیست و کدام برای من مناسب‌تر است؟">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+              <span>درایوهای جعبه بکس</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <main class="chat" id="chat" aria-live="polite">
-        <div class="msg bot">سلام 👋 من دستیار هوشمند عظیم ابزارم. بگو چه کاری انجام می‌دی یا دنبال چه ابزاری هستی تا راهنمایی‌ات کنم.</div>
-      </main>
-
-      <div class="typing" id="typing">دستیار در حال آماده‌کردن پاسخ است…</div>
-
-      <div class="quick" aria-label="پیشنهادهای سریع">
-        <button type="button" data-q="برای تعمیرگاه خودرو چه ابزارهایی پیشنهاد می‌کنی؟">ابزار تعمیرگاه</button>
-        <button type="button" data-q="برای خرید آچار چه نکاتی مهم است؟">راهنمای آچار</button>
-        <button type="button" data-q="برای باز کردن پیچ سفت چه ابزاری مناسب است؟">پیچ سفت</button>
-        <button type="button" data-q="یک ست ابزار مناسب کارگاه پیشنهاد بده">ست ابزار کارگاهی</button>
+      <!-- کادر ارسال پیام -->
+      <div class="composer-wrapper">
+        <form class="composer-box" id="chatForm">
+          <textarea
+            class="composer-textarea"
+            id="chatInput"
+            rows="1"
+            maxlength="1200"
+            placeholder="پرسش فنی، ابزار مورد نظر یا شرح پروژه را بنویسید..."
+            required
+            aria-label="متن پرسش فنی"
+          ></textarea>
+          <button type="submit" class="send-action-btn" id="sendBtn" title="ارسال پیام" aria-label="ارسال پیام">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
       </div>
-
-      <form class="composer" id="form">
-        <div class="composer-wrap">
-          <textarea id="input" rows="2" maxlength="1200" placeholder="مثلاً: برای تعویض لنت خودرو چه ابزارهایی لازم دارم؟" required aria-label="پیام به دستیار"></textarea>
-          <span class="hint">حداکثر ۱۲۰۰ کاراکتر</span>
-        </div>
-        <button class="send" id="sendBtn" type="submit">ارسال ↵</button>
-      </form>
-      <div class="note">
-        <span><strong>نکته:</strong> قیمت و موجودی قطعی باید از اطلاعات واقعی فروشگاه تأیید شود.</span>
-        <span>درخواست‌ها قبل از ارسال به مدل، از سمت سرور محدود می‌شوند.</span>
-      </div>
-    </section>
-  </div>
+    </div>
+  </main>
 
   <script>
-    const chat=document.getElementById('chat');
-    const form=document.getElementById('form');
-    const input=document.getElementById('input');
-    const typing=document.getElementById('typing');
-    const status=document.querySelector('.status');
-    const sendBtn=document.getElementById('sendBtn');
-    const clearBtn=document.getElementById('clearChat');
-    const quick=document.querySelector('.quick');
-    const getAIEndpoint=()=>String(window.AZIM_AI_API_URL||'/api/chat').trim();
-
-    function setStatus(label,mode){
-      const span=status?.querySelector('span');
-      if(span)span.textContent=label;
-      status?.classList.remove('busy','offline');
-      if(mode)status?.classList.add(mode);
-    }
-    function addMessage(text,who){
-      const d=document.createElement('div');
-      d.className='msg '+who;
-      d.textContent=String(text??'');
-      chat.appendChild(d);
-      chat.scrollTop=chat.scrollHeight;
-      return d;
-    }
-    function wireQuick(){
-      quick?.querySelectorAll('button').forEach(b=>{
-        b.onclick=()=>ask(b.dataset.q||'');
-      });
-    }
-    async function ask(q){
-      q=String(q||'').trim();
-      if(!q || form.dataset.disabled==='1' || form.dataset.busy==='1')return;
-      addMessage(q,'user');
-      typing.style.display='block';
-      form.dataset.busy='1';
-      sendBtn.disabled=true;
-      setStatus('در حال دریافت پاسخ…','busy');
-      try{
-        const r=await fetch(getAIEndpoint(),{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({message:q})
+    // تضمین قطعی حذف هرگونه ویجت یا آیکون شناور در صفحه دستیار
+    (function eradicateFloatingWidgets() {
+      const killSelectors = ['#azimAiFab', '.az-ai-fab', '[data-floating-cart]', '.floating-cart', '.floating-cart-button', '.az-floating-cart'];
+      const removeEm = () => {
+        document.querySelectorAll(killSelectors.join(',')).forEach(el => {
+          try { el.remove(); } catch (_) {}
         });
-        const data=await r.json().catch(()=>({}));
-        if(!r.ok) throw new Error(data.error||'خطا در اتصال به دستیار');
-        addMessage(data.reply||'پاسخی دریافت نشد.','bot');
-        setStatus('آماده پاسخ‌گویی');
-      }catch(e){
-        addMessage('اتصال دستیار هوشمند برقرار نشد. '+(e.message||''),'bot');
-        setStatus('اتصال برقرار نیست','offline');
-      }finally{
-        typing.style.display='none';
-        form.dataset.busy='0';
-        sendBtn.disabled=false;
-        input.focus();
+      };
+      removeEm();
+      document.addEventListener('DOMContentLoaded', removeEm);
+      window.addEventListener('load', removeEm);
+      const observer = new MutationObserver(removeEm);
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    })();
+
+    // بوم زنده ذرات نورانی در پس‌زمینه
+    (function initLiveCanvas() {
+      const canvas = document.getElementById('liveBgCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w = canvas.width = window.innerWidth;
+      let h = canvas.height = window.innerHeight;
+
+      window.addEventListener('resize', () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      });
+
+      const particleCount = Math.min(30, Math.floor(w / 45));
+      const particles = [];
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          radius: Math.random() * 1.5 + 0.8,
+          alpha: Math.random() * 0.4 + 0.2
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+
+        for (let i = 0; i < particles.length; i++) {
+          const p1 = particles[i];
+          p1.x += p1.vx;
+          p1.y += p1.vy;
+
+          if (p1.x < 0) p1.x = w;
+          if (p1.x > w) p1.x = 0;
+          if (p1.y < 0) p1.y = h;
+          if (p1.y > h) p1.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, p1.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(245, 185, 0, ${p1.alpha})`;
+          ctx.fill();
+
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j];
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 120) {
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              const lineAlpha = (1 - dist / 120) * 0.15;
+              ctx.strokeStyle = `rgba(245, 185, 0, ${lineAlpha})`;
+              ctx.lineWidth = 0.75;
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    // ارجاع به المان‌های صفحه
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+
+    // تنظیم خودکار ارتفاع متن
+    chatInput.addEventListener('input', () => {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+    });
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+      }
+    });
+
+    // افزودن پیام به کادر گفتگو
+    function appendMessage(text, sender = 'bot') {
+      const row = document.createElement('div');
+      row.className = `msg-row ${sender}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar';
+      avatar.setAttribute('aria-hidden', 'true');
+
+      if (sender === 'bot') {
+        avatar.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+        `;
+      } else {
+        avatar.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        `;
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+
+      if (sender === 'bot') {
+        bubble.innerHTML = formatBotResponse(text);
+
+        // دکمه کپی متن
+        const actions = document.createElement('div');
+        actions.className = 'msg-bar-actions';
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'msg-btn-action';
+        copyBtn.type = 'button';
+        copyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span>کپی متن</span>
+        `;
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(text).then(() => {
+            copyBtn.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span style="color:#10b981">کپی شد</span>
+            `;
+            setTimeout(() => {
+              copyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <span>کپی متن</span>
+              `;
+            }, 2000);
+          });
+        };
+        actions.appendChild(copyBtn);
+        bubble.appendChild(actions);
+      } else {
+        bubble.textContent = text;
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      chatMessages.appendChild(row);
+
+      chatMessages.scrollTo({
+        top: chatMessages.scrollHeight,
+        behavior: 'smooth'
+      });
+      return row;
+    }
+
+    // فرمت‌دهنده متن فنی بدون هیچ ایموجی
+    function formatBotResponse(raw) {
+      if (!raw) return '';
+      let s = String(raw)
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      s = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+      const lines = s.split('\n');
+      let inList = false;
+      let out = [];
+
+      for (let line of lines) {
+        const trimmed = line.trim();
+        if (/^[•\-\*]\s+/.test(trimmed)) {
+          if (!inList) { out.push('<ul>'); inList = true; }
+          out.push('<li>' + trimmed.replace(/^[•\-\*]\s+/, '') + '</li>');
+        } else {
+          if (inList) { out.push('</ul>'); inList = false; }
+          if (trimmed) out.push('<p>' + trimmed + '</p>');
+        }
+      }
+      if (inList) out.push('</ul>');
+
+      let finalHtml = out.join('');
+
+      if (/ترکمتر|بکس|آچار|کارگاه|جک/i.test(raw)) {
+        finalHtml += `
+          <div>
+            <a href="./products-v4.html" class="catalog-tag-link" target="_self">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <span>مشاهده و بررسی این اقلام در کاتالوگ عظیم ابزار</span>
+            </a>
+          </div>
+        `;
+      }
+
+      return finalHtml;
+    }
+
+    // نمایش نشانگر فوق‌العاده شیک و زنده به سبک لوگو رسمی جیمینی (Google Gemini Sparkle)
+    function showThinkingIndicator() {
+      hideThinkingIndicator();
+
+      const row = document.createElement('div');
+      row.className = 'msg-row bot ai-thinking-row';
+      row.id = 'aiThinkingBubble';
+
+      row.innerHTML = `
+        <div class="gemini-pill-indicator" aria-label="هوش مصنوعی در حال پردازش">
+          <div class="gemini-logo-box">
+            <div class="gemini-ambient-glow" aria-hidden="true"></div>
+            <svg class="gemini-sparkle-svg" viewBox="0 0 28 28" fill="none">
+              <path d="M14 2C14 8.627 8.627 14 2 14C8.627 14 14 19.373 14 26C14 19.373 19.373 14 26 14C19.373 14 14 8.627 14 2Z" fill="url(#geminiGrad)"/>
+              <path d="M22 2C22 4.209 20.209 6 18 6C20.209 6 22 7.791 22 10C22 7.791 23.791 6 26 6C23.791 6 22 4.209 22 2Z" fill="url(#geminiMiniGrad)"/>
+              <defs>
+                <linearGradient id="geminiGrad" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#4285F4"/>
+                  <stop offset="32%" stop-color="#9B51E0"/>
+                  <stop offset="68%" stop-color="#FF5E7E"/>
+                  <stop offset="100%" stop-color="#FFA825"/>
+                </linearGradient>
+                <linearGradient id="geminiMiniGrad" x1="18" y1="2" x2="26" y2="10" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#FFFFFF"/>
+                  <stop offset="100%" stop-color="#FFA825"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="gemini-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      `;
+
+      chatMessages.appendChild(row);
+      chatMessages.scrollTo({
+        top: chatMessages.scrollHeight,
+        behavior: 'smooth'
+      });
+      return row;
+    }
+
+    function hideThinkingIndicator() {
+      const el = document.getElementById('aiThinkingBubble');
+      if (el) el.remove();
+    }
+
+    // ارسال پرسش
+    async function handleSendMessage(query) {
+      const q = String(query || '').trim();
+      if (!q || sendBtn.disabled) return;
+
+      // حذف قطعی کارت معرفی عظیم AI هنگام ارسال پیام تا صفحه فقط چت باشد
+      const welcomeCard = document.getElementById('aiWelcomeCard');
+      if (welcomeCard) {
+        welcomeCard.remove();
+      }
+
+      appendMessage(q, 'user');
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+
+      sendBtn.disabled = true;
+
+      // نمایش انیمیشن هوش مصنوعی دقیقاً در زمان آماده‌سازی پاسخ در کادر چت
+      showThinkingIndicator();
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: q })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'خطا در ارتباط با سرور دستیار');
+
+        hideThinkingIndicator();
+        appendMessage(data.reply || 'پاسخی از مشاور دریافت نشد.', 'bot');
+      } catch (err) {
+        hideThinkingIndicator();
+        appendMessage(
+          'متأسفانه ارتباط با دستیار در این لحظه با مشکل مواجه شد. لطفاً دوباره تلاش کنید یا از بخش کاتالوگ محصولات را مشاهده فرمایید.',
+          'bot'
+        );
+      } finally {
+        hideThinkingIndicator();
+        sendBtn.disabled = false;
+        chatInput.focus();
       }
     }
-    form.addEventListener('submit',e=>{
+
+    chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const q=input.value.trim();
-      input.value='';
-      input.style.height='';
-      ask(q);
+      handleSendMessage(chatInput.value);
     });
-    input.addEventListener('input',()=>{
-      input.style.height='auto';
-      input.style.height=Math.min(input.scrollHeight,150)+'px';
-    });
-    input.addEventListener('keydown',e=>{
-      if(e.key==='Enter' && !e.shiftKey && !e.isComposing){
-        e.preventDefault();
-        form.requestSubmit();
+
+    // مدیریت کلیک روی چیپ‌های پرسش سریع با Event Delegation
+    chatMessages.addEventListener('click', (e) => {
+      const chip = e.target.closest('.quick-prompt-chip');
+      if (chip) {
+        const prompt = chip.getAttribute('data-prompt');
+        if (prompt) handleSendMessage(prompt);
       }
     });
-    clearBtn?.addEventListener('click',()=>{
-      chat.innerHTML='<div class="msg bot">گفت‌وگوی جدید آماده است 👋 سؤال یا نیازت را بگو تا شروع کنیم.</div>';
-      setStatus('آماده پاسخ‌گویی');
-      input.focus();
+
+    clearChatBtn.addEventListener('click', () => {
+      hideThinkingIndicator();
+      chatMessages.innerHTML = `
+        <div class="ai-intro-card" id="aiWelcomeCard">
+          <div class="ai-intro-header">
+            <div class="ai-intro-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>
+            <h1 class="ai-intro-title">گفتگوی جدید آماده است</h1>
+          </div>
+          <p class="ai-intro-text">
+            تاریخچه پیام‌ها پاکسازی شد. چه ابزار یا پروژه‌ای در دستور کار دارید؟ به محض ارسال اولین پیام، کادر گفتگو تمام صفحه خواهد شد.
+          </p>
+        </div>
+      `;
+      chatInput.focus();
     });
-    wireQuick();
-    window.__AZIM_AI_REWIRE=wireQuick;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      chatInput.focus();
+    });
   </script>
-  <script src="./azim-live-content.js?v=4" defer></script>
-  <script src="./azim-ai-widget.js?v=1" defer></script>
 </body>
 </html>
