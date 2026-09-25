@@ -74,7 +74,7 @@ const delegatedDataActions = [
   'data-new-discount-customer','data-new-discount-product','data-copy-discount'
 ];
 for (const attr of delegatedDataActions) {
-  if (!js.includes("closest('[" + attr + "]'))")) fail('no click delegation for ' + attr);
+  if (!js.includes("closest('[" + attr + "]')")) fail('no click delegation for ' + attr);
 }
 
 if (!js.includes("if (!canView(name)) return toast('__AZICON_BLOCK__ دسترسی این بخش برای نقش فعلی وجود ندارد.');")) {
