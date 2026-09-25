@@ -118,10 +118,15 @@ jobs:
           node --check admin-app.js
           grep -q "const PORT = Number(process.env.PORT || 3000)" server.js
           grep -q "AZIM_ALLOWED_ORIGIN" server.js
+          grep -q "isAdmin(msg.chat?.id)" supabase/functions/azim-telegram-admin/index.ts
           echo 'BACKEND SOURCE VERIFIED'
 
-      - name: Prepare Pages artifact
+      - name: Validate SQL source quoting
         shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -nE '(^|[[:space:]])as \$|^\$;|do \$ begin' supabase-schema.sql supabase-admin-schema.sql database/checkout-actions.sql
+          grep -q 'as \$\        shell: bash
         run: |
           set -euo pipefail
           rm -rf _site
@@ -129,6 +134,26 @@ jobs:
           rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='audit/' --exclude='supabase/functions/' --exclude='supabase/migrations/' --exclude='src/' --exclude='scripts/' --exclude='database/' --exclude='DEPLOYMENT_FA.md' --exclude='Dockerfile' --exclude='wrangler.jsonc' --exclude='worker.js' --exclude='robots.txt' --exclude='metadata.json' --exclude='*.pdf' --exclude='*.pem' --exclude='*.key' --exclude='.env*' --exclude='.github/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='test.txt' --exclude='temp*.txt' --exclude='upscale-failures.json' --exclude='products-source-generated.json' --exclude='HANDOVER.md' --exclude='*.sql' --exclude='server.js' --exclude='api/' ./ _site/
           test -s _site/products.html
           test -s _site/products-v4.html
+
+      - name: Validate GitHub Pages artifact does not leak internal source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -d _site/audit
+          test ! -d _site/supabase/functions
+          test ! -d _site/supabase/migrations
+          test ! -d _site/database
+          test ! -d _site/src
+          test ! -d _site/scripts
+          test ! -e _site/Dockerfile
+          test ! -e _site/worker.js
+          test ! -e _site/.env
+          test ! -e _site/.env.example
+          if find _site -type f -name '*.pdf' -print -quit | grep -q .; then
+            echo 'INTERNAL_PDF_LEAK_DETECTED'
+            exit 1
+          fi
+          echo 'PAGES_ARTIFACT_SECURITY_BOUNDARY_VERIFIED'
 
       - name: Validate admin panel runtime
         shell: bash
@@ -232,6 +257,319 @@ jobs:
               assert marker in html, f'CSP_META_MISSING: {name}'
           print('GITHUB_PAGES_CSP_VERIFIED: all active HTML entry points contain a CSP meta policy')
           PY
+
+      - name: Run automated regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+ supabase-schema.sql
+          grep -q 'as \$\        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='audit/' --exclude='supabase/functions/' --exclude='supabase/migrations/' --exclude='src/' --exclude='scripts/' --exclude='database/' --exclude='DEPLOYMENT_FA.md' --exclude='Dockerfile' --exclude='wrangler.jsonc' --exclude='worker.js' --exclude='robots.txt' --exclude='metadata.json' --exclude='*.pdf' --exclude='*.pem' --exclude='*.key' --exclude='.env*' --exclude='.github/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='test.txt' --exclude='temp*.txt' --exclude='upscale-failures.json' --exclude='products-source-generated.json' --exclude='HANDOVER.md' --exclude='*.sql' --exclude='server.js' --exclude='api/' ./ _site/
+          test -s _site/products.html
+          test -s _site/products-v4.html
+
+      - name: Validate GitHub Pages artifact does not leak internal source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -d _site/audit
+          test ! -d _site/supabase/functions
+          test ! -d _site/supabase/migrations
+          test ! -d _site/database
+          test ! -d _site/src
+          test ! -d _site/scripts
+          test ! -e _site/Dockerfile
+          test ! -e _site/worker.js
+          test ! -e _site/.env
+          test ! -e _site/.env.example
+          if find _site -type f -name '*.pdf' -print -quit | grep -q .; then
+            echo 'INTERNAL_PDF_LEAK_DETECTED'
+            exit 1
+          fi
+          echo 'PAGES_ARTIFACT_SECURITY_BOUNDARY_VERIFIED'
+
+      - name: Validate admin panel runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('_site/admin.html').read_text(encoding='utf-8')
+          assert 'پنل مدیریت' in html
+          assert re.search(r'admin-app\.js\?v=\d+', html)
+          match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
+          Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
+          assert Path('_site/admin-app.js').is_file() and Path('_site/admin-app.js').stat().st_size > 1000
+          assert Path('_site/admin-modern.css').is_file() and Path('_site/admin-modern.css').stat().st_size > 5000
+          assert 'azMenuTrigger' in html and 'azMenuOverlay' in html
+          cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
+          assert 'service_role' not in cfg and 'sb_publishable_' in cfg
+          print('ADMIN PANEL VERIFIED: shell + external runtime + publishable config')
+          PY
+          node --check /tmp/admin-inline.js
+          node --check _site/admin-app.js
+          node --check _site/azim-live-content.js
+
+      - name: Validate homepage asset files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in workshop_tools_hero_1789756528479.jpg industrial_garage_set_1789756545202.jpg cat_cabinet_trolley_1789756604644.jpg cat_wrenches_1789756566411.jpg garage_engine_work_1789760853632.jpg impact_air_wrench_1789760841938.jpg; do
+            test -s "_site/assets/homepage/$asset"
+          done
+          echo 'HOMEPAGE_ASSETS_VERIFIED: hero + category images are included in Pages artifact'
+
+      - name: Validate homepage runtime scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('_site/index.html').read_text(encoding='utf-8')
+          assert '<script src="./azim-motion.js?v=7" defer></script>' in html
+          assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
+          assert 'azim-live-content.js?v=3' in html
+          assert 'azim-home-gallery.js' not in html
+          print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
+          PY
+
+      - name: Validate contact and catalog runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          contact = Path('_site/contact.html').read_text(encoding='utf-8')
+          index = Path('_site/index.html').read_text(encoding='utf-8')
+          products = Path('_site/products-v4.html').read_text(encoding='utf-8')
+          assert 'azim-live-content.js?v=3' in contact
+          assert 'supabase-config.js' in contact
+          assert 'azim-live-content.js?v=3' in index
+          assert 'loadLiveCatalog' in products
+          assert 'livePriceData' in products
+          assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
+          scripts = re.findall(r'<script>(.*?)</script>', contact, flags=re.S)
+          inline = next((s for s in scripts if 'handleFormSubmission' in s), '')
+          assert inline.strip(), 'CONTACT_INLINE_SCRIPT_MISSING'
+          Path('/tmp/contact-inline.js').write_text(inline, encoding='utf-8')
+          print('CONTACT/CATALOG VERIFIED: unified CMS + live variants + no placeholder mobile number')
+          PY
+          node --check /tmp/contact-inline.js
+
+      - name: Validate AI assistant runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          ai = Path('_site/ai.html').read_text(encoding='utf-8')
+          cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
+          live = Path('_site/azim-live-content.js').read_text(encoding='utf-8')
+          assert 'supabase-config.js' in ai
+          assert 'azim-live-content.js?v=3' in ai
+          assert 'id="chatMessages"' in ai and 'id="chatForm"' in ai and 'id="chatInput"' in ai
+          assert 'window.AZIM_AI_API_URL' in ai
+          assert 'sb_publishable_' in cfg and 'functions/v1/azim-ai-chat' in cfg
+          assert 'chatMessages' in live and 'chatForm' in live and 'chatInput' in live
+          print('AI RUNTIME VERIFIED: Supabase Edge Function + live CMS + redesigned DOM')
+          PY
+
+      - name: Validate GitHub Pages security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          pages = ['index.html','products-v4.html','cart.html','contact.html','order-status.html','ai.html','admin.html','404.html']
+          marker = '<meta http-equiv="Content-Security-Policy"'
+          for name in pages:
+              html = Path('_site', name).read_text(encoding='utf-8')
+              assert marker in html, f'CSP_META_MISSING: {name}'
+          print('GITHUB_PAGES_CSP_VERIFIED: all active HTML entry points contain a CSP meta policy')
+          PY
+
+      - name: Run automated regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+ supabase-admin-schema.sql
+          grep -q 'do \$\$ begin' database/checkout-actions.sql
+          echo 'SQL DOLLAR QUOTING VERIFIED'
+
+      - name: Prepare Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='audit/' --exclude='supabase/functions/' --exclude='supabase/migrations/' --exclude='src/' --exclude='scripts/' --exclude='database/' --exclude='DEPLOYMENT_FA.md' --exclude='Dockerfile' --exclude='wrangler.jsonc' --exclude='worker.js' --exclude='robots.txt' --exclude='metadata.json' --exclude='*.pdf' --exclude='*.pem' --exclude='*.key' --exclude='.env*' --exclude='.github/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='test.txt' --exclude='temp*.txt' --exclude='upscale-failures.json' --exclude='products-source-generated.json' --exclude='HANDOVER.md' --exclude='*.sql' --exclude='server.js' --exclude='api/' ./ _site/
+          test -s _site/products.html
+          test -s _site/products-v4.html
+
+      - name: Validate GitHub Pages artifact does not leak internal source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -d _site/audit
+          test ! -d _site/supabase/functions
+          test ! -d _site/supabase/migrations
+          test ! -d _site/database
+          test ! -d _site/src
+          test ! -d _site/scripts
+          test ! -e _site/Dockerfile
+          test ! -e _site/worker.js
+          test ! -e _site/.env
+          test ! -e _site/.env.example
+          if find _site -type f -name '*.pdf' -print -quit | grep -q .; then
+            echo 'INTERNAL_PDF_LEAK_DETECTED'
+            exit 1
+          fi
+          echo 'PAGES_ARTIFACT_SECURITY_BOUNDARY_VERIFIED'
+
+      - name: Validate admin panel runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('_site/admin.html').read_text(encoding='utf-8')
+          assert 'پنل مدیریت' in html
+          assert re.search(r'admin-app\.js\?v=\d+', html)
+          match = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          assert match, 'ADMIN_INLINE_SCRIPT_MISSING'
+          Path('/tmp/admin-inline.js').write_text(match[-1], encoding='utf-8')
+          assert Path('_site/admin-app.js').is_file() and Path('_site/admin-app.js').stat().st_size > 1000
+          assert Path('_site/admin-modern.css').is_file() and Path('_site/admin-modern.css').stat().st_size > 5000
+          assert 'azMenuTrigger' in html and 'azMenuOverlay' in html
+          cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
+          assert 'service_role' not in cfg and 'sb_publishable_' in cfg
+          print('ADMIN PANEL VERIFIED: shell + external runtime + publishable config')
+          PY
+          node --check /tmp/admin-inline.js
+          node --check _site/admin-app.js
+          node --check _site/azim-live-content.js
+
+      - name: Validate homepage asset files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in workshop_tools_hero_1789756528479.jpg industrial_garage_set_1789756545202.jpg cat_cabinet_trolley_1789756604644.jpg cat_wrenches_1789756566411.jpg garage_engine_work_1789760853632.jpg impact_air_wrench_1789760841938.jpg; do
+            test -s "_site/assets/homepage/$asset"
+          done
+          echo 'HOMEPAGE_ASSETS_VERIFIED: hero + category images are included in Pages artifact'
+
+      - name: Validate homepage runtime scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('_site/index.html').read_text(encoding='utf-8')
+          assert '<script src="./azim-motion.js?v=7" defer></script>' in html
+          assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
+          assert 'azim-live-content.js?v=3' in html
+          assert 'azim-home-gallery.js' not in html
+          print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
+          PY
+
+      - name: Validate contact and catalog runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          contact = Path('_site/contact.html').read_text(encoding='utf-8')
+          index = Path('_site/index.html').read_text(encoding='utf-8')
+          products = Path('_site/products-v4.html').read_text(encoding='utf-8')
+          assert 'azim-live-content.js?v=3' in contact
+          assert 'supabase-config.js' in contact
+          assert 'azim-live-content.js?v=3' in index
+          assert 'loadLiveCatalog' in products
+          assert 'livePriceData' in products
+          assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
+          scripts = re.findall(r'<script>(.*?)</script>', contact, flags=re.S)
+          inline = next((s for s in scripts if 'handleFormSubmission' in s), '')
+          assert inline.strip(), 'CONTACT_INLINE_SCRIPT_MISSING'
+          Path('/tmp/contact-inline.js').write_text(inline, encoding='utf-8')
+          print('CONTACT/CATALOG VERIFIED: unified CMS + live variants + no placeholder mobile number')
+          PY
+          node --check /tmp/contact-inline.js
+
+      - name: Validate AI assistant runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          ai = Path('_site/ai.html').read_text(encoding='utf-8')
+          cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
+          live = Path('_site/azim-live-content.js').read_text(encoding='utf-8')
+          assert 'supabase-config.js' in ai
+          assert 'azim-live-content.js?v=3' in ai
+          assert 'id="chatMessages"' in ai and 'id="chatForm"' in ai and 'id="chatInput"' in ai
+          assert 'window.AZIM_AI_API_URL' in ai
+          assert 'sb_publishable_' in cfg and 'functions/v1/azim-ai-chat' in cfg
+          assert 'chatMessages' in live and 'chatForm' in live and 'chatInput' in live
+          print('AI RUNTIME VERIFIED: Supabase Edge Function + live CMS + redesigned DOM')
+          PY
+
+      - name: Validate GitHub Pages security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          pages = ['index.html','products-v4.html','cart.html','contact.html','order-status.html','ai.html','admin.html','404.html']
+          marker = '<meta http-equiv="Content-Security-Policy"'
+          for name in pages:
+              html = Path('_site', name).read_text(encoding='utf-8')
+              assert marker in html, f'CSP_META_MISSING: {name}'
+          print('GITHUB_PAGES_CSP_VERIFIED: all active HTML entry points contain a CSP meta policy')
+          PY
+
+      - name: Run automated regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
