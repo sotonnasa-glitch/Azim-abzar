@@ -28,7 +28,7 @@ let supabasePromise: Promise<any> | null = null;
 
 async function getSupabase() {
   if (!supabasePromise) {
-    supabasePromise = import("npm:@supabase/supabase-js@2").then(({ createClient }) =>
+    supabasePromise = import("npm:@supabase/supabase-js@2.117.2").then(({ createClient }) =>
       createClient(PROJECT_URL, ADMIN_KEY)
     );
   }
