@@ -1968,7 +1968,7 @@
       ].join('\n');
     }
 
-    // Store the consultation request in Supabase, then trigger direct mail.
+    // Store the consultation request in Supabase. Fall back to mail only if persistence fails.
     async function handleFormSubmission(e) {
       e.preventDefault();
       const form = document.getElementById('contactForm');
@@ -1989,12 +1989,26 @@
       try {
         if (window.supabase && window.AZIM_SUPABASE_URL && window.AZIM_SUPABASE_ANON_KEY) {
           const client = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
+          let productId = null;
+          try {
+            const code = (new URLSearchParams(window.location.search).get('code') || '').trim().toUpperCase();
+            if (code) {
+              const productResult = await client
+                .from('products')
+                .select('id')
+                .eq('code', code)
+                .maybeSingle();
+              if (!productResult.error) productId = productResult.data?.id || null;
+            }
+          } catch (_) {}
+
           const result = await client.from('inquiries').insert({
             full_name: name,
             mobile: phone,
             subject,
             business: business || null,
-            details
+            details,
+            product_id: productId
           });
           if (result.error) throw result.error;
           saved = true;
@@ -2003,23 +2017,30 @@
         console.warn('Inquiry save failed; falling back to email.', err);
       }
 
-      const subjectText = encodeURIComponent('درخواست مشاوره فنی از عظیم ابزار');
-      const body = encodeURIComponent(buildContactMessage());
-      window.location.href = 'mailto:info@azimabzar.ir?subject=' + subjectText + '&body=' + body;
-
       const alert = document.getElementById('formAlert');
-      if (alert) {
-        alert.textContent = saved
-          ? 'درخواست مشاوره شما با موفقیت ثبت گردید. کارشناسان فنی عظیم ابزار به زودی با شما تماس می‌گیرند.'
-          : 'درخواست مشاوره آماده ارسال است؛ لطفاً برنامه ایمیل را تأیید فرمایید.';
-        alert.style.display = 'block';
+      if (saved) {
+        if (alert) {
+          alert.textContent = 'درخواست مشاوره شما با موفقیت ثبت شد. کارشناسان فنی عظیم ابزار با شما تماس می‌گیرند.';
+          alert.style.display = 'block';
+        }
+        triggerToast('درخواست شما با موفقیت در سیستم ثبت شد');
+      } else {
+        const subjectText = encodeURIComponent('درخواست مشاوره فنی از عظیم ابزار');
+        const body = encodeURIComponent(buildContactMessage());
+        window.location.href = 'mailto:info@azimabzar.ir?subject=' + subjectText + '&body=' + body;
+        if (alert) {
+          alert.textContent = 'ثبت آنلاین درخواست انجام نشد؛ برنامه ایمیل برای ارسال درخواست باز می‌شود.';
+          alert.style.display = 'block';
+        }
       }
+
       setTimeout(function() {
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.innerHTML = '<span>ثبت درخواست مشاوره</span>';
       }, 1200);
     }
+
   </script>
 <script>
 (function(){
