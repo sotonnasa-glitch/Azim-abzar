@@ -105,9 +105,6 @@ if (!js.includes("if (r.error) throw r.error;") || !js.includes("state.orderProd
 if (!js.includes("async function loadCustomersForOrder()") || !js.includes("const r = await state.db.from('customers').select('id,full_name,mobile').order('full_name').limit(2000);")) {
   fail('order customer loader is not hardened');
 }
-if (!js.includes("اگر این بخش را می‌بینید")) {
-  // no-op; retained below for compatibility with older generated admin copies
-}
 if (!js.includes("readonly aria-readonly=\"true\"")) {
   fail('order total input is still manually editable despite authoritative RPC calculation');
 }
@@ -129,3 +126,4 @@ if (html.includes('admin-app.js?v=50')) {
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log('ADMIN_STATIC_OK');
+if (!js.includes("state.productCacheLoaded = false;")) fail('catalog reload does not invalidate order product cache');
