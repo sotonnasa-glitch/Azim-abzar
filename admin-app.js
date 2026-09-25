@@ -2408,3 +2408,1011 @@
       const active = rows.filter(x => x.is_active && new Date(x.starts_at).getTime() <= Date.now() && (!x.ends_at || new Date(x.ends_at).getTime() >= Date.now()) && !(x.usage_limit != null && Number(x.used_count||0) >= Number(x.usage_limit))).length;
       const uses = rows.reduce((sum,x)=>sum+Number(x.used_count||0),0);
       const value = rows.reduce((sum,x)=>sum+Number(x.total_discount||0),0);
+      if ($('discountCodeStatTotal')) $('discountCodeStatTotal').textContent = rows.length.toLocaleString('fa-IR');
+      if ($('discountCodeStatActive')) $('discountCodeStatActive').textContent = active.toLocaleString('fa-IR');
+      if ($('discountCodeStatUses')) $('discountCodeStatUses').textContent = uses.toLocaleString('fa-IR');
+      if ($('discountCodeStatValue')) $('discountCodeStatValue').textContent = money(value);
+      renderDiscountCodes();
+    } catch (err) {
+      showSectionError('discountCodesTable', err);
+    }
+  }
+
+  function renderDiscountCodes() {
+    const box = $('discountCodesTable');
+    if (!box) return;
+    const term = ($('discountCodeSearch')?.value || '').trim().toLocaleLowerCase('fa');
+    const filter = $('discountCodeFilter')?.value || '';
+    const now = Date.now();
+    const rows = (discountState.rows || []).filter(x => {
+      if (!String(x.code || '').trim()) return false;
+      const hay = (String(x.name || '') + ' ' + String(x.code || '')).toLocaleLowerCase('fa');
+      if (term && !hay.includes(term)) return false;
+      const stateName = !x.is_active ? 'off' :
+        (new Date(x.starts_at).getTime() > now ? 'scheduled' :
+        (x.ends_at && new Date(x.ends_at).getTime() < now ? 'expired' :
+        (x.usage_limit != null && Number(x.used_count||0) >= Number(x.usage_limit) ? 'expired' : 'active')));
+      if (filter && stateName !== filter) return false;
+      return true;
+    });
+    if (!rows.length) {
+      box.innerHTML = '<div class="az-coupon-empty"><div style="font-size:28px">🏷️</div><strong>هنوز کد تخفیفی مطابق فیلتر ثبت نشده</strong><div class="muted" style="margin-top:6px">کد را می‌توان برای کل سبد، محصول، دسته، برند یا مشتری ساخت.</div></div>';
+      return;
+    }
+    const scopeText = x => x.applies_to === 'all' ? 'کل سبد' :
+      x.applies_to === 'products' ? 'محصولات انتخابی' :
+      x.applies_to === 'categories' ? 'دسته‌های انتخابی' :
+      x.applies_to === 'brands' ? 'برندهای انتخابی' : 'مشتری‌های انتخابی';
+    const body = rows.map(x => {
+      const used = Number(x.used_count || 0);
+      const limit = x.usage_limit == null ? '∞' : Number(x.usage_limit).toLocaleString('fa-IR');
+      const remaining = x.usage_limit == null ? 'نامحدود' : Math.max(0, Number(x.usage_limit)-used).toLocaleString('fa-IR');
+      const value = x.discount_type === 'percentage' ? Number(x.value||0).toLocaleString('fa-IR') + '٪' : money(x.value);
+      const tags = [
+        '<span class="badge">' + esc(scopeText(x)) + '</span>',
+        x.first_order_only ? '<span class="badge warn">اولین خرید</span>' : '',
+        x.auto_apply ? '<span class="badge warn">خودکار</span>' : '',
+        x.min_order_amount ? '<span class="badge">حداقل ' + esc(money(x.min_order_amount)) + '</span>' : ''
+      ].join('');
+      return '<article class="az-coupon-card">' +
+        '<div class="az-coupon-top"><div><div class="az-coupon-code" dir="ltr">' + esc(x.code) + '</div><h3 class="az-coupon-title">' + esc(x.name || 'کد تخفیف') + '</h3><p class="az-coupon-sub">' + esc(x.notes || 'کوپن فروش') + '</p></div>' + discountBadge(x) + '</div>' +
+        '<div class="az-coupon-main"><div><div class="az-coupon-label">مقدار تخفیف</div><div class="az-coupon-value">' + esc(value) + '</div>' + (x.max_discount ? '<div class="muted">سقف: ' + money(x.max_discount) + '</div>' : '') + '</div><div class="az-coupon-scope"><div class="az-coupon-label">دامنه</div><strong>' + esc(scopeText(x)) + '</strong></div></div>' +
+        '<div class="az-coupon-meta"><div><span class="az-coupon-label">استفاده</span><span class="az-coupon-number">' + used.toLocaleString('fa-IR') + ' / ' + limit + '</span></div><div><span class="az-coupon-label">باقی‌مانده</span><span class="az-coupon-number">' + remaining + '</span></div><div><span class="az-coupon-label">اعتبار تا</span><span class="az-coupon-number">' + esc(x.ends_at ? dateFa(x.ends_at,false) : 'بدون پایان') + '</span></div><div><span class="az-coupon-label">ارزش مصرف‌شده</span><span class="az-coupon-number">' + esc(money(x.total_discount || 0)) + '</span></div></div>' +
+        '<div class="az-coupon-tags">' + tags + '</div>' +
+        '<div class="az-coupon-actions"><button class="btn secondary" data-edit-discount="' + x.id + '">ویرایش</button><button class="btn ghost" data-copy-discount="' + esc(x.code) + '">کپی کد</button>' +
+        (can.all() ? '<button class="btn ghost" data-toggle-discount="' + x.id + '">' + (x.is_active ? 'خاموش' : 'روشن') + '</button><button class="btn ghost" data-delete-discount="' + x.id + '">حذف</button>' : '') +
+        '</div></article>';
+    }).join('');
+    box.innerHTML = '<div class="az-coupon-grid">' + body + '</div>';
+  }
+
+  async function openDiscountCodeEditor(id) {
+    await openDiscountEditor(id, null, true);
+  }
+
+  async function redeemOrderDiscount(orderId, result, customerId, orderCode) {
+    const discountId = result?.row?.id || null;
+    if (!discountId) {
+      await state.db.from('discount_redemptions').delete().eq('order_id',orderId);
+      return;
+    }
+    await state.db.from('discount_redemptions').delete().eq('order_id',orderId);
+    const ins = await state.db.from('discount_redemptions').insert({
+      discount_id:discountId, customer_id:customerId || null, order_id:orderId,
+      code_used:result.row.code || null, discount_amount:Number(result.discount||0), created_by:state.user.id
+    });
+    if (ins.error) throw ins.error;
+  }
+
+  function generateDiscountCode() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = new Uint8Array(7);
+    if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+    else for (let i=0;i<bytes.length;i++) bytes[i] = Math.floor(Math.random()*256);
+    let suffix = '';
+    bytes.forEach(b => suffix += alphabet[b % alphabet.length]);
+    return 'AZIM-' + suffix;
+  }
+
+  async function copyDiscountCode(code) {
+    const value = String(code || '').trim();
+    if (!value) return;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(value);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = value; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      toast('__AZICON_SUCCESS__ کد کپی شد');
+    } catch (_) {
+      toast('__AZICON_ERROR__ کپی کد ممکن نشد؛ خود کد را انتخاب کن.');
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const d = e.target.closest('[data-edit-discount]'); if (d) openDiscountEditor(d.dataset.editDiscount);
+    const dt = e.target.closest('[data-toggle-discount]'); if (dt) toggleDiscount(dt.dataset.toggleDiscount);
+    const dd = e.target.closest('[data-delete-discount]'); if (dd) deleteDiscount(dd.dataset.deleteDiscount);
+    const dc = e.target.closest('[data-new-discount-customer]'); if (dc) openDiscountEditor(null, dc.dataset.newDiscountCustomer);
+    const dp = e.target.closest('[data-new-discount-product]'); if (dp) openDiscountEditor(null, null, true, dp.dataset.newDiscountProduct);
+    const cp = e.target.closest('[data-copy-discount]'); if (cp) copyDiscountCode(cp.dataset.copyDiscount);
+  });
+
+  async function loadMedia() {
+    const r = await state.db.from('media_assets').select('*').order('created_at', { ascending: false }).limit(200);
+    if (r.error) return showSectionError('mediaTable', r.error);
+    if (!r.data?.length) return $('mediaTable').innerHTML = '<div class="empty">رسانه‌ای ثبت نشده.</div>';
+    const body = r.data.map((x) =>
+      '<tr><td>' + (x.public_url ? '<img class="thumb" src="' + esc(x.public_url) + '" alt="">' : '—') + '</td>' +
+      '<td>' + esc(x.filename) + '</td><td>' + esc(x.folder) + '</td><td>' + (((x.size_bytes || 0) / 1024).toFixed(1)) +
+      ' KB</td><td>' + dateFa(x.created_at) + '</td><td>' +
+      (can.edit() ? '<button class="btn ghost" data-delete-media="' + x.id + '">حذف</button>' : '') + '</td></tr>'
+    ).join('');
+    $('mediaTable').innerHTML = '<table class="table"><thead><tr><th>تصویر</th><th>فایل</th><th>پوشه</th><th>حجم</th><th>تاریخ</th><th>عملیات</th></tr></thead><tbody>' +
+      body + '</tbody></table>';
+  }
+
+  async function uploadMedia() {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه آپلود رسانه ندارد.');
+    const file = $('mediaFile').files[0];
+    if (!file) return toast('یک فایل انتخاب کن');
+    const folder = $('mediaFolder').value;
+    const path = folder + '/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
+    if (up.error) return toast('__AZICON_ERROR__ ' + errorText(up.error));
+    const url = state.db.storage.from('admin-media').getPublicUrl(path).data.publicUrl;
+    const r = await state.db.from('media_assets').insert({
+      filename: file.name, storage_path: path, public_url: url, mime_type: file.type,
+      size_bytes: file.size, folder, uploaded_by: state.user.id
+    });
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    await audit('upload', 'media_assets', path, { folder, filename: file.name });
+    $('mediaFile').value = '';
+    toast('__AZICON_SUCCESS__ فایل آپلود شد');
+    await loadMedia();
+  }
+
+  async function deleteMedia(id) {
+    if (!can.edit()) return;
+    const r = await state.db.from('media_assets').select('*').eq('id', id).single();
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    if (!confirm('این فایل رسانه‌ای حذف شود؟')) return;
+    const rem = await state.db.storage.from('admin-media').remove([r.data.storage_path]);
+    if (rem.error) return toast('__AZICON_ERROR__ ' + errorText(rem.error));
+    const d = await state.db.from('media_assets').delete().eq('id', id);
+    if (d.error) return toast('__AZICON_ERROR__ ' + errorText(d.error));
+    await audit('delete', 'media_assets', id, { path: r.data.storage_path });
+    toast('__AZICON_SUCCESS__ رسانه حذف شد');
+    await loadMedia();
+  }
+
+  const contentMeta = {
+    home_meta: {
+      title: 'متای صفحه اصلی',
+      fields: [
+        ['title', 'عنوان سایت', 'input'],
+        ['description', 'توضیحات متا', 'textarea']
+      ]
+    },
+    home_hero: {
+      title: 'هیرو صفحه اصلی',
+      fields: [
+        ['eyebrow', 'برچسب بالای هیرو', 'input'],
+        ['title', 'عنوان اصلی', 'input'],
+        ['highlight', 'خط برجسته عنوان', 'input'],
+        ['description', 'توضیحات', 'textarea'],
+        ['trust_badges', 'مزیت‌ها (هر خط یک مورد)', 'lines'],
+        ['primary_cta', 'دکمه کاتالوگ', 'input'],
+        ['contact_cta', 'دکمه ارتباط', 'input']
+      ]
+    },
+    home_choice: {
+      title: 'مسیرهای خرید',
+      fields: [
+        ['eyebrow', 'برچسب', 'input'],
+        ['title', 'عنوان', 'input'],
+        ['lead', 'متن راهنما', 'textarea']
+      ]
+    },
+    home_why: {
+      title: 'مزیت‌های فروشگاه',
+      fields: [
+        ['eyebrow', 'برچسب', 'input'],
+        ['title', 'عنوان', 'input'],
+        ['lead', 'متن راهنما', 'textarea']
+      ]
+    },
+    contact_page: {
+      title: 'صفحه ارتباط و سفارش',
+      fields: [
+        ['title', 'عنوان صفحه', 'input'],
+        ['description', 'توضیحات متا', 'textarea'],
+        ['email', 'ایمیل فروشگاه', 'input']
+      ]
+    }
+  };
+
+  async function loadContent() {
+    const r = await state.db.from('site_content').select('*').order('updated_at', { ascending: false });
+    if (r.error) return showSectionError('contentTable', r.error);
+    state.contentRows = r.data || [];
+    if (!state.contentRows.length) return $('contentTable').innerHTML = '<div class="empty">هنوز محتوایی ثبت نشده.</div>';
+    const body = state.contentRows.map((x) =>
+      '<tr><td>' + esc(x.section_key) + '</td><td>' + esc(x.title || '—') + '</td><td>' +
+      (x.is_active ? '<span class="badge ok">فعال</span>' : '<span class="badge red">غیرفعال</span>') +
+      '</td><td>' + dateFa(x.updated_at) + '</td><td>' +
+      (can.edit() ? '<button class="btn secondary" data-edit-content="' + x.id + '">ویرایش</button>' : '') +
+      '</td></tr>'
+    ).join('');
+    $('contentTable').innerHTML =
+      '<table class="table"><thead><tr><th>کلید</th><th>عنوان</th><th>وضعیت</th><th>آخرین بروزرسانی</th><th>عملیات</th></tr></thead><tbody>' +
+      body + '</tbody></table>';
+  }
+
+  function contentForm(x) {
+    const key = x?.section_key || '';
+    const meta = contentMeta[key];
+    if (!meta) {
+      return '<form id="contentForm" class="grid2">' +
+        '<div class="field"><label>کلید یکتا *</label><input class="input" name="section_key" required value="' + esc(key) + '"></div>' +
+        '<div class="field"><label>عنوان</label><input class="input" name="title" value="' + esc(x?.title) + '"></div>' +
+        '<label class="check field"><input name="is_active" type="checkbox" ' + (x?.is_active === false ? '' : 'checked') + '> فعال</label>' +
+        '<div class="field full"><label>Payload JSON</label><textarea class="textarea" name="payload" style="min-height:260px">' +
+        esc(JSON.stringify(x?.payload || {}, null, 2)) + '</textarea></div>' +
+        '<div class="field full"><button class="btn">ذخیره</button></div><div id="contentStatus" class="status field full"></div></form>';
+    }
+    const payload = x?.payload || {};
+    const fields = meta.fields.map((f) => {
+      if (f[2] === 'textarea') return '<div class="field full"><label>' + f[1] + '</label><textarea class="textarea" name="f_' + f[0] + '">' + esc(payload[f[0]] || '') + '</textarea></div>';
+      if (f[2] === 'lines') return '<div class="field full"><label>' + f[1] + '</label><textarea class="textarea" name="f_' + f[0] + '" placeholder="هر مورد در یک خط">' + esc(Array.isArray(payload[f[0]]) ? payload[f[0]].join('\\n') : '') + '</textarea></div>';
+      return '<div class="field"><label>' + f[1] + '</label><input class="input" name="f_' + f[0] + '" value="' + esc(payload[f[0]] || '') + '"></div>';
+    }).join('');
+    return '<form id="contentForm" class="grid2">' +
+      '<div class="field"><label>بخش</label><input class="input" value="' + esc(key) + '" disabled></div>' +
+      '<div class="field"><label>عنوان مدیریتی</label><input class="input" name="admin_title" value="' + esc(x?.title || meta.title) + '"></div>' +
+      fields +
+      '<label class="check field full"><input name="is_active" type="checkbox" ' + (x?.is_active === false ? '' : 'checked') + '> فعال روی سایت</label>' +
+      '<div class="field full"><button class="btn">ذخیره محتوا</button></div><div id="contentStatus" class="status field full"></div></form>';
+  }
+
+  async function editContent(id) {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوا ندارد.');
+    const r = await state.db.from('site_content').select('*').eq('id', id).single();
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    openModal('ویرایش محتوا', contentForm(r.data));
+    $('contentForm').onsubmit = (e) => saveContent(e, id);
+  }
+
+  function newContent() {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ساخت محتوا ندارد.');
+    openModal('بخش محتوایی جدید', contentForm(null));
+    $('contentForm').onsubmit = (e) => saveContent(e, null);
+  }
+
+  async function saveContent(e, id) {
+    e.preventDefault();
+    try {
+      const s = e.target.elements;
+      const key = s.section_key ? s.section_key.value.trim() : state.contentRows.find((x) => x.id === id)?.section_key;
+      let payload = {};
+      const meta = contentMeta[key];
+      if (meta) {
+        meta.fields.forEach((f) => {
+          const val = s['f_' + f[0]]?.value || '';
+          payload[f[0]] = f[2] === 'lines' ? val.split('\\n').map((x) => x.trim()).filter(Boolean) : val.trim();
+        });
+      } else {
+        payload = JSON.parse(s.payload.value || '{}');
+      }
+      const title = s.admin_title ? s.admin_title.value.trim() || null : s.title.value.trim() || null;
+      const p = {
+        section_key: key, title, payload, is_active: key === 'ai_settings' ? true : !!s.is_active.checked,
+        updated_by: state.user.id
+      };
+      let r;
+      if (id) r = await state.db.from('site_content').update(p).eq('id', id);
+      else r = await state.db.from('site_content').insert(p);
+      if (r.error) throw r.error;
+      await audit(id ? 'update' : 'create', 'site_content', id || key, { section_key: key });
+      closeModal();
+      toast('__AZICON_SUCCESS__ محتوای سایت ذخیره شد');
+      await loadContent();
+    } catch (err) {
+      $('contentStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
+    }
+  }
+
+
+  function copyField(name, label, value, kind = 'input', wide = false) {
+    const cls = wide ? 'field full' : 'field';
+    if (kind === 'lines') {
+      return '<div class="' + cls + '"><label>' + esc(label) + '</label><textarea class="textarea az-copy-textarea" name="' + name + '" placeholder="هر مورد در یک خط">' + esc(Array.isArray(value) ? value.join('\\n') : '') + '</textarea></div>';
+    }
+    return '<div class="' + cls + '"><label>' + esc(label) + '</label>' +
+      (kind === 'textarea'
+        ? '<textarea class="textarea az-copy-textarea" name="' + name + '">' + esc(value || '') + '</textarea>'
+        : '<input class="input" name="' + name + '" value="' + esc(value || '') + '">') +
+      '</div>';
+  }
+
+  function copyGet(obj, path, fallback = '') {
+    return path.split('.').reduce((v, k) => v == null ? undefined : v[k], obj) ?? fallback;
+  }
+
+  function copySet(obj, path, value) {
+    const parts = path.split('.');
+    let cur = obj;
+    parts.forEach((part, i) => {
+      const last = i === parts.length - 1;
+      const next = parts[i + 1];
+      if (last) {
+        cur[part] = value;
+      } else {
+        if (cur[part] == null) cur[part] = /^\d+$/.test(next) ? [] : {};
+        cur = cur[part];
+      }
+    });
+  }
+
+  function siteCopyDefaults() {
+    return {
+      home: {
+        meta:{title:'',description:''},
+        header:{brand:'',tagline:'',nav_home:'',nav_products:'',nav_contact:''},
+        topbar:[],
+        hero:{eyebrow:'',title:'',highlight:'',description:'',trust:[],primary_cta:'',contact_cta:''},
+        hud:{label:'',badge:'',value:'',unit:'',specs:[],chips:[['',''],['','']]},
+        ticker:[],
+        choice:{eyebrow:'',title:'',lead:'',cards:[['','','',''],['','','',''],['','','','']]},
+        why:{eyebrow:'',title:'',lead:'',items:[['',''],['',''],['',''],['','']]},
+        footer:{text:'',links:[]}
+      },
+      contact:{
+        meta:{title:'',description:''},
+        header:{brand:'',tagline:'',back:''},
+        hero:{title:'',description:'',call_cta:'',form_cta:''},
+        channels_head:{title:'',description:''},
+        phone:{title:'',pill:'',value:'',sub:'',copy:'',call:''},
+        support:{title:'',pill:'',value:'',sub:'',button:''},
+        email:{title:'',pill:'',value:'',sub:'',copy:'',send:''},
+        address:{title:'',pill:'',value:'',sub:'',button:'',neshan_url:'',balad_url:''},
+        hours:{title:'',status:'',rows:[['',''],['',''],['','']]},
+        form:{title:'',description:'',topicsLabel:'',topics:[],fullnameLabel:'',fullnamePlaceholder:'',mobileLabel:'',mobilePlaceholder:'',subjectLabel:'',subjectOptions:[],businessLabel:'',businessPlaceholder:'',detailsLabel:'',detailsPlaceholder:'',submit:'',whatsapp:''},
+        trust:[['',''],['',''],['',''],['','']],
+        faq:{title:'',items:[['',''],['',''],['','']]},
+        bottom:{title:'',badge:'',address:'',meta1:'',meta2:'',phone:'',map:''},
+        footer:{text:'',links:[]}
+      }
+    };
+  }
+
+  const unifiedSiteFields = [
+    ['home.meta.title','عنوان SEO صفحه اصلی'],['home.meta.description','توضیحات SEO صفحه اصلی','textarea'],
+    ['home.header.brand','نام برند'],['home.header.tagline','شعار زیر برند'],
+    ['home.header.nav_home','منوی صفحه اصلی'],['home.header.nav_products','منوی کاتالوگ محصولات'],
+    ['home.header.nav_contact','منوی ارتباط و سفارش'],
+    ['home.topbar','نوار بالای صفحه','lines'],['home.hero.eyebrow','برچسب بالای هیرو'],
+    ['home.hero.title','عنوان اصلی هیرو'],['home.hero.highlight','خط برجسته هیرو'],
+    ['home.hero.description','توضیحات هیرو','textarea'],['home.hero.trust','۴ مزیت هیرو','lines'],
+    ['home.hero.primary_cta','دکمه کاتالوگ'],['home.hero.contact_cta','دکمه ارتباط'],
+    ['home.hud.label','عنوان HUD'],['home.hud.badge','نشان HUD'],['home.hud.value','عدد HUD'],
+    ['home.hud.unit','واحد HUD'],['home.hud.specs','مشخصات HUD','lines'],
+    ['home.hud.chips.0.0','چیپ شناور اول — عنوان'],['home.hud.chips.0.1','چیپ شناور اول — توضیح'],
+    ['home.hud.chips.1.0','چیپ شناور دوم — عنوان'],['home.hud.chips.1.1','چیپ شناور دوم — توضیح'],
+    ['home.ticker','متن‌های نوار متحرک','lines'],
+    ['home.choice.eyebrow','مسیرها — برچسب'],['home.choice.title','مسیرها — عنوان'],
+    ['home.choice.lead','مسیرها — توضیح','textarea'],
+    ['home.choice.cards.0.0','مسیر اول — برچسب'],['home.choice.cards.0.1','مسیر اول — عنوان'],
+    ['home.choice.cards.0.2','مسیر اول — توضیح','textarea'],['home.choice.cards.0.3','مسیر اول — دکمه'],
+    ['home.choice.cards.1.0','مسیر دوم — برچسب'],['home.choice.cards.1.1','مسیر دوم — عنوان'],
+    ['home.choice.cards.1.2','مسیر دوم — توضیح','textarea'],['home.choice.cards.1.3','مسیر دوم — دکمه'],
+    ['home.choice.cards.2.0','مسیر سوم — برچسب'],['home.choice.cards.2.1','مسیر سوم — عنوان'],
+    ['home.choice.cards.2.2','مسیر سوم — توضیح','textarea'],['home.choice.cards.2.3','مسیر سوم — دکمه'],
+    ['home.why.eyebrow','مزایا — برچسب'],['home.why.title','مزایا — عنوان'],['home.why.lead','مزایا — توضیح','textarea'],
+    ['home.why.items.0.0','مزیت ۱ — عنوان'],['home.why.items.0.1','مزیت ۱ — توضیح','textarea'],
+    ['home.why.items.1.0','مزیت ۲ — عنوان'],['home.why.items.1.1','مزیت ۲ — توضیح','textarea'],
+    ['home.why.items.2.0','مزیت ۳ — عنوان'],['home.why.items.2.1','مزیت ۳ — توضیح','textarea'],
+    ['home.why.items.3.0','مزیت ۴ — عنوان'],['home.why.items.3.1','مزیت ۴ — توضیح','textarea'],
+    ['home.footer.text','متن فوتر'],['home.footer.links','لینک‌های فوتر','lines'],
+
+    ['contact.meta.title','عنوان SEO ارتباط با ما'],['contact.meta.description','توضیحات SEO ارتباط با ما','textarea'],
+    ['contact.header.brand','ارتباط — نام برند'],['contact.header.tagline','ارتباط — شعار زیر برند'],['contact.header.back','متن بازگشت'],
+    ['contact.hero.title','ارتباط — عنوان','textarea'],['contact.hero.description','ارتباط — توضیحات','textarea'],
+    ['contact.hero.call_cta','دکمه تماس'],['contact.hero.form_cta','دکمه فرم'],
+    ['contact.channels_head.title','بخش راه‌های ارتباط — عنوان'],['contact.channels_head.description','بخش راه‌های ارتباط — توضیح','textarea'],
+    ['contact.phone.title','تلفن — عنوان'],['contact.phone.pill','تلفن — برچسب'],['contact.phone.value','تلفن — شماره'],
+    ['contact.phone.sub','تلفن — توضیح','textarea'],['contact.phone.copy','تلفن — دکمه کپی'],['contact.phone.call','تلفن — دکمه تماس'],
+    ['contact.support.title','پشتیبانی — عنوان'],['contact.support.pill','پشتیبانی — برچسب'],
+    ['contact.support.value','پشتیبانی — متن اصلی','textarea'],['contact.support.sub','پشتیبانی — توضیح','textarea'],['contact.support.button','پشتیبانی — دکمه'],
+    ['contact.email.title','ایمیل — عنوان'],['contact.email.pill','ایمیل — برچسب'],['contact.email.value','ایمیل'],
+    ['contact.email.sub','ایمیل — توضیح','textarea'],['contact.email.copy','ایمیل — دکمه کپی'],['contact.email.send','ایمیل — دکمه ارسال'],
+    ['contact.address.title','آدرس — عنوان'],['contact.address.pill','آدرس — برچسب'],['contact.address.value','آدرس','textarea'],
+    ['contact.address.sub','آدرس — توضیح','textarea'],['contact.address.button','آدرس — دکمه'],['contact.address.neshan_url','لینک موقعیت در نشان'],['contact.address.balad_url','لینک موقعیت در بلد'],
+    ['contact.hours.title','ساعات — عنوان'],['contact.hours.status','ساعات — وضعیت'],
+    ['contact.hours.rows.0.0','شنبه تا چهارشنبه — برچسب'],['contact.hours.rows.0.1','شنبه تا چهارشنبه — ساعت'],
+    ['contact.hours.rows.1.0','پنجشنبه — برچسب'],['contact.hours.rows.1.1','پنجشنبه — ساعت'],
+    ['contact.hours.rows.2.0','جمعه و تعطیلات — برچسب'],['contact.hours.rows.2.1','جمعه و تعطیلات — توضیح'],
+    ['contact.form.title','فرم — عنوان'],['contact.form.description','فرم — توضیح','textarea'],
+    ['contact.form.topicsLabel','فرم — عنوان موضوعات'],['contact.form.topics','فرم — موضوعات سریع','lines'],
+    ['contact.form.fullnameLabel','فرم — نام'],['contact.form.fullnamePlaceholder','فرم — جای‌خالی نام'],
+    ['contact.form.mobileLabel','فرم — موبایل'],['contact.form.mobilePlaceholder','فرم — جای‌خالی موبایل'],
+    ['contact.form.subjectLabel','فرم — دسته‌بندی'],['contact.form.subjectOptions','فرم — گزینه‌های دسته‌بندی','lines'],
+    ['contact.form.businessLabel','فرم — کارگاه'],['contact.form.businessPlaceholder','فرم — جای‌خالی کارگاه'],
+    ['contact.form.detailsLabel','فرم — شرح درخواست','textarea'],['contact.form.detailsPlaceholder','فرم — جای‌خالی شرح','textarea'],
+    ['contact.form.submit','فرم — دکمه ارسال'],['contact.form.whatsapp','فرم — دکمه پیام‌رسان'],
+    ['contact.trust.0.0','اعتماد ۱ — عنوان'],['contact.trust.0.1','اعتماد ۱ — توضیح'],
+    ['contact.trust.1.0','اعتماد ۲ — عنوان'],['contact.trust.1.1','اعتماد ۲ — توضیح'],
+    ['contact.trust.2.0','اعتماد ۳ — عنوان'],['contact.trust.2.1','اعتماد ۳ — توضیح'],
+    ['contact.trust.3.0','اعتماد ۴ — عنوان'],['contact.trust.3.1','اعتماد ۴ — توضیح'],
+    ['contact.faq.title','سؤالات متداول — عنوان'],
+    ['contact.faq.items.0.0','سؤال ۱'],['contact.faq.items.0.1','پاسخ ۱','textarea'],
+    ['contact.faq.items.1.0','سؤال ۲'],['contact.faq.items.1.1','پاسخ ۲','textarea'],
+    ['contact.faq.items.2.0','سؤال ۳'],['contact.faq.items.2.1','پاسخ ۳','textarea'],
+    ['contact.faq.items.3.0','سؤال ۴'],['contact.faq.items.3.1','پاسخ ۴','textarea'],
+    ['contact.faq.items.4.0','سؤال ۵'],['contact.faq.items.4.1','پاسخ ۵','textarea'],
+    ['contact.bottom.title','پایین صفحه — عنوان آدرس'],['contact.bottom.badge','پایین صفحه — برچسب'],
+    ['contact.bottom.address','پایین صفحه — آدرس','textarea'],['contact.bottom.meta1','پایین صفحه — توضیح اول'],
+    ['contact.bottom.meta2','پایین صفحه — توضیح دوم'],['contact.bottom.phone','پایین صفحه — تلفن'],
+    ['contact.bottom.map','پایین صفحه — دکمه نقشه'],['contact.footer.text','فوتر ارتباط','textarea'],['contact.footer.links','فوتر ارتباط — لینک‌ها','lines']
+  ];
+
+  function siteCopyForm(copy) {
+    const p = Object.assign(siteCopyDefaults(), copy || {});
+    const fieldHtml = (prefix) => unifiedSiteFields.filter(f => f[0] === prefix || f[0].startsWith(prefix + '.')).map(f => {
+      const kind = f[2] || 'input';
+      return copyField('sc_' + f[0], f[1], copyGet(p, f[0], kind === 'lines' ? [] : ''), kind, kind === 'textarea' || kind === 'lines');
+    }).join('');
+    return '<form id="unifiedSiteForm" class="az-unified-form">' +
+      '<div class="az-copy-intro"><strong>ویرایش یکجای نوشته‌های سایت</strong><small>از همین صفحه متن‌های قابل مشاهده صفحه اصلی و «ارتباط با ما» را تغییر بده. دکمه‌ها و ساختار صفحه دست‌نخورده می‌مانند.</small></div>' +
+      '<details class="az-copy-group" open><summary>__AZICON_HOME__ صفحه اصلی — هدر و SEO</summary><div class="grid2">' + fieldHtml('home.meta') + fieldHtml('home.header') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_TARGET__ صفحه اصلی — هیرو و نوار بالایی</summary><div class="grid2">' + fieldHtml('home.topbar') + fieldHtml('home.hero') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_GEAR__ صفحه اصلی — HUD و نوار متحرک</summary><div class="grid2">' + fieldHtml('home.hud') + fieldHtml('home.ticker') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_COMPASS__ صفحه اصلی — مسیرهای خرید</summary><div class="grid2">' + fieldHtml('home.choice') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_TOOLS__ صفحه اصلی — مزیت‌ها</summary><div class="grid2">' + fieldHtml('home.why') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_DOWN__ صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — هدر و SEO</summary><div class="grid2">' + fieldHtml('contact.meta') + fieldHtml('contact.header') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_INVOICE__ ارتباط با ما — معرفی صفحه</summary><div class="grid2">' + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_CLOCK__ ارتباط با ما — ساعات کاری</summary><div class="grid2">' + fieldHtml('contact.hours') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_NOTE__ ارتباط با ما — فرم استعلام</summary><div class="grid2">' + fieldHtml('contact.form') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_SUCCESS__ ارتباط با ما — مزیت‌ها و اعتماد</summary><div class="grid2">' + fieldHtml('contact.trust') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_QUESTION__ ارتباط با ما — پرسش‌های متداول</summary><div class="grid2">' + fieldHtml('contact.faq') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PIN__ ارتباط با ما — آدرس پایین صفحه و فوتر</summary><div class="grid2">' + fieldHtml('contact.bottom') + fieldHtml('contact.footer') + '</div></details>' +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">__AZICON_SAVE__ ذخیره همه نوشته‌ها</button><span id="unifiedSiteStatus" class="status"></span></div>' +
+      '</form>';
+  }
+
+
+  const focusedCopyGroups = {
+    home: [
+      ['__AZICON_HOME__ هدر و SEO','home.meta,home.header'],
+      ['__AZICON_TARGET__ هیرو و نوار بالایی','home.topbar,home.hero'],
+      ['__AZICON_COMPASS__ مسیرهای خرید','home.choice'],
+      ['__AZICON_TOOLS__ مزیت‌های فروشگاه','home.why'],
+      ['__AZICON_DOWN__ فوتر صفحه اصلی','home.footer']
+    ],
+    contact: [
+      ['__AZICON_PHONE__ هدر و SEO','contact.meta,contact.header'],
+      ['__AZICON_INVOICE__ معرفی صفحه','contact.hero,contact.channels_head'],
+      ['__AZICON_PHONE__ تلفن، پشتیبانی، ایمیل و آدرس','contact.phone,contact.support,contact.email,contact.address'],
+      ['__AZICON_CLOCK__ ساعات کاری','contact.hours'],
+      ['__AZICON_NOTE__ فرم استعلام و پیام','contact.form'],
+      ['__AZICON_SUCCESS__ مزیت‌های اعتماد','contact.trust'],
+      ['__AZICON_QUESTION__ پرسش‌های متداول','contact.faq'],
+      ['__AZICON_PIN__ آدرس پایین صفحه و فوتر','contact.bottom,contact.footer']
+    ]
+  };
+
+  function fieldsForPaths(paths) {
+    const wanted = new Set(paths.split(',').map(x => x.trim()));
+    return unifiedSiteFields.filter(f => [...wanted].some(prefix => f[0] === prefix || f[0].startsWith(prefix + '.')));
+  }
+
+  function focusedSiteForm(scope, copy) {
+    const p = Object.assign(siteCopyDefaults(), copy || {});
+    const groups = focusedCopyGroups[scope] || [];
+    return '<form id="focusedSiteForm" class="az-unified-form">' +
+      '<div class="az-copy-intro"><strong>' + (scope === 'contact' ? '__AZICON_PHONE__ مدیریت صفحه ارتباط با ما' : '__AZICON_HOME__ مدیریت صفحه اصلی') + '</strong>' +
+      '<small>فقط محتوای همین صفحه در این بخش قرار دارد؛ اطلاعات را تغییر بده و «ذخیره صفحه» را بزن.</small></div>' +
+      groups.map((g,i) => {
+        const html = fieldsForPaths(g[1]).map(f => {
+          const kind = f[2] || 'input';
+          return copyField('fc_' + f[0], f[1], copyGet(p, f[0], kind === 'lines' ? [] : ''), kind, kind === 'textarea' || kind === 'lines');
+        }).join('');
+        return '<details class="az-copy-group" ' + (i === 0 ? 'open' : '') + '><summary>' + g[0] + '</summary><div class="grid2">' + html + '</div></details>';
+      }).join('') +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">__AZICON_SAVE__ ذخیره صفحه</button><button class="btn ghost" type="button" id="previewFocusedSite">__AZICON_GLOBE__ پیش‌نمایش</button><span id="focusedSiteStatus" class="status"></span></div>' +
+      '</form>';
+  }
+
+  async function openFocusedSiteEditor(scope) {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
+    const r = await state.db.from('site_content').select('id,section_key,title,payload,is_active').eq('section_key','site_copy').maybeSingle();
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    openModal(scope === 'contact' ? 'ویرایش صفحه ارتباط با ما' : 'ویرایش صفحه اصلی', focusedSiteForm(scope, r.data?.payload || {}));
+    $('focusedSiteForm').onsubmit = (e) => saveFocusedSiteContent(e, scope, r.data?.id || null);
+    $('previewFocusedSite')?.addEventListener('click', () => {
+      const target = scope === 'contact' ? 'contact.html' : 'index.html';
+      window.open(new URL(target, window.location.origin).href, '_blank', 'noopener');
+    });
+  }
+
+  async function saveFocusedSiteContent(e, scope, rowId) {
+    e.preventDefault();
+    if (!can.edit()) return;
+    const status = $('focusedSiteStatus');
+    try {
+      const existingRow = await state.db.from('site_content').select('section_key,payload').eq('section_key','site_copy').maybeSingle();
+      if (existingRow.error) throw existingRow.error;
+      const copy = Object.assign(siteCopyDefaults(), existingRow.data?.payload || {});
+      const fields = (focusedCopyGroups[scope] || []).flatMap(g => fieldsForPaths(g[1]));
+      fields.forEach(f => {
+        const el = e.target.elements['fc_' + f[0]];
+        if (!el) return;
+        copySet(copy, f[0], f[2] === 'lines'
+          ? el.value.split('\n').map(x => x.trim()).filter(Boolean)
+          : el.value.trim());
+      });
+
+      const saved = rowId
+        ? await state.db.from('site_content').update({section_key:'site_copy',title:'ویرایش یکجای متن سایت',payload:copy,is_active:true,updated_by:state.user.id}).eq('id',rowId)
+        : await state.db.from('site_content').insert({section_key:'site_copy',title:'ویرایش یکجای متن سایت',payload:copy,is_active:true,updated_by:state.user.id});
+      if (saved.error) throw saved.error;
+
+      if (scope === 'home') {
+        const h = copy.home || {};
+        const compat = [
+          ['home_meta',{title:copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی',description:copyGet(h,'meta.description') || copyGet(h,'hero.description')}],
+          ['home_hero',{eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
+          ['home_choice',{eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
+          ['home_why',{eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}]
+        ];
+        for (const [key,payload] of compat) {
+          const rr = await state.db.from('site_content').update({payload,updated_by:state.user.id}).eq('section_key',key);
+          if (rr.error) throw rr.error;
+        }
+      } else {
+        const p = copy.contact || {};
+        const rr = await state.db.from('site_content').update({
+          payload:{title:copyGet(p,'meta.title') || copyGet(p,'hero.title'),description:copyGet(p,'meta.description') || copyGet(p,'hero.description'),email:copyGet(p,'email.value')},
+          updated_by:state.user.id
+        }).eq('section_key','contact_page');
+        if (rr.error) throw rr.error;
+      }
+      await audit('update','site_content',rowId || 'site_copy',{scope});
+      if (status) status.textContent='__AZICON_SUCCESS__ ذخیره شد';
+      toast('__AZICON_SUCCESS__ صفحه ' + (scope === 'contact' ? 'ارتباط با ما' : 'اصلی') + ' بروزرسانی شد');
+      await loadContent();
+    } catch (err) {
+      if (status) status.textContent='__AZICON_ERROR__ ' + errorText(err);
+    }
+  }
+
+  async function openUnifiedSiteEditor() {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوای سایت را ندارد.');
+    const r = await state.db.from('site_content').select('id,section_key,title,payload,is_active').eq('section_key','site_copy').maybeSingle();
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    openModal('ویرایش یکجای سایت', siteCopyForm(r.data?.payload || {}));
+    $('unifiedSiteForm').onsubmit = (e) => saveUnifiedSiteContent(e, r.data?.id || null);
+  }
+
+  async function saveUnifiedSiteContent(e, rowId) {
+    e.preventDefault();
+    if (!can.edit()) return;
+    const status = $('unifiedSiteStatus');
+    try {
+      const base = siteCopyDefaults();
+      const allRows = await state.db.from('site_content').select('section_key,payload').in('section_key',['site_copy','home_meta','home_hero','home_choice','home_why','contact_page']);
+      if (allRows.error) throw allRows.error;
+      const existing = allRows.data || [];
+      const source = existing.find(x => x.section_key === 'site_copy')?.payload || {};
+      const copy = Object.assign(siteCopyDefaults(), source);
+      unifiedSiteFields.forEach((f) => {
+        const el = e.target.elements['sc_' + f[0]];
+        if (!el) return;
+        copySet(copy, f[0], (f[2] === 'lines' ? el.value.split('\\n').map(x => x.trim()).filter(Boolean) : el.value.trim()));
+      });
+      const copyPayload = { ...base, ...copy };
+      const up = {
+        section_key:'site_copy',
+        title:'ویرایش یکجای متن سایت',
+        payload:copyPayload,
+        is_active:true,
+        updated_by:state.user.id
+      };
+      const r = rowId
+        ? await state.db.from('site_content').update(up).eq('id',rowId)
+        : await state.db.from('site_content').insert(up);
+      if (r.error) throw r.error;
+
+      const h = copyPayload.home || {};
+      const c = copyPayload.contact || {};
+      const compat = [
+        ['home_meta', {title: copyGet(h,'meta.title') || 'عظیم ابزار | مرجع تخصصی ابزارهای مکانیکی، کارگاهی و صنعتی', description: copyGet(h,'meta.description') || copyGet(h,'hero.description') || ''}],
+        ['home_hero', {eyebrow:copyGet(h,'hero.eyebrow'),title:copyGet(h,'hero.title'),highlight:copyGet(h,'hero.highlight'),description:copyGet(h,'hero.description'),trust_badges:copyGet(h,'hero.trust',[]),primary_cta:copyGet(h,'hero.primary_cta'),contact_cta:copyGet(h,'hero.contact_cta')}],
+        ['home_choice', {eyebrow:copyGet(h,'choice.eyebrow'),title:copyGet(h,'choice.title'),lead:copyGet(h,'choice.lead')}],
+        ['home_why', {eyebrow:copyGet(h,'why.eyebrow'),title:copyGet(h,'why.title'),lead:copyGet(h,'why.lead')}],
+        ['contact_page', {title:copyGet(c,'meta.title') || copyGet(c,'hero.title'),description:copyGet(c,'meta.description') || copyGet(c,'hero.description'),email:copyGet(c,'email.value')}]
+      ];
+      for (const [key,payload] of compat) {
+        const row = existing.find(x => x.section_key === key);
+        if (!row) continue;
+        const rr = await state.db.from('site_content').update({payload,updated_by:state.user.id}).eq('section_key',key);
+        if (rr.error) throw rr.error;
+      }
+      await audit('update','site_content',rowId || 'site_copy',{section_key:'site_copy',scope:'home+contact'});
+      if (status) status.textContent='__AZICON_SUCCESS__ همه نوشته‌ها ذخیره شد';
+      toast('__AZICON_SUCCESS__ نوشته‌های صفحه اصلی و ارتباط با ما ذخیره شد');
+      await loadContent();
+    } catch (err) {
+      if (status) status.textContent='__AZICON_ERROR__ ' + errorText(err);
+    }
+  }
+
+  function aiForm(x) {
+    const p = x?.payload || {};
+    const prompts = Array.isArray(p.quick_prompts) ? p.quick_prompts : [];
+    const enabled = p.enabled !== false;
+    return '<div class="az-ai-grid">' +
+      '<div class="az-ai-main">' +
+        '<div class="az-ai-card az-ai-chat-card">' +
+          '<div class="az-ai-card-head"><div><strong>تست زنده دستیار</strong><small>قبل از تحویل، دقیقاً ببین AI چه پاسخی به مشتری می‌دهد.</small></div><span class="az-ai-live">LIVE</span></div>' +
+          '<div id="aiChatMessages" class="az-ai-chat-messages"><div class="az-ai-message ai"><b>دستیار</b><span>' + esc(p.greeting || 'سلام، چطور می‌توانم برای انتخاب ابزار کمکتان کنم؟') + '</span></div></div>' +
+          '<div id="aiQuickPromptRow" class="az-ai-quick-row">' + prompts.slice(0,8).map((q,i) => '<button type="button" class="az-ai-prompt" data-ai-prompt="' + esc(q) + '">' + esc(q) + '</button>').join('') + '</div>' +
+          '<form id="aiChatForm" class="az-ai-chat-form"><input id="aiChatInput" class="input" autocomplete="off" placeholder="مثلاً: برای آچار ۱۰×۱۱ چه گزینه‌ای داریم؟"><button class="btn" type="submit">ارسال</button></form>' +
+          '<div id="aiChatStatus" class="status"></div>' +
+        '</div>' +
+        '<div class="az-ai-card">' +
+          '<div class="az-ai-card-head"><div><strong>تنظیمات مدل و رفتار</strong><small>کنترل کامل Provider، مدل و دستورالعمل دستیار.</small></div></div>' +
+          '<form id="aiForm" class="grid2">' +
+            '<label class="check field full az-ai-enable"><input name="enabled" type="checkbox" ' + (enabled ? 'checked' : '') + '> <span><b>دستیار روی سایت فعال باشد</b><small>وقتی خاموش است، API باید وضعیت غیرفعال را مدیریت کند.</small></span></label>' +
+            '<div class="field"><label>Provider اصلی</label><select class="select" name="provider"><option value="gemini" ' + (p.provider === 'gemini' ? 'selected' : '') + '>Gemini</option><option value="openai" ' + (p.provider === 'openai' ? 'selected' : '') + '>OpenAI</option></select></div>' +
+            '<div class="field"><label>مدل اصلی</label><input class="input" name="model" value="' + esc(p.model || 'gemini-3.6-flash') + '"></div>' +
+            '<div class="field"><label>مدل پشتیبان</label><input class="input" name="fallback_model" value="' + esc(p.fallback_model || 'gpt-4o-mini') + '"></div>' +
+            '<div class="field"><label>حداکثر تعداد دکمه سریع</label><input class="input" value="' + Math.min(prompts.length || 0,8) + '" disabled></div>' +
+            '<div class="field full"><label>پیام خوشامد</label><textarea class="textarea" name="greeting">' + esc(p.greeting || '') + '</textarea></div>' +
+            '<div class="field full"><label>دستور سیستم</label><textarea class="textarea az-ai-system-prompt" name="system_instruction">' + esc(p.system_instruction || '') + '</textarea></div>' +
+            '<div class="field full"><label>دکمه‌های سریع</label><textarea class="textarea" name="quick_prompts" placeholder="هر مورد در یک خط">' + esc(prompts.join('\\n')) + '</textarea><small class="field-hint">این موارد مستقیماً به‌عنوان پیشنهاد سؤال در چت نمایش داده می‌شوند.</small></div>' +
+            '<div class="field full"><div class="tools"><button class="btn" type="submit">ذخیره تنظیمات</button><button type="button" id="testAIButton" class="btn secondary">تست API</button></div></div>' +
+            '<div id="aiStatus" class="status field full"></div>' +
+          '</form>' +
+        '</div>' +
+      '</div>' +
+      '<div class="az-ai-side">' +
+        '<div class="az-ai-card az-ai-status-card"><div class="az-ai-card-head"><div><strong>وضعیت سرویس</strong><small>نمای لحظه‌ای پیکربندی فعلی</small></div></div><div class="az-ai-metrics"><div><span>وضعیت</span><b id="aiMetricStatus">' + (enabled ? 'فعال' : 'خاموش') + '</b></div><div><span>Provider</span><b id="aiMetricProvider">' + esc(p.provider || '—') + '</b></div><div><span>مدل اصلی</span><b id="aiMetricModel" dir="ltr">' + esc(p.model || '—') + '</b></div><div><span>Fallback</span><b id="aiMetricFallback" dir="ltr">' + esc(p.fallback_model || '—') + '</b></div></div></div>' +
+        '<div class="az-ai-card"><div class="az-ai-card-head"><div><strong>اتصال به کاتالوگ</strong><small>منبع اطلاعات محصول برای پاسخ‌گویی.</small></div><span class="az-ai-catalog-dot"></span></div><div class="az-ai-catalog"><div><b id="aiCatalogProducts">—</b><span>محصول</span></div><div><b id="aiCatalogCategories">—</b><span>دسته</span></div><div><b id="aiCatalogVariants">—</b><span>محصول دارای واریانت</span></div></div><div id="aiCatalogStatus" class="status"></div></div>' +
+        '<div class="az-ai-card"><div class="az-ai-card-head"><div><strong>آخرین فعالیت‌های AI</strong><small>تست‌ها و تغییرات ثبت‌شده در Audit Log.</small></div></div><div id="aiLogs" class="az-ai-logs"><div class="az-ai-log-empty">در حال بارگذاری…</div></div></div>' +
+        '<div class="az-ai-card az-ai-rules"><strong>قواعد پیشنهادی فروش</strong><ul><li>قیمت و مشخصات فقط از داده واقعی کاتالوگ خوانده شود.</li><li>برای محصول ناموجود، گزینه جایگزین پیشنهاد شود؛ اطلاعات ساختگی نه.</li><li>اگر سؤال مبهم بود، قبل از پیشنهاد قطعی سؤال روشن‌کننده بپرسد.</li></ul></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function aiProductsView() {
+    return '<div class="az-ai-products-wrap"><div class="az-section-head"><div><span class="az-section-kicker">PRODUCT AI</span><h2>🤖 ربات محصولات</h2><p>هر محصول به‌صورت خودکار از دیتابیس خوانده می‌شود؛ سایز یا مدل انتخاب‌شده هم به AI می‌رسد.</p></div><span class="az-ai-live">LIVE</span></div><div class="az-ai-product-metrics"><div><span>کل محصولات</span><b id="aipTotal">—</b></div><div><span>فعال</span><b id="aipActive">—</b></div><div><span>دارای سایز/مدل</span><b id="aipVariants">—</b></div><div><span>درخواست امروز</span><b id="aipToday">—</b></div><div><span>توکن خروجی امروز</span><b id="aipOutputTokens">—</b></div></div><div class="az-ai-product-grid"><div class="az-ai-card"><div class="az-ai-card-head"><div><strong>تست واقعی ربات محصول</strong><small>محصول و واریانت واقعی را انتخاب کن.</small></div></div><div class="grid2"><div class="field full"><label>جستجوی محصول</label><div class="az-search-wrap"><span>⌕</span><input id="aipSearch" class="input" placeholder="نام یا کد محصول…" autocomplete="off"></div></div><div class="field full"><label>محصول</label><select id="aipProduct" class="select"><option value="">انتخاب محصول…</option></select></div><div class="field"><label>سایز / مدل</label><select id="aipVariant" class="select"><option value="">بدون واریانت</option></select></div><div class="field"><label>سؤال اختیاری</label><input id="aipQuestion" class="input" maxlength="600" placeholder="خالی = معرفی کوتاه و دقیق"></div><div class="field full"><button type="button" id="aipTestBtn" class="btn">🤖 تست ربات</button></div><div id="aipProductInfo" class="field full"></div><div id="aipResult" class="az-ai-product-result field full">هنوز تستی انجام نشده.</div><div id="aipStatus" class="status field full"></div></div></div><div class="az-ai-card"><div class="az-ai-card-head"><div><strong>اتصال خودکار</strong><small>نیازی به ساخت دستی برای هر محصول نیست.</small></div></div><div class="az-ai-product-rules"><div><b>۱</b><span>محصول جدید یا ویرایش‌شده ← اطلاعات زنده از دیتابیس.</span></div><div><b>۲</b><span>انتخاب سایز/مدل ← همان واریانت به AI.</span></div><div><b>۳</b><span>کلیک روی ربات ← فقط همان محصول خوانده می‌شود.</span></div><div><b>۴</b><span>پاسخ کوتاه و دقیق و بدون حدس.</span></div></div></div></div></div>';
+  }
+
+  async function loadAIProducts() {
+    const el=$('aiProductsEditor'); if(!el) return; el.innerHTML=aiProductsView();
+    const startOfDay=new Date(); startOfDay.setHours(0,0,0,0);
+    const [tot,active,variantCount,usage]=await Promise.all([
+      countTable('products'),
+      countTable('products', q=>q.eq('is_active',true)),
+      countTable('products', q=>q.not('variants','is',null)),
+      state.db.from('ai_usage_logs').select('output_tokens,success,created_at').gte('created_at',startOfDay.toISOString()).limit(5000)
+    ]);
+    $('aipTotal').textContent=Number(tot||0).toLocaleString('fa-IR');
+    $('aipActive').textContent=Number(active||0).toLocaleString('fa-IR');
+    $('aipVariants').textContent=Number(variantCount||0).toLocaleString('fa-IR');
+    const ur=usage?.data||[];
+    $('aipToday').textContent=ur.filter(x=>x.success).length.toLocaleString('fa-IR');
+    $('aipOutputTokens').textContent=ur.reduce((n,x)=>n+Number(x.output_tokens||0),0).toLocaleString('fa-IR');
+
+    const search=$('aipSearch'), sel=$('aipProduct'); let cache=[];
+    async function searchProducts(term=''){
+      let rq=state.db.from('products').select('id,code,name,brand,description,category_name,variants,is_active').order('name').limit(30);
+      term=String(term||'').trim().replace(/[(),]/g,' ');
+      if(term) rq=rq.or('name.ilike.%'+term+'%,code.ilike.%'+term+'%');
+      const rr=await rq;
+      if(rr.error){$('aipStatus').textContent='__AZICON_ERROR__ '+errorText(rr.error);return;}
+      cache=rr.data||[];
+      sel.innerHTML='<option value="">انتخاب محصول…</option>'+cache.map(p=>'<option value="'+esc(p.id)+'">'+esc((p.code||'')+' · '+(p.name||'محصول'))+'</option>').join('');
+      syncVariants();
+    }
+    function syncVariants(){
+      const p=cache.find(x=>x.id===sel.value);
+      const vs=Array.isArray(p?.variants)?p.variants.map(v=>String(v?.size??v?.label??v?.name??'').trim()).filter(Boolean):[];
+      const vsel=$('aipVariant');
+      vsel.innerHTML='<option value="">بدون واریانت / حالت پایه</option>'+vs.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+      $('aipProductInfo').innerHTML=p?'<div class="az-ai-product-info"><b>'+esc(p.name||'محصول')+'</b><span>'+esc(p.brand||p.category_name||'')+'</span><small>'+esc(p.description||'توضیح ثبت نشده')+'</small></div>':'';
+    }
+    await searchProducts('');
+    let t=null;
+    search.oninput=()=>{clearTimeout(t);t=setTimeout(()=>searchProducts(search.value),220);};
+    sel.onchange=syncVariants;
+    $('aipTestBtn').onclick=async()=>{
+      const p=cache.find(x=>x.id===sel.value),status=$('aipStatus'),out=$('aipResult');
+      if(!p){status.textContent='ابتدا محصول را انتخاب کن.';return;}
+      const variant=$('aipVariant').value||'',message=$('aipQuestion').value.trim();
+      status.textContent='در حال دریافت پاسخ واقعی AI…';out.textContent='در حال پاسخ‌گویی…';
+      try{
+        const rr=await fetch(String(window.AZIM_AI_API_URL||'/api/chat'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'product',product_id:p.id,product_code:p.code,variant_label:variant,message})});
+        const d=await rr.json().catch(()=>({}));
+        if(!rr.ok) throw Error(d.error||'HTTP '+rr.status);
+        out.textContent=String(d.reply||'پاسخی دریافت نشد.');
+        status.textContent='پاسخ '+(d.provider||'AI')+' برای '+(p.code||p.name)+(variant?' · '+variant:'')+' دریافت شد.';
+        await audit('ai_product_test','products',p.id,{product_code:p.code,variant_label:variant,provider:d.provider||'api',result:'success'});
+      }catch(e){
+        out.textContent='پاسخ دریافت نشد.';
+        status.textContent='__AZICON_ERROR__ '+errorText(e);
+        await audit('ai_product_test','products',p.id,{product_code:p.code,variant_label:variant,result:'error'});
+      }
+    };
+  }
+
+  async function loadAI() {
+    const r = await state.db.from('site_content').select('*').eq('section_key', 'ai_settings').maybeSingle();
+    const row = r.data || null;
+    if (r.error) {
+      $('aiEditor').innerHTML = '<div class="empty">__AZICON_ERROR__ ' + esc(errorText(r.error)) + '</div>';
+      return;
+    }
+    $('aiEditor').innerHTML = aiForm(row);
+    const p = row?.payload || {};
+    const enabled = p.enabled !== false;
+    $('aiHealth').textContent = enabled ? '● فعال' : '● خاموش';
+    $('aiHealth').className = 'badge ' + (enabled ? 'ok' : 'red');
+    $('aiForm').onsubmit = (e) => saveAI(e, row);
+    $('testAIButton').onclick = () => testAI();
+    $('aiTestTop').onclick = () => testAI();
+    $('aiChatForm').onsubmit = (e) => sendAIChat(e);
+    document.querySelectorAll('[data-ai-prompt]').forEach((b) => {
+      b.onclick = () => {
+        $('aiChatInput').value = b.dataset.aiPrompt || '';
+        $('aiChatInput').focus();
+      };
+    });
+    await loadAICatalogStats();
+    await loadAILogs();
+  }
+
+  async function loadAICatalogStats() {
+    const [products, categories, variants] = await Promise.all([
+      countTable('products'),
+      countTable('categories'),
+      countTable('products', q => q.not('variants', 'is', null))
+    ]);
+    if ($('aiCatalogProducts')) $('aiCatalogProducts').textContent = Number(products || 0).toLocaleString('fa-IR');
+    if ($('aiCatalogCategories')) $('aiCatalogCategories').textContent = Number(categories || 0).toLocaleString('fa-IR');
+    if ($('aiCatalogVariants')) $('aiCatalogVariants').textContent = Number(variants || 0).toLocaleString('fa-IR');
+    if ($('aiCatalogStatus')) $('aiCatalogStatus').textContent = 'داده‌ها از دیتابیس فروشگاه خوانده می‌شوند.';
+  }
+
+  async function loadAILogs() {
+    const el = $('aiLogs');
+    if (!el) return;
+    const r = await state.db.from('audit_logs').select('action,entity,entity_id,metadata,created_at').order('created_at', { ascending: false }).limit(80);
+    if (r.error) { el.innerHTML = '<div class="az-ai-log-empty">ثبت فعالیت در دسترس نیست.</div>'; return; }
+    const rows = (r.data || []).filter(x => x.entity === 'site_content' && (x.metadata?.section_key === 'ai_settings' || x.action === 'ai_test')).slice(0,8);
+    el.innerHTML = rows.length ? rows.map(x =>
+      '<div class="az-ai-log"><span class="az-ai-log-dot"></span><div><b>' + esc(x.action === 'ai_test' ? 'تست دستیار' : 'تغییر تنظیمات') + '</b><small>' + dateFa(x.created_at) + '</small></div><em>' + esc(x.metadata?.provider || x.metadata?.result || 'ثبت شد') + '</em></div>'
+    ).join('') : '<div class="az-ai-log-empty">هنوز فعالیت AI ثبت نشده.</div>';
+  }
+
+  async function saveAI(e, row) {
+    e.preventDefault();
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه تنظیم AI ندارد.');
+    const s = e.target.elements;
+    const payload = {
+      enabled: s.enabled.checked,
+      provider: s.provider.value,
+      model: s.model.value.trim(),
+      fallback_model: s.fallback_model.value.trim(),
+      greeting: s.greeting.value.trim(),
+      system_instruction: s.system_instruction.value.trim(),
+      quick_prompts: s.quick_prompts.value.split('\\n').map((x) => x.trim()).filter(Boolean)
+    };
+    const p = { section_key: 'ai_settings', title: 'کنترل دستیار هوشمند', payload, is_active: true, updated_by: state.user.id };
+    const r = row?.id
+      ? await state.db.from('site_content').update(p).eq('id', row.id)
+      : await state.db.from('site_content').insert(p);
+    if (r.error) { $('aiStatus').textContent = '__AZICON_ERROR__ ' + errorText(r.error); return; }
+    await audit('update', 'site_content', row?.id || 'ai_settings', { section_key: 'ai_settings', enabled: payload.enabled, provider: payload.provider });
+    toast('__AZICON_SUCCESS__ تنظیمات AI ذخیره شد');
+    await loadAI();
+  }
+
+  async function testAI() {
+    const status = $('aiStatus');
+    const top = $('aiTestTop');
+    if (status) status.textContent = 'در حال تست اتصال به /api/chat…';
+    if (top) top.disabled = true;
+    try {
+      const r = await fetch(String(window.AZIM_AI_API_URL||'/api/chat'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'یک پاسخ خیلی کوتاه بده: برای انتخاب آچار چه چیزی مهم است؟' })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+      const reply = String(data.reply || '').trim();
+      if (status) status.textContent = '__AZICON_SUCCESS__ پاسخ دریافت شد: ' + reply.slice(0, 320);
+      await audit('ai_test', 'site_content', 'ai_settings', { section_key: 'ai_settings', result: 'success', provider: data.provider || 'api' });
+      await loadAILogs();
+    } catch (e) {
+      if (status) status.textContent = '__AZICON_ERROR__ تست AI ناموفق: ' + errorText(e);
+      await audit('ai_test', 'site_content', 'ai_settings', { section_key: 'ai_settings', result: 'error' });
+      await loadAILogs();
+    } finally {
+      if (top) top.disabled = false;
+    }
+  }
+
+  async function sendAIChat(e) {
+    e.preventDefault();
+    const input = $('aiChatInput');
+    const box = $('aiChatMessages');
+    const status = $('aiChatStatus');
+    const message = input?.value.trim();
+    if (!message || !box) return;
+    const userRow = document.createElement('div');
+    userRow.className = 'az-ai-message user';
+    userRow.innerHTML = '<b>مشتری</b><span>' + esc(message) + '</span>';
+    box.appendChild(userRow);
+    input.value = '';
+    status.textContent = 'در حال دریافت پاسخ…';
+    try {
+      const r = await fetch(String(window.AZIM_AI_API_URL||'/api/chat'), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode:'general',message}) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+      const aiRow = document.createElement('div');
+      aiRow.className = 'az-ai-message ai';
+      aiRow.innerHTML = '<b>دستیار</b><span>' + esc(String(data.reply || 'پاسخی دریافت نشد.')) + '</span>';
+      box.appendChild(aiRow);
+      box.scrollTop = box.scrollHeight;
+      status.textContent = '__AZICON_SUCCESS__ پاسخ دریافت شد';
+      await audit('ai_test', 'site_content', 'ai_settings', { section_key:'ai_settings', result:'chat_success' });
+      await loadAILogs();
+    } catch (err) {
+      status.textContent = '__AZICON_ERROR__ ' + errorText(err);
+    }
+  }
+
+  async function loadAdmins() {
+    const r = await state.db.from('admin_users').select('user_id,role,is_active,created_at').order('created_at');
+    if (r.error) return showSectionError('adminsTable', r.error);
+    const body = (r.data || []).map((x) =>
+      '<tr><td dir="ltr" style="font-size:9px">' + esc(x.user_id) + '</td><td>' +
+      (can.all() ? '<select class="select admin-role" data-id="' + x.user_id + '">' +
+      ['owner','admin','editor','sales'].map((v) => '<option value="' + v + '" ' + (x.role === v ? 'selected' : '') + '>' + labels[v] + '</option>').join('') + '</select>' : esc(labels[x.role] || x.role)) +
+      '</td><td>' + (can.all() ? '<input type="checkbox" class="admin-active" data-id="' + x.user_id + '" ' + (x.is_active ? 'checked' : '') + '>' : (x.is_active ? 'بله' : 'خیر')) +
+      '</td><td>' + dateFa(x.created_at, false) + '</td></tr>'
+    ).join('');
+    $('adminsTable').innerHTML = body ?
+      '<table class="table"><thead><tr><th>User UUID</th><th>نقش</th><th>فعال</th><th>تاریخ</th></tr></thead><tbody>' + body + '</tbody></table>' :
+      '<div class="empty">مدیری ثبت نشده.</div>';
+  }
+
+  async function changeAdmin(id, field, value) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند کاربران مدیر را تغییر دهد.');
+    if (id === state.user.id && field === 'is_active' && value === false) return toast('حساب جاری را غیرفعال نکن.');
+    const p = {}; p[field] = value;
+    const r = await state.db.from('admin_users').update(p).eq('user_id', id);
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    await audit(field === 'role' ? 'role_change' : 'status_change', 'admin_users', id, p);
+    toast('__AZICON_SUCCESS__ بروزرسانی شد');
+  }
+
+  async function loadSecurity() {
+    const el = $('securityPanel');
+    if (!el || !state.db || !state.user) return;
+    el.innerHTML = '<div class="az-security-loading">در حال بررسی وضعیت امنیتی حساب…</div>';
+    try {
+      const [aal, factors, session] = await Promise.all([
+        state.db.auth.mfa.getAuthenticatorAssuranceLevel(),
+        state.db.auth.mfa.listFactors(),
+        state.db.auth.getSession()
+      ]);
+      if (aal.error) throw aal.error;
+      if (factors.error) throw factors.error;
+      if (session.error) throw session.error;
+
+      const current = aal.data?.currentLevel || 'aal1';
+      const next = aal.data?.nextLevel || 'aal2';
+      const totp = (factors.data?.totp || []).filter(x => x.status === 'verified');
+      const pending = (factors.data?.totp || []).filter(x => x.status !== 'verified');
+      const expiresAt = session.data?.session?.expires_at ? new Date(session.data.session.expires_at * 1000) : null;
+      const expText = expiresAt ? expiresAt.toLocaleString('fa-IR') : 'نامشخص';
+      const aalOk = current === 'aal2';
+
+      el.innerHTML =
+        '<div class="az-security-grid">' +
+          '<div class="az-security-main">' +
+            '<div class="az-security-hero">' +
+              '<div><span class="az-security-kicker">SECURITY CENTER</span><h2>حساب مدیر تحت کنترل است</h2><p>مجوزهای مدیریتی دیتابیس فقط در نشست MFA سطح AAL2 قابل استفاده هستند.</p></div>' +
+              '<div class="az-security-status ' + (aalOk ? 'ok' : 'warn') + '"><span></span><strong>' + (aalOk ? 'MFA فعال' : 'نیازمند MFA') + '</strong><small>' + esc(current.toUpperCase()) + '</small></div>' +
+            '</div>' +
+            '<div class="az-security-cards">' +
+              '<div class="az-security-card"><span>سطح نشست</span><b>' + esc(current.toUpperCase()) + '</b><small>' + (aalOk ? 'تأیید دومرحله‌ای در این نشست برقرار است.' : 'بدون AAL2 دسترسی مدیریتی رد می‌شود.') + '</small></div>' +
+              '<div class="az-security-card"><span>عامل TOTP</span><b>' + String(totp.length) + '</b><small>' + (totp.length ? 'عامل تأییدشده برای حساب وجود دارد.' : 'هیچ عامل TOTP تأییدشده‌ای ندارید.') + '</small></div>' +
+              '<div class="az-security-card"><span>نشست بعدی</span><b>' + esc(next.toUpperCase()) + '</b><small>سطح اطمینان مورد انتظار برای عملیات حساس.</small></div>' +
+              '<div class="az-security-card"><span>انقضای نشست</span><b dir="ltr" style="font-size:10px">' + esc(expText) + '</b><small>توکن نشست طبق تنظیمات Supabase مدیریت می‌شود.</small></div>' +
+            '</div>' +
+            '<div class="az-security-section">' +
+              '<div class="az-security-section-head"><strong>کنترل‌های فعال</strong><small>بررسی‌های امنیتی قابل مشاهده از داخل پنل</small></div>' +
+              '<div class="az-security-checks">' +
+                '<div class="az-security-check ' + (aalOk ? 'ok' : 'bad') + '"><span>' + (aalOk ? '✓' : '!') + '</span><div><b>احراز هویت دومرحله‌ای</b><small>دسترسی حساس به نشست AAL2 وابسته است.</small></div></div>' +
+                '<div class="az-security-check ' + (totp.length ? 'ok' : 'bad') + '"><span>' + (totp.length ? '✓' : '!') + '</span><div><b>Authenticator / TOTP</b><small>' + (totp.length ? 'عامل TOTP تأیید شده است.' : 'یک عامل TOTP باید فعال شود.') + '</small></div></div>' +
+                '<div class="az-security-check ok"><span>✓</span><div><b>تفکیک نقش‌ها</b><small>دسترسی‌ها بر اساس owner / admin / editor / sales کنترل می‌شوند.</small></div></div>' +
+                '<div class="az-security-check ok"><span>✓</span><div><b>ثبت رویدادها</b><small>عملیات مدیریتی حساس در Audit Log ثبت می‌شوند.</small></div></div>' +
+              '</div>' +
+            '</div>' +
+            (pending.length ? '<div class="az-security-warning">یک عامل MFA در وضعیت انتظار تأیید است. قبل از خروج از این دستگاه، فعال‌سازی آن را کامل کنید.</div>' : '') +
+          '</div>' +
+          '<aside class="az-security-side">' +
+            '<div class="az-security-section"><div class="az-security-section-head"><strong>عامل‌های MFA</strong><small>Supabase Auth</small></div><div class="az-security-factor-list">' +
+              (totp.length ? totp.map(x => '<div class="az-security-factor"><span class="dot"></span><div><b>' + esc(x.friendly_name || 'TOTP') + '</b><small>تأیید شده · ' + esc(x.created_at ? dateFa(x.created_at,false) : '—') + '</small></div></div>').join('') : '<div class="az-security-empty">عامل تأییدشده‌ای ثبت نشده.</div>') +
+            '</div></div>' +
+            '<div class="az-security-section"><div class="az-security-section-head"><strong>اقدام امنیتی</strong></div><button id="securityRecheckBtn" class="btn" style="width:100%">بازبینی MFA</button><p class="az-security-note">برای تغییر عامل یا بازیابی MFA از تنظیمات Auth حساب Supabase استفاده کنید؛ این پنل هیچ secret یا seed را ذخیره نمی‌کند.</p></div>' +
+          '</aside>' +
+        '</div>';
+
+      $('securityRecheckBtn')?.addEventListener('click', async () => {
+        const ok = await requireAdminMFA();
+        if (ok) { toast('__AZICON_SUCCESS__ نشست MFA تأیید شد'); await loadSecurity(); }
+      });
+    } catch (err) {
+      el.innerHTML = '<div class="empty">__AZICON_ERROR__ بررسی امنیتی ناموفق: ' + esc(errorText(err)) + '</div>';
+    }
+  }
+
+  async function loadAudit() {
+    const r = await state.db.from('audit_logs').select('id,actor_id,action,entity,entity_id,metadata,created_at').order('created_at', { ascending: false }).limit(120);
+    if (r.error) return showSectionError('auditTable', r.error);
+    const body = (r.data || []).map((x) =>
+      '<tr><td>' + dateFa(x.created_at) + '</td><td>' + esc(x.action) + '</td><td>' + esc(x.entity) +
+      '</td><td style="font-size:9px">' + esc(x.entity_id || '—') + '</td><td>' + esc(JSON.stringify(x.metadata || {})) + '</td></tr>'
+    ).join('');
+    $('auditTable').innerHTML = body ?
+      '<table class="table"><thead><tr><th>زمان</th><th>عملیات</th><th>بخش</th><th>شناسه</th><th>جزئیات</th></tr></thead><tbody>' +
+      body + '</tbody></table>' : '<div class="empty">هنوز فعالیتی ثبت نشده.</div>';
+  }
+
+  document.addEventListener('click', (e) => {
+    const p = e.target.closest('[data-edit-product]'); if (p) editProduct(p.dataset.editProduct);
+    const t = e.target.closest('[data-toggle-product]'); if (t) toggleProduct(t.dataset.toggleProduct);
+    const c = e.target.closest('[data-edit-category]'); if (c) editCategory(c.dataset.editCategory);
+    const ct = e.target.closest('[data-toggle-category]'); if (ct) toggleCategory(ct.dataset.toggleCategory);
+    const b = e.target.closest('[data-edit-brand]'); if (b) editBrand(b.dataset.editBrand);
+    const bt = e.target.closest('[data-toggle-brand]'); if (bt) toggleBrand(bt.dataset.toggleBrand);
+    const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
+    const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
+    const o = e.target.closest('[data-edit-order]'); if (o) openOrder(o.dataset.editOrder);
+    const m = e.target.closest('[data-delete-media]'); if (m) deleteMedia(m.dataset.deleteMedia);
+    const co = e.target.closest('[data-edit-content]'); if (co) editContent(co.dataset.editContent);
+    const fc = e.target.closest('[data-filter-category]'); if (fc) { $('productSearch').value=''; if ($('productCategoryFilter')) $('productCategoryFilter').value=fc.dataset.filterCategory; setView('products'); }
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('admin-role')) changeAdmin(e.target.dataset.id, 'role', e.target.value);
+    if (e.target.matches('[data-product-select],#productSelectAll')) {
+      const checks = document.querySelectorAll('[data-product-select]');
+      const n = document.querySelectorAll('[data-product-select]:checked').length;
+      $('productBulkBar')?.classList.toggle('show', n > 0);
+      if ($('selectedProductCount')) $('selectedProductCount').textContent = n.toLocaleString('fa-IR') + ' انتخاب';
+    }
+    if (e.target.classList.contains('admin-active')) changeAdmin(e.target.dataset.id, 'is_active', e.target.checked);
+  });
+
+  (async function boot() {
+    if (!window.supabase || !window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) {
+      $('loginScreen').classList.remove('hidden');
+      $('loginStatus').textContent = 'پیکربندی Supabase ناقص است.';
+      return;
+    }
+    ensureExtraUI();
+    ensureDiscountSection();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installAnimatedIconLayer, { once: true }); else installAnimatedIconLayer();
+    initAdminMenu();
+    initCommandPalette();
+    state.db = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+    $('loginBtn').onclick = async () => {
+      const email = $('loginEmail').value.trim();
+      const password = $('loginPassword').value;
+      if (!email || !password) return $('loginStatus').textContent = 'ایمیل و رمز عبور را وارد کن.';
+      $('loginStatus').textContent = 'در حال ورود…';
+      const r = await state.db.auth.signInWithPassword({ email, password });
+      if (r.error) return $('loginStatus').textContent = '__AZICON_ERROR__ ' + errorText(r.error);
+      if (!(await ensureAdmin())) {
+        await state.db.auth.signOut();
+        return;
+      }
+      if (!(await requireAdminMFA())) return;
+      await loadDashboard();
+    };
+
+    if (await ensureAdmin()) {
+      if (await requireAdminMFA()) await loadDashboard();
+    }
+  })();
+})();
