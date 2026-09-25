@@ -11,34 +11,10 @@
 -- Private schema is not part of the public Data API exposure surface.
 grant usage on schema private to anon;
 
--- Public checkout endpoint is only an INVOKER wrapper.
-alter function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb)
-  set schema public;
-
-create or replace function public.azim_cart_checkout(
-  p_mode text default 'preview',
-  p_full_name text default null,
-  p_mobile text default null,
-  p_email text default null,
-  p_address text default null,
-  p_city text default null,
-  p_discount_code text default null,
-  p_items jsonb default '[]'::jsonb
-)
-returns jsonb
-language sql
-security invoker
-set search_path to ''
-as $$
-  select private.azim_cart_checkout(
-    p_mode,p_full_name,p_mobile,p_email,p_address,p_city,p_discount_code,p_items
-  );
-$$;
-
-revoke all on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from public;
-grant execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) to anon;
-revoke execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from authenticated;
-
+-- The canonical public checkout wrapper is defined once in database/checkout-actions.sql
+-- with the payment_method parameter. Keeping a separate 8-argument overload makes
+-- 8-argument calls ambiguous in PostgreSQL/PostgREST because the 9-argument function
+-- supplies a default for payment_method.
 -- Internal implementation is not exposed through public REST schema.
 revoke all on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from public;
 grant execute on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) to anon;
@@ -176,31 +152,4 @@ to authenticated
 using (
   user_id = (select auth.uid())
   or (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
-);
-
-create policy "Owner admin insert admin users"
-on public.admin_users
-for insert
-to authenticated
-with check (
-  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
-);
-
-create policy "Owner admin update admin users"
-on public.admin_users
-for update
-to authenticated
-using (
-  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
-)
-with check (
-  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
-);
-
-create policy "Owner admin delete admin users"
-on public.admin_users
-for delete
-to authenticated
-using (
-  (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
 );
