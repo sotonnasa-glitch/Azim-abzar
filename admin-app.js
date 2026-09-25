@@ -1066,15 +1066,29 @@
       const rawPrice = String(row.querySelector('[data-variant-price]')?.value || '').trim();
       if (!size) return null;
       const price = rawPrice === '' ? null : Number(rawPrice);
-      if (rawPrice !== '' && (!Number.isFinite(price) || price < 0)) {
-        throw new Error('قیمت یکی از سایزها نامعتبر است.');
-      }
-      return { size, price: rawPrice === '' ? null : Math.floor(price) };
+      const invalid = rawPrice !== '' && (!Number.isFinite(price) || price < 0);
+      row.dataset.invalidVariantPrice = invalid ? '1' : '';
+      return { size, price: invalid || rawPrice === '' ? null : Math.floor(price) };
     }).filter(Boolean);
     const json = JSON.stringify(variants);
     if (form.elements.variants) form.elements.variants.value = json;
     if (form.elements.variantsAdvanced) form.elements.variantsAdvanced.value = JSON.stringify(variants, null, 2);
     return variants;
+  }
+
+  function validateVariantInputs(form) {
+    const rows = Array.from(form?.querySelectorAll('[data-variant-row]') || []);
+    for (const row of rows) {
+      const size = String(row.querySelector('[data-variant-size]')?.value || '').trim();
+      const rawPrice = String(row.querySelector('[data-variant-price]')?.value || '').trim();
+      if (!size) continue;
+      const numeric = Number(rawPrice);
+      if (rawPrice !== '' && (!Number.isFinite(numeric) || numeric < 0)) {
+        row.dataset.invalidVariantPrice = '1';
+        throw new Error('قیمت یکی از سایزها نامعتبر است.');
+      }
+      row.dataset.invalidVariantPrice = '';
+    }
   }
 
   function initVariantEditor(form) {
@@ -1149,7 +1163,8 @@
       if (!file) return;
       if (!String(file.type || '').startsWith('image/')) {
         input.value = '';
-        throw new Error('فایل انتخاب‌شده تصویر نیست.');
+        toast('__AZICON_ERROR__ فایل انتخاب‌شده تصویر نیست.');
+        return;
       }
       const oldUrl = form.dataset.azPreviewUrl;
       if (oldUrl) URL.revokeObjectURL(oldUrl);
@@ -1292,7 +1307,8 @@
     if (!can.edit()) return;
     const s = e.target.elements;
     try {
-      let img = id ? (state.products.find((x) => x.id === id)?.img || null) : null;
+       validateVariantInputs(e.target);
+     let img = id ? (state.products.find((x) => x.id === id)?.img || null) : null;
       if (s.clearImage?.checked) img = null;
       const file = s.file?.files?.[0];
       if (file) {
