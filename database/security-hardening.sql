@@ -139,11 +139,12 @@ alter default privileges for role postgres in schema public
   revoke execute on functions from anon, authenticated;
 
 
--- Performance hardening for admin_users RLS:
--- Re-evaluate auth helpers once per statement instead of once per row,
--- and avoid overlapping SELECT policies.
+-- Admin-user RLS: only owners can manage owner/admin accounts; admins can manage staff roles.
 drop policy if exists "Owner admin manage admin users" on public.admin_users;
-drop policy if exists "Authenticated users can read own admin profile" on public.admin_users;
+drop policy if exists "Admin users select own or manage" on public.admin_users;
+drop policy if exists "Owner manages all admin users" on public.admin_users;
+drop policy if exists "Admins manage staff only" on public.admin_users;
+drop policy if exists "Admins update staff only" on public.admin_users;
 
 create policy "Admin users select own or manage"
 on public.admin_users
@@ -151,5 +152,88 @@ for select
 to authenticated
 using (
   user_id = (select auth.uid())
-  or (select private.has_azim_role(ARRAY['owner'::text, 'admin'::text]))
+  or (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
 );
+
+create policy "Owner manages all admin users"
+on public.admin_users
+for all to authenticated
+using ((select private.has_azim_role(ARRAY['owner'::text])))
+with check ((select private.has_azim_role(ARRAY['owner'::text])));
+
+create policy "Admins manage staff only"
+on public.admin_users
+for insert to authenticated
+with check (
+  (select private.has_azim_role(ARRAY['admin'::text]))
+  and role in ('editor','sales')
+);
+
+create policy "Admins update staff only"
+on public.admin_users
+for update to authenticated
+using (
+  (select private.has_azim_role(ARRAY['admin'::text]))
+  and role in ('editor','sales')
+)
+with check (
+  (select private.has_azim_role(ARRAY['admin'::text]))
+  and role in ('editor','sales')
+);
+
+-- Editors may manage content, but never payment or AI control sections.
+drop policy if exists "Admins manage site content" on public.site_content;
+drop policy if exists "Editors manage site content" on public.site_content;
+drop policy if exists "Owner admin manage site content" on public.site_content;
+drop policy if exists "Editors manage non-sensitive site content" on public.site_content;
+
+create policy "Owner admin manage site content"
+on public.site_content
+for all to authenticated
+using ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text])))
+with check ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text])));
+
+create policy "Editors manage non-sensitive site content"
+on public.site_content
+for all to authenticated
+using (
+  (select private.has_azim_role(ARRAY['editor'::text]))
+  and section_key not in ('checkout_payment','ai_settings')
+)
+with check (
+  (select private.has_azim_role(ARRAY['editor'::text]))
+  and section_key not in ('checkout_payment','ai_settings')
+);
+
+-- Audit actor identity is enforced by the database, not by client input.
+create or replace function private.enforce_audit_actor()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    raise exception using message = 'شناسه کاربر برای ثبت گزارش فعالیت مشخص نیست.';
+  end if;
+  new.actor_id := auth.uid();
+  return new;
+end;
+$$;
+
+revoke all on function private.enforce_audit_actor() from public, anon, authenticated;
+drop trigger if exists trg_enforce_audit_actor on public.audit_logs;
+create trigger trg_enforce_audit_actor
+before insert on public.audit_logs
+for each row execute function private.enforce_audit_actor();
+
+-- Keep discount redemption history immutable from the browser.
+revoke insert, update, delete, truncate on public.discount_redemptions from authenticated;
+drop policy if exists "Admins manage discount redemptions" on public.discount_redemptions;
+drop policy if exists "Sales manage discount redemptions" on public.discount_redemptions;
+drop policy if exists "Staff can read discount redemptions" on public.discount_redemptions;
+create policy "Staff can read discount redemptions"
+on public.discount_redemptions
+for select to authenticated
+using ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text,'sales'::text])));
+
