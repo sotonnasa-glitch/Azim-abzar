@@ -404,55 +404,9 @@ $function$
 
 alter function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) set statement_timeout = '5s';
 
-create or replace function public.azim_cart_checkout(
-  p_mode text default 'preview',
-  p_full_name text default null,
-  p_mobile text default null,
-  p_email text default null,
-  p_address text default null,
-  p_city text default null,
-  p_discount_code text default null,
-  p_items jsonb default '[]'::jsonb
-)
-returns jsonb
-language sql
-security invoker
-set search_path to ''
-as $$
-  select private.azim_cart_checkout(
-    p_mode,p_full_name,p_mobile,p_email,p_address,p_city,p_discount_code,p_items
-  );
-$$;
-
--- Backward-compatible preview overload for older cart clients that send only items + coupon code.
--- Keep it anonymous-only; it delegates to the hardened 8-argument public wrapper.
-create or replace function public.azim_cart_checkout(
-  p_items jsonb,
-  p_discount_code text
-)
-returns jsonb
-language sql
-security invoker
-set search_path to ''
-as $$
-  select public.azim_cart_checkout(
-    'preview'::text, null::text, null::text, null::text,
-    null::text, null::text, p_discount_code, p_items
-  );
-$$;
-
-revoke all on function public.azim_cart_checkout(jsonb,text) from public;
-grant execute on function public.azim_cart_checkout(jsonb,text) to anon;
-revoke execute on function public.azim_cart_checkout(jsonb,text) from authenticated;
-
-revoke all on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from public;
-grant execute on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) to anon;
-revoke execute on function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from authenticated;
-
-revoke all on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from public;
-grant execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) to anon;
-revoke execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) from authenticated;
-
+-- The canonical public checkout wrapper is defined once in database/checkout-actions.sql
+-- with the payment_method parameter. Defining an additional 8-argument overload
+-- causes PostgreSQL/PostgREST function resolution to become ambiguous for 8-argument calls.
 alter function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb) set statement_timeout='5s';
 
 -- Anonymous clients have no direct DML path to business tables.
