@@ -134,6 +134,7 @@ jobs:
           rsync -a --exclude='.git/' --exclude='.image-enhancement-work/' --exclude='audit/' --exclude='supabase/functions/' --exclude='supabase/migrations/' --exclude='src/' --exclude='scripts/' --exclude='database/' --exclude='DEPLOYMENT_FA.md' --exclude='Dockerfile' --exclude='wrangler.jsonc' --exclude='worker.js' --exclude='robots.txt' --exclude='metadata.json' --exclude='*.pdf' --exclude='*.pem' --exclude='*.key' --exclude='.env*' --exclude='.github/' --exclude='catalog_site_mapping_908/missing-images.zip' --exclude='catalog_site_mapping_908/missing-images-*.zip' --exclude='catalog_site_mapping_908/missing-mini-*.zip' --exclude='catalog_site_mapping_908/*.b64' --exclude='azim_abzar_images_part*.zip' --exclude='test.txt' --exclude='temp*.txt' --exclude='upscale-failures.json' --exclude='products-source-generated.json' --exclude='HANDOVER.md' --exclude='*.sql' --exclude='server.js' --exclude='api/' ./ _site/
           test -s _site/products.html
           test -s _site/products-v4.html
+          test -s _site/.well-known/security.txt
 
       - name: Validate GitHub Pages artifact does not leak internal source
         shell: bash
