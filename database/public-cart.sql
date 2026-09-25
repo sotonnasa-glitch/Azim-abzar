@@ -35,7 +35,7 @@ CREATE OR REPLACE FUNCTION private.azim_cart_checkout(p_mode text DEFAULT 'previ
 AS $function$
 declare
   v_mode text := lower(trim(coalesce(p_mode,'preview')));
-  v_mobile text := regexp_replace(trim(coalesce(p_mobile,'')), '\s+', '', 'g');
+  v_mobile text := private.azim_normalize_mobile(p_mobile);
   v_code text := upper(regexp_replace(trim(coalesce(p_discount_code,'')), '\s+', '', 'g'));
   v_customer_id uuid := null;
   v_discount record;
@@ -86,13 +86,10 @@ begin
     if length(trim(coalesce(p_full_name,''))) < 2 then
       raise exception 'نام و نام خانوادگی را وارد کنید.';
     end if;
-    if v_mobile !~ '^09[0-9]{9}
+    if v_mobile !~ '^09[0-9]{9}$' then
+      raise exception 'شماره موبایل واردشده معتبر نیست.';
+    end if;
 
-  if v_mobile <> '' then
-    select c.id into v_customer_id
-    from public.customers c
-    where c.mobile = v_mobile
-    limit 1;
   end if;
 
   for v_item in select value from jsonb_array_elements(p_items) loop
