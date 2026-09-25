@@ -70,13 +70,195 @@ declare
     coalesce(current_setting('request.headers', true)::json->>'x-forwarded-for',''),
     ',', 1
   );
-  v_mobile text := regexp_replace(trim(coalesce(new.mobile,'')), '\\s+', '', 'g');
+  v_mobile text := private.azim_normalize_mobile(new.mobile);
 begin
   begin
     v_ip := nullif(trim(v_ip_text),'')::inet;
   exception when others then
     v_ip := null;
   end;
+
+  if v_mobile <> '' and v_mobile !~ '^09[0-9]{9} and (
+    select count(*) from private.azim_inquiry_rate_limits
+    where ip=v_ip and created_at > now()-interval '10 minutes'
+  ) >= 10 then
+    raise exception 'تعداد درخواست‌های ارتباطی زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.';
+  end if;
+
+  if v_mobile <> '' and (
+    select count(*) from private.azim_inquiry_rate_limits
+    where mobile=v_mobile and created_at > now()-interval '10 minutes'
+  ) >= 5 then
+    raise exception 'برای این شماره، تعداد درخواست‌های ارتباطی در این بازه زیاد است.';
+  end if;
+
+  insert into private.azim_inquiry_rate_limits(ip,mobile)
+  values(v_ip, nullif(v_mobile,''));
+  return new;
+end;
+$$;
+
+revoke all on function private.azim_check_inquiry_rate() from public, anon, authenticated;
+drop trigger if exists trg_azim_inquiry_rate on public.inquiries;
+create trigger trg_azim_inquiry_rate
+before insert on public.inquiries
+for each row execute function private.azim_check_inquiry_rate();
+
+-- MFA is a database-level authorization requirement, not only a UI check.
+create or replace function private.has_azim_role(allowed_roles text[])
+returns boolean
+language sql stable security definer
+set search_path to 'public'
+as $$
+  select coalesce(auth.jwt()->>'aal','aal1')='aal2'
+    and exists (
+      select 1 from public.admin_users
+      where user_id=auth.uid()
+        and is_active=true
+        and role=any(allowed_roles)
+    );
+$$;
+
+create or replace function private.is_azim_admin()
+returns boolean
+language sql stable security definer
+set search_path to 'public'
+as $$
+  select coalesce(auth.jwt()->>'aal','aal1')='aal2'
+    and exists (
+      select 1 from public.admin_users
+      where user_id=auth.uid()
+        and is_active=true
+    );
+$$;
+
+-- Future public tables/functions created by postgres start with no anon/authenticated grant.
+alter default privileges for role postgres in schema public
+  revoke all on tables from anon, authenticated;
+alter default privileges for role postgres in schema public
+  revoke execute on functions from anon, authenticated;
+
+
+-- Admin-user RLS: owner can manage all accounts; admins can manage staff roles only.
+drop policy if exists "Owner admin manage admin users" on public.admin_users;
+drop policy if exists "Admin users select own or manage" on public.admin_users;
+drop policy if exists "Owner manages all admin users" on public.admin_users;
+drop policy if exists "Admins manage staff only" on public.admin_users;
+drop policy if exists "Admins update staff only" on public.admin_users;
+drop policy if exists "Owner admin delete admin users" on public.admin_users;
+drop policy if exists "Owner admin insert admin users" on public.admin_users;
+drop policy if exists "Owner admin update admin users" on public.admin_users;
+drop policy if exists "Admin users insert" on public.admin_users;
+drop policy if exists "Admin users update" on public.admin_users;
+drop policy if exists "Owner deletes admin users" on public.admin_users;
+
+create policy "Admin users select own or manage"
+on public.admin_users
+for select to authenticated
+using (
+  user_id = (select auth.uid())
+  or (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
+);
+
+create policy "Admin users insert"
+on public.admin_users
+for insert to authenticated
+with check (
+  (select private.has_azim_role(ARRAY['owner'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['admin'::text]))
+    and role in ('editor','sales')
+  )
+);
+
+create policy "Admin users update"
+on public.admin_users
+for update to authenticated
+using (
+  (select private.has_azim_role(ARRAY['owner'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['admin'::text]))
+    and role in ('editor','sales')
+  )
+)
+with check (
+  (select private.has_azim_role(ARRAY['owner'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['admin'::text]))
+    and role in ('editor','sales')
+  )
+);
+
+create policy "Owner deletes admin users"
+on public.admin_users
+for delete to authenticated
+using ((select private.has_azim_role(ARRAY['owner'::text])));
+
+-- Editors can manage normal CMS content but cannot change payment/AI control sections.
+drop policy if exists "Admins manage site content" on public.site_content;
+drop policy if exists "Editors manage site content" on public.site_content;
+drop policy if exists "Owner admin manage site content" on public.site_content;
+drop policy if exists "Editors manage non-sensitive site content" on public.site_content;
+drop policy if exists "Staff manage allowed site content" on public.site_content;
+
+create policy "Staff manage allowed site content"
+on public.site_content
+for all to authenticated
+using (
+  (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['editor'::text]))
+    and section_key not in ('checkout_payment','ai_settings')
+  )
+)
+with check (
+  (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['editor'::text]))
+    and section_key not in ('checkout_payment','ai_settings')
+  )
+);
+
+-- Audit actor identity is enforced by the database, not by client input.
+create or replace function private.enforce_audit_actor()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    raise exception using message = 'شناسه کاربر برای ثبت گزارش فعالیت مشخص نیست.';
+  end if;
+  new.actor_id := auth.uid();
+  return new;
+end;
+$$;
+
+revoke all on function private.enforce_audit_actor() from public, anon, authenticated;
+drop trigger if exists trg_enforce_audit_actor on public.audit_logs;
+create trigger trg_enforce_audit_actor
+before insert on public.audit_logs
+for each row execute function private.enforce_audit_actor();
+
+-- Discount redemptions are immutable business history from the browser.
+revoke insert, update, delete, truncate on public.discount_redemptions from authenticated;
+drop policy if exists "Admins manage discount redemptions" on public.discount_redemptions;
+drop policy if exists "Sales manage discount redemptions" on public.discount_redemptions;
+drop policy if exists "Discount redemptions select" on public.discount_redemptions;
+drop policy if exists "Staff can read discount redemptions" on public.discount_redemptions;
+
+create policy "Staff can read discount redemptions"
+on public.discount_redemptions
+for select to authenticated
+using ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text,'sales'::text])));
+
+create index if not exists discounts_updated_by_idx
+  on public.discounts(updated_by);
+
+ then
+    raise exception 'شماره موبایل واردشده معتبر نیست.';
+  end if;
 
   if v_ip is not null and (
     select count(*) from private.azim_inquiry_rate_limits
