@@ -54,6 +54,26 @@
     sales: () => ['owner', 'admin', 'sales'].includes(state.me?.role)
   };
 
+  const viewRoles = {
+    dashboard: ['owner','admin','editor','sales'],
+    products: ['owner','admin','editor','sales'],
+    categories: ['owner','admin','editor'],
+    brands: ['owner','admin','editor'],
+    inquiries: ['owner','admin','sales'],
+    orders: ['owner','admin','sales'],
+    discounts: ['owner','admin','sales'],
+    'discount-codes': ['owner','admin','sales'],
+    customers: ['owner','admin','sales'],
+    media: ['owner','admin','editor'],
+    content: ['owner','admin','editor'],
+    admins: ['owner','admin'],
+    audit: ['owner','admin'],
+    security: ['owner','admin'],
+    ai: ['owner','admin','editor'],
+    'ai-products': ['owner','admin','editor']
+  };
+  const canView = (name) => !viewRoles[name] || viewRoles[name].includes(state.me?.role);
+
   const animatedIconMap = {
     '__AZICON_WAVE__':'wave','__AZICON_LOCK__':'lock','__AZICON_MAIL__':'mail','__AZICON_USER__':'user','__AZICON_ADMIN__':'admin','__AZICON_MENU__':'menu','__AZICON_EDIT__':'edit','__AZICON_GLOBE__':'globe',
     '__AZICON_HOME__':'home','__AZICON_PHONE__':'phone','__AZICON_SPARK__':'spark','__AZICON_LOCK__':'lock','__AZICON_BLOCK__':'block','__AZICON_ERROR__':'error','__AZICON_SUCCESS__':'success','__AZICON_TARGET__':'target',
@@ -551,7 +571,10 @@
     let active = 0;
     function render(q='') {
       const nq = q.trim().toLowerCase();
-      const matches = navItems.filter(x => !nq || (x[1]+' '+x[2]).toLowerCase().includes(nq));
+      const matches = navItems.filter(x =>
+        canView(x[0]) &&
+        (!nq || (x[1]+' '+x[2]).toLowerCase().includes(nq))
+      );
       list.innerHTML = matches.length ? matches.map((x,i) =>
         '<div class="az-command-item ' + (i===active?'active':'') + '" data-command-view="' + x[0] + '"><span>' + esc(x[1]) + '</span><small>' + esc(x[2]) + '</small></div>'
       ).join('') : '<div class="empty">نتیجه‌ای پیدا نشد.</div>';
@@ -750,6 +773,7 @@
     $('newCategoryBtn').onclick = () => newCategory();
     $('newBrandBtn').onclick = () => newBrand();
     $('newContentBtn').onclick = () => newContent();
+    $('uploadMediaBtn').onclick = () => uploadMedia();
     $('homeCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('home'));
     $('contactCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
     $('homeCopyCard')?.addEventListener('click', () => openFocusedSiteEditor('home'));
@@ -781,7 +805,8 @@
       content: ['owner', 'admin', 'editor'],
       admins: ['owner', 'admin'],
       audit: ['owner', 'admin'],
-      ai: ['owner', 'admin', 'editor']
+      ai: ['owner', 'admin', 'editor'],
+      'ai-products': ['owner', 'admin', 'editor']
     };
     document.querySelectorAll('.nav button[data-view]').forEach((b) => {
       const v = b.dataset.view;
@@ -793,6 +818,10 @@
     if ($('newBrandBtn')) $('newBrandBtn').style.display = can.edit() ? '' : 'none';
     if ($('newContentBtn')) $('newContentBtn').style.display = can.edit() ? '' : 'none';
     if ($('uploadMediaBtn')) $('uploadMediaBtn').style.display = can.edit() ? '' : 'none';
+    if ($('newOrderBtn')) $('newOrderBtn').style.display = can.sales() ? '' : 'none';
+    if ($('newCustomerBtn')) $('newCustomerBtn').style.display = can.sales() ? '' : 'none';
+    if ($('newDiscountBtn')) $('newDiscountBtn').style.display = can.all() ? '' : 'none';
+    if ($('newDiscountCodeBtn')) $('newDiscountCodeBtn').style.display = can.all() ? '' : 'none';
   }
 
   function activeView() {
@@ -800,6 +829,7 @@
   }
 
   async function setView(name) {
+    if (!canView(name)) return toast('__AZICON_BLOCK__ دسترسی این بخش برای نقش فعلی وجود ندارد.');
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
     const target = $('view-' + name);
     if (!target) return;
@@ -2459,7 +2489,7 @@
         '<div class="az-coupon-main"><div><div class="az-coupon-label">مقدار تخفیف</div><div class="az-coupon-value">' + esc(value) + '</div>' + (x.max_discount ? '<div class="muted">سقف: ' + money(x.max_discount) + '</div>' : '') + '</div><div class="az-coupon-scope"><div class="az-coupon-label">دامنه</div><strong>' + esc(scopeText(x)) + '</strong></div></div>' +
         '<div class="az-coupon-meta"><div><span class="az-coupon-label">استفاده</span><span class="az-coupon-number">' + used.toLocaleString('fa-IR') + ' / ' + limit + '</span></div><div><span class="az-coupon-label">باقی‌مانده</span><span class="az-coupon-number">' + remaining + '</span></div><div><span class="az-coupon-label">اعتبار تا</span><span class="az-coupon-number">' + esc(x.ends_at ? dateFa(x.ends_at,false) : 'بدون پایان') + '</span></div><div><span class="az-coupon-label">ارزش مصرف‌شده</span><span class="az-coupon-number">' + esc(money(x.total_discount || 0)) + '</span></div></div>' +
         '<div class="az-coupon-tags">' + tags + '</div>' +
-        '<div class="az-coupon-actions"><button class="btn secondary" data-edit-discount="' + x.id + '">ویرایش</button><button class="btn ghost" data-copy-discount="' + esc(x.code) + '">کپی کد</button>' +
+        '<div class="az-coupon-actions">' + (can.all() ? '<button class="btn secondary" data-edit-discount="' + x.id + '">ویرایش</button>' : '') + '<button class="btn ghost" data-copy-discount="' + esc(x.code) + '">کپی کد</button>' +
         (can.all() ? '<button class="btn ghost" data-toggle-discount="' + x.id + '">' + (x.is_active ? 'خاموش' : 'روشن') + '</button><button class="btn ghost" data-delete-discount="' + x.id + '">حذف</button>' : '') +
         '</div></article>';
     }).join('');
