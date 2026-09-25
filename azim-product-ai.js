@@ -3,45 +3,114 @@
   if (window.__AZIM_PRODUCT_AI__) return;
   window.__AZIM_PRODUCT_AI__ = true;
 
-  const api = () => String(window.AZIM_AI_API_URL || '').trim();
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const MASCOT_SRC = './assets/ai/azim-mascot.webp';
+  const AI_API = () => String(window.AZIM_AI_API_URL || '').trim();
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
   const norm = s => String(s ?? '').trim().toLocaleLowerCase('fa')
     .replace(/[يى]/g,'ی').replace(/ك/g,'ک')
     .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
     .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
     .replace(/\s+/g,' ');
 
-  function labelFor(base, variant) {
-    const b = String(base || '').trim();
-    const v = String(variant || '').trim();
-    if (!v || norm(b) === norm(v) || norm(b).includes(norm(v))) return b;
-    return b + ' ' + v;
+  let current = { id:'', code:'', name:'', variant:'', variantIndex:-1 };
+  let activeSourceButton = null;
+
+  function mascotImg(cls=''){
+    return '<img class="az-ai-robot-image ' + cls + '" src="' + MASCOT_SRC + '" alt="" aria-hidden="true">';
   }
 
-  function robotSvg() {
-    return '<svg class="az-ai-robot-svg" viewBox="0 0 44 44" fill="none" aria-hidden="true">' +
-      '<path d="M11 12.5h22l-2.2-5H13.2l-2.2 5Z" fill="#d9f2ed"/>' +
-      '<path d="M9.7 12.5h24.6v2.5H9.7z" fill="#9ed8cf"/>' +
-      '<rect x="11.5" y="15" width="21" height="15" rx="5.5" fill="#b7d5d0"/>' +
-      '<rect x="14" y="17.5" width="16" height="8.4" rx="4" fill="#18302d"/>' +
-      '<circle class="az-ai-robot-eye" cx="19" cy="21.5" r="1.55" fill="#63efe2"/>' +
-      '<circle class="az-ai-robot-eye" cx="25" cy="21.5" r="1.55" fill="#63efe2"/>' +
-      '<path d="M20 24.6h4" stroke="#74ddd3" stroke-width="1.3" stroke-linecap="round"/>' +
-      '<rect x="14.5" y="29" width="15" height="7" rx="2.6" fill="#6ca8a1"/>' +
-      '<path d="M18.5 31.5h7" stroke="#c8f7f1" stroke-width="1.2" stroke-linecap="round"/>' +
-      '<path class="az-ai-robot-leg" d="M13 33.5 9.3 39" stroke="#a8c9c4" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<path class="az-ai-robot-leg r" d="M31 33.5l3.7 5.5" stroke="#a8c9c4" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<path d="M12 28 6.5 32" stroke="#a8c9c4" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<g class="az-ai-robot-wave"><path d="M31 28.5 37 24.5" stroke="#b8dcd7" stroke-width="2.8" stroke-linecap="round"/><path d="M37 24.6c2 .5 2.7 2.1 2.3 3.3-.4 1.3-1.8 1.7-3 .7" stroke="#b8dcd7" stroke-width="2.4" stroke-linecap="round"/></g>' +
-      '<g class="az-ai-robot-tool"><path d="M7 32 2.7 26.8" stroke="#d9b25a" stroke-width="2.3" stroke-linecap="round"/><path d="M2.7 26.8 1.8 23.6l2.7 1.3 1.1 2.7" stroke="#d9b25a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>' +
-      '<circle class="az-ai-robot-spark" cx="35.5" cy="12" r="1.1" fill="#74eee2"/>' +
-      '<circle class="az-ai-robot-spark" cx="7.3" cy="17.4" r=".9" fill="#74eee2"/>' +
-    '</svg>';
+  function labelFor(name, variant){
+    return variant ? 'راهنمای محصول · ' + String(variant) : 'راهنمای محصول';
   }
 
-  let current = { id:'', code:'', name:'', variant:'' };
+  function stateButton(btn, state, duration){
+    if (!btn) return;
+    ['attention','click','thinking','answer','variant','notify'].forEach(x => btn.classList.remove('is-' + x));
+    if (state) {
+      btn.classList.add('is-' + state);
+      btn.dataset.state = state;
+    } else {
+      btn.dataset.state = 'idle';
+    }
+    if (duration) {
+      window.setTimeout(() => {
+        if (btn.isConnected && (!state || btn.dataset.state === state)) {
+          btn.classList.remove('is-' + state);
+          btn.dataset.state = 'idle';
+        }
+      }, duration);
+    }
+  }
 
-  function ensureModal() {
+  function ensureButtonMarkup(btn){
+    if (!btn) return;
+    let icon = btn.querySelector('.az-ai-robot-icon');
+    if (!icon) {
+      icon = document.createElement('span');
+      icon.className = 'az-ai-robot-icon';
+      btn.prepend(icon);
+    }
+    if (!icon.querySelector('img')) icon.insertAdjacentHTML('beforeend', mascotImg('is-ready'));
+    let label = btn.querySelector('.az-ai-label');
+    if (!label) {
+      label = document.createElement('span');
+      label.className = 'az-ai-label';
+      btn.appendChild(label);
+    }
+    if (!label.textContent.trim()) label.textContent = 'راهنمای محصول';
+    if (!btn.querySelector('.az-ai-state-dot')) {
+      const dot = document.createElement('span');
+      dot.className = 'az-ai-state-dot';
+      btn.appendChild(dot);
+    }
+  }
+
+  function readCardContext(btn){
+    const card = btn?.closest('.card');
+    const id = String(btn?.dataset?.aiProductId || '').trim();
+    const code = String(btn?.dataset?.aiProductCode || '').trim().toUpperCase();
+    const name = String(btn?.dataset?.aiBaseName || card?.querySelector('.name')?.textContent || 'محصول').trim();
+    const select = card?.querySelector('select[data-id]');
+    let variant = String(btn?.dataset?.aiVariant || '').trim();
+    let variantIndex = -1;
+    if (select) {
+      variantIndex = Number.isInteger(Number(select.value)) ? Number(select.value) : -1;
+      const option = select.selectedOptions?.[0];
+      if (option) variant = String(option.textContent || '').split(' — ')[0].trim();
+    }
+    return { id, code, name, variant, variantIndex };
+  }
+
+  function readDetailContext(){
+    const modal = document.getElementById('quickModal');
+    if (!modal?.classList.contains('show')) return null;
+    const title = String(document.getElementById('modalTitle')?.textContent || 'محصول').trim();
+    const code = String(document.getElementById('modalCode')?.textContent || '').replace(/^.*?:\s*/,'').trim().toUpperCase();
+    const rows = [...modal.querySelectorAll('.modal-variant-row')];
+    const selected = rows.findIndex(x => x.classList.contains('selected'));
+    const variant = selected >= 0 ? String(rows[selected]?.querySelector('strong')?.textContent || '').trim() : '';
+    return { id:'', code, name:title, variant, variantIndex:selected };
+  }
+
+  function setButtonContext(btn, ctx){
+    if (!btn || !ctx) return;
+    btn.dataset.aiProductId = ctx.id || '';
+    btn.dataset.aiProductCode = ctx.code || '';
+    btn.dataset.aiBaseName = ctx.name || 'محصول';
+    btn.dataset.aiVariant = ctx.variant || '';
+    btn.dataset.aiVariantIndex = String(Number.isInteger(ctx.variantIndex) ? ctx.variantIndex : -1);
+    ensureButtonMarkup(btn);
+    const label = btn.querySelector('.az-ai-label');
+    if (label) {
+      label.textContent = labelFor(ctx.name, ctx.variant);
+      label.title = ctx.variant ? 'این دستیار درباره همین مدل/سایز پاسخ می‌دهد' : 'این دستیار درباره همین محصول پاسخ می‌دهد';
+    }
+    btn.setAttribute('aria-label', ctx.variant ? 'راهنمای محصول ' + ctx.variant : 'راهنمای همین محصول');
+  }
+
+  function ensurePanel(){
     let root = document.getElementById('azProductAiModal');
     if (root) return root;
     root = document.createElement('div');
@@ -49,161 +118,319 @@
     root.className = 'az-ai-modal-backdrop';
     root.setAttribute('aria-hidden','true');
     root.innerHTML =
-      '<div class="az-ai-modal" role="dialog" aria-modal="true" aria-labelledby="azAiModalTitle">' +
+      '<div class="az-ai-modal state-idle" role="dialog" aria-modal="true" aria-labelledby="azAiModalTitle">' +
         '<div class="az-ai-modal-head">' +
-          '<div class="az-ai-modal-robot">' + robotSvg() + '</div>' +
-          '<div class="az-ai-modal-title"><strong id="azAiModalTitle">مشاوره ابزار</strong><small>راهنمای هوشمند محصول</small></div>' +
+          '<div class="az-ai-modal-robot">' + mascotImg() + '</div>' +
+          '<div class="az-ai-modal-title"><strong id="azAiModalTitle">راهنمای محصول</strong><small>دستیار هوشمند همان کالا و مدل انتخاب‌شده</small></div>' +
           '<button type="button" class="az-ai-modal-close" id="azAiModalClose" aria-label="بستن">×</button>' +
         '</div>' +
-        '<div class="az-ai-modal-product" id="azAiModalProduct"></div>' +
-        '<div class="az-ai-reply loading" id="azAiReply">در حال بررسی اطلاعات واقعی محصول…</div>' +
+        '<div class="az-ai-modal-context">' +
+          '<span class="az-ai-context-pill">محصول: <strong id="azAiContextProduct">—</strong></span>' +
+          '<span class="az-ai-context-pill">مدل/سایز: <strong id="azAiContextVariant">انتخاب نشده</strong></span>' +
+        '</div>' +
+        '<div class="az-ai-reply loading" id="azAiReply">در حال بررسی اطلاعات واقعی همین محصول… <span class="az-ai-thinking-dots"><i></i><i></i><i></i></span></div>' +
         '<div class="az-ai-quick" id="azAiQuick"></div>' +
         '<form class="az-ai-chat-form" id="azAiChatForm">' +
-          '<input id="azAiQuestion" autocomplete="off" maxlength="600" placeholder="درباره این محصول سؤال داری؟">' +
+          '<input id="azAiQuestion" autocomplete="off" maxlength="600" placeholder="درباره همین محصول سؤال داری؟">' +
           '<button type="submit">بپرس</button>' +
         '</form>' +
         '<div class="az-ai-status" id="azAiStatus"></div>' +
       '</div>';
+
     document.body.appendChild(root);
     root.addEventListener('click', e => { if (e.target === root) close(); });
-    root.querySelector('#azAiModalClose').onclick = close;
-    root.querySelector('#azAiChatForm').onsubmit = e => { e.preventDefault(); send(); };
+    root.querySelector('#azAiModalClose').addEventListener('click', close);
+    root.querySelector('#azAiChatForm').addEventListener('submit', e => {
+      e.preventDefault();
+      send();
+    });
     return root;
   }
 
-  function close() {
+  function updatePanelContext(root){
+    const title = labelFor(current.name, current.variant);
+    root.querySelector('#azAiModalTitle').textContent = title;
+    root.querySelector('#azAiContextProduct').textContent = current.name || '—';
+    root.querySelector('#azAiContextVariant').textContent = current.variant || 'انتخاب نشده';
+  }
+
+  function setPanelState(root, state){
+    const panel = root?.querySelector('.az-ai-modal');
+    if (!panel) return;
+    panel.classList.remove('state-idle','state-thinking','state-answer','state-variant','state-attention');
+    panel.classList.add('state-' + (state || 'idle'));
+  }
+
+  function setQuick(root){
+    const box = root.querySelector('#azAiQuick');
+    const items = [
+      'برای این کار مناسبه؟',
+      'چه نکته‌ای موقع انتخاب مهمه؟',
+      'این سایز برای کار من مناسبه؟'
+    ];
+    box.innerHTML = items.map(x => '<button type="button" data-ai-q="' + esc(x) + '">' + esc(x) + '</button>').join('');
+    box.querySelectorAll('[data-ai-q]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        root.querySelector('#azAiQuestion').value = btn.dataset.aiQ || '';
+        send();
+      });
+    });
+  }
+
+  async function requestAI(message=''){
+    const endpoint = AI_API();
+    if (!endpoint) throw Error('مسیر دستیار هوشمند تنظیم نشده است.');
+    const body = {
+      mode:'product',
+      product_id:current.id,
+      product_code:current.code,
+      variant_label:current.variant,
+      variant_index:current.variantIndex,
+      message:String(message || '').trim()
+    };
+    const r = await fetch(endpoint, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw Error(data.error || ('HTTP ' + r.status));
+    return data;
+  }
+
+  function open(btn){
+    ensureButtonMarkup(btn);
+    current = btn?.classList.contains('az-ai-detail-launch')
+      ? (readDetailContext() || readCardContext(btn))
+      : readCardContext(btn);
+    if (!current) return;
+
+    activeSourceButton = btn || null;
+    stateButton(btn, 'click', 460);
+
+    const root = ensurePanel();
+    updatePanelContext(root);
+    setQuick(root);
+    root.classList.add('show');
+    root.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+
+    const reply = root.querySelector('#azAiReply');
+    const status = root.querySelector('#azAiStatus');
+    const input = root.querySelector('#azAiQuestion');
+    reply.innerHTML = 'در حال بررسی اطلاعات واقعی همین محصول… <span class="az-ai-thinking-dots"><i></i><i></i><i></i></span>';
+    reply.classList.add('loading');
+    status.textContent = '';
+    status.className = 'az-ai-status';
+    input.value = '';
+    setPanelState(root,'thinking');
+    if (btn) stateButton(btn,'thinking');
+
+    requestAI('').then(data => {
+      reply.textContent = String(data.reply || 'پاسخی دریافت نشد.');
+      reply.classList.remove('loading');
+      status.textContent = 'پاسخ بر اساس اطلاعات همین محصول و همین انتخاب آماده شد.';
+      status.className = 'az-ai-status ok';
+      setPanelState(root,'answer');
+      if (btn) stateButton(btn,'answer',900);
+      window.setTimeout(() => {
+        if (root.classList.contains('show')) setPanelState(root,'idle');
+      }, 900);
+    }).catch(error => {
+      reply.textContent = 'برای این محصول فعلاً پاسخ هوشمند دریافت نشد.';
+      reply.classList.remove('loading');
+      status.textContent = String(error?.message || error);
+      status.className = 'az-ai-status error';
+      setPanelState(root,'idle');
+      if (btn) stateButton(btn,'idle');
+    });
+  }
+
+  function close(){
     const root = document.getElementById('azProductAiModal');
     if (!root) return;
     root.classList.remove('show');
     root.setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
+    activeSourceButton = null;
   }
 
-  function setQuick() {
-    const root = ensureModal();
-    const q = root.querySelector('#azAiQuick');
-    const items = ['برای این کار مناسبه؟','چه نکته‌ای موقع انتخابش مهمه؟','بین سایزها کدوم مناسب‌تره؟'];
-    q.innerHTML = items.map(x => '<button type="button" data-ai-q="' + esc(x) + '">' + esc(x) + '</button>').join('');
-    q.querySelectorAll('[data-ai-q]').forEach(b => b.onclick = () => {
-      root.querySelector('#azAiQuestion').value = b.dataset.aiQ;
-      send();
-    });
-  }
-
-  async function requestAI(message='') {
-    const endpoint = api();
-    if (!endpoint) throw Error('مسیر AI تنظیم نشده است.');
-    const r = await fetch(endpoint, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        mode:'product',
-        product_id:current.id,
-        product_code:current.code,
-        variant_label:current.variant,
-        message:String(message || '').trim()
-      })
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw Error(data.error || 'HTTP ' + r.status);
-    return data;
-  }
-
-  async function open(btn) {
-    const root = ensureModal();
-    current = {
-      id:btn.dataset.aiProductId || '',
-      code:btn.dataset.aiProductCode || '',
-      name:btn.dataset.aiBaseName || 'محصول',
-      variant:btn.dataset.aiVariant || ''
-    };
-    const title = labelFor(current.name, current.variant);
-    root.querySelector('#azAiModalTitle').textContent = title;
-    root.querySelector('#azAiModalProduct').innerHTML = '<b>' + esc(title) + '</b> · اطلاعات محصول مستقیماً از دیتابیس خوانده می‌شود.';
-    const reply = root.querySelector('#azAiReply');
-    const status = root.querySelector('#azAiStatus');
-    const input = root.querySelector('#azAiQuestion');
-    reply.textContent = 'در حال بررسی اطلاعات واقعی محصول…';
-    reply.classList.add('loading');
-    status.textContent = '';
-    status.classList.remove('error');
-    input.value = '';
-    setQuick();
-    root.classList.add('show');
-    root.setAttribute('aria-hidden','false');
-    document.body.style.overflow = 'hidden';
-    try {
-      const data = await requestAI('');
-      reply.textContent = String(data.reply || 'پاسخی دریافت نشد.');
-      reply.classList.remove('loading');
-      status.textContent = 'پاسخ بر اساس اطلاعات همین محصول آماده شد.';
-    } catch (e) {
-      reply.textContent = 'برای این محصول فعلاً پاسخ هوشمند دریافت نشد.';
-      reply.classList.remove('loading');
-      status.textContent = String(e.message || e);
-      status.classList.add('error');
-    }
-  }
-
-  async function send() {
-    const root = ensureModal();
+  async function send(){
+    const root = ensurePanel();
     const input = root.querySelector('#azAiQuestion');
     const reply = root.querySelector('#azAiReply');
     const status = root.querySelector('#azAiStatus');
     const q = String(input.value || '').trim();
     if (!q) return;
-    reply.textContent = 'در حال پاسخ‌گویی…';
+    reply.innerHTML = 'در حال پاسخ‌گویی… <span class="az-ai-thinking-dots"><i></i><i></i><i></i></span>';
     reply.classList.add('loading');
     status.textContent = '';
-    status.classList.remove('error');
+    status.className = 'az-ai-status';
+    setPanelState(root,'thinking');
+    if (activeSourceButton) stateButton(activeSourceButton,'thinking');
+
     try {
       const data = await requestAI(q);
       reply.textContent = String(data.reply || 'پاسخی دریافت نشد.');
       reply.classList.remove('loading');
       status.textContent = 'پاسخ بر اساس اطلاعات همین محصول آماده شد.';
+      status.className = 'az-ai-status ok';
+      setPanelState(root,'answer');
+      if (activeSourceButton) stateButton(activeSourceButton,'answer',900);
       input.value = '';
-    } catch (e) {
+      window.setTimeout(() => {
+        if (root.classList.contains('show')) setPanelState(root,'idle');
+      }, 900);
+    } catch (error) {
       reply.textContent = 'پاسخی برای این سؤال دریافت نشد.';
       reply.classList.remove('loading');
-      status.textContent = String(e.message || e);
-      status.classList.add('error');
+      status.textContent = String(error?.message || error);
+      status.className = 'az-ai-status error';
+      setPanelState(root,'idle');
+      if (activeSourceButton) stateButton(activeSourceButton,'idle');
     }
   }
 
-  function hydrate() {
-    document.querySelectorAll('.az-product-ai-btn .az-ai-robot-icon').forEach(el => {
-      if (!el.innerHTML.trim()) el.innerHTML = robotSvg();
+  function bindButton(btn){
+    if (!btn || btn.dataset.aiBound === '1') return;
+    btn.dataset.aiBound = '1';
+    ensureButtonMarkup(btn);
+    btn.addEventListener('pointerenter', () => stateButton(btn,'attention',760));
+    btn.addEventListener('focus', () => stateButton(btn,'attention',760));
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      open(btn);
     });
+    if (!btn.classList.contains('az-ai-detail-launch')) {
+      const ctx = readCardContext(btn);
+      setButtonContext(btn, ctx);
+    }
   }
 
-  document.addEventListener('click', e => {
-    const btn = e.target.closest?.('.az-product-ai-btn');
-    if (btn) { e.preventDefault(); open(btn); }
-  });
+  function hydrate(scope=document){
+    scope.querySelectorAll?.('.az-product-ai-btn').forEach(bindButton);
+  }
+
+  function syncCardVariant(select){
+    const card = select?.closest('.card');
+    const btn = card?.querySelector('.az-product-ai-btn:not(.az-ai-detail-launch)');
+    if (!btn) return;
+    const ctx = readCardContext(btn);
+    setButtonContext(btn, ctx);
+    stateButton(btn,'variant',640);
+
+    const root = document.getElementById('azProductAiModal');
+    const matchesOpenContext = root?.classList.contains('show') &&
+      current.code && ctx.code && current.code === ctx.code;
+    if (matchesOpenContext) {
+      current.variant = ctx.variant;
+      current.variantIndex = ctx.variantIndex;
+      updatePanelContext(root);
+      setPanelState(root,'variant');
+      window.setTimeout(() => {
+        if (root.classList.contains('show')) setPanelState(root,'idle');
+      }, 650);
+    }
+  }
+
+  function ensureDetailCTA(){
+    const modal = document.getElementById('quickModal');
+    if (!modal) return;
+    const actions = modal.querySelector('.modal-actions');
+    if (!actions) return;
+    let wrap = modal.querySelector('.az-ai-detail-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'az-ai-detail-wrap';
+      wrap.innerHTML =
+        '<button type="button" class="az-product-ai-btn az-ai-detail-launch" aria-label="راهنمای هوشمند همین محصول">' +
+          '<span class="az-ai-robot-icon"></span>' +
+          '<span class="az-ai-label">راهنمای محصول</span>' +
+          '<span class="az-ai-state-dot"></span>' +
+        '</button>' +
+        '<span class="az-ai-detail-hint">پاسخ‌ها به محصول و سایز/مدل انتخاب‌شده همین صفحه متصل‌اند.</span>';
+      actions.parentNode.insertBefore(wrap, actions);
+    }
+    const btn = wrap.querySelector('.az-ai-detail-launch');
+    const ctx = readDetailContext();
+    if (ctx) {
+      setButtonContext(btn, ctx);
+      bindButton(btn);
+    }
+  }
+
+  function syncDetailCTA(){
+    const modal = document.getElementById('quickModal');
+    if (!modal?.classList.contains('show')) return;
+    ensureDetailCTA();
+    const ctx = readDetailContext();
+    const btn = modal.querySelector('.az-ai-detail-launch');
+    if (!ctx || !btn) return;
+    setButtonContext(btn, ctx);
+
+    const root = document.getElementById('azProductAiModal');
+    if (root?.classList.contains('show') && current.code && ctx.code && current.code === ctx.code) {
+      current.variant = ctx.variant;
+      current.variantIndex = ctx.variantIndex;
+      updatePanelContext(root);
+    }
+  }
 
   document.addEventListener('change', e => {
     const select = e.target.closest?.('select[data-id]');
-    if (!select) return;
-    const card = select.closest('.card');
-    const btn = card?.querySelector('.az-product-ai-btn');
-    if (!btn) return;
-    let variant = '';
-    try {
-      if (typeof window.__AZIM_GET_PRODUCT_VARIANT__ === 'function') {
-        variant = window.__AZIM_GET_PRODUCT_VARIANT__(select.dataset.id, Number(select.value || 0)) || '';
-      } else {
-        variant = (select.selectedOptions?.[0]?.textContent || '').split(' — ')[0].trim();
-      }
-    } catch (_) {}
-    btn.dataset.aiVariant = variant;
-    const label = btn.querySelector('.az-ai-label');
-    if (label) label.textContent = labelFor(btn.dataset.aiBaseName, variant) + '؟ من راهنماییت می‌کنم';
+    if (select) syncCardVariant(select);
   });
 
-  window.AZIM_PRODUCT_AI = { openFromElement:open, close, robotSvg, labelFor, hydrate };
+  document.addEventListener('click', e => {
+    if (e.target.closest?.('.modal-variant-row')) {
+      window.setTimeout(syncDetailCTA, 0);
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') close();
+  });
 
   const grid = document.getElementById('grid');
-  if (grid) new MutationObserver(hydrate).observe(grid, { childList:true, subtree:true });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate, { once:true });
-  else hydrate();
+  if (grid) new MutationObserver(m => {
+    if (m.some(x => x.addedNodes?.length)) hydrate(grid);
+  }).observe(grid,{childList:true,subtree:true});
+
+  const quickModal = document.getElementById('quickModal');
+  if (quickModal) {
+    new MutationObserver(() => window.setTimeout(syncDetailCTA,0))
+      .observe(quickModal,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+  }
+
+  function initialAttention(){
+    try{
+      if (sessionStorage.getItem('azim-ai-mascot-attention-v1')) return;
+      sessionStorage.setItem('azim-ai-mascot-attention-v1','1');
+      window.setTimeout(() => {
+        const btn = document.querySelector('.az-product-ai-btn:not(.az-ai-detail-launch)');
+        if (btn && btn.isConnected) stateButton(btn,'attention',760);
+      }, 4800);
+    }catch(_){}
+  }
+
+  window.AZIM_PRODUCT_AI = {
+    openFromElement:open,
+    close,
+    robotMarkup:mascotImg,
+    syncDetailCTA,
+    readDetailContext
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      hydrate(document);
+      syncDetailCTA();
+      initialAttention();
+    }, {once:true});
+  } else {
+    hydrate(document);
+    syncDetailCTA();
+    initialAttention();
+  }
 })();
