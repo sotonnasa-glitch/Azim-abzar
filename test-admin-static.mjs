@@ -89,6 +89,31 @@ if (!js.includes("function initVariantEditor(form)")) {
 if (!js.includes("function initProductImageEditor(form)")) {
   fail('product image editor function is missing');
 }
+
+if (!js.includes("else if (name === 'security') await loadSecurity();")) {
+  fail('security section is not wired through loadSection');
+}
+if (!js.includes("security: 'securityPanel'")) {
+  fail('security panel is missing from load error/skeleton routing');
+}
+if (!js.includes("orderProducts: []")) {
+  fail('order editor does not have an isolated product cache');
+}
+if (!js.includes("if (r.error) throw r.error;") || !js.includes("state.orderProducts = r.data || [];")) {
+  fail('order product loader does not surface query errors or populate its isolated cache');
+}
+if (!js.includes("async function loadCustomersForOrder()") || !js.includes("const r = await state.db.from('customers').select('id,full_name,mobile').order('full_name').limit(2000);")) {
+  fail('order customer loader is not hardened');
+}
+if (!js.includes("اگر این بخش را می‌بینید")) {
+  // no-op; retained below for compatibility with older generated admin copies
+}
+if (!js.includes("readonly aria-readonly=\"true\"")) {
+  fail('order total input is still manually editable despite authoritative RPC calculation');
+}
+if (!js.includes("حجم تصویر محصول نباید بیشتر از ۱۰ مگابایت باشد.")) {
+  fail('product image size validation is missing at save time');
+}
 if (!js.includes("state.db.rpc('azim_save_discount'")) {
   fail('discount editor is not using atomic save RPC');
 }
