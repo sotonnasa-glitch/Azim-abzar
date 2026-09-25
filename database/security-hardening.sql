@@ -139,70 +139,84 @@ alter default privileges for role postgres in schema public
   revoke execute on functions from anon, authenticated;
 
 
--- Admin-user RLS: only owners can manage owner/admin accounts; admins can manage staff roles.
+-- Admin-user RLS: owner can manage all accounts; admins can manage staff roles only.
 drop policy if exists "Owner admin manage admin users" on public.admin_users;
 drop policy if exists "Admin users select own or manage" on public.admin_users;
 drop policy if exists "Owner manages all admin users" on public.admin_users;
 drop policy if exists "Admins manage staff only" on public.admin_users;
 drop policy if exists "Admins update staff only" on public.admin_users;
+drop policy if exists "Owner admin delete admin users" on public.admin_users;
+drop policy if exists "Owner admin insert admin users" on public.admin_users;
+drop policy if exists "Owner admin update admin users" on public.admin_users;
+drop policy if exists "Admin users insert" on public.admin_users;
+drop policy if exists "Admin users update" on public.admin_users;
+drop policy if exists "Owner deletes admin users" on public.admin_users;
 
 create policy "Admin users select own or manage"
 on public.admin_users
-for select
-to authenticated
+for select to authenticated
 using (
   user_id = (select auth.uid())
   or (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
 );
 
-create policy "Owner manages all admin users"
-on public.admin_users
-for all to authenticated
-using ((select private.has_azim_role(ARRAY['owner'::text])))
-with check ((select private.has_azim_role(ARRAY['owner'::text])));
-
-create policy "Admins manage staff only"
+create policy "Admin users insert"
 on public.admin_users
 for insert to authenticated
 with check (
-  (select private.has_azim_role(ARRAY['admin'::text]))
-  and role in ('editor','sales')
+  (select private.has_azim_role(ARRAY['owner'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['admin'::text]))
+    and role in ('editor','sales')
+  )
 );
 
-create policy "Admins update staff only"
+create policy "Admin users update"
 on public.admin_users
 for update to authenticated
 using (
-  (select private.has_azim_role(ARRAY['admin'::text]))
-  and role in ('editor','sales')
+  (select private.has_azim_role(ARRAY['owner'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['admin'::text]))
+    and role in ('editor','sales')
+  )
 )
 with check (
-  (select private.has_azim_role(ARRAY['admin'::text]))
-  and role in ('editor','sales')
+  (select private.has_azim_role(ARRAY['owner'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['admin'::text]))
+    and role in ('editor','sales')
+  )
 );
 
--- Editors may manage content, but never payment or AI control sections.
+create policy "Owner deletes admin users"
+on public.admin_users
+for delete to authenticated
+using ((select private.has_azim_role(ARRAY['owner'::text])));
+
+-- Editors can manage normal CMS content but cannot change payment/AI control sections.
 drop policy if exists "Admins manage site content" on public.site_content;
 drop policy if exists "Editors manage site content" on public.site_content;
 drop policy if exists "Owner admin manage site content" on public.site_content;
 drop policy if exists "Editors manage non-sensitive site content" on public.site_content;
+drop policy if exists "Staff manage allowed site content" on public.site_content;
 
-create policy "Owner admin manage site content"
-on public.site_content
-for all to authenticated
-using ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text])))
-with check ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text])));
-
-create policy "Editors manage non-sensitive site content"
+create policy "Staff manage allowed site content"
 on public.site_content
 for all to authenticated
 using (
-  (select private.has_azim_role(ARRAY['editor'::text]))
-  and section_key not in ('checkout_payment','ai_settings')
+  (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['editor'::text]))
+    and section_key not in ('checkout_payment','ai_settings')
+  )
 )
 with check (
-  (select private.has_azim_role(ARRAY['editor'::text]))
-  and section_key not in ('checkout_payment','ai_settings')
+  (select private.has_azim_role(ARRAY['owner'::text,'admin'::text]))
+  or (
+    (select private.has_azim_role(ARRAY['editor'::text]))
+    and section_key not in ('checkout_payment','ai_settings')
+  )
 );
 
 -- Audit actor identity is enforced by the database, not by client input.
@@ -227,13 +241,18 @@ create trigger trg_enforce_audit_actor
 before insert on public.audit_logs
 for each row execute function private.enforce_audit_actor();
 
--- Keep discount redemption history immutable from the browser.
+-- Discount redemptions are immutable business history from the browser.
 revoke insert, update, delete, truncate on public.discount_redemptions from authenticated;
 drop policy if exists "Admins manage discount redemptions" on public.discount_redemptions;
 drop policy if exists "Sales manage discount redemptions" on public.discount_redemptions;
+drop policy if exists "Discount redemptions select" on public.discount_redemptions;
 drop policy if exists "Staff can read discount redemptions" on public.discount_redemptions;
+
 create policy "Staff can read discount redemptions"
 on public.discount_redemptions
 for select to authenticated
 using ((select private.has_azim_role(ARRAY['owner'::text,'admin'::text,'sales'::text])));
+
+create index if not exists discounts_updated_by_idx
+  on public.discounts(updated_by);
 
