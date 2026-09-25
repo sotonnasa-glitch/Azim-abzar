@@ -1376,10 +1376,15 @@
       if (content.error) throw content.error;
       if (categories.error) throw categories.error;
       if (brands.error) throw brands.error;
+      const allProducts = await state.db.from('products')
+        .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
+        .order('code', { ascending: true })
+        .limit(2000);
+      if (allProducts.error) throw allProducts.error;
       const backup = {
         exported_at: new Date().toISOString(),
-        version: 'azim-abzar-admin-backup-v1',
-        products: state.products || [],
+        version: 'azim-abzar-admin-backup-v2',
+        products: allProducts.data || [],
         categories: categories.data || [],
         brands: brands.data || [],
         site_content: content.data || []
@@ -1575,9 +1580,20 @@
         name: s.name.value.trim(), slug: s.slug.value.trim(), sort_order: Number(s.sort_order.value || 0),
         description: s.description.value.trim() || null, image, is_active: s.is_active.checked
       };
-      const r = id ? await state.db.from('categories').update(p).eq('id', id) : await state.db.from('categories').insert(p);
+      const r = await state.db.rpc('azim_save_category', {
+        p_id: id || null,
+        p_name: p.name,
+        p_slug: p.slug,
+        p_description: p.description,
+        p_image: p.image,
+        p_sort_order: p.sort_order,
+        p_is_active: p.is_active
+      });
       if (r.error) throw r.error;
-      await audit(id ? 'update' : 'create', 'categories', id || 'new', { name: p.name });
+      await audit(id ? 'update' : 'create', 'categories', r.data?.id || id || 'new', {
+        name: p.name,
+        updated_products: Number(r.data?.updated_products || 0)
+      });
       closeModal();
       toast('__AZICON_SUCCESS__ دسته ذخیره شد');
       await loadCategories();
@@ -1653,9 +1669,20 @@
         name: s.name.value.trim(), slug: s.slug.value.trim(), sort_order: Number(s.sort_order.value || 0),
         description: s.description.value.trim() || null, logo, is_active: s.is_active.checked
       };
-      const r = id ? await state.db.from('brands').update(p).eq('id', id) : await state.db.from('brands').insert(p);
+      const r = await state.db.rpc('azim_save_brand', {
+        p_id: id || null,
+        p_name: p.name,
+        p_slug: p.slug,
+        p_description: p.description,
+        p_logo: p.logo,
+        p_sort_order: p.sort_order,
+        p_is_active: p.is_active
+      });
       if (r.error) throw r.error;
-      await audit(id ? 'update' : 'create', 'brands', id || 'new', { name: p.name });
+      await audit(id ? 'update' : 'create', 'brands', r.data?.id || id || 'new', {
+        name: p.name,
+        updated_products: Number(r.data?.updated_products || 0)
+      });
       closeModal();
       toast('__AZICON_SUCCESS__ برند ذخیره شد');
       await loadBrands();
@@ -2678,22 +2705,36 @@
 
   async function uploadMedia() {
     if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه آپلود رسانه ندارد.');
-    const file = $('mediaFile').files[0];
+    const input = $('mediaFile');
+    const button = $('uploadMediaBtn');
+    const file = input?.files?.[0];
     if (!file) return toast('یک فایل انتخاب کن');
+    if (!String(file.type || '').startsWith('image/')) return toast('__AZICON_ERROR__ فقط فایل تصویری مجاز است.');
+    if (file.size > 10 * 1024 * 1024) return toast('__AZICON_ERROR__ حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.');
     const folder = $('mediaFolder').value;
     const path = folder + '/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
-    if (up.error) return toast('__AZICON_ERROR__ ' + errorText(up.error));
-    const url = state.db.storage.from('admin-media').getPublicUrl(path).data.publicUrl;
-    const r = await state.db.from('media_assets').insert({
-      filename: file.name, storage_path: path, public_url: url, mime_type: file.type,
-      size_bytes: file.size, folder, uploaded_by: state.user.id
-    });
-    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
-    await audit('upload', 'media_assets', path, { folder, filename: file.name });
-    $('mediaFile').value = '';
-    toast('__AZICON_SUCCESS__ فایل آپلود شد');
-    await loadMedia();
+    if (button) button.disabled = true;
+    try {
+      const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
+      if (up.error) throw up.error;
+      const url = state.db.storage.from('admin-media').getPublicUrl(path).data.publicUrl;
+      const r = await state.db.from('media_assets').insert({
+        filename: file.name, storage_path: path, public_url: url, mime_type: file.type,
+        size_bytes: file.size, folder, uploaded_by: state.user.id
+      });
+      if (r.error) {
+        await state.db.storage.from('admin-media').remove([path]).catch(() => {});
+        throw r.error;
+      }
+      await audit('upload', 'media_assets', path, { folder, filename: file.name });
+      input.value = '';
+      toast('__AZICON_SUCCESS__ فایل آپلود شد');
+      await loadMedia();
+    } catch (err) {
+      toast('__AZICON_ERROR__ ' + errorText(err));
+    } finally {
+      if (button) button.disabled = false;
+    }
   }
 
   async function deleteMedia(id) {
@@ -3419,11 +3460,17 @@
   async function changeAdmin(id, field, value) {
     if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند کاربران مدیر را تغییر دهد.');
     if (id === state.user.id && field === 'is_active' && value === false) return toast('حساب جاری را غیرفعال نکن.');
+    if (id === state.user.id && field === 'role') return toast('نقش حساب جاری را از داخل همین نشست تغییر نده.');
     const p = {}; p[field] = value;
-    const r = await state.db.from('admin_users').update(p).eq('user_id', id);
-    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
-    await audit(field === 'role' ? 'role_change' : 'status_change', 'admin_users', id, p);
-    toast('__AZICON_SUCCESS__ بروزرسانی شد');
+    try {
+      const r = await state.db.from('admin_users').update(p).eq('user_id', id);
+      if (r.error) throw r.error;
+      await audit(field === 'role' ? 'role_change' : 'status_change', 'admin_users', id, p);
+      toast('__AZICON_SUCCESS__ بروزرسانی شد');
+    } catch (err) {
+      toast('__AZICON_ERROR__ ' + errorText(err));
+      await loadAdmins();
+    }
   }
 
   async function loadSecurity() {
