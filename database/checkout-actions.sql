@@ -245,11 +245,11 @@ declare
   v_prior_reserved bigint := 0;
   v_remaining_refundable bigint := 0;
 begin
-  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}'$'
-     and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}'$' then
+  if not ((v_code ~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}' and length(v_code)=24)
+     or (v_code ~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}' and length(v_code)=43)) then
     return jsonb_build_object('ok',false,'message','شناسه سفارش نامعتبر است.');
   end if;
-  if v_mobile !~ '^09[0-9]{9}'$' then
+  if not (v_mobile ~ '^09[0-9]{9}' and length(v_mobile)=11) then
     return jsonb_build_object('ok',false,'message','شماره موبایل معتبر وارد کنید.');
   end if;
   if p_quantity is null or p_quantity<1 then
