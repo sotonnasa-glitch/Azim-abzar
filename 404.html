@@ -16,8 +16,8 @@
     <div class="code">404</div>
     <h1>این صفحه پیدا نشد</h1>
     <p>آدرس واردشده وجود ندارد یا ممکن است جابه‌جا شده باشد.</p>
-    <a class="btn" href="./index.html">بازگشت به صفحه اصلی</a>
+    <a class="btn" id="homeLink" href="/">بازگشت به صفحه اصلی</a>
   </main>
-  <script src="./azim-ai-widget.js?v=1" defer></script>
+  <script>\n    (function(){\n      var link = document.getElementById("homeLink");\n      if (!link) return;\n      if (/\\.github\\.io$/i.test(location.hostname)) link.href = "/Azim-abzar/";\n      else link.href = "/";\n    })();\n  </script>
 </body>
 </html>
