@@ -15,6 +15,7 @@
     brands: [],
     customers: [],
     orderItems: [],
+    orderProducts: [],
     productCacheLoaded: false,
     contentRows: []
   };
@@ -383,13 +384,6 @@
         if (e.key !== 'Enter') return;
         e.preventDefault();
         await finish();
-      });
-      $('mfaChallengeLogoutBtn')?.addEventListener('click', async () => {
-        await state.db.auth.signOut();
-        $('mfaScreen')?.classList.add('hidden');
-        $('loginScreen')?.classList.remove('hidden');
-        const loginStatus = $('loginStatus');
-        if (loginStatus) loginStatus.textContent = '';
       });
       return false;
     }
@@ -871,7 +865,8 @@
       const skeletons = {
         products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
         inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
-        media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
+        media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable',
+        security: 'securityPanel'
       };
       if (skeletons[name]) showSkeleton(skeletons[name]);
 
@@ -887,13 +882,14 @@
       else if (name === 'ai') await loadAI();
       else if (name === 'admins') await loadAdmins();
       else if (name === 'audit') await loadAudit();
+      else if (name === 'security') await loadSecurity();
     } catch (e) {
       console.error('Azim Abzar admin section load failed:', e);
       const message = errorText(e);
       const targets = {
         products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
         inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
-        media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
+        media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable', security: 'securityPanel'
       };
       if (targets[name]) showSectionError(targets[name], e);
       toast('__AZICON_ERROR__ ' + message);
@@ -1330,6 +1326,8 @@
       let uploadedPath = null;
       if (s.clearImage?.checked) img = null;
       const file = s.file?.files?.[0];
+      if (file && !String(file.type || '').startsWith('image/')) throw new Error('فایل محصول باید تصویر باشد.');
+      if (file && file.size > 10 * 1024 * 1024) throw new Error('حجم تصویر محصول نباید بیشتر از ۱۰ مگابایت باشد.');
       if (file) {
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
         const path = 'products/' + crypto.randomUUID() + '.' + ext;
@@ -1912,15 +1910,20 @@
   }
 
   async function loadCustomersForOrder() {
-    const r = await state.db.from('customers').select('id,full_name,mobile').order('full_name');
+    const r = await state.db.from('customers').select('id,full_name,mobile').order('full_name').limit(2000);
+    if (r.error) throw r.error;
     return r.data || [];
   }
 
   async function loadProductsForOrder() {
-    if (state.productCacheLoaded) return state.products;
-    const r = await state.db.from('products').select('id,name,code,price,is_active,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at').order('name').limit(1000);
-    if (!r.error) { state.products = r.data || []; state.productCacheLoaded = true; }
-    return state.products;
+    if (state.productCacheLoaded) return state.orderProducts;
+    const r = await state.db.from('products')
+      .select('id,name,code,price,is_active,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,variants')
+      .order('name').limit(2000);
+    if (r.error) throw r.error;
+    state.orderProducts = r.data || [];
+    state.productCacheLoaded = true;
+    return state.orderProducts;
   }
 
   function orderTimeline(status) {
@@ -1944,7 +1947,7 @@
       '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
       '<div class="field"><label>پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], x?.payment_status || 'unpaid', labels) + '</select></div>' +
       '<div class="field"><label>ارسال</label><select class="select" name="shipping_status">' + selectOptions(['pending','packed','shipped','delivered'], x?.shipping_status || 'pending', labels) + '</select></div>' +
-      '<div class="field"><label>مبلغ نهایی</label><input class="input" name="total" type="number" min="0" value="' + esc(x?.total ?? 0) + '"><div id="orderTotalPreview" class="muted" style="margin-top:4px">' + money(x?.total ?? 0) + '</div></div>' +
+      '<div class="field"><label>مبلغ نهایی محاسبه‌شده</label><input class="input" name="total" type="number" min="0" value="' + esc(x?.total ?? 0) + '" readonly aria-readonly="true"><div id="orderTotalPreview" class="muted" style="margin-top:4px">با اقلام، ارسال و تخفیف به‌صورت خودکار محاسبه می‌شود.</div></div>' +
       '<div class="field"><label>کد رهگیری</label><input class="input" name="tracking_code" value="' + esc(x?.tracking_code) + '"></div>' +
       '<div class="field"><label>کد تخفیف</label><div class="tools" style="width:100%"><input class="input" name="discount_code" dir="ltr" value="' + esc(x?.discount_code || '') + '" placeholder="مثلاً AZIM20"><button type="button" id="applyOrderDiscountBtn" class="btn secondary">اعمال تخفیف</button></div><div id="orderDiscountStatus" class="status"></div><input type="hidden" name="discount" value="' + esc(x?.discount ?? 0) + '"></div>' +
       '<div class="field"><label>هزینه ارسال</label><input class="input" name="shipping_cost" type="number" min="0" value="' + esc(x?.shipping_cost ?? 0) + '"></div>' +
@@ -1965,7 +1968,8 @@
   }
 
   function orderItemRow(it, idx) {
-    const productOptions = state.products.map((p) =>
+    const orderProducts = state.orderProducts.length ? state.orderProducts : state.products;
+    const productOptions = orderProducts.map((p) =>
       '<option value="' + esc(p.id) + '" ' + (it?.product_id === p.id ? 'selected' : '') + '>' +
       esc(p.code || '—') + ' · ' + esc(p.name) + '</option>'
     ).join('');
@@ -1983,16 +1987,21 @@
 
   async function openOrder(id) {
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
-    const [o, c, i] = await Promise.all([
-      state.db.from('orders').select('*').eq('id', id).single(),
-      loadCustomersForOrder(),
-      state.db.from('order_items').select('*').eq('order_id', id)
-    ]);
-    if (o.error) return toast('__AZICON_ERROR__ ' + errorText(o.error));
-    state.orderItems = i.data || [];
-    await loadProductsForOrder();
-    openModal('مدیریت سفارش', orderForm(o.data, c, state.orderItems));
-    wireOrderForm(id);
+    try {
+      const [o, c, i] = await Promise.all([
+        state.db.from('orders').select('*').eq('id', id).single(),
+        loadCustomersForOrder(),
+        state.db.from('order_items').select('*').eq('order_id', id)
+      ]);
+      if (o.error) throw o.error;
+      if (i.error) throw i.error;
+      state.orderItems = i.data || [];
+      await loadProductsForOrder();
+      openModal('مدیریت سفارش', orderForm(o.data, c, state.orderItems));
+      wireOrderForm(id);
+    } catch (err) {
+      toast('__AZICON_ERROR__ بارگذاری سفارش ناموفق بود: ' + errorText(err));
+    }
   }
 
   async function newOrder() {
@@ -2011,7 +2020,8 @@
       const qty = qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
       const price = Number(row.querySelector('.item-price')?.value || 0);
       const variantLabel = String(row.querySelector('.item-variant')?.value || '').trim();
-      const product = state.products.find((p) => p.id === productId);
+      const orderProducts = state.orderProducts.length ? state.orderProducts : state.products;
+      const product = orderProducts.find((p) => p.id === productId);
       const orderItemId = row.dataset.itemId || null;
       return productId ? {
         order_item_id: orderItemId,
@@ -2027,12 +2037,25 @@
   }
 
   function updateOrderItemTotals() {
+    const form = $('orderForm');
+    let subtotal = 0;
     document.querySelectorAll('#orderItemsBox .order-item-row').forEach((row) => {
       const q = Number(row.querySelector('.item-qty')?.value || 1);
       const p = Number(row.querySelector('.item-price')?.value || 0);
+      const safeQ = Number.isFinite(q) && q > 0 ? Math.floor(q) : 1;
+      const safeP = Number.isFinite(p) && p >= 0 ? Math.floor(p) : 0;
+      const line = safeQ * safeP;
+      subtotal += line;
       const total = row.querySelector('.item-total');
-      if (total) total.value = String(q * p);
+      if (total) total.value = String(line);
     });
+    if (form) {
+      const shipping = Number(form.elements.shipping_cost?.value || 0);
+      const discount = Number(form.elements.discount?.value || 0);
+      const finalTotal = Math.max(0, subtotal + (Number.isFinite(shipping) && shipping >= 0 ? Math.floor(shipping) : 0) - (Number.isFinite(discount) && discount >= 0 ? Math.floor(discount) : 0));
+      if (form.elements.total) form.elements.total.value = String(finalTotal);
+      if ($('orderTotalPreview')) $('orderTotalPreview').textContent = 'جمع اقلام: ' + money(subtotal) + ' · ارسال: ' + money(shipping) + ' · تخفیف: ' + money(discount) + ' · نهایی: ' + money(finalTotal);
+    }
   }
 
   function addOrderItemRow(it = null) {
@@ -2074,6 +2097,8 @@
     $('orderForm')?.elements?.discount_code?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); applyOrderDiscount(true); }
     });
+    $('orderForm')?.elements?.shipping_cost?.addEventListener('input', () => updateOrderItemTotals());
+    $('orderForm')?.elements?.shipping_cost?.addEventListener('change', () => updateOrderItemTotals());
     updateOrderItemTotals();
   }
 
@@ -2553,7 +2578,7 @@
       if (out) out.textContent = result.reason + (result.discount ? ' • تخفیف: ' + money(result.discount) : '');
       form.elements.discount.value = String(result.discount);
       if (form.elements.total) form.elements.total.value = String(Math.max(0, subtotal + Number(form.elements.shipping_cost.value||0) - result.discount));
-      if (total) total.textContent = money(Math.max(0, subtotal + Number(form.elements.shipping_cost.value||0) - result.discount));
+      if (total) total.textContent = 'جمع اقلام: ' + money(subtotal) + ' · ارسال: ' + money(Number(form.elements.shipping_cost.value||0)) + ' · تخفیف: ' + money(result.discount) + ' · نهایی: ' + money(Math.max(0, subtotal + Number(form.elements.shipping_cost.value||0) - result.discount));
       form.dataset.discountId = result.row?.id || '';
       if (showToast) toast(result.discount ? '__AZICON_SUCCESS__ تخفیف اعمال شد' : result.reason);
     } catch (err) {
