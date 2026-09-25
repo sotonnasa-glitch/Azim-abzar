@@ -2328,12 +2328,13 @@
 
   async function saveDiscount(e, id, presetCustomerId = null, presetProductId = null) {
     e.preventDefault();
-    if (!can.all()) return;
+    if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک/مدیر ارشد می‌تواند تخفیف را مدیریت کند.');
     const s = e.target.elements;
     const status = $('discountStatus');
+    const saveBtn = e.target.querySelector('button[type="submit"]');
     try {
       const name = s.name.value.trim();
-      let code = s.code.value.trim().toUpperCase().replace(/\s+/g,'');
+      const code = s.code.value.trim().toUpperCase().replace(/\s+/g,'');
       const type = s.discount_type.value;
       const value = Number(s.value.value || 0);
       const min = Number(s.min_order_amount.value || 0);
@@ -2343,54 +2344,56 @@
       const starts = s.starts_at.value ? new Date(s.starts_at.value).toISOString() : new Date().toISOString();
       const ends = s.ends_at.value ? new Date(s.ends_at.value).toISOString() : null;
       const scope = s.applies_to.value;
-      const checked = Array.from(document.querySelectorAll('#discountTargetList input[data-target-id]:checked')).map(el=>el.dataset.targetId);
+      const checked = Array.from(document.querySelectorAll('#discountTargetList input[data-target-id]:checked')).map(el=>el.dataset.targetId).filter(Boolean);
+
       if (!name) throw new Error('عنوان تخفیف الزامی است.');
       if (e.target.dataset.codeRequired === '1' && !code) throw new Error('کد تخفیف برای این بخش الزامی است.');
+      if (code && !/^[A-Z0-9_-]{2,50}$/.test(code)) throw new Error('فرمت کد تخفیف نامعتبر است.');
       if (type === 'percentage' && (value < 1 || value > 100)) throw new Error('درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.');
       if (type === 'fixed' && value < 1) throw new Error('مبلغ تخفیف باید بیشتر از صفر باشد.');
       if (min < 0) throw new Error('حداقل مبلغ سفارش نمی‌تواند منفی باشد.');
-      if (max != null && max < 0) throw new Error('سقف تخفیف نمی‌تواند منفی باشد.');
-      if (usage != null && usage < 1) throw new Error('سقف استفاده باید حداقل ۱ باشد.');
-      if (per < 1) throw new Error('حداکثر استفاده هر مشتری باید حداقل ۱ باشد.');
+      if (max != null && (!Number.isFinite(max) || max < 0)) throw new Error('سقف تخفیف نامعتبر است.');
+      if (usage != null && (!Number.isInteger(usage) || usage < 1)) throw new Error('سقف استفاده باید حداقل ۱ باشد.');
+      if (!Number.isInteger(per) || per < 1) throw new Error('حداکثر استفاده هر مشتری باید حداقل ۱ باشد.');
       if (scope !== 'all' && !checked.length) throw new Error('برای این دامنه حداقل یک مورد را انتخاب کن.');
+      if (scope === 'all' && checked.length) throw new Error('برای تخفیف کلی نباید موردی انتخاب شده باشد.');
       if (ends && new Date(ends) <= new Date(starts)) throw new Error('پایان باید بعد از شروع باشد.');
-      const payload = {
-        name, code: code || null, discount_type:type, value,
-        max_discount:max, min_order_amount:min, starts_at:starts, ends_at:ends,
-        usage_limit:usage, per_customer_limit:per, first_order_only:s.first_order_only.checked,
-        auto_apply:s.auto_apply.checked, applies_to:scope, priority:Number(s.priority.value||0),
-        is_active:s.is_active.checked, notes:s.notes.value.trim()||null, created_by:state.user.id
-      };
-      let rid=id;
-      let r = id
-        ? await state.db.from('discounts').update({...payload, updated_at:new Date().toISOString()}).eq('id',id)
-        : await state.db.from('discounts').insert(payload).select('id').single();
-      if (r.error) throw r.error;
-      rid = rid || r.data.id;
 
-      const tables = [
-        ['discount_products','product_id'],
-        ['discount_categories','category_id'],
-        ['discount_brands','brand_id'],
-        ['discount_customers','customer_id']
-      ];
-      for (const [table] of tables) {
-        const d = await state.db.from(table).delete().eq('discount_id',rid);
-        if (d.error) throw d.error;
-      }
-      if (scope !== 'all' && checked.length) {
-        const table = scope === 'products' ? 'discount_products' : scope === 'categories' ? 'discount_categories' : scope === 'brands' ? 'discount_brands' : 'discount_customers';
-        const key = scope === 'products' ? 'product_id' : scope === 'categories' ? 'category_id' : scope === 'brands' ? 'brand_id' : 'customer_id';
-        const ins = await state.db.from(table).insert(checked.map(v=>({discount_id:rid,[key]:v})));
-        if (ins.error) throw ins.error;
-      }
-      await audit(id?'update':'create','discounts',rid,{name,code,scope,type,value,targets:checked.length});
+      if (saveBtn) saveBtn.disabled = true;
+      const r = await state.db.rpc('azim_save_discount', {
+        p_id: id || null,
+        p_name: name,
+        p_code: code || null,
+        p_discount_type: type,
+        p_value: Math.floor(value),
+        p_max_discount: max == null ? null : Math.floor(max),
+        p_min_order_amount: Math.floor(min),
+        p_starts_at: starts,
+        p_ends_at: ends,
+        p_usage_limit: usage == null ? null : Math.floor(usage),
+        p_per_customer_limit: Math.floor(per),
+        p_first_order_only: !!s.first_order_only.checked,
+        p_auto_apply: !!s.auto_apply.checked,
+        p_applies_to: scope,
+        p_priority: Number.isFinite(Number(s.priority.value)) ? Math.floor(Number(s.priority.value)) : 0,
+        p_is_active: !!s.is_active.checked,
+        p_notes: s.notes.value.trim() || null,
+        p_targets: checked
+      });
+      if (r.error) throw r.error;
+
+      const rid = r.data?.id || id;
+      await audit(id ? 'update' : 'create', 'discounts', rid, {
+        name, code: code || null, scope, type, value: Math.floor(value), targets: checked.length
+      });
       closeModal();
       toast('__AZICON_SUCCESS__ تخفیف ذخیره شد');
       await loadDiscounts();
       await loadDiscountCodes();
     } catch (err) {
       if (status) status.textContent = '__AZICON_ERROR__ ' + errorText(err);
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
     }
   }
 
