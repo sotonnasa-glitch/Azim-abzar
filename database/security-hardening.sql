@@ -78,11 +78,8 @@ begin
     v_ip := null;
   end;
 
-  if v_mobile <> '' and v_mobile !~ '^09[0-9]{9} and (
-    select count(*) from private.azim_inquiry_rate_limits
-    where ip=v_ip and created_at > now()-interval '10 minutes'
-  ) >= 10 then
-    raise exception 'تعداد درخواست‌های ارتباطی زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.';
+  if v_mobile <> '' and v_mobile !~ '^09[0-9]{9}$' then
+    raise exception 'شماره موبایل واردشده معتبر نیست.';
   end if;
 
   if v_mobile <> '' and (
