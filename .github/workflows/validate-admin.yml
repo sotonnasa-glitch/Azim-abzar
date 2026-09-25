@@ -6,12 +6,16 @@ on:
       - 'admin-app.js'
       - 'admin.html'
       - 'database/discount-engine-hardening.sql'
+      - 'database/admin-integrity.sql'
+      - 'test-admin-static.mjs'
       - '.github/workflows/validate-admin.yml'
   pull_request:
     paths:
       - 'admin-app.js'
       - 'admin.html'
       - 'database/discount-engine-hardening.sql'
+      - 'database/admin-integrity.sql'
+      - 'test-admin-static.mjs'
       - '.github/workflows/validate-admin.yml'
 
 jobs:
@@ -24,17 +28,8 @@ jobs:
           node-version: 22
       - name: Syntax check admin JavaScript
         run: node --check admin-app.js
-      - name: Verify coupon UI hooks
-        shell: bash
-        run: |
-          grep -q 'data-menu-view="discount-codes"' admin.html
-          grep -q 'admin-app.js?v=50' admin.html
-          grep -q 'data-menu-view="ai"' admin.html
-          grep -q "\['ai','دستیار هوشمند'" admin-app.js
-          grep -q "sec.id = 'view-ai'" admin-app.js
-          grep -q 'azim_save_order_with_discount' admin-app.js
-          grep -q 'az-coupon-card' admin-app.js
-          grep -q 'data-new-discount-product' admin-app.js
+      - name: Deep admin static regression audit
+        run: node test-admin-static.mjs
       - name: Verify discount SQL
         shell: bash
         run: |
