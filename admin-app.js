@@ -1017,6 +1017,8 @@
     if (variantFilter === 'with') rows = rows.filter(p => Array.isArray(p.variants) && p.variants.length > 0);
     if (variantFilter === 'without') rows = rows.filter(p => !Array.isArray(p.variants) || !p.variants.length);
     state.products = rows;
+    // The catalog view may be filtered; never let an order form reuse a stale product cache.
+    state.productCacheLoaded = false;
 
     const variantCount = rows.filter(p => Array.isArray(p.variants) && p.variants.length > 0).length;
     if ($('productMetaCount')) $('productMetaCount').textContent = rows.length.toLocaleString('fa-IR') + ' محصول در نتیجه';
@@ -1611,11 +1613,13 @@
     try {
       const s = e.target.elements;
       let image = id ? (state.categories.find((x) => x.id === id)?.image || null) : null;
+      let uploadedPath = null;
       const file = s.image_file?.files?.[0];
       if (file && !String(file.type || '').startsWith('image/')) throw new Error('فایل تصویر دسته معتبر نیست.');
       if (file && file.size > 10 * 1024 * 1024) throw new Error('حجم تصویر دسته نباید بیشتر از ۱۰ مگابایت باشد.');
       if (file) {
         const path = 'categories/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        uploadedPath = path;
         const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
         if (up.error) throw up.error;
         image = state.db.storage.from('admin-media').getPublicUrl(path).data.publicUrl;
@@ -1641,7 +1645,10 @@
       closeModal();
       toast('__AZICON_SUCCESS__ دسته ذخیره شد');
       await loadCategories();
-    } catch (err) { $('categoryStatus').textContent = '__AZICON_ERROR__ ' + errorText(err); }
+    } catch (err) {
+      if (uploadedPath) { try { await state.db.storage.from('admin-media').remove([uploadedPath]); } catch (_) {} }
+      $('categoryStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
+    }
   }
 
   async function loadBrands() {
@@ -1702,11 +1709,13 @@
     try {
       const s = e.target.elements;
       let logo = id ? (state.brands.find((x) => x.id === id)?.logo || null) : null;
+      let uploadedPath = null;
       const file = s.logo_file?.files?.[0];
       if (file && !String(file.type || '').startsWith('image/')) throw new Error('فایل لوگوی برند معتبر نیست.');
       if (file && file.size > 10 * 1024 * 1024) throw new Error('حجم لوگوی برند نباید بیشتر از ۱۰ مگابایت باشد.');
       if (file) {
         const path = 'brands/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        uploadedPath = path;
         const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
         if (up.error) throw up.error;
         logo = state.db.storage.from('admin-media').getPublicUrl(path).data.publicUrl;
@@ -1732,7 +1741,10 @@
       closeModal();
       toast('__AZICON_SUCCESS__ برند ذخیره شد');
       await loadBrands();
-    } catch (err) { $('brandStatus').textContent = '__AZICON_ERROR__ ' + errorText(err); }
+    } catch (err) {
+      if (uploadedPath) { try { await state.db.storage.from('admin-media').remove([uploadedPath]); } catch (_) {} }
+      $('brandStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
+    }
   }
 
   async function loadInquiries() {
