@@ -92,6 +92,13 @@ begin
 
   end if;
 
+  if v_customer_id is not null then
+    select exists(
+      select 1 from public.orders o
+      where o.customer_id = v_customer_id and o.status <> 'cancelled'
+    ) into v_has_order;
+  end if;
+
   for v_item in select value from jsonb_array_elements(p_items) loop
     begin
       v_product_id := (v_item->>'product_id')::uuid;
@@ -219,7 +226,7 @@ begin
             and coalesce(o.status,'') <> 'cancelled'
         ) < coalesce(d.per_customer_limit,1)
       )
-      and (not d.first_order_only or not v_has_order)
+      and (not d.first_order_only or (v_customer_id is not null and not v_has_order))
       and (
         d.applies_to <> 'customers'
         or (
