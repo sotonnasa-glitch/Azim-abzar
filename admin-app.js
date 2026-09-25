@@ -1058,6 +1058,119 @@
     '</div>';
   }
 
+  function syncVariantPayload(form) {
+    if (!form) return [];
+    const rows = Array.from(form.querySelectorAll('[data-variant-row]'));
+    const variants = rows.map((row) => {
+      const size = String(row.querySelector('[data-variant-size]')?.value || '').trim();
+      const rawPrice = String(row.querySelector('[data-variant-price]')?.value || '').trim();
+      if (!size) return null;
+      const price = rawPrice === '' ? null : Number(rawPrice);
+      if (rawPrice !== '' && (!Number.isFinite(price) || price < 0)) {
+        throw new Error('قیمت یکی از سایزها نامعتبر است.');
+      }
+      return { size, price: rawPrice === '' ? null : Math.floor(price) };
+    }).filter(Boolean);
+    const json = JSON.stringify(variants);
+    if (form.elements.variants) form.elements.variants.value = json;
+    if (form.elements.variantsAdvanced) form.elements.variantsAdvanced.value = JSON.stringify(variants, null, 2);
+    return variants;
+  }
+
+  function initVariantEditor(form) {
+    if (!form) return;
+    const list = form.querySelector('#variantRows');
+    const add = form.querySelector('#addVariantBtn');
+    if (!list || !add) return;
+
+    const renderEmpty = () => {
+      list.innerHTML = '<div class="az-variant-empty">این محصول فعلاً سایزبندی ندارد. برای افزودن، «＋ افزودن سایز» را بزن.</div>';
+    };
+
+    const bind = () => {
+      list.querySelectorAll('[data-variant-row]').forEach((row) => {
+        row.querySelectorAll('[data-variant-size],[data-variant-price]').forEach((input) => {
+          input.oninput = () => {
+            syncVariantPayload(form);
+          };
+        });
+      });
+    };
+
+    add.onclick = () => {
+      const empty = list.querySelector('.az-variant-empty');
+      if (empty) list.innerHTML = '';
+      list.insertAdjacentHTML('beforeend',
+        '<div class="az-variant-row" data-variant-row>' +
+          '<input class="input" data-variant-size placeholder="سایز / مشخصه">' +
+          '<input class="input" data-variant-price inputmode="numeric" placeholder="قیمت این سایز">' +
+          '<button type="button" class="btn ghost" data-remove-variant>حذف</button>' +
+        '</div>'
+      );
+      bind();
+      syncVariantPayload(form);
+      list.querySelector('[data-variant-row]:last-of-type [data-variant-size]')?.focus();
+    };
+
+    list.onclick = (e) => {
+      const remove = e.target.closest('[data-remove-variant]');
+      if (!remove) return;
+      remove.closest('[data-variant-row]')?.remove();
+      if (!list.querySelector('[data-variant-row]')) renderEmpty();
+      bind();
+      syncVariantPayload(form);
+    };
+
+    bind();
+    syncVariantPayload(form);
+    form.addEventListener('submit', () => syncVariantPayload(form), true);
+  }
+
+  function initProductImageEditor(form) {
+    if (!form) return;
+    const input = form.elements.file;
+    const clear = form.elements.clearImage;
+    const imageBox = form.querySelector('.az-simple-image');
+    if (!input || !imageBox) return;
+
+    const setPreview = (src, alt) => {
+      let img = imageBox.querySelector('#productImagePreview');
+      if (!img) {
+        imageBox.innerHTML = '<img id="productImagePreview" alt="">';
+        img = imageBox.querySelector('#productImagePreview');
+      }
+      img.src = src;
+      img.alt = alt || form.elements.name?.value || 'محصول';
+      img.style.display = 'block';
+    };
+
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      if (!String(file.type || '').startsWith('image/')) {
+        input.value = '';
+        throw new Error('فایل انتخاب‌شده تصویر نیست.');
+      }
+      const oldUrl = form.dataset.azPreviewUrl;
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
+      const url = URL.createObjectURL(file);
+      form.dataset.azPreviewUrl = url;
+      setPreview(url, form.elements.name?.value || 'محصول');
+      if (clear) clear.checked = false;
+    };
+
+    clear?.addEventListener('change', () => {
+      if (!clear.checked || !form.dataset.azPreviewUrl) return;
+      const img = imageBox.querySelector('#productImagePreview');
+      if (img) img.style.opacity = '0.28';
+    });
+
+    form.elements.name?.addEventListener('input', () => {
+      const img = imageBox.querySelector('#productImagePreview');
+      if (img) img.alt = form.elements.name.value || 'محصول';
+    });
+  }
+
   function productForm(p) {
     const isEdit = !!p;
     const categoryOptions = state.categories.map((cat) =>
