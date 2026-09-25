@@ -1,4 +1,13 @@
 -- Azim Abzar: public cart / order request engine
+-- Order-time customer/shipping snapshot fields preserve historical order data
+-- even if the customer master record changes later.
+alter table public.orders
+  add column if not exists customer_name text,
+  add column if not exists customer_mobile text,
+  add column if not exists customer_email text,
+  add column if not exists shipping_address text,
+  add column if not exists shipping_city text;
+
 -- Hardened guest wrapper delegates to the private implementation; see database/security-hardening.sql.
 -- Active production function definition captured from Supabase.
 grant usage on schema private to anon;
