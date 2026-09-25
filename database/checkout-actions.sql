@@ -2,6 +2,11 @@
 -- Apply after database/public-cart.sql and database/order-tracking.sql.
 
 alter table public.orders
+  add column if not exists customer_name text,
+  add column if not exists customer_mobile text,
+  add column if not exists customer_email text,
+  add column if not exists shipping_address text,
+  add column if not exists shipping_city text,
   add column if not exists payment_method text,
   add column if not exists payment_provider text,
   add column if not exists payment_reference text,
