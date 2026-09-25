@@ -872,6 +872,7 @@
       unpaid: 'پرداخت نشده',
       pending: 'در انتظار پرداخت',
       paid: 'پرداخت شده',
+      partially_refunded: 'بخشی از وجه مسترد شده',
       refunded: 'مسترد شده'
     };
 
@@ -916,24 +917,42 @@
         '</div>';
     }
 
-    window.copyText = function(text, btnId){
-      if(!navigator.clipboard){
-        const t = document.createElement('textarea');
-        t.value = text;
-        document.body.appendChild(t);
-        t.select();
-        document.execCommand('copy');
-        document.body.removeChild(t);
-      } else {
-        navigator.clipboard.writeText(text);
-      }
-      const b = $(btnId);
-      if(b){
-        const orig = b.innerText;
-        b.innerText = 'کپی شد ✓';
-        setTimeout(() => { b.innerText = orig; }, 2000);
+    window.copyText = async function(text, btnId){
+      try{
+        if(navigator.clipboard && window.isSecureContext){
+          await navigator.clipboard.writeText(text);
+        }else{
+          const t = document.createElement('textarea');
+          t.value = text;
+          t.setAttribute('readonly','');
+          t.style.position = 'fixed';
+          t.style.opacity = '0';
+          document.body.appendChild(t);
+          t.select();
+          document.execCommand('copy');
+          document.body.removeChild(t);
+        }
+        const b = $(btnId);
+        if(b){
+          const orig = b.innerText;
+          b.innerText = 'کپی شد ✓';
+          setTimeout(() => { b.innerText = orig; }, 2000);
+        }
+      }catch(_){
+        setMessage('کپی کردن اطلاعات انجام نشد؛ متن را دستی کپی کنید.', 'error');
       }
     };
+
+    function safeExternalUrl(value){
+      try{
+        const raw = String(value || '').trim();
+        if(!raw) return '';
+        const u = new URL(raw, window.location.href);
+        return ['http:','https:'].includes(u.protocol) ? u.href : '';
+      }catch(_){
+        return '';
+      }
+    }
 
     function render(data){
       const s = orderStatus[data.status] || { label: data.status || 'نامشخص', desc: 'وضعیت بررسی شد.', step: 1 };
@@ -991,13 +1010,22 @@
       if(data.can_cancel&&data.cancel_request_status!=='pending') cancelAction='<button class="action-btn" type="button" id="cancelOrderBtn">❌ درخواست لغو سفارش</button>';
       else if(data.cancel_request_status==='pending') cancelAction='<span class="badge">درخواست لغو در حال بررسی است</span>';
 
+      const trackingUrl = safeExternalUrl(data.tracking_url);
+      const carrierLine = data.shipping_carrier
+        ? '<div style="margin-top:5px;font-size:10.5px;color:#aeb7b1;">شرکت ارسال: ' + esc(data.shipping_carrier) + '</div>'
+        : '';
+      const trackingLink = trackingUrl
+        ? '<a class="action-btn" style="margin-top:8px;min-height:36px;height:auto;padding:7px 10px;" href="' + esc(trackingUrl) + '" target="_blank" rel="noopener noreferrer nofollow">🔗 پیگیری مرسوله</a>'
+        : '';
       const trackingBlock = data.tracking_code ?
         '<div class="tracking-code-banner">' +
           '<div>' +
-            '<div style="font-size: 11.5px; color: #8e9a91; margin-bottom: 2px;">کد رهگیری مرسوله (پست / تیپاکس):</div>' +
+            '<div style="font-size: 11.5px; color: #8e9a91; margin-bottom: 2px;">کد رهگیری مرسوله:</div>' +
             '<div class="tracking-code-text">' + esc(data.tracking_code) + '</div>' +
+            carrierLine +
+            trackingLink +
           '</div>' +
-          '<button class="btn-copy-code" id="btnCopyTrack" type="button" onclick="copyText(\'' + esc(data.tracking_code) + '\', \'btnCopyTrack\')">کپی کد</button>' +
+          '<button class="btn-copy-code" id="btnCopyTrack" type="button" data-copy-value="' + esc(data.tracking_code) + '">کپی کد</button>' +
         '</div>' : '';
 
       $('result').innerHTML =
@@ -1006,7 +1034,7 @@
             '<span class="order-code-title">شناسه سفارش</span>' +
             '<div class="order-code-text">' +
               '<span>' + esc(data.order_code) + '</span>' +
-              '<button class="btn-copy-code" id="btnCopyCode" type="button" onclick="copyText(\'' + esc(data.order_code) + '\', \'btnCopyCode\')">کپی</button>' +
+              '<button class="btn-copy-code" id="btnCopyCode" type="button" data-copy-value="' + esc(data.order_code) + '">کپی</button>' +
             '</div>' +
           '</div>' +
           '<div class="status-badge ' + (delivered ? 'delivered' : (cancelled ? 'cancelled' : '')) + '">' +
@@ -1047,6 +1075,9 @@
         '<div id="actionBox" class="action-box" hidden></div>';
 
       $('result').hidden = false;
+      document.querySelectorAll('[data-copy-value]').forEach(btn=>{
+        btn.addEventListener('click',()=>window.copyText(btn.getAttribute('data-copy-value') || '', btn.id));
+      });
       const cancelBtn=$('cancelOrderBtn');
       if(cancelBtn) cancelBtn.onclick=()=>openCancelForm();
       document.querySelectorAll('[data-return-item]').forEach(btn=>{btn.onclick=()=>openReturnForm(items.find(x=>String(x.id)===String(btn.dataset.returnItem)));});
