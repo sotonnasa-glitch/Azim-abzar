@@ -183,11 +183,11 @@ declare
   v_order public.orders%rowtype;
   v_request public.order_action_requests%rowtype;
 begin
-  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}'$'
-     and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}'$' then
+  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$'
+     and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$' then
     return jsonb_build_object('ok',false,'message','شناسه سفارش نامعتبر است.');
   end if;
-  if v_mobile !~ '^09[0-9]{9}'$' then
+  if v_mobile !~ '^09[0-9]{9}$' then
     return jsonb_build_object('ok',false,'message','شماره موبایل معتبر وارد کنید.');
   end if;
   if length(v_reason)<2 or length(v_reason)>300 then
