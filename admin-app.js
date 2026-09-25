@@ -863,16 +863,18 @@
   }
 
   async function loadSection(name) {
-    if (name === 'discounts') return loadDiscounts();
-    if (name === 'discount-codes') return loadDiscountCodes();
-    if (name === 'ai-products') return loadAIProducts();
-    const skeletons = {
-      products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
-      inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
-      media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
-    };
-    if (skeletons[name]) showSkeleton(skeletons[name]);
     try {
+      if (name === 'discounts') return await loadDiscounts();
+      if (name === 'discount-codes') return await loadDiscountCodes();
+      if (name === 'ai-products') return await loadAIProducts();
+
+      const skeletons = {
+        products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
+        inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
+        media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
+      };
+      if (skeletons[name]) showSkeleton(skeletons[name]);
+
       if (name === 'dashboard') await loadDashboard();
       else if (name === 'products') await loadProducts();
       else if (name === 'categories') await loadCategories();
@@ -886,9 +888,18 @@
       else if (name === 'admins') await loadAdmins();
       else if (name === 'audit') await loadAudit();
     } catch (e) {
-      toast('__AZICON_ERROR__ ' + errorText(e));
+      console.error('Azim Abzar admin section load failed:', e);
+      const message = errorText(e);
+      const targets = {
+        products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
+        inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
+        media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable'
+      };
+      if (targets[name]) showSectionError(targets[name], e);
+      toast('__AZICON_ERROR__ ' + message);
     }
   }
+
 
   async function countTable(table, filter) {
     let q = state.db.from(table).select('*', { count: 'exact', head: true });
@@ -1316,11 +1327,13 @@
     try {
       validateVariantInputs(e.target);
       let img = id ? (state.products.find((x) => x.id === id)?.img || null) : null;
+      let uploadedPath = null;
       if (s.clearImage?.checked) img = null;
       const file = s.file?.files?.[0];
       if (file) {
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
         const path = 'products/' + crypto.randomUUID() + '.' + ext;
+        uploadedPath = path;
         const up = await state.db.storage.from('product-images').upload(path, file, {
           upsert: false, contentType: file.type || 'image/jpeg'
         });
@@ -1346,6 +1359,11 @@
       if (discountActive && (!discountValue || !Number.isFinite(discountValue) || discountValue < 1)) throw new Error('مقدار تخفیف الزامی است.');
       if (discountActive && discountType === 'percentage' && discountValue > 100) throw new Error('درصد تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد.');
       if (discountStarts && discountEnds && new Date(discountEnds) <= new Date(discountStarts)) throw new Error('پایان تخفیف باید بعد از شروع باشد.');
+      const originalPrice = s.original_price.value === '' ? null : Number(s.original_price.value);
+      const currentPrice = s.price.value === '' ? null : Number(s.price.value);
+      if (originalPrice != null && (!Number.isFinite(originalPrice) || originalPrice < 0)) throw new Error('قیمت اصلی نامعتبر است.');
+      if (currentPrice != null && (!Number.isFinite(currentPrice) || currentPrice < 0)) throw new Error('قیمت فعلی نامعتبر است.');
+
       const p = {
         name: s.name.value.trim(),
         brand: s.brand.value.trim() || 'بدون برند',
@@ -1354,8 +1372,8 @@
         code: nextCode,
         badge: s.badge.value.trim() || null,
         description: s.description.value.trim() || s.name.value.trim(),
-        original_price: s.original_price.value ? Number(s.original_price.value) : null,
-        price: s.price.value ? Number(s.price.value) : null,
+        original_price: originalPrice,
+        price: currentPrice,
         img,
         is_active: s.is_active.checked,
         discount_type: discountType,
@@ -1373,6 +1391,9 @@
       toast('__AZICON_SUCCESS__ محصول ذخیره شد');
       await Promise.all([loadProducts(), loadDashboard()]);
     } catch (err) {
+      if (uploadedPath) {
+        try { await state.db.storage.from('product-images').remove([uploadedPath]); } catch (_) {}
+      }
       $('productStatus').textContent = '__AZICON_ERROR__ ' + errorText(err);
     }
   }
@@ -1593,6 +1614,8 @@
       const s = e.target.elements;
       let image = id ? (state.categories.find((x) => x.id === id)?.image || null) : null;
       const file = s.image_file?.files?.[0];
+      if (file && !String(file.type || '').startsWith('image/')) throw new Error('فایل تصویر دسته معتبر نیست.');
+      if (file && file.size > 10 * 1024 * 1024) throw new Error('حجم تصویر دسته نباید بیشتر از ۱۰ مگابایت باشد.');
       if (file) {
         const path = 'categories/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
@@ -1682,6 +1705,8 @@
       const s = e.target.elements;
       let logo = id ? (state.brands.find((x) => x.id === id)?.logo || null) : null;
       const file = s.logo_file?.files?.[0];
+      if (file && !String(file.type || '').startsWith('image/')) throw new Error('فایل لوگوی برند معتبر نیست.');
+      if (file && file.size > 10 * 1024 * 1024) throw new Error('حجم لوگوی برند نباید بیشتر از ۱۰ مگابایت باشد.');
       if (file) {
         const path = 'brands/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         const up = await state.db.storage.from('admin-media').upload(path, file, { upsert: false, contentType: file.type });
