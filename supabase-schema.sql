@@ -35,14 +35,14 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
   select coalesce(auth.jwt()->>'aal','aal1')='aal2'
     and exists(
       select 1 from public.admin_users
       where user_id = auth.uid()
         and is_active = true
     );
-$;
+$$;
 
 revoke all on function private.is_azim_admin() from public;
 grant execute on function private.is_azim_admin() to authenticated;
