@@ -2117,17 +2117,26 @@
     async function loadLiveCatalog() {
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
-        const u = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=id,code,name,description,img,price,variants,is_active,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
-        const r = await fetch(u, {
-          headers: {
-            apikey: window.AZIM_SUPABASE_ANON_KEY,
-            Authorization: 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
-          },
-          cache: 'no-store'
-        });
-        if (!r.ok) return null;
-        const rows = await r.json();
-        return Array.isArray(rows) ? rows : [];
+        const base = window.AZIM_SUPABASE_URL + '/rest/v1/products';
+        const select = 'id,code,name,description,img,price,variants,is_active,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
+        const pageSize = 1000;
+        const rows = [];
+        for (let offset = 0; offset < 10000; offset += pageSize) {
+          const u = base + '?select=' + encodeURIComponent(select) + '&limit=' + pageSize + '&offset=' + offset;
+          const r = await fetch(u, {
+            headers: {
+              apikey: window.AZIM_SUPABASE_ANON_KEY,
+              Authorization: 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
+            },
+            cache: 'no-store'
+          });
+          if (!r.ok) return rows.length ? rows : null;
+          const page = await r.json();
+          if (!Array.isArray(page)) return rows.length ? rows : null;
+          rows.push(...page);
+          if (page.length < pageSize) break;
+        }
+        return rows;
       } catch (_) {
         return null;
       }
