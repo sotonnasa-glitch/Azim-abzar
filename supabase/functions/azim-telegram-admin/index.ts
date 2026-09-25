@@ -677,6 +677,9 @@ async function showSiteContentItem(chatId: number | string, key: string) {
 }
 
 async function handleReplyMessage(msg: any) {
+  // Reply-driven admin actions must be authorized before parsing or mutating any state.
+  if (!isAdmin(msg.chat?.id)) return false;
+
   const replyText = String(msg.reply_to_message?.text ?? "");
   const text = String(msg.text ?? "").trim();
   if (!replyText || !text) return false;
