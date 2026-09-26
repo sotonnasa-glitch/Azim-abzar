@@ -1068,7 +1068,7 @@ main{position:relative;padding:20px 0 64px}
       if(rm){ C.remove(rm.dataset.remove); coupon=null; render(); }
     });
 
-    $('clearCartBtn').onclick=()=>{ if(confirm('کل سبد سفارش پاک شود؟')){C.clear();coupon=null;render();} };
+    $('clearCartBtn').onclick=()=>{ if(confirm('کل سبد سفارش پاک شود؟')){C.clear();coupon=null;saveOnlineRecovery(null);render();} };
     if(onlineRecovery?.order_code) renderOnlineRecovery();
     $('applyCouponBtn').onclick=applyCoupon;
     $('couponInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCoupon();}});
