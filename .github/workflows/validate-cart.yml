@@ -62,3 +62,14 @@ jobs:
           grep -q 'grant execute' database/public-cart.sql
           grep -Eq 'as \$(\$|function\$)' database/public-cart.sql
           grep -Eq '\$(\$|function\$);' database/public-cart.sql
+
+      - name: Check online payment gateway boundary
+        run: |
+          test -f supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'PAYMENT_PROVIDER_NOT_IMPLEMENTED' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'payment_transactions' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'if (action === "start")' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'if (action === "verify")' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'payment-callback.html' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'online_available' database/checkout-actions.sql
+          grep -q 'azim-payment-gateway' cart.html
