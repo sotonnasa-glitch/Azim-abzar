@@ -37,10 +37,11 @@ async function currentSettings() {
 async function reconcile() {
   const settings = await currentSettings();
   const ready = String(settings?.gateway_ready ?? "false").toLowerCase() === "true";
-  const enabled = String(settings?.online_enabled ?? "false").toLowerCase() === "true";
   const provider = String(settings?.provider ?? "").trim().toLowerCase();
 
-  if (!ready || !enabled || !provider) {
+  // Reconciliation is for already-created payments. Disabling new checkout
+  // must not stop settlement/recovery of an older pending transaction.
+  if (!ready || !provider) {
     return { ok: true, skipped: true, reason: "gateway_not_ready", checked: 0 };
   }
 
