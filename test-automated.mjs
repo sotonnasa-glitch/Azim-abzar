@@ -503,6 +503,10 @@ function testAuditAddendumGuards() {
   const assetsIgnore = fs.readFileSync(path.join(__dirname, '.assetsignore'), 'utf8');
   const pagesWorkflow = fs.readFileSync(path.join(__dirname, '.github', 'workflows', 'pages.yml'), 'utf8');
   const adminJs = fs.readFileSync(path.join(__dirname, 'admin-app.js'), 'utf8');
+  const paymentGatewayJs = fs.readFileSync(path.join(__dirname, 'supabase', 'functions', 'azim-payment-gateway', 'index.ts'), 'utf8');
+  const paymentReconcileJs = fs.readFileSync(path.join(__dirname, 'supabase', 'functions', 'azim-payment-reconcile', 'index.ts'), 'utf8');
+  const telegramAdminJs = fs.readFileSync(path.join(__dirname, 'supabase', 'functions', 'azim-telegram-admin', 'index.ts'), 'utf8');
+  const checkoutSql = fs.readFileSync(path.join(__dirname, 'database', 'checkout-actions.sql'), 'utf8');
   const cartPages = ['cart.html', 'index.html', 'contact.html', 'products-v4.html']
     .map(name => [name, fs.readFileSync(path.join(__dirname, name), 'utf8')]);
 
@@ -561,6 +565,45 @@ function testAuditAddendumGuards() {
     pass('پنل پرداخت از نمایش Secret، تأیید دستی پرداخت و Reference کامل جلوگیری می‌کند');
   } else {
     fail('محافظ‌های UI مرکز پرداخت کامل نیستند');
+  }
+
+  if (
+    paymentGatewayJs.includes('idempotency_key: transaction.idempotency_key ?? transaction.id') &&
+    paymentGatewayJs.includes('const savedStart = await updateTransaction(transaction.id') &&
+    paymentGatewayJs.includes('if (!ready || !provider)') &&
+    paymentReconcileJs.includes('if (!ready || !provider)') &&
+    !paymentReconcileJs.includes('if (!ready || !enabled || !provider)')
+  ) {
+    pass('منطق retry/تأیید/پایش تراکنش: idempotency حفظ می‌شود و reconcile بعد از خاموشی checkout هم ادامه دارد');
+  } else {
+    fail('منطق retry/reconcile درگاه کامل نیست');
+  }
+
+  if (
+    checkoutSql.includes("lower(coalesce(sc.payload->>'gateway_ready','false'))='true'") &&
+    checkoutSql.includes("nullif(trim(coalesce(sc.payload->>'provider','')),'') is not null")
+  ) {
+    pass('سمت سرور اجازه انتخاب پرداخت آنلاین را فقط برای درگاه فعال و آماده می‌دهد');
+  } else {
+    fail('در checkout سمت سرور فقط online_enabled کنترل می‌شود');
+  }
+
+  if (
+    telegramAdminJs.includes('if (order.payment_method==="online")') &&
+    telegramAdminJs.includes('supabase.rpc("azim_create_online_refund_request"') &&
+    telegramAdminJs.includes('p_idempotency_key:"telegram-cancel-refund:"') &&
+    telegramAdminJs.includes('p_idempotency_key:"telegram-return-refund:"')
+  ) {
+    pass('مسیرهای عودت وجه آنلاین در تلگرام به درخواست Refund امن متصل هستند');
+  } else {
+    fail('مسیر عودت وجه آنلاین تلگرام هنوز شامل تغییر مستقیم وضعیت مالی است');
+  }
+
+  if (
+    paymentGatewayJs.includes('const saved = await updateTransaction(transaction.id, { return_url: desiredReturnUrl });') &&
+    checkoutSql.includes("payment_method=v_method")
+  ) {
+    pass('ذخیره callback و روش پرداخت قبل از ادامه checkout بررسی می‌شود');
   }
 
   const saveInquiryPos = adminJs.indexOf('async function saveInquiry(id)');
