@@ -1079,6 +1079,37 @@ main{position:relative;padding:20px 0 64px}
             p_payment_method:document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone'
           })
         }).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d?.message||d?.hint||'ثبت سفارش ناموفق بود.');return d;});
+        const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
+
+        if(selectedPayment==='online'){
+          btn.innerHTML='<span style="display:inline-block;animation:azSlowSpin 1s linear infinite">↗</span> در حال اتصال به درگاه…';
+          const payUrl=(window.AZIM_SUPABASE_URL||'')+'/functions/v1/azim-payment-gateway';
+          const payResp=await fetch(payUrl,{
+            method:'POST',
+            headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+            body:JSON.stringify({
+              action:'start',
+              order_code:data.order_code||'',
+              mobile:$('mobile').value.trim()
+            })
+          });
+          const payData=await payResp.json().catch(()=>({}));
+          if(!payResp.ok || !payData?.ok || !payData?.redirect_url){
+            throw new Error(payData?.error||'شروع پرداخت آنلاین انجام نشد.');
+          }
+          try{
+            localStorage.setItem('azim_pending_payment',JSON.stringify({
+              order_code:data.order_code||'',
+              transaction_id:payData.transaction_id||'',
+              created_at:new Date().toISOString()
+            }));
+          }catch(_){}
+          C.clear();
+          coupon=null;
+          window.location.href=payData.redirect_url;
+          return;
+        }
+
         C.clear();
         coupon=null;
         $('cartWorkspace').hidden=true;
@@ -1146,11 +1177,11 @@ main{position:relative;padding:20px 0 64px}
         try{ data=await r.json(); }catch(_){}
         if(!r.ok) throw new Error(data?.message||data?.hint||'روش‌های پرداخت دریافت نشد.');
 
-      const online=Boolean(data?.online_enabled);
+      const online=Boolean(data?.online_available);
       const onlineOption=$('onlinePaymentOption');
       const note=$('paymentNote');
       if(onlineOption) onlineOption.hidden=!online;
-      if(note) note.textContent=online?'پرداخت آنلاین فعال است و در صورت انتخاب، ادامه پرداخت طبق تنظیمات درگاه انجام می‌شود.':'درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام قابل استفاده است.';
+      if(note) note.textContent=online?'پرداخت آنلاین فعال است و پس از ثبت سفارش شما را به درگاه امن فروشگاه منتقل می‌کند.':'درگاه آنلاین فعلاً فعال نیست؛ تماس یا پیام قابل استفاده است.';
         if(!online && document.querySelector('input[name="paymentMethod"]:checked')?.value==='online'){
         document.querySelector('input[name="paymentMethod"][value="phone"]')?.click();
       }
