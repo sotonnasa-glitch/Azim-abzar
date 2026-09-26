@@ -76,10 +76,7 @@
         }
         actions.innerHTML='<a class="secondary" href="order-status.html?code='+encodeURIComponent(data?.order_code||code)+'">پیگیری سفارش</a><a class="secondary" href="index.html">صفحه اصلی</a>';
         actions.classList.remove('hidden');
-        try{
-        localStorage.removeItem('azim_pending_payment');
-        localStorage.removeItem('azim_payment_recovery');
-      }catch(_){}
+        try{ localStorage.removeItem('azim_pending_payment'); }catch(_){}
         return;
       }
 
@@ -91,7 +88,10 @@
       if(data.order_code){ codeBox.textContent='کد سفارش: '+data.order_code; codeBox.classList.remove('hidden'); }
       actions.innerHTML='<a class="primary" href="order-status.html?code='+encodeURIComponent(data.order_code||code)+'">پیگیری سفارش</a><a class="secondary" href="products-v4.html">بازگشت به محصولات</a>';
       actions.classList.remove('hidden');
-      try{ localStorage.removeItem('azim_pending_payment'); }catch(_){}
+      try{
+        localStorage.removeItem('azim_pending_payment');
+        localStorage.removeItem('azim_payment_recovery');
+      }catch(_){}
     }catch(e){
       fail('ارتباط با سامانه پرداخت برقرار نشد. چند لحظه بعد دوباره صفحه را باز کنید.');
     }
