@@ -797,8 +797,7 @@
     }
     @keyframes azArrowBounceL {
       0%, 100% { transform: translateX(-2px); }
-      50% { transform: translateX(-5px); }
-    }
+      50% { transform: translateX(-5px); }    }
 
     .pages button:disabled {
       opacity: 0.26;
@@ -1597,8 +1596,7 @@
       }
       .az-nav-btn.az-nav-btn-cart .az-cart-badge[hidden] {
         display: none !important;
-      }
-      .modal-box { padding: 20px 16px; border-radius: 20px; }
+      }      .modal-box { padding: 20px 16px; border-radius: 20px; }
       .modal-close-btn { top: 14px; left: 14px; width: 38px; height: 38px; }
       .modal-specs-grid { grid-template-columns: 1fr; }
       .footer-inner { flex-direction: column; text-align: center; }
@@ -2236,7 +2234,7 @@
       const discountBadge = shownNet < shownBase ? '<span class="badge-discount">تخفیف</span>' : '';
       const cat = categoriesMap[x.id] || 'ابزار تخصصی';
 
-      const variantBadge = vs.length ? `<span class="badge-variant">${fmt(vs.length)} سایز</span>` : '';
+      const selectedVariantLabel = vs.length ? String(vs[0]?.[0] || '').trim() : '';\n      const variantBadge = vs.length ? `<span class="badge-variant" data-variant-badge="${esc(x.id)}">سایز ${esc(selectedVariantLabel)}</span>` : '';
       
       const select = vs.length 
         ? `<div class="sizebox">
@@ -2289,12 +2287,7 @@
           const d = getData(id);
           const v = d.vs[Number(s.value)];
           
-          const priceEl = document.querySelector(`[data-price="${id}"]`);
-          if (priceEl && v) {
-            const d = getData(id);
-            const net = discountedPrice(v[1], d.discount);
-            priceEl.innerHTML = priceHtml(net, v[1]);
-          }
+          const cardEl = s.closest('.card');\n          if (!cardEl || !v) return;\n\n          const priceEl = cardEl.querySelector('[data-price]');\n          if (priceEl) {\n            const net = discountedPrice(v[1], d.discount);\n            priceEl.innerHTML = priceHtml(net, v[1]);\n          }\n\n          const badgeEl = cardEl.querySelector('[data-variant-badge]');\n          if (badgeEl) badgeEl.textContent = 'سایز ' + String(v[0] || '').trim();
         });
       });
     }
@@ -2397,8 +2390,7 @@
       const modalSpecVariants = document.getElementById('modalSpecVariants');
       const modalSpecStatus = document.getElementById('modalSpecStatus');
       if (modalSpecCategory) modalSpecCategory.textContent = cat;
-      if (modalSpecVariants) modalSpecVariants.textContent = vs.length ? fmt(vs.length) + ' گزینه' : 'بدون سایزبندی';
-      if (modalSpecStatus) {
+      if (modalSpecVariants) modalSpecVariants.textContent = vs.length ? fmt(vs.length) + ' گزینه' : 'بدون سایزبندی';      if (modalSpecStatus) {
         const live = livePriceData[id];
         modalSpecStatus.textContent = live ? (live.is_active ? 'فعال در فروشگاه' : 'غیرفعال') : 'اطلاعات کاتالوگ';
         modalSpecStatus.style.color = live?.is_active === false ? '#ff8b8b' : '#2ed573';
