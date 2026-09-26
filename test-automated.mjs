@@ -555,7 +555,7 @@ function testAuditAddendumGuards() {
 
   if (
     adminJs.includes("هیچ دکمه‌ای در این پنل پرداخت را دستی موفق نمی‌کند") &&
-    adminJs.includes("Reference کامل ماسک شده است") &&
+    adminJs.includes("reference کامل ماسک شده است") &&
     adminJs.includes("پرداخت آنلاین فعال شد")
   ) {
     pass('پنل پرداخت از نمایش Secret، تأیید دستی پرداخت و Reference کامل جلوگیری می‌کند');
