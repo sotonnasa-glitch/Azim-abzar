@@ -1373,7 +1373,7 @@ async function handleCallbackQuery(query: any) {
     const [, orderCode, nextStatus] = data.split(":");
     const supabase = await getSupabase();
     const { data: current, error: currentError } = await supabase.from("orders")
-      .select("order_code,status,payment_status,shipping_status").eq("order_code", orderCode).maybeSingle();
+      .select("order_code,status,payment_status,payment_method,shipping_status").eq("order_code", orderCode).maybeSingle();
     if (currentError) throw currentError;
     if (!current) throw new Error("سفارش پیدا نشد: " + orderCode);
 
@@ -1401,7 +1401,7 @@ async function handleCallbackQuery(query: any) {
     const { data: order, error } = await supabase.from("orders")
       .update({ status: nextStatus, updated_at: new Date().toISOString() })
       .eq("order_code", orderCode)
-      .select("order_code,status,payment_status,shipping_status").maybeSingle();
+      .select("order_code,status,payment_status,payment_method,shipping_status").maybeSingle();
     if (error) throw error;
     if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
 
