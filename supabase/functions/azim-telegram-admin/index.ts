@@ -1157,6 +1157,38 @@ async function handleCallbackQuery(query: any) {
       if (req.status!=="approved" || req.refund_status!=="pending" || order.payment_status!=="paid") {
         throw new Error("این درخواست در وضعیت لازم برای ثبت عودت وجه نیست.");
       }
+
+      if (order.payment_method==="online") {
+        const { data: tx, error: txError } = await supabase.from("payment_transactions")
+          .select("id,amount,status")
+          .eq("order_id",order.id)
+          .in("status",["paid","partially_refunded"])
+          .order("created_at",{ascending:false})
+          .limit(1)
+          .maybeSingle();
+        if (txError) throw txError;
+        if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
+
+        const refund = await supabase.rpc("azim_create_online_refund_request",{
+          p_transaction_id:tx.id,
+          p_amount:Number(order.total||0),
+          p_reason:"درخواست عودت وجه پس از لغو سفارش از پنل تلگرام",
+          p_idempotency_key:"telegram-cancel-refund:"+requestId
+        });
+        if (refund.error) throw refund.error;
+
+        await sendText(chatId,
+          "🟠 درخواست عودت وجه سفارش " + order.order_code + " ثبت شد.\n\n" +
+          "مبلغ: " + money(refund.data?.amount ?? order.total) + "\n\n" +
+          "تا تأیید واقعی درگاه، وضعیت پرداخت «مسترد شده» نمی‌شود.",
+          {reply_markup:{inline_keyboard:[
+            [{text:"⬅️ درخواست‌ها",callback_data:"service_requests"}],
+            [{text:"📄 سفارش",callback_data:"order:"+order.order_code}]
+          ]}}
+        );
+        return;
+      }
+
       const { error: updateError } = await supabase.from("orders")
         .update({payment_status:"refunded",updated_at:new Date().toISOString()})
         .eq("id",order.id);
@@ -1259,6 +1291,43 @@ async function handleCallbackQuery(query: any) {
         throw new Error("این مرجوعی هنوز در وضعیت لازم برای عودت وجه نیست.");
       }
 
+      if (order.payment_method==="online") {
+        const { data: tx, error: txError } = await supabase.from("payment_transactions")
+          .select("id,amount,status")
+          .eq("order_id",order.id)
+          .in("status",["paid","partially_refunded"])
+          .order("created_at",{ascending:false})
+          .limit(1)
+          .maybeSingle();
+        if (txError) throw txError;
+        if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
+
+        const refundAmount=Number(req.refund_amount||0);
+        if (!Number.isSafeInteger(refundAmount) || refundAmount<=0) {
+          throw new Error("مبلغ عودت این مرجوعی معتبر نیست.");
+        }
+
+        const refund = await supabase.rpc("azim_create_online_refund_request",{
+          p_transaction_id:tx.id,
+          p_amount:refundAmount,
+          p_reason:"درخواست عودت وجه مرجوعی از پنل تلگرام",
+          p_idempotency_key:"telegram-return-refund:"+requestId
+        });
+        if (refund.error) throw refund.error;
+
+        await sendText(chatId,
+          "🟠 درخواست عودت وجه مرجوعی ثبت شد.\n\n" +
+          "سفارش: " + order.order_code +
+          "\n💰 مبلغ این مرجوعی: " + money(refund.data?.amount ?? refundAmount) +
+          "\n\nپس از تأیید واقعی درگاه، وضعیت پرداخت نهایی می‌شود.",
+          {reply_markup:{inline_keyboard:[
+            [{text:"📄 سفارش",callback_data:"order:"+order.order_code}],
+            [{text:"🔄 درخواست‌ها",callback_data:"service_requests"}]
+          ]}}
+        );
+        return;
+      }
+
       const { data: paidReturns, error: paidError } = await supabase.from("order_return_requests")
         .select("refund_amount")
         .eq("order_id",order.id)
@@ -1280,7 +1349,8 @@ async function handleCallbackQuery(query: any) {
       if (requestError) throw requestError;
 
       await sendText(chatId,
-        "✅ عودت وجه مرجوعی ثبت شد.\n\nسفارش: " + order.order_code +
+        "✅ عودت وجه مرجوعی ثبت شد.\n\n" +
+        "سفارش: " + order.order_code +
         "\n💰 مبلغ این مرجوعی: " + money(req.refund_amount) +
         "\n💳 وضعیت پرداخت: " + paymentStatusLabel(nextPayment),
         {reply_markup:{inline_keyboard:[
