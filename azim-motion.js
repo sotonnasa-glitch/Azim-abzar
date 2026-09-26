@@ -1,9 +1,9 @@
 (() => {
-  if (window.__azimIndustrialMotionV7) return;
-  window.__azimIndustrialMotionV7 = true;
+  if (window.__azimIndustrialMotionV8) return;
+  window.__azimIndustrialMotionV8 = true;
 
   const style = document.createElement('style');
-  style.id = 'azim-enhanced-motion-styles-v7';
+  style.id = 'azim-enhanced-motion-styles-v8';
   style.textContent = `
     /* === Floating Ambient Canvas === */
     #az-ambient-canvas {
@@ -147,7 +147,6 @@
       opacity: 0;
       transform: translateY(22px);
       transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: opacity, transform;
     }
     .az-scroll-fade.az-visible {
       opacity: 1;
@@ -193,8 +192,10 @@
       mouseY = -1000;
     }, { passive: true });
 
-    // Particle count: 50 rich glowing industrial embers and sparks
-    const count = 50;
+    // Performance: fewer particles on mobile and a modest count on desktop.
+    // Keep the effect visible without 50 radial-gradient allocations every frame.
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const count = isMobile ? 16 : 30;
     const particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -211,13 +212,22 @@
     }
 
     let isVisible = true;
+    let isScrolling = false;
+    let scrollResumeTimer = 0;
     document.addEventListener('visibilitychange', () => {
       isVisible = !document.hidden;
     });
 
+    // Touch scrolling gets priority over ambient animation.
+    window.addEventListener('scroll', () => {
+      isScrolling = true;
+      clearTimeout(scrollResumeTimer);
+      scrollResumeTimer = window.setTimeout(() => { isScrolling = false; }, 120);
+    }, { passive: true });
+
     let time = 0;
     function draw() {
-      if (!isVisible) {
+      if (!isVisible || isScrolling) {
         requestAnimationFrame(draw);
         return;
       }
@@ -252,15 +262,15 @@
         }
         if (p.y > height + 10) p.y = -10;
 
-        // Glowing halo gradient for each spark
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2.6);
-        grad.addColorStop(0, `rgba(${p.color}, ${Math.min(1, currentAlpha * 1.3)})`);
-        grad.addColorStop(0.4, `rgba(${p.color}, ${currentAlpha * 0.6})`);
-        grad.addColorStop(1, `rgba(${p.color}, 0)`);
+        // Cheap two-pass glow instead of a radial-gradient allocation per particle/frame.
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color}, ${Math.min(0.22, currentAlpha * 0.22)})`;
+        ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 2.6, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
+        ctx.arc(p.x, p.y, p.r * 0.85, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color}, ${Math.min(0.95, currentAlpha)})`;
         ctx.fill();
       }
 
@@ -417,6 +427,9 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('az-visible');
+          entry.target.addEventListener('transitionend', () => {
+            entry.target.style.willChange = 'auto';
+          }, { once: true, passive: true });
           obs.unobserve(entry.target);
         }
       });
