@@ -2069,6 +2069,17 @@
       return `${fmt(n)} <small>تومان</small>`;
     };
 
+    function catalogImageUrl(raw) {
+      const value = String(raw || '').trim();
+      if (!value) return '';
+      const runtimeBase = String(window.AZIM_SUPABASE_URL || '').replace(/\/+$/, '');
+      const match = value.match(/\/storage\/v1\/object\/public\/catalog-images\/(P\d{4})\.jpg(?:\?.*)?$/i);
+      if (match && runtimeBase) {
+        return runtimeBase + '/storage/v1/object/public/catalog-images/' + match[1].toUpperCase() + '.jpg';
+      }
+      return value;
+    }
+
     function catalogImageFallback(img, id) {
       if (!img) return;
       if (img.dataset.fallbackTried === '1') {
@@ -2757,7 +2768,7 @@
       const staticRows = products.map(x => ({
         id: String(x.id || '').trim().toUpperCase(),
         name: String(x.name || '').trim(),
-        image: String(x.image || '').trim()
+        image: catalogImageUrl(x.image)
       }));
       if (new Set(staticRows.map(x => x.id)).size !== 908) {
         throw Error('شناسه‌های کاتالوگ تکراری است');
@@ -2797,7 +2808,7 @@
             product_id: d.id || null,
             name: d.name || staticMap.get(id)?.name || ('محصول ' + id),
             description: d.description || '',
-            image: d.img || staticMap.get(id)?.image || ''
+            image: catalogImageUrl(d.img || staticMap.get(id)?.image || '')
           }))
           .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
         liveMap.forEach((d, id) => {
