@@ -568,6 +568,41 @@ function testAuditAddendumGuards() {
   }
 
   if (
+    paymentGatewayJs.includes('/pg/v4/payment/request.json') &&
+    paymentGatewayJs.includes('/pg/v4/payment/verify.json') &&
+    paymentGatewayJs.includes('async function refundWithProvider(provider, ctx)') &&
+    paymentGatewayJs.includes('action === "healthcheck"') &&
+    paymentGatewayJs.includes('action === "refund"') &&
+    paymentGatewayJs.includes('provider_session_id')
+  ) {
+    pass('Adapter واقعی زرین‌پال برای Request/Verify/Healthcheck/Refund در Gateway وجود دارد');
+  } else {
+    fail('Adapter واقعی زرین‌پال یا یکی از مسیرهای مالی آن ناقص است');
+  }
+
+  if (
+    adminJs.includes("azim_admin_configure_payment_gateway") &&
+    adminJs.includes("paymentEdgeAction('healthcheck'") &&
+    adminJs.includes("paymentEdgeAction('refund',") &&
+    adminJs.includes("data-payment-merchant-id")
+  ) {
+    pass('پنل ادمین پیکربندی درگاه، تست واقعی اتصال و اجرای Refund را پوشش می‌دهد');
+  } else {
+    fail('کنترل‌های واقعی درگاه در پنل ادمین ناقص است');
+  }
+
+  if (
+    checkoutSql.includes("from public.products") &&
+    checkoutSql.includes("v_product.price") &&
+    checkoutSql.includes("v_variant_price") &&
+    checkoutSql.includes("v_total")
+  ) {
+    pass('مبلغ پرداخت از قیمت جاری محصول/سایز در دیتابیس ساخته می‌شود و به مبلغ سفارش متصل است');
+  } else {
+    fail('منبع مبلغ پرداخت به قیمت جاری محصول/سایز در دیتابیس به‌صورت کامل اثبات نشد');
+  }
+
+  if (
     paymentGatewayJs.includes('idempotency_key: transaction.idempotency_key ?? transaction.id') &&
     paymentGatewayJs.includes('const savedStart = await updateTransaction(transaction.id') &&
     paymentGatewayJs.includes('if (!ready || !provider)') &&
