@@ -275,28 +275,28 @@ async function verifyWithProvider(_provider: string, _ctx: any) {
   throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
 }
 
-async function claimNotification(id: string) {
+async function claimNotification(row: any) {
+  const id = clean(row?.id, 100);
+  const currentAttempts = Number(row?.attempts || 0);
+  if (!id || currentAttempts >= 5) return null;
+
+  const nextAttempts = currentAttempts + 1;
   const { response: r, body } = await restJson(
     "/rest/v1/payment_notification_queue?id=eq." + encodeURIComponent(id) +
-    "&status=in.(pending,failed)&attempts=lt.5",
+    "&status=in.(pending,failed)&attempts=eq." + String(currentAttempts),
     {
       method: "PATCH",
       headers: { "content-type": "application/json", Prefer: "return=representation" },
       body: JSON.stringify({
         status: "sending",
-        attempts: 1,
+        attempts: nextAttempts,
         last_attempt_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }),
     },
   );
   if (!r.ok || !Array.isArray(body) || !body[0]) return null;
-
-  const row = body[0];
-  if (Number(row.attempts) > 1) {
-    await updateTransaction("", {});
-  }
-  return row;
+  return body[0];
 }
 
 function telegramMoney(n: unknown) {
@@ -373,7 +373,7 @@ async function drainNotificationQueue(transactionId?: string, orderId?: string) 
   if (!r.ok || !Array.isArray(rows)) return;
 
   for (const row of rows) {
-    const claimed = await claimNotification(String(row.id));
+    const claimed = await claimNotification(row);
     if (!claimed) continue;
 
     try {
