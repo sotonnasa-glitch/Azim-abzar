@@ -67,6 +67,14 @@ begin
     'total',o.total,
     'created_at',o.created_at,
     'updated_at',o.updated_at,
+    'payment_transaction_id',pt.id,
+    'payment_transaction_status',pt.status,
+    'can_retry_payment',(
+      o.payment_method='online'
+      and o.payment_status in ('failed','cancelled')
+      and o.status <> 'cancelled'
+      and o.shipping_status not in ('shipped','delivered')
+    ),
     'can_cancel',(
       o.status in ('pending','confirmed','processing')
       and o.shipping_status not in ('shipped','delivered')
@@ -122,6 +130,13 @@ begin
   )
   into v_result
   from public.orders o
+  left join lateral (
+    select p.id,p.status
+    from public.payment_transactions p
+    where p.order_id=o.id
+    order by p.created_at desc
+    limit 1
+  ) pt on true
   where upper(o.order_code)=v_code
   limit 1;
 
