@@ -104,6 +104,17 @@ Workflow:
 
 برای انتقال داده‌های واقعی، backup/export از project فعلی و import به project مقصد لازم است.
 
+### پرداخت آنلاین
+
+زیرساخت پرداخت آنلاین از قبل در پروژه آماده شده است:
+
+- جدول تراکنش‌ها: `public.payment_transactions`
+- Edge Function: `supabase/functions/azim-payment-gateway/index.ts`
+- صفحه callback: `payment-callback.html`
+- راهنمای اطلاعات موردنیاز درگاه: `PAYMENT_SETUP_FA.md`
+
+فعلاً گزینه پرداخت آنلاین عمداً تا زمان تکمیل adapter درگاه و تست واقعی فعال نمی‌شود. پس از اینکه مشتری درگاه را تهیه کرد، نام درگاه، شناسه‌ها/کلیدهای لازم، مستندات API، واحد مبلغ و اطلاعات callback از او گرفته می‌شود و فقط adapter همان درگاه تکمیل می‌شود. Secretهای درگاه نباید وارد repository یا frontend شوند.
+
 ### 11. حساب مدیر و MFA
 پس از ساخت Auth user مشتری:
 
