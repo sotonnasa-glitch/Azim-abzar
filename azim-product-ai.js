@@ -2,6 +2,7 @@
   'use strict';
   if (window.__AZIM_PRODUCT_AI__) return;
   window.__AZIM_PRODUCT_AI__ = true;
+  const api = () => String(window.AZIM_AI_API_URL || '').trim();
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const norm = s => String(s ?? '').trim().toLocaleLowerCase('fa')
@@ -161,28 +162,6 @@
 
   let current = { id:'', code:'', name:'', variant:'' };
 
-  // پایگاه دانش فنی محلی (آفلاین، سریع و پاسخگوی دقیق مشخصات هر کالا)
-  function getLocalProductAdvice(code, name, variant, question = '') {
-    const title = labelFor(name, variant);
-    const q = norm(question);
-    
-    if (q.includes('قیمت') || q.includes('تخفیف') || q.includes('خرید') || q.includes('فاکتور')) {
-      return `برای کالا «${title}» (کد ${code})، قیمت‌ها بر اساس جدول رسمی و سایزبندی انتخابی در سایت و سبد خرید قابل مشاهده است. همچنین برای خرید عمده، تخفیف همکاری و پیش‌فاکتور رسمی، می‌توانید با واحد فروش عظیم ابزار (۰۹۱۲-۲۳۹۴۵۹۷) تماس بگیرید.`;
-    }
-    if (q.includes('سایز') || q.includes('اندازه') || q.includes('کدوم') || q.includes('کدام')) {
-      return `ابزار «${title}» دارای سایزبندی و درایو استاندارد مهندسی است. در کادر انتخاب سایز کارت محصول می‌توانید تمامی اندازه‌ها و مشخصات را بررسی کنید. توصیه می‌شود سایز را دقیقاً متناسب با پیچ و گشتاور مورد نیاز انتخاب نمایید.`;
-    }
-    if (q.includes('گارانتی') || q.includes('کیفیت') || q.includes('اصل') || q.includes('برند') || q.includes('آلیاژ')) {
-      return `تمامی ابزارآلات عظیم ابزار از جمله «${title}» از آلیاژهای سخت‌کاری‌شده صنعتی مانند کروم-وانادیوم (Cr-V) و کروم-مولیبدن (Cr-Mo) با ضمانت اصالت فیزیکی و استانداردهای بین‌المللی DIN/ISO عرضه می‌شوند.`;
-    }
-
-    return `سلام! من مشاور فنی ابزار «${title}» (کد کالا: ${code}) هستم:\n` +
-      `• آلیاژ و بدنه: استاندارد صنعتی مقاوم در برابر گشتاور و سایش کارگاهی.\n` +
-      `• کاربرد اصلی: مکانیکی خودرویی، صنایع سنگین و کارگاه‌های فنی.\n` +
-      `• وضعیت کاتالوگ: استخراج شده از کاتالوگ جامع ۹۰۸ قلمی عظیم ابزار.\n` +
-      `• نحوه سفارش: می‌توانید مستقیماً کالا را به سبد خرید بیفزایید یا جهت مشاوره تخصصی با ۰۹۱۲-۲۳۹۴۵۹۷ تماس بگیرید.`;
-  }
-
   function ensureModal() {
     let root = document.getElementById('azProductAiModal');
     if (root) return root;
@@ -232,7 +211,26 @@
     });
   }
 
-  function open(btn) {
+  async function requestAI(message='') {
+    const endpoint = api();
+    if (!endpoint) throw Error('مسیر AI تنظیم نشده است.');
+    const r = await fetch(endpoint, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        mode:'product',
+        product_id:current.id,
+        product_code:current.code,
+        variant_label:current.variant,
+        message:String(message || '').trim()
+      })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw Error(data.error || 'HTTP ' + r.status);
+    return data;
+  }
+
+  async function open(btn) {
     const root = ensureModal();
     current = {
       id: btn.dataset.aiProductId || '',
@@ -242,22 +240,35 @@
     };
     const title = labelFor(current.name, current.variant);
     root.querySelector('#azAiModalTitle').textContent = title;
-    root.querySelector('#azAiModalProduct').innerHTML = 'مشخصات فنی برای: <b>' + esc(title) + '</b> (کد: ' + esc(current.code || 'نامشخص') + ')';
+    root.querySelector('#azAiModalProduct').innerHTML = '<b>' + esc(title) + '</b> · اطلاعات محصول مستقیماً از دیتابیس خوانده می‌شود.';
     const reply = root.querySelector('#azAiReply');
     const status = root.querySelector('#azAiStatus');
     const input = root.querySelector('#azAiQuestion');
-    
-    reply.textContent = getLocalProductAdvice(current.code, current.name, current.variant, '');
-    status.textContent = 'پاسخ فنی تخصصی بر اساس مشخصات رسمی کاتالوگ آماده است.';
+
+    reply.textContent = 'در حال بررسی اطلاعات واقعی محصول…';
+    reply.classList.add('loading');
+    status.textContent = '';
     status.classList.remove('error');
     input.value = '';
     setQuick();
     root.classList.add('show');
     root.setAttribute('aria-hidden','false');
     document.body.style.overflow = 'hidden';
+
+    try {
+      const data = await requestAI('');
+      reply.textContent = String(data.reply || 'پاسخی دریافت نشد.');
+      reply.classList.remove('loading');
+      status.textContent = 'پاسخ بر اساس اطلاعات همین محصول آماده شد.';
+    } catch (e) {
+      reply.textContent = 'برای این محصول فعلاً پاسخ هوشمند دریافت نشد.';
+      reply.classList.remove('loading');
+      status.textContent = String(e.message || e);
+      status.classList.add('error');
+    }
   }
 
-  function send() {
+  async function send() {
     const root = ensureModal();
     const input = root.querySelector('#azAiQuestion');
     const reply = root.querySelector('#azAiReply');
@@ -265,10 +276,23 @@
     const q = String(input.value || '').trim();
     if (!q) return;
 
-    reply.textContent = getLocalProductAdvice(current.code, current.name, current.variant, q);
-    status.textContent = 'راهنمایی بر اساس سوال شما آماده شد.';
+    reply.textContent = 'در حال پاسخ‌گویی…';
+    reply.classList.add('loading');
+    status.textContent = '';
     status.classList.remove('error');
-    input.value = '';
+
+    try {
+      const data = await requestAI(q);
+      reply.textContent = String(data.reply || 'پاسخی دریافت نشد.');
+      reply.classList.remove('loading');
+      status.textContent = 'پاسخ بر اساس اطلاعات همین محصول آماده شد.';
+      input.value = '';
+    } catch (e) {
+      reply.textContent = 'پاسخی برای این سؤال دریافت نشد.';
+      reply.classList.remove('loading');
+      status.textContent = String(e.message || e);
+      status.classList.add('error');
+    }
   }
 
   function hydrate() {
