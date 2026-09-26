@@ -532,10 +532,11 @@ function testAuditAddendumGuards() {
 
   if (
     adminJs.includes("const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);") &&
-    adminJs.includes("const canEditContentKey = (key) => can.edit()") &&
-    adminJs.includes("if (!canEditContentKey(key)) return toast('__AZICON_BLOCK__ این بخش فقط توسط مدیران قابل ذخیره است.')")
+    adminJs.includes("if (clean === 'checkout_payment') return false;") &&
+    adminJs.includes("if (!canEditContentKey(key)) return toast('__AZICON_BLOCK__ این بخش فقط توسط مدیران قابل ذخیره است.')") &&
+    adminJs.includes("state.db.rpc('azim_admin_set_online_payment_enabled'")
   ) {
-    pass('ویرایش checkout_payment و ai_settings برای editor در UI/handler بسته شد');
+    pass('ویرایش محتوای حساس و تغییر مستقیم checkout_payment برای نقش‌های غیرمجاز بسته شد');
   } else {
     fail('محافظ نقش برای محتوای حساس پنل کامل نیست');
   }
