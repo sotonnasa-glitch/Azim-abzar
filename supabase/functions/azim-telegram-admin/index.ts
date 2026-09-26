@@ -1364,7 +1364,7 @@ async function handleCallbackQuery(query: any) {
     await sendText(chatId,
       "🟠 درخواست عودت وجه ثبت شد.\n\n" +
       "سفارش: " + orderCode + "\n" +
-      "مبلغ درخواستی: " + money(remainingRefund) + "\n\n"
+      "مبلغ درخواستی: " + money(remainingRefund) + "\n\n" +
       "تا وقتی خود درگاه عودت وجه را تأیید نکند، وضعیت پرداخت «مسترد شده» ثبت نمی‌شود.",
       { reply_markup: { inline_keyboard: [
         [{ text: "📄 سفارش", callback_data: "order:" + orderCode }],
