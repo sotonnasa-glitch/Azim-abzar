@@ -294,6 +294,30 @@ jobs:
         run: |
           set -euo pipefail
           npm install --ignore-scripts --no-audit --no-fund
+          node server.js > /tmp/azim-express.log 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          ready=0
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/azim-express.log >&2 || true
+              echo 'EXPRESS_SERVER_EXITED_BEFORE_HEALTHCHECK' >&2
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/azim-express.log >&2 || true
+            echo 'EXPRESS_SERVER_HEALTHCHECK_TIMEOUT' >&2
+            exit 1
+          fi
           npm test
 
       - name: Upload Pages artifact
