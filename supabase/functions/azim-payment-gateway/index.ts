@@ -3,7 +3,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
 const PUBLIC_SITE_URL = String(Deno.env.get("AZIM_PUBLIC_SITE_URL") ?? "").replace(/\/+$/, "");
 const ALLOWED_ORIGIN = String(Deno.env.get("AZIM_ALLOWED_ORIGIN") ?? "").replace(/\/+$/, "");
+const SUPABASE_ANON_KEY = String(Deno.env.get("SUPABASE_ANON_KEY") ?? "");
 const HAS_NEW_SECRET_KEY = Boolean(Deno.env.get("SUPABASE_SECRET_KEYS"));
+const ZARINPAL_ACCESS_TOKEN = String(Deno.env.get("ZARINPAL_ACCESS_TOKEN") ?? "");
 
 function secretKey() {
   try {
@@ -87,6 +89,94 @@ function normalizeMobile(value: unknown) {
   else if (v.startsWith("0098")) v = "0" + v.slice(4);
   else if (v.startsWith("98")) v = "0" + v.slice(2);
   return v;
+}
+
+function bearerToken(req: Request) {
+  const header = req.headers.get("authorization") ?? "";
+  return /^Bearer\s+(.+)$/i.test(header) ? header.replace(/^Bearer\s+/i, "").trim() : "";
+}
+
+function decodeJwtPayload(token: string) {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return {};
+    const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    return JSON.parse(atob(padded));
+  } catch {
+    return {};
+  }
+}
+
+async function requireAdminAal2(req: Request) {
+  const token = bearerToken(req);
+  if (!token) throw new Error("ADMIN_AUTH_REQUIRED");
+  if (!SUPABASE_ANON_KEY) throw new Error("SUPABASE_ANON_KEY_MISSING");
+
+  const authResp = await fetch(SUPABASE_URL + "/auth/v1/user", {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + token },
+  });
+  const user = await authResp.json().catch(() => null);
+  if (!authResp.ok || !user?.id) throw new Error("ADMIN_AUTH_INVALID");
+
+  const claims = decodeJwtPayload(token);
+  if (String(claims?.aal ?? "aal1") !== "aal2") throw new Error("ADMIN_MFA_REQUIRED");
+
+  const { response: r, body: rows } = await restJson(
+    "/rest/v1/admin_users?select=role,is_active&user_id=eq." + encodeURIComponent(String(user.id)) + "&is_active=eq.true&limit=1",
+  );
+  const row = r.ok && Array.isArray(rows) ? rows[0] : null;
+  if (!row || !["owner", "admin"].includes(String(row.role))) throw new Error("ADMIN_ROLE_REQUIRED");
+
+  return { user, token, role: String(row.role) };
+}
+
+function zarinpalBase(settings: any) {
+  return String(settings?.sandbox).toLowerCase() === "true"
+    ? "https://sandbox.zarinpal.com"
+    : "https://payment.zarinpal.com";
+}
+
+function zarinpalMerchant(settings: any) {
+  return clean(settings?.merchant_id, 80);
+}
+
+function tomanToRial(value: unknown) {
+  let n: bigint;
+  try { n = BigInt(String(value ?? "0")); } catch { throw new Error("INVALID_PAYMENT_AMOUNT"); }
+  if (n < 100n) throw new Error("INVALID_PAYMENT_AMOUNT");
+  const rial = n * 10n;
+  if (rial > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error("PAYMENT_AMOUNT_TOO_LARGE");
+  return Number(rial);
+}
+
+async function zarinpalRest(settings: any, endpoint: string, payload: Record<string, unknown>) {
+  const merchant = zarinpalMerchant(settings);
+  if (!merchant) throw new Error("ZARINPAL_MERCHANT_ID_MISSING");
+
+  const r = await fetch(zarinpalBase(settings) + endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "AzimAbzarPayment/1.0" },
+    body: JSON.stringify({ merchant_id: merchant, ...payload }),
+  });
+  const body = await r.json().catch(() => ({}));
+  return { response: r, body };
+}
+
+async function zarinpalGraphql(query: string, variables: Record<string, unknown>) {
+  if (!ZARINPAL_ACCESS_TOKEN) throw new Error("ZARINPAL_ACCESS_TOKEN_MISSING");
+  const r = await fetch("https://next.zarinpal.com/api/v4/graphql/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "AzimAbzarPayment/1.0",
+      Authorization: "Bearer " + ZARINPAL_ACCESS_TOKEN,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const body = await r.json().catch(() => ({}));
+  return { response: r, body };
 }
 
 function restHeaders(extra: Record<string, string> = {}) {
@@ -200,6 +290,13 @@ function sanitizeCallbackParams(input: unknown) {
 }
 
 async function createTransaction(order: any, provider: string, settings: any, req: Request) {
+  const providerConfig = {
+    provider,
+    merchant_id: clean(settings?.merchant_id, 80) || null,
+    sandbox: String(settings?.sandbox).toLowerCase() === "true",
+    provider_amount_unit: clean(settings?.provider_amount_unit || "IRR", 20) || "IRR",
+    provider_amount_multiplier: Number(settings?.provider_amount_multiplier || 10) || 10,
+  };
   const payload = {
     order_id: order.id,
     provider,
@@ -209,6 +306,7 @@ async function createTransaction(order: any, provider: string, settings: any, re
     return_url: callbackBase(settings),
     client_ip: clientIp(req) === "unknown" ? null : clientIp(req),
     idempotency_key: crypto.randomUUID(),
+    provider_config: providerConfig,
   };
 
   const { response: r, body } = await restJson("/rest/v1/payment_transactions", {
@@ -240,43 +338,185 @@ async function updateTransaction(transactionId: string, patch: Record<string, un
   return r.ok;
 }
 
-async function startWithProvider(_provider: string, _ctx: any) {
-  /*
-   * Provider adapter boundary.
-   *
-   * Return:
-   *   {
-   *     redirect_url: string,
-   *     authority?: string,
-   *     gateway_reference?: string,
-   *     provider_request_id?: string
-   *   }
-   *
-   * The real adapter is intentionally added only after the store owner
-   * supplies the exact gateway provider/API contract and credentials.
-   */
-  throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
+async function startWithProvider(provider: string, ctx: any) {
+  if (provider !== "zarinpal") throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
+  const { order, transaction, settings } = ctx;
+  const existingAuthority = clean(transaction?.authority, 200);
+  if (existingAuthority) {
+    return {
+      redirect_url: zarinpalBase(settings) + "/pg/StartPay/" + encodeURIComponent(existingAuthority),
+      authority: existingAuthority,
+      gateway_reference: transaction?.gateway_reference ?? null,
+      provider_request_id: transaction?.gateway_request_id ?? null,
+    };
+  }
+
+  if (clean(settings?.store_amount_unit || "toman", 20).toLowerCase() !== "toman") {
+    throw new Error("UNSUPPORTED_STORE_AMOUNT_UNIT");
+  }
+
+  const amount = tomanToRial(order.total);
+  const callback = String(transaction?.return_url || "");
+  if (!/^https:\/\//i.test(callback)) throw new Error("CALLBACK_NOT_CONFIGURED");
+  const { response: r, body } = await zarinpalRest(settings, "/pg/v4/payment/request.json", {
+    amount,
+    callback_url: callback,
+    description: ("پرداخت سفارش " + clean(order.order_code, 40)).slice(0, 250),
+    metadata: {
+      mobile: normalizeMobile(order.customer_mobile),
+      email: clean(order.customer_email || "", 180) || undefined,
+      order_code: clean(order.order_code, 80),
+    },
+  });
+
+  const code = Number(body?.data?.code);
+  if (!r.ok || code !== 100 || !body?.data?.authority) {
+    const errorCode = clean(body?.errors?.code ?? body?.data?.code, 120);
+    const errorMessage = clean(body?.errors?.message ?? body?.data?.message, 500);
+    const e = new Error(errorMessage || ("زرین‌پال درخواست پرداخت را نپذیرفت. " + errorCode).trim());
+    (e as any).provider_status = errorCode || String(code || r.status);
+    throw e;
+  }
+
+  return {
+    redirect_url: zarinpalBase(settings) + "/pg/StartPay/" + encodeURIComponent(String(body.data.authority)),
+    authority: String(body.data.authority),
+    gateway_reference: body?.data?.ref_id ? String(body.data.ref_id) : null,
+    provider_request_id: body?.data?.request_id ? String(body.data.request_id) : null,
+    provider_session_id: body?.data?.session_id ? String(body.data.session_id) : (body?.data?.sessionId ? String(body.data.sessionId) : null),
+  };
 }
 
-async function verifyWithProvider(_provider: string, _ctx: any) {
-  /*
-   * Return a normalized provider result:
-   *   {
-   *     status: 'paid'|'pending'|'failed'|'cancelled'|'review_required',
-   *     gateway_reference?: string,
-   *     provider_request_id?: string,
-   *     provider_status?: string,
-   *     confirmed_store_amount?: number,       // canonical store unit (toman)
-   *     confirmed_store_amount_unit?: string,
-   *     verification_payload?: object,
-   *     error?: string
-   *   }
-   *
-   * A browser callback saying "success" is NEVER enough. The adapter must
-   * call the provider's server-side verify API and return the actual status
-   * and the amount confirmed by the provider.
-   */
-  throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
+async function verifyWithProvider(provider: string, ctx: any) {
+  if (provider !== "zarinpal") throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
+  const { order, transaction, settings, callbackParams } = ctx;
+  if (String(callbackParams?.Status ?? "").toUpperCase() === "NOK") {
+    return {
+      status: "cancelled",
+      provider_status: "NOK",
+      error: "پرداخت توسط کاربر لغو شد.",
+      verification_payload: { Status: "NOK", Authority: clean(callbackParams?.Authority, 200) },
+    };
+  }
+
+  const authority = clean(callbackParams?.Authority || transaction?.authority, 200);
+  if (!authority) {
+    return { status: "review_required", provider_status: "MISSING_AUTHORITY", error: "Authority در پاسخ درگاه پیدا نشد." };
+  }
+
+  if (clean(settings?.store_amount_unit || "toman", 20).toLowerCase() !== "toman") {
+    return { status: "review_required", provider_status: "UNSUPPORTED_STORE_AMOUNT_UNIT", error: "واحد مبلغ فروشگاه برای زرین‌پال قابل تبدیل نیست." };
+  }
+
+  const amount = tomanToRial(order.total);
+  const { response: r, body } = await zarinpalRest(settings, "/pg/v4/payment/verify.json", {
+    amount,
+    authority,
+  });
+
+  const code = Number(body?.data?.code);
+  const refId = body?.data?.ref_id ?? body?.data?.refId ?? null;
+  const providerPayload = body?.data && typeof body.data === "object"
+    ? { data: body.data, errors: body?.errors ?? null }
+    : { errors: body?.errors ?? null };
+
+  if (r.ok && (code === 100 || code === 101)) {
+    return {
+      status: "paid",
+      provider_status: String(code),
+      gateway_reference: refId == null ? clean(transaction?.gateway_reference, 200) || null : String(refId),
+      provider_request_id: body?.data?.session_id ? String(body.data.session_id) : (body?.data?.sessionId ? String(body.data.sessionId) : clean(transaction?.gateway_request_id, 200) || null),
+      provider_session_id: body?.data?.session_id ? String(body.data.session_id) : (body?.data?.sessionId ? String(body.data.sessionId) : clean(transaction?.provider_session_id, 200) || null),
+      confirmed_store_amount: Number(order.total),
+      confirmed_store_amount_unit: "toman",
+      verification_payload: providerPayload,
+    };
+  }
+
+  if (code === -21 || code === -11) {
+    return {
+      status: "pending",
+      provider_status: String(code),
+      error: clean(body?.errors?.message ?? body?.data?.message, 500) || "وضعیت تراکنش هنوز نهایی نشده است.",
+      verification_payload: providerPayload,
+    };
+  }
+
+  return {
+    status: "failed",
+    provider_status: String(code || r.status),
+    error: clean(body?.errors?.message ?? body?.data?.message, 500) || "پرداخت توسط زرین‌پال تأیید نشد.",
+    error_code: String(code || r.status),
+    verification_payload: providerPayload,
+  };
+}
+
+async function refundWithProvider(provider: string, ctx: any) {
+  if (provider !== "zarinpal") throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
+  if (!ZARINPAL_ACCESS_TOKEN) throw new Error("ZARINPAL_ACCESS_TOKEN_MISSING");
+
+  const { order, transaction, refund, settings } = ctx;
+  const sessionId = clean(transaction?.provider_session_id, 200);
+  if (!sessionId) throw new Error("REFUND_SESSION_ID_MISSING");
+
+  const amount = tomanToRial(refund.amount);
+  const query = `
+    mutation AddRefund(
+      $session_id: ID!,
+      $amount: BigInteger!,
+      $description: String,
+      $method: InstantPayoutActionTypeEnum,
+      $reason: RefundReasonEnum
+    ) {
+      resource: AddRefund(
+        session_id: $session_id,
+        amount: $amount,
+        description: $description,
+        method: $method,
+        reason: $reason
+      ) {
+        terminal_id
+        id
+        amount
+        timeline {
+          refund_amount
+          refund_time
+          refund_status
+        }
+      }
+    }
+  `;
+  const { response: r, body } = await zarinpalGraphql(query, {
+    session_id: sessionId,
+    amount,
+    description: ("عودت سفارش " + clean(order.order_code, 40)).slice(0, 250),
+    reason: "CUSTOMER_REQUEST",
+  });
+
+  const resource = body?.data?.resource;
+  const errors = Array.isArray(body?.errors) ? body.errors : [];
+  if (!r.ok || errors.length || !resource?.id) {
+    const message = clean(errors[0]?.message ?? body?.message, 500) || "زرین‌پال درخواست عودت وجه را نپذیرفت.";
+    throw new Error(message);
+  }
+
+  const providerRefundId = clean(resource.id, 200) || null;
+  const returned = Number(resource.amount ?? refund.amount);
+  const timelineStatus = clean(resource?.timeline?.refund_status, 80).toLowerCase();
+  const finalStatus = /^(refunded|success|succeeded|completed)$/.test(timelineStatus) ? "refunded" : "pending";
+
+  return {
+    status: finalStatus,
+    provider_refund_id: providerRefundId,
+    confirmed_amount: Number(refund.amount),
+    response_payload: {
+      resource,
+      provider: "zarinpal",
+      sandbox: String(settings?.sandbox).toLowerCase() === "true",
+      requested_rial: amount,
+      returned_rial: returned,
+    },
+  };
 }
 
 async function claimNotification(row: any) {
@@ -419,6 +659,146 @@ async function drainNotificationQueue(transactionId?: string, orderId?: string) 
   }
 }
 
+async function handleHealthcheck(req: Request, body: any) {
+  try {
+    await requireAdminAal2(req);
+  } catch (e) {
+    const code = String((e as Error)?.message ?? e);
+    const map: Record<string, [number, string]> = {
+      ADMIN_AUTH_REQUIRED: [401, "ورود مدیر لازم است."],
+      ADMIN_AUTH_INVALID: [401, "نشست مدیر معتبر نیست."],
+      ADMIN_MFA_REQUIRED: [403, "برای تست درگاه، MFA باید روی AAL2 باشد."],
+      ADMIN_ROLE_REQUIRED: [403, "فقط مالک یا مدیر ارشد مجاز است."],
+      SUPABASE_ANON_KEY_MISSING: [500, "کلید عمومی Supabase برای احراز هویت موجود نیست."],
+    };
+    const [status, error] = map[code] || [403, "دسترسی به تست درگاه مجاز نیست."];
+    return response({ ok: false, code, error }, status, req);
+  }
+
+  const settings = await getSettings();
+  const provider = clean(settings?.provider, 60).toLowerCase();
+  if (provider !== "zarinpal") {
+    return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_IMPLEMENTED", error: "provider فعلی پیاده‌سازی نشده است." }, 409, req);
+  }
+
+  try {
+    const { response: r, body: providerBody } = await zarinpalRest(settings, "/pg/v4/payment/feeCalculation.json", {
+      amount: 10000,
+      currency: "IRR",
+    });
+    const code = Number(providerBody?.data?.code);
+    const ok = r.ok && (code === 100 || code === 200) && !providerBody?.errors;
+    const details = {
+      provider,
+      sandbox: String(settings?.sandbox).toLowerCase() === "true",
+      http_status: r.status,
+      provider_code: code || null,
+      refund_api_configured: Boolean(ZARINPAL_ACCESS_TOKEN),
+      checked_at: new Date().toISOString(),
+    };
+
+    await callServiceRpc("azim_set_gateway_health", {
+      p_provider: provider,
+      p_ok: ok,
+      p_error: ok ? null : clean(providerBody?.errors?.message ?? providerBody?.data?.message, 500) || "تست اتصال درگاه ناموفق بود.",
+      p_health_payload: details,
+    });
+
+    return response({
+      ok,
+      gateway_ready: ok,
+      refund_api_configured: Boolean(ZARINPAL_ACCESS_TOKEN),
+      code: ok ? null : "GATEWAY_HEALTHCHECK_FAILED",
+      error: ok ? null : (clean(providerBody?.errors?.message ?? providerBody?.data?.message, 500) || "اتصال زرین‌پال تأیید نشد."),
+      details,
+    }, ok ? 200 : 502, req);
+  } catch (e) {
+    const message = String((e as Error)?.message ?? e);
+    await callServiceRpc("azim_set_gateway_health", {
+      p_provider: provider,
+      p_ok: false,
+      p_error: clean(message, 500),
+      p_health_payload: { provider, sandbox: String(settings?.sandbox).toLowerCase() === "true", checked_at: new Date().toISOString() },
+    }).catch(() => null);
+    return response({ ok: false, code: "GATEWAY_HEALTHCHECK_ERROR", error: "تست اتصال درگاه انجام نشد." }, 502, req);
+  }
+}
+
+async function handleRefund(req: Request, body: any) {
+  try {
+    await requireAdminAal2(req);
+  } catch (e) {
+    const code = String((e as Error)?.message ?? e);
+    return response({ ok: false, code, error: "برای اجرای عودت وجه، نشست مدیر با MFA تأییدشده لازم است." }, 403, req);
+  }
+
+  const refundId = clean(body?.refund_id, 100);
+  if (!refundId) return response({ ok: false, code: "REFUND_ID_REQUIRED", error: "شناسه عودت وجه مشخص نشده است." }, 400, req);
+
+  try {
+    const { response: rr, body: refunds } = await restJson(
+      "/rest/v1/payment_refunds?select=*&id=eq." + encodeURIComponent(refundId) + "&limit=1",
+    );
+    const refund = rr.ok && Array.isArray(refunds) ? refunds[0] : null;
+    if (!refund) return response({ ok: false, code: "REFUND_NOT_FOUND", error: "درخواست عودت وجه پیدا نشد." }, 404, req);
+
+    const transaction = await getTransaction(String(refund.transaction_id));
+    const order = await getOrderById(String(refund.order_id));
+    if (!transaction || !order) return response({ ok: false, code: "REFUND_CONTEXT_NOT_FOUND", error: "اطلاعات تراکنش/سفارش عودت ناقص است." }, 409, req);
+
+    if (refund.status === "refunded") {
+      return response({ ok: true, already_finalized: true, refund_id: refund.id, status: "refunded" }, 200, req);
+    }
+
+    if (!["requested","pending","processing"].includes(String(refund.status))) {
+      return response({ ok: false, code: "REFUND_STATUS_INVALID", error: "این درخواست عودت در وضعیت قابل اجرا نیست." }, 409, req);
+    }
+
+    const provider = clean(transaction.provider, 60).toLowerCase();
+    const settings = await getSettings();
+    const snapshot = transaction.provider_config && typeof transaction.provider_config === "object"
+      ? { ...settings, ...transaction.provider_config }
+      : settings;
+
+    const result = await refundWithProvider(provider, { order, transaction, refund, settings: snapshot });
+    const finalized = await callServiceRpc("azim_finalize_online_refund", {
+      p_refund_id: refund.id,
+      p_status: result.status,
+      p_provider_refund_id: result.provider_refund_id ?? null,
+      p_confirmed_amount: result.confirmed_amount ?? null,
+      p_response_payload: result.response_payload ?? {},
+      p_error_code: null,
+      p_error_message: null,
+    });
+
+    if (finalized?.review_required) {
+      return response({ ok: false, review_required: true, refund_id: refund.id, status: "review_required", error: finalized.message || "عودت وجه برای بررسی متوقف شد." }, 409, req);
+    }
+    return response({ ok: true, refund_id: refund.id, status: finalized?.status || result.status, provider_refund_id: result.provider_refund_id || null }, 200, req);
+  } catch (e) {
+    const message = String((e as Error)?.message ?? e);
+    if (message === "ZARINPAL_ACCESS_TOKEN_MISSING" || message === "REFUND_SESSION_ID_MISSING") {
+      await callServiceRpc("azim_finalize_online_refund", {
+        p_refund_id: refundId,
+        p_status: "review_required",
+        p_confirmed_amount: null,
+        p_response_payload: { code: message },
+        p_error_code: message,
+        p_error_message: message === "REFUND_SESSION_ID_MISSING" ? "شناسه نشست پرداخت برای اجرای عودت درگاه موجود نیست." : "کلید دسترسی امن زرین‌پال برای Refund در Secrets ثبت نشده است.",
+      }).catch(() => null);
+      return response({ ok: false, review_required: true, code: message, error: message === "REFUND_SESSION_ID_MISSING" ? "شناسه نشست پرداخت برای عودت وجه در دسترس نیست؛ درخواست برای بررسی نگه داشته شد." : "کلید امن Refund درگاه تنظیم نشده است؛ درخواست برای بررسی نگه داشته شد." }, 409, req);
+    }
+    await callServiceRpc("azim_finalize_online_refund", {
+      p_refund_id: refundId,
+      p_status: "failed",
+      p_response_payload: {},
+      p_error_code: "REFUND_PROVIDER_ERROR",
+      p_error_message: clean(message, 500),
+    }).catch(() => null);
+    return response({ ok: false, code: "REFUND_PROVIDER_ERROR", error: "اجرای عودت وجه نزد درگاه ناموفق شد و وضعیت برای بررسی ثبت شد." }, 502, req);
+  }
+}
+
 async function handleStart(req: Request, body: any) {
   const settings = await getSettings();
   const enabled = String(settings?.online_enabled ?? "false").toLowerCase() === "true";
@@ -501,6 +881,7 @@ async function handleStart(req: Request, body: any) {
       authority: result.authority ?? null,
       gateway_reference: result.gateway_reference ?? transaction.gateway_reference ?? null,
       gateway_request_id: result.provider_request_id ?? transaction.gateway_request_id ?? null,
+      provider_session_id: result.provider_session_id ?? transaction.provider_session_id ?? null,
       provider_status: "started",
       last_verified_at: null,
       error_code: null,
@@ -549,14 +930,12 @@ async function handleStart(req: Request, body: any) {
 
 async function handleVerify(req: Request, body: any) {
   const settings = await getSettings();
-  const ready = String(settings?.gateway_ready ?? "false").toLowerCase() === "true";
-  const provider = clean(settings?.provider, 60).toLowerCase();
+  const configuredReady = String(settings?.gateway_ready ?? "false").toLowerCase() === "true";
+  const configuredProvider = clean(settings?.provider, 60).toLowerCase();
 
-  // Existing payments must remain verifiable even when new checkouts are disabled.
-  if (!ready || !provider) {
-    return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_CONFIGURED", error: "اتصال درگاه برای بررسی تراکنش آماده نیست." }, 503, req);
-  }
-
+  // Existing payments can be verified from their provider snapshot even if
+  // new checkout is currently disabled. For callbacks that identify a tx, the
+  // transaction's own provider/config is authoritative.
   let transaction: any = null;
   let order: any = null;
   const suppliedTransactionId = clean(body?.transaction_id, 80);
@@ -574,21 +953,32 @@ async function handleVerify(req: Request, body: any) {
     return response({ ok: false, code: "ORDER_NOT_FOUND", error: "سفارش یا شناسه تراکنش معتبر نیست." }, 404, req);
   }
 
+  let provider = configuredProvider;
   if (!transaction) {
+    if (!configuredProvider) {
+      return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_CONFIGURED", error: "درگاه پرداخت برای بررسی مشخص نشده است." }, 503, req);
+    }
     const q = "/rest/v1/payment_transactions?select=*" +
       "&order_id=eq." + encodeURIComponent(order.id) +
-      "&provider=eq." + encodeURIComponent(provider) +
+      "&provider=eq." + encodeURIComponent(configuredProvider) +
       "&order=created_at.desc&limit=1";
     const { response: txResp, body: txRows } = await restJson(q);
     transaction = txResp.ok && Array.isArray(txRows) ? txRows[0] ?? null : null;
+  }
+  if (transaction?.provider) provider = clean(transaction.provider, 60).toLowerCase();
+  const providerSettings = transaction?.provider_config && typeof transaction.provider_config === "object"
+    ? { ...settings, ...transaction.provider_config }
+    : settings;
+  if (!provider) {
+    return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_CONFIGURED", error: "provider تراکنش مشخص نیست." }, 503, req);
   }
 
   if (!transaction) {
     return response({ ok: false, code: "TRANSACTION_NOT_FOUND", error: "تراکنش پرداخت پیدا نشد." }, 404, req);
   }
 
-  if (String(transaction.provider || "").toLowerCase() !== provider) {
-    return response({ ok: false, code: "PROVIDER_MISMATCH", error: "درگاه تراکنش با درگاه فعال فروشگاه مطابقت ندارد." }, 409, req);
+  if (transaction.provider && String(transaction.provider).toLowerCase() !== provider) {
+    return response({ ok: false, code: "PROVIDER_MISMATCH", error: "درگاه تراکنش معتبر نیست." }, 409, req);
   }
 
   if (transaction.status === "paid" && order.payment_status === "paid") {
@@ -609,7 +999,7 @@ async function handleVerify(req: Request, body: any) {
       order,
       transaction,
       callbackParams,
-      settings,
+      settings: providerSettings,
     });
 
     const status = clean(result?.status ?? (result?.ok ? "paid" : "pending"), 40).toLowerCase();
@@ -743,6 +1133,8 @@ Deno.serve(async (req) => {
 
     if (action === "start") return await handleStart(req, body);
     if (action === "verify") return await handleVerify(req, body);
+    if (action === "healthcheck") return await handleHealthcheck(req, body);
+    if (action === "refund") return await handleRefund(req, body);
 
     return response({ ok: false, code: "BAD_ACTION", error: "درخواست پرداخت نامعتبر است." }, 400, req);
   } catch (_e) {
