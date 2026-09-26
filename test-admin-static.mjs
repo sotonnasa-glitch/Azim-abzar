@@ -109,7 +109,7 @@ const paymentChecks = [
 for (const needle of paymentChecks) {
   if (!js.includes(needle)) fail('payment admin guard/hook missing: ' + needle);
 }
-if (!js.includes("data-view = 'payment'")) fail('payment admin navigation hook is missing');
+if (!js.includes("btn.dataset.view = 'payment'") || !js.includes("btn.dataset.menuView = 'payment'")) fail('payment admin navigation hook is missing');
 if (!paymentMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'")) fail('payment admin RPCs are missing AAL2 protection');
 if (!paymentMigration.includes("and section_key <> 'checkout_payment'")) fail('direct checkout_payment content DML is not blocked');
 if (!paymentMigration.includes("revoke all on function public.azim_admin_payment_dashboard() from public,anon;")) fail('payment dashboard RPC is not explicitly revoked from public/anon');
