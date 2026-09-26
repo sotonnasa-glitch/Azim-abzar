@@ -364,6 +364,16 @@ async function handleVerify(req: Request, body: any) {
     return response({ ok: false, code: "TRANSACTION_NOT_FOUND", error: "تراکنش پرداخت پیدا نشد." }, 404, req);
   }
 
+  if (transaction.status === "paid" && order.payment_status === "paid") {
+    return response({
+      ok: true,
+      order_code: order.order_code,
+      payment_status: "paid",
+      payment_reference: transaction.gateway_reference ?? order.payment_reference ?? null,
+      already_verified: true,
+    }, 200, req);
+  }
+
   try {
     const result = await verifyWithProvider(provider, {
       order,
