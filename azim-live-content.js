@@ -331,6 +331,76 @@
     if(f){setText(f.querySelector('.footer-inner > span'),ft.text);const footerLinks=(ft.links||[]).filter(v=>!/(دستیار|هوش مصنوعی|\bAI\b)/i.test(String(v))); f.querySelectorAll('.footer-links a').forEach((a,i)=>{if(footerLinks[i]) setText(a,footerLinks[i]);});}
   }
 
+  function applySharedFooter(copy) {
+    const f = copy?.footer || {};
+    const footer = document.querySelector('.az-main-footer');
+    if (!footer) return;
+
+    const set = (sel, value) => {
+      const el = footer.querySelector(sel);
+      if (el && value != null && String(value).trim() !== '') el.textContent = String(value);
+    };
+
+    set('.az-fbrand-text strong', f.brand);
+    set('.az-fbrand-text small', f.tagline);
+    set('.az-footer-desc', f.description);
+    set('.az-footer-badge-online span:last-child', f.online_badge);
+
+    const cols = footer.querySelectorAll('.az-footer-main .az-footer-col');
+    const categoryCol = cols[1];
+    const quickCol = cols[2];
+    const contactCol = cols[3];
+
+    if (categoryCol) {
+      setNodeText(categoryCol.querySelector('.az-footer-heading'), f.categories_heading);
+      const links = categoryCol.querySelectorAll('.az-footer-list a');
+      const cats = Array.isArray(f.categories) ? f.categories : [];
+      cats.forEach((value, i) => { if (links[i]) links[i].textContent = String(value); });
+      setNodeText(links[cats.length], f.catalog_cta);
+    }
+
+    if (quickCol) {
+      setNodeText(quickCol.querySelector('.az-footer-heading'), f.quick_heading);
+      const links = quickCol.querySelectorAll('.az-footer-list a');
+      const quick = Array.isArray(f.quick_links) ? f.quick_links : [];
+      quick.forEach((value, i) => { if (links[i]) links[i].textContent = String(value); });
+    }
+
+    if (contactCol) {
+      setNodeText(contactCol.querySelector('.az-footer-heading'), f.contact_heading);
+      const rows = contactCol.querySelectorAll('.az-footer-contact-items .az-contact-row');
+      if (rows[0] && f.address) {
+        const span = rows[0].querySelector('span');
+        if (span) span.textContent = String(f.address);
+      }
+      if (rows[1] && f.phone) {
+        const span = rows[1].querySelector('span');
+        const a = span?.querySelector('a');
+        if (a) {
+          a.textContent = String(f.phone);
+          const digits = String(f.phone).replace(/[^0-9+]/g,'');
+          if (digits) a.href = 'tel:' + digits;
+          span.childNodes.forEach(n => { if (n.nodeType === 3 && n.textContent.includes('مشاوره و استعلام تلفنی:')) n.textContent = 'مشاوره و استعلام تلفنی: '; });
+        } else if (span) {
+          span.textContent = 'مشاوره و استعلام تلفنی: ' + String(f.phone);
+        }
+      }
+      if (rows[2] && f.hours) {
+        const span = rows[2].querySelector('span');
+        if (span) span.textContent = String(f.hours);
+      }
+    }
+
+    set('.az-footer-bottom .az-fbottom-inner > span:first-child', f.bottom_text);
+    const bottomStrong = footer.querySelector('.az-footer-bottom .az-fbottom-inner > span:first-child strong');
+    if (bottomStrong && f.brand) bottomStrong.textContent = f.brand;
+    set('.az-footer-bottom .az-fbottom-sub', f.bottom_subtext);
+  }
+
+  function setNodeText(el, value) {
+    if (el && value != null && String(value).trim() !== '') el.textContent = String(value);
+  }
+
   function applyAI(c) {
     const p=c.ai_settings||{};
     const chat=document.getElementById('chat') || document.getElementById('chatMessages'),form=document.getElementById('form') || document.getElementById('chatForm'),input=document.getElementById('input') || document.getElementById('chatInput'),typing=document.getElementById('typing'),status=document.querySelector('.status') || document.querySelector('.brand-status'),quick=document.querySelector('.quick') || document.querySelector('.quick-prompts-bar'),sendBtn=document.getElementById('sendBtn');
@@ -360,6 +430,7 @@
     const c=await loadContent();
     const copy=c.site_copy||{};
     if(document.querySelector('#home')){applyHomeLegacy(c);applyHomeCopy(copy,c);}
+    applySharedFooter(copy);
     if(document.querySelector('#card-channel-phone')){applyContactCopy(copy,c);}
     if((document.querySelector('#chat')&&document.querySelector('#form')) || (document.querySelector('#chatMessages')&&document.querySelector('#chatForm'))) applyAI(c);
   });
