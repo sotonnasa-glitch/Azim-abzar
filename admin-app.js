@@ -779,8 +779,10 @@
     $('uploadMediaBtn').onclick = () => uploadMedia();
     $('homeCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('home'));
     $('contactCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
+    $('footerCopyBtn')?.addEventListener('click', () => openSharedFooterEditor());
     $('homeCopyCard')?.addEventListener('click', () => openFocusedSiteEditor('home'));
     $('contactCopyCard')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
+    $('footerCopyCard')?.addEventListener('click', () => openSharedFooterEditor());
     $('unifiedSiteBtn')?.addEventListener('click', () => openUnifiedSiteEditor());
     $('changePasswordBtn')?.addEventListener('click', () => openPasswordChange(false));
     $('newOrderBtn').onclick = () => newOrder();
@@ -3006,6 +3008,23 @@
 
   function siteCopyDefaults() {
     return {
+      footer: {
+        brand:'عظیم ابزار',
+        tagline:'مرجع تخصصی ابزارهای مکانیکی و صنعتی',
+        description:'',
+        online_badge:'سامانه فعال استعلام قیمت و سفارش کالا',
+        categories_heading:'دسته‌بندی‌های تخصصی',
+        categories:[],
+        catalog_cta:'مشاهده کاتالوگ جامع محصولات',
+        quick_heading:'دسترسی سریع و خدمات',
+        quick_links:[],
+        contact_heading:'نشانی و راه‌های ارتباطی',
+        address:'',
+        phone:'۰۹۱۲-۲۳۹۴۵۹۷',
+        hours:'',
+        bottom_text:'© تمامی حقوق مادی و معنوی متعلق به عظیم ابزار است.',
+        bottom_subtext:'مرکز تأمین و توزیع تخصصی ابزارهای کارگاهی، صنعتی و خودرویی کشور'
+      },
       home: {
         meta:{title:'',description:''},
         header:{brand:'',tagline:'',nav_home:'',nav_products:'',nav_contact:''},
@@ -3065,6 +3084,22 @@
     ['home.why.items.3.0','مزیت ۴ — عنوان'],['home.why.items.3.1','مزیت ۴ — توضیح','textarea'],
     ['home.footer.text','متن فوتر'],['home.footer.links','لینک‌های فوتر','lines'],
 
+    ['footer.brand','فوتر — نام برند'],
+    ['footer.tagline','فوتر — زیرعنوان'],
+    ['footer.description','فوتر — معرفی فروشگاه','textarea'],
+    ['footer.online_badge','فوتر — وضعیت سامانه'],
+    ['footer.categories_heading','فوتر — عنوان دسته‌بندی‌ها'],
+    ['footer.categories','فوتر — دسته‌بندی‌ها (هر خط یک مورد)','lines'],
+    ['footer.catalog_cta','فوتر — متن لینک کاتالوگ'],
+    ['footer.quick_heading','فوتر — عنوان دسترسی سریع'],
+    ['footer.quick_links','فوتر — لینک‌های دسترسی سریع (هر خط یک مورد)','lines'],
+    ['footer.contact_heading','فوتر — عنوان راه‌های ارتباطی'],
+    ['footer.address','فوتر — آدرس','textarea'],
+    ['footer.phone','فوتر — شماره مشاوره'],
+    ['footer.hours','فوتر — ساعات کاری','textarea'],
+    ['footer.bottom_text','فوتر — متن نوار پایانی'],
+    ['footer.bottom_subtext','فوتر — توضیح نوار پایانی','textarea'],
+
     ['contact.meta.title','عنوان SEO ارتباط با ما'],['contact.meta.description','توضیحات SEO ارتباط با ما','textarea'],
     ['contact.header.brand','ارتباط — نام برند'],['contact.header.tagline','ارتباط — شعار زیر برند'],['contact.header.back','متن بازگشت'],
     ['contact.hero.title','ارتباط — عنوان','textarea'],['contact.hero.description','ارتباط — توضیحات','textarea'],
@@ -3120,6 +3155,7 @@
       '<details class="az-copy-group"><summary>__AZICON_COMPASS__ صفحه اصلی — مسیرهای خرید</summary><div class="grid2">' + fieldHtml('home.choice') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_TOOLS__ صفحه اصلی — مزیت‌ها</summary><div class="grid2">' + fieldHtml('home.why') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_DOWN__ صفحه اصلی — فوتر</summary><div class="grid2">' + fieldHtml('home.footer') + '</div></details>' +
+      '<details class="az-copy-group"><summary>__AZICON_PIN__ فوتر مشترک و اطلاعات فروشگاه</summary><div class="grid2">' + fieldHtml('footer') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — هدر و SEO</summary><div class="grid2">' + fieldHtml('contact.meta') + fieldHtml('contact.header') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_INVOICE__ ارتباط با ما — معرفی صفحه</summary><div class="grid2">' + fieldHtml('contact.hero') + fieldHtml('contact.channels_head') + '</div></details>' +
       '<details class="az-copy-group"><summary>__AZICON_PHONE__ ارتباط با ما — راه‌های تماس</summary><div class="grid2">' + fieldHtml('contact.phone') + fieldHtml('contact.support') + fieldHtml('contact.email') + fieldHtml('contact.address') + '</div></details>' +
@@ -3132,6 +3168,85 @@
       '</form>';
   }
 
+
+  function sharedFooterForm(copy) {
+    const f = Object.assign(siteCopyDefaults().footer, copy?.footer || {});
+    return '<form id="sharedFooterForm" class="az-unified-form">' +
+      '<div class="az-copy-intro"><strong>__AZICON_PIN__ ویرایش فوتر و اطلاعات فروشگاه</strong>' +
+      '<small>اطلاعاتی که در پایین صفحات مشتری دیده می‌شود را از اینجا تغییر بده؛ ساختار و لینک‌ها حفظ می‌شوند.</small></div>' +
+      '<details class="az-copy-group" open><summary>هویت و معرفی فروشگاه</summary><div class="grid2">' +
+        copyField('sf_brand','نام برند',f.brand) +
+        copyField('sf_tagline','زیرعنوان',f.tagline) +
+        copyField('sf_description','معرفی فروشگاه',f.description,'textarea',true) +
+        copyField('sf_online_badge','وضعیت سامانه',f.online_badge) +
+      '</div></details>' +
+      '<details class="az-copy-group"><summary>دسته‌بندی‌ها و دسترسی سریع</summary><div class="grid2">' +
+        copyField('sf_categories_heading','عنوان دسته‌بندی‌ها',f.categories_heading) +
+        copyField('sf_categories','دسته‌بندی‌ها (هر خط یک مورد)',f.categories,'lines',true) +
+        copyField('sf_catalog_cta','متن لینک کاتالوگ',f.catalog_cta) +
+        copyField('sf_quick_heading','عنوان دسترسی سریع',f.quick_heading) +
+        copyField('sf_quick_links','لینک‌های دسترسی سریع (هر خط یک مورد)',f.quick_links,'lines',true) +
+      '</div></details>' +
+      '<details class="az-copy-group"><summary>آدرس و تماس</summary><div class="grid2">' +
+        copyField('sf_contact_heading','عنوان راه‌های ارتباطی',f.contact_heading) +
+        copyField('sf_address','آدرس',f.address,'textarea',true) +
+        copyField('sf_phone','شماره مشاوره',f.phone) +
+        copyField('sf_hours','ساعات کاری',f.hours,'textarea',true) +
+      '</div></details>' +
+      '<details class="az-copy-group"><summary>نوار پایانی</summary><div class="grid2">' +
+        copyField('sf_bottom_text','متن پایانی',f.bottom_text,'textarea',true) +
+        copyField('sf_bottom_subtext','توضیح پایانی',f.bottom_subtext,'textarea',true) +
+      '</div></details>' +
+      '<div class="az-copy-savebar"><button class="btn" type="submit">__AZICON_SAVE__ ذخیره فوتر</button><button class="btn ghost" type="button" id="previewSharedFooter">__AZICON_GLOBE__ پیش‌نمایش سایت</button><span id="sharedFooterStatus" class="status"></span></div>' +
+    '</form>';
+  }
+
+  async function openSharedFooterEditor() {
+    if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش فوتر را ندارد.');
+    const r = await state.db.from('site_content').select('id,payload').eq('section_key','site_copy').maybeSingle();
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    openModal('فوتر و اطلاعات فروشگاه', sharedFooterForm(r.data?.payload || {}));
+    $('sharedFooterForm').onsubmit = (e) => saveSharedFooterContent(e, r.data?.id || null);
+    $('previewSharedFooter')?.addEventListener('click', () => window.open(new URL('index.html', window.location.origin).href, '_blank', 'noopener'));
+  }
+
+  async function saveSharedFooterContent(e, rowId) {
+    e.preventDefault();
+    if (!can.edit()) return;
+    const status = $('sharedFooterStatus');
+    try {
+      const existing = await state.db.from('site_content').select('id,payload').eq('section_key','site_copy').maybeSingle();
+      if (existing.error) throw existing.error;
+      const copy = Object.assign(siteCopyDefaults(), existing.data?.payload || {});
+      copy.footer = {
+        brand:e.target.elements.sf_brand.value.trim(),
+        tagline:e.target.elements.sf_tagline.value.trim(),
+        description:e.target.elements.sf_description.value.trim(),
+        online_badge:e.target.elements.sf_online_badge.value.trim(),
+        categories_heading:e.target.elements.sf_categories_heading.value.trim(),
+        categories:e.target.elements.sf_categories.value.split('\n').map(x => x.trim()).filter(Boolean),
+        catalog_cta:e.target.elements.sf_catalog_cta.value.trim(),
+        quick_heading:e.target.elements.sf_quick_heading.value.trim(),
+        quick_links:e.target.elements.sf_quick_links.value.split('\n').map(x => x.trim()).filter(Boolean),
+        contact_heading:e.target.elements.sf_contact_heading.value.trim(),
+        address:e.target.elements.sf_address.value.trim(),
+        phone:e.target.elements.sf_phone.value.trim(),
+        hours:e.target.elements.sf_hours.value.trim(),
+        bottom_text:e.target.elements.sf_bottom_text.value.trim(),
+        bottom_subtext:e.target.elements.sf_bottom_subtext.value.trim()
+      };
+      const saved = rowId
+        ? await state.db.from('site_content').update({section_key:'site_copy',title:'ویرایش یکجای متن سایت',payload:copy,is_active:true,updated_by:state.user.id}).eq('id',rowId)
+        : await state.db.from('site_content').insert({section_key:'site_copy',title:'ویرایش یکجای متن سایت',payload:copy,is_active:true,updated_by:state.user.id});
+      if (saved.error) throw saved.error;
+      await audit('update','site_content',rowId || 'site_copy',{scope:'shared-footer'});
+      if(status) status.textContent='__AZICON_SUCCESS__ فوتر ذخیره شد';
+      toast('__AZICON_SUCCESS__ اطلاعات فوتر ذخیره شد');
+      await loadContent();
+    } catch (err) {
+      if(status) status.textContent='__AZICON_ERROR__ ' + errorText(err);
+    }
+  }
 
   const focusedCopyGroups = {
     home: [
