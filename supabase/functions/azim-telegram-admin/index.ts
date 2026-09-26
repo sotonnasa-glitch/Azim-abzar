@@ -1036,7 +1036,7 @@ async function handleCallbackQuery(query: any) {
 
   if (data.startsWith("product_price:")) {
     const productCode = data.slice("product_price:".length);
-    await sendText(chatId, "💰 قیمت جدید محصول\nکد: " + productCode + "\nمبلغ جدید را فقط به ریال بفرست:", {
+    await sendText(chatId, "💰 قیمت جدید محصول\nکد: " + productCode + "\nمبلغ جدید را فقط به تومان بفرست:", {
       reply_markup: forceReplyMarkup(),
     });
     return;
