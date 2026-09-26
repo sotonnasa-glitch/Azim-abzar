@@ -1,13 +1,32 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
 const PUBLIC_SITE_URL = String(Deno.env.get("AZIM_PUBLIC_SITE_URL") ?? "").replace(/\/+$/, "");
 const ALLOWED_ORIGIN = String(Deno.env.get("AZIM_ALLOWED_ORIGIN") ?? "").replace(/\/+$/, "");
+
+function secretKey() {
+  try {
+    const raw = Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}";
+    const keys = JSON.parse(raw);
+    if (keys?.default) return String(keys.default);
+  } catch (error) {
+    console.error("SUPABASE_SECRET_KEYS parse error:", error);
+  }
+  return String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+}
+
+const SERVICE_KEY = secretKey();
 
 const RATE = new Map<string, { start: number; count: number }>();
 const WINDOW_MS = 10 * 60 * 1000;
 const DEFAULT_RATE_LIMIT = 12;
+const MAX_CALLBACK_KEYS = 24;
+const MAX_CALLBACK_VALUE = 800;
+const MAX_CALLBACK_BYTES = 12000;
+
+if (!SUPABASE_URL || !SERVICE_KEY) {
+  throw new Error("SUPABASE_URL or server secret key is missing");
+}
 
 function cors(req: Request) {
   const requestOrigin = req.headers.get("origin") ?? "";
@@ -51,70 +70,63 @@ function allowed(req: Request) {
   return item.count <= DEFAULT_RATE_LIMIT;
 }
 
+function clean(value: unknown, max = 500) {
+  return String(value ?? "").trim().slice(0, max);
+}
+
 function normalizeMobile(value: unknown) {
-  let v = String(value ?? "").trim();
+  let v = clean(value, 40);
   v = v.replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660));
   v = v.replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0));
   v = v.replace(/[\s\-()]/g, "");
   if (v.startsWith("+98")) v = "0" + v.slice(3);
   else if (v.startsWith("0098")) v = "0" + v.slice(4);
+  else if (v.startsWith("98")) v = "0" + v.slice(2);
   return v;
 }
 
-function clean(value: unknown, max = 500) {
-  return String(value ?? "").trim().slice(0, max);
-}
-
-async function getSettings() {
-  if (!SUPABASE_URL || !SERVICE_KEY) return {};
-  try {
-    const url = SUPABASE_URL +
-      "/rest/v1/site_content?select=payload&section_key=eq.checkout_payment&is_active=eq.true&limit=1";
-    const r = await fetch(url, {
-      headers: { apikey: SERVICE_KEY, Authorization: "Bearer " + SERVICE_KEY },
-    });
-    if (!r.ok) return {};
-    const rows = await r.json();
-    return rows?.[0]?.payload ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function restHeaders() {
+function restHeaders(extra: Record<string, string> = {}) {
   return {
     apikey: SERVICE_KEY,
     Authorization: "Bearer " + SERVICE_KEY,
+    ...extra,
   };
 }
 
-async function findOrder(orderCode: string, mobile: string) {
-  if (!SUPABASE_URL || !SERVICE_KEY) return null;
-  const code = clean(orderCode, 80).toUpperCase();
-  if (!code) return null;
+async function restJson(path: string, init: RequestInit = {}) {
+  const r = await fetch(SUPABASE_URL + path, {
+    ...init,
+    headers: restHeaders((init.headers ?? {}) as Record<string, string>),
+  });
+  const body = await r.json().catch(() => null);
+  return { response: r, body };
+}
 
-  const url = SUPABASE_URL +
-    "/rest/v1/orders?select=id,order_code,customer_id,total,payment_method,payment_status,payment_provider,payment_reference,created_at,status,customer_mobile" +
-    "&order_code=eq." + encodeURIComponent(code) + "&limit=1";
-
-  try {
-    const r = await fetch(url, { headers: restHeaders() });
-    if (!r.ok) return null;
-    const rows = await r.json();
-    const order = rows?.[0] ?? null;
-    if (!order) return null;
-
-    const expected = normalizeMobile(order.customer_mobile);
-    if (!expected || expected !== normalizeMobile(mobile)) return null;
-    return order;
-  } catch {
-    return null;
+async function callServiceRpc(name: string, payload: Record<string, unknown>) {
+  const { response: r, body } = await restJson("/rest/v1/rpc/" + name, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) {
+    const message = clean(body?.message ?? body?.hint ?? body?.error, 500);
+    throw new Error(message || ("RPC " + name + " failed"));
   }
+  return body;
+}
+
+async function getSettings() {
+  const { response: r, body } = await restJson(
+    "/rest/v1/site_content?select=payload&section_key=eq.checkout_payment&is_active=eq.true&limit=1",
+  );
+  if (!r.ok) return {};
+  return body?.[0]?.payload ?? {};
 }
 
 function callbackBase(settings: any) {
   if (!PUBLIC_SITE_URL) return null;
   const path = clean(settings?.callback_path || "payment-callback.html", 200).replace(/^\/+/, "");
+  if (!/^[A-Za-z0-9._/-]+$/.test(path)) return null;
   return PUBLIC_SITE_URL + "/" + path;
 }
 
@@ -126,68 +138,263 @@ function callbackUrl(settings: any, orderCode: string, transactionId: string) {
     "&transaction_id=" + encodeURIComponent(transactionId);
 }
 
-async function createTransaction(order: any, provider: string, settings: any) {
-  const url = SUPABASE_URL + "/rest/v1/payment_transactions";
+async function findOrder(orderCode: string, mobile: string) {
+  const code = clean(orderCode, 80).toUpperCase();
+  if (!code) return null;
+
+  const url = "/rest/v1/orders?select=id,order_code,customer_id,total,payment_method,payment_status,payment_provider,payment_reference,created_at,status,customer_mobile" +
+    "&order_code=eq." + encodeURIComponent(code) + "&limit=1";
+  const { response: r, body: rows } = await restJson(url);
+  if (!r.ok) return null;
+
+  const order = rows?.[0] ?? null;
+  if (!order) return null;
+
+  const expected = normalizeMobile(order.customer_mobile);
+  if (!expected || expected !== normalizeMobile(mobile)) return null;
+  return order;
+}
+
+async function getTransaction(transactionId: string) {
+  const id = clean(transactionId, 80);
+  if (!id) return null;
+  const { response: r, body: rows } = await restJson(
+    "/rest/v1/payment_transactions?select=*&id=eq." + encodeURIComponent(id) + "&limit=1",
+  );
+  if (!r.ok) return null;
+  return rows?.[0] ?? null;
+}
+
+async function getOrderById(orderId: string) {
+  const id = clean(orderId, 80);
+  if (!id) return null;
+  const { response: r, body: rows } = await restJson(
+    "/rest/v1/orders?select=id,order_code,customer_id,total,payment_method,payment_status,payment_provider,payment_reference,created_at,status,customer_mobile" +
+    "&id=eq." + encodeURIComponent(id) + "&limit=1",
+  );
+  if (!r.ok) return null;
+  return rows?.[0] ?? null;
+}
+
+function sanitizeCallbackParams(input: unknown) {
+  if (!input || typeof input !== "object") return {};
+  const source = input as Record<string, unknown>;
+  const keys = Object.keys(source).slice(0, MAX_CALLBACK_KEYS);
+  const out: Record<string, string> = {};
+  let total = 2;
+
+  for (const key of keys) {
+    const safeKey = clean(key, 80);
+    if (!safeKey || !/^[A-Za-z0-9_.-]+$/.test(safeKey)) continue;
+    const value = clean(source[key], MAX_CALLBACK_VALUE);
+    const projected = total + safeKey.length + value.length;
+    if (projected > MAX_CALLBACK_BYTES) break;
+    out[safeKey] = value;
+    total = projected;
+  }
+  return out;
+}
+
+async function createTransaction(order: any, provider: string, settings: any, req: Request) {
   const payload = {
     order_id: order.id,
     provider,
     status: "initiated",
     amount: Number(order.total || 0),
-    amount_unit: clean(settings?.amount_unit || "site", 30) || "site",
+    amount_unit: clean(settings?.store_amount_unit || "toman", 30) || "toman",
     return_url: callbackBase(settings),
+    client_ip: clientIp(req) === "unknown" ? null : clientIp(req),
+    idempotency_key: crypto.randomUUID(),
   };
 
-  const r = await fetch(url, {
+  const { response: r, body } = await restJson("/rest/v1/payment_transactions", {
     method: "POST",
-    headers: {
-      ...restHeaders(),
-      "content-type": "application/json",
-      Prefer: "return=representation",
-    },
+    headers: { "content-type": "application/json", Prefer: "return=representation" },
     body: JSON.stringify(payload),
   });
 
-  const data = await r.json().catch(() => null);
-  if (!r.ok) throw new Error(data?.message ?? "ثبت تراکنش پرداخت ناموفق بود.");
-  return Array.isArray(data) ? data[0] : data;
+  if (!r.ok) {
+    const code = Number(r.status);
+    const message = clean(body?.message ?? body?.hint, 500);
+    const error = new Error(message || "ثبت تراکنش پرداخت ناموفق بود.");
+    (error as any).httpStatus = code;
+    throw error;
+  }
+  return Array.isArray(body) ? body[0] : body;
 }
 
-async function markTransactionFailed(transactionId: string, errorCode: string, errorMessage: string) {
-  if (!SUPABASE_URL || !SERVICE_KEY || !transactionId) return;
-  await fetch(SUPABASE_URL + "/rest/v1/payment_transactions?id=eq." + encodeURIComponent(transactionId), {
-    method: "PATCH",
-    headers: { ...restHeaders(), "content-type": "application/json", Prefer: "return=minimal" },
-    body: JSON.stringify({
-      status: "failed",
-      error_code: errorCode,
-      error_message: errorMessage.slice(0, 1000),
-      updated_at: new Date().toISOString(),
-    }),
-  }).catch(() => {});
+async function updateTransaction(transactionId: string, patch: Record<string, unknown>) {
+  if (!transactionId) return false;
+  const { response: r } = await restJson(
+    "/rest/v1/payment_transactions?id=eq." + encodeURIComponent(transactionId),
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }),
+    },
+  );
+  return r.ok;
 }
 
-/*
- * Provider adapter contract.
- *
- * This function deliberately does NOT invent a gateway integration before the
- * store owner supplies the exact provider and its required credentials/API contract.
- *
- * Later, implement exactly one adapter here:
- *   startWithProvider(provider, { order, transaction, settings })
- *   -> { redirect_url, authority/reference, provider_request_id }
- *
- * and:
- *   verifyWithProvider(provider, { order, transaction, callbackParams, settings })
- *   -> { ok, gateway_reference, amount_confirmed }
- *
- * Secrets belong in Supabase Edge Function secrets, never in frontend code or GitHub.
- */
 async function startWithProvider(_provider: string, _ctx: any) {
+  /*
+   * Provider adapter boundary.
+   *
+   * Return:
+   *   {
+   *     redirect_url: string,
+   *     authority?: string,
+   *     gateway_reference?: string,
+   *     provider_request_id?: string
+   *   }
+   *
+   * The real adapter is intentionally added only after the store owner
+   * supplies the exact gateway provider/API contract and credentials.
+   */
   throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
 }
 
 async function verifyWithProvider(_provider: string, _ctx: any) {
+  /*
+   * Return a normalized provider result:
+   *   {
+   *     status: 'paid'|'pending'|'failed'|'cancelled'|'review_required',
+   *     gateway_reference?: string,
+   *     provider_request_id?: string,
+   *     provider_status?: string,
+   *     confirmed_store_amount?: number,       // canonical store unit (toman)
+   *     confirmed_store_amount_unit?: string,
+   *     verification_payload?: object,
+   *     error?: string
+   *   }
+   *
+   * A browser callback saying "success" is NEVER enough. The adapter must
+   * call the provider's server-side verify API and return the actual status
+   * and the amount confirmed by the provider.
+   */
   throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
+}
+
+async function claimNotification(id: string) {
+  const { response: r, body } = await restJson(
+    "/rest/v1/payment_notification_queue?id=eq." + encodeURIComponent(id) +
+    "&status=in.(pending,failed)&attempts=lt.5",
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify({
+        status: "sending",
+        attempts: 1,
+        last_attempt_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+    },
+  );
+  if (!r.ok || !Array.isArray(body) || !body[0]) return null;
+
+  const row = body[0];
+  if (Number(row.attempts) > 1) {
+    await updateTransaction("", {});
+  }
+  return row;
+}
+
+function telegramMoney(n: unknown) {
+  return new Intl.NumberFormat("fa-IR").format(Number(n ?? 0)) + " تومان";
+}
+
+async function telegram(method: string, payload: Record<string, unknown>) {
+  const token = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
+  if (!token) throw new Error("TELEGRAM_BOT_TOKEN_MISSING");
+
+  const r = await fetch("https://api.telegram.org/bot" + token + "/" + method, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok || !body?.ok) throw new Error(body?.description ?? "Telegram error");
+  return body.result;
+}
+
+function adminChatIds() {
+  return (Deno.env.get("TELEGRAM_ADMIN_CHAT_IDS") ?? "")
+    .split(",")
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+async function sendAdminPaymentNotice(row: any) {
+  const payload = row?.payload ?? {};
+  const eventType = String(row?.event_type ?? "");
+  const orderCode = clean(payload?.order_code || "", 80);
+  const amount = telegramMoney(payload?.amount || 0);
+  const ref = clean(payload?.gateway_reference || "", 160);
+  const status = clean(payload?.status || "", 40);
+
+  let text = "💳 پرداخت آنلاین عظیم ابزار\n\n";
+  if (eventType === "payment_paid") {
+    text += "🟢 پرداخت تأیید شد\n";
+  } else if (eventType === "payment_failed") {
+    text += "🔴 پرداخت ناموفق شد\n";
+  } else if (eventType === "refund_requested") {
+    text += "🟠 درخواست عودت وجه ثبت شد\n";
+  } else if (eventType === "refund_failed") {
+    text += "🔴 عودت وجه ناموفق شد\n";
+  } else if (eventType === "refund_review_required") {
+    text += "🟠 عودت وجه نیازمند بررسی است\n";
+  } else {
+    text += "🟠 تراکنش نیازمند بررسی است\n";
+  }
+  if (orderCode) text += "🧾 سفارش: " + orderCode + "\n";
+  if (amount) text += "💰 مبلغ: " + amount + "\n";
+  if (status) text += "📌 وضعیت: " + status + "\n";
+  if (ref) text += "🔖 مرجع درگاه: " + ref + "\n";
+  if (payload?.reason) text += "ℹ️ علت: " + clean(payload.reason, 300) + "\n";
+  if (payload?.error_code) text += "⚠️ کد خطا: " + clean(payload.error_code, 120) + "\n";
+
+  const ids = adminChatIds();
+  if (!ids.length) throw new Error("TELEGRAM_ADMIN_CHAT_IDS_MISSING");
+
+  for (const chatId of ids) {
+    await telegram("sendMessage", { chat_id: chatId, text });
+  }
+}
+
+async function drainNotificationQueue(transactionId?: string, orderId?: string) {
+  let query = "/rest/v1/payment_notification_queue?select=*&status=in.(pending,failed)&attempts=lt.5&order=created_at.asc&limit=10";
+  if (transactionId) {
+    query += "&transaction_id=eq." + encodeURIComponent(transactionId);
+  } else if (orderId) {
+    query += "&order_id=eq." + encodeURIComponent(orderId);
+  }
+
+  const { response: r, body: rows } = await restJson(query);
+  if (!r.ok || !Array.isArray(rows)) return;
+
+  for (const row of rows) {
+    const claimed = await claimNotification(String(row.id));
+    if (!claimed) continue;
+
+    try {
+      await sendAdminPaymentNotice(claimed);
+      await restJson("/rest/v1/payment_notification_queue?id=eq." + encodeURIComponent(String(row.id)), {
+        method: "PATCH",
+        headers: { "content-type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ status: "sent", sent_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
+      });
+    } catch (error) {
+      await restJson("/rest/v1/payment_notification_queue?id=eq." + encodeURIComponent(String(row.id)), {
+        method: "PATCH",
+        headers: { "content-type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({
+          status: "failed",
+          last_error: clean((error as Error)?.message, 500),
+          updated_at: new Date().toISOString(),
+        }),
+      });
+    }
+  }
 }
 
 async function handleStart(req: Request, body: any) {
@@ -221,86 +428,81 @@ async function handleStart(req: Request, body: any) {
     return response({ ok: false, code: "ORDER_CANCELLED", error: "این سفارش لغو شده است." }, 409, req);
   }
 
-  const existingUrl =
-    SUPABASE_URL +
-    "/rest/v1/payment_transactions?select=id,status,authority,gateway_reference,provider,created_at" +
+  const existingQuery =
+    "/rest/v1/payment_transactions?select=id,status,authority,gateway_reference,gateway_request_id,provider,return_url,amount,amount_unit,created_at" +
     "&order_id=eq." + encodeURIComponent(order.id) +
     "&provider=eq." + encodeURIComponent(provider) +
     "&status=in.(initiated,pending)" +
     "&order=created_at.desc&limit=1";
 
-  const existingResp = await fetch(existingUrl, { headers: restHeaders() }).catch(() => null);
-  const existingRows = existingResp && existingResp.ok ? await existingResp.json().catch(() => []) : [];
-  const existing = existingRows?.[0] ?? null;
+  const { response: existingResp, body: existingRows } = await restJson(existingQuery);
+  const existing = existingResp.ok && Array.isArray(existingRows) ? existingRows[0] ?? null : null;
 
-  if (existing?.id) {
-    try {
-      const desiredReturnUrl = callbackUrl(settings, order.order_code, existing.id);
-      if (desiredReturnUrl && existing.return_url !== desiredReturnUrl) {
-        await fetch(SUPABASE_URL + "/rest/v1/payment_transactions?id=eq." + encodeURIComponent(existing.id), {
-          method: "PATCH",
-          headers: { ...restHeaders(), "content-type": "application/json", Prefer: "return=minimal" },
-          body: JSON.stringify({ return_url: desiredReturnUrl, updated_at: new Date().toISOString() }),
-        }).catch(() => {});
-        existing.return_url = desiredReturnUrl;
-      }
-      const result = await startWithProvider(provider, { order, transaction: existing, settings });
-      return response({ ok: true, ...result, transaction_id: existing.id, order_code: order.order_code }, 200, req);
-    } catch (e) {
-      const message = String((e as Error)?.message ?? e);
-      if (message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED") {
-        return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_IMPLEMENTED", error: "اتصال این درگاه هنوز در کد فعال نشده است." }, 501, req);
-      }
-      return response({ ok: false, code: "PAYMENT_START_FAILED", error: "شروع پرداخت ناموفق بود." }, 502, req);
-    }
-  }
-
-  let transaction: any = null;
+  let transaction: any = existing;
   try {
-    transaction = await createTransaction(order, provider, settings);
+    if (!transaction) {
+      transaction = await createTransaction(order, provider, settings, req);
+    }
+
     const desiredReturnUrl = callbackUrl(settings, order.order_code, transaction.id);
-    if (desiredReturnUrl) {
-      await fetch(SUPABASE_URL + "/rest/v1/payment_transactions?id=eq." + encodeURIComponent(transaction.id), {
-        method: "PATCH",
-        headers: { ...restHeaders(), "content-type": "application/json", Prefer: "return=minimal" },
-        body: JSON.stringify({ return_url: desiredReturnUrl, updated_at: new Date().toISOString() }),
-      }).catch(() => {});
+    if (!desiredReturnUrl) {
+      return response({ ok: false, code: "CALLBACK_NOT_CONFIGURED", error: "آدرس بازگشت پرداخت تنظیم نشده است." }, 503, req);
+    }
+
+    if (transaction.return_url !== desiredReturnUrl) {
+      await updateTransaction(transaction.id, { return_url: desiredReturnUrl });
       transaction.return_url = desiredReturnUrl;
     }
 
-    const result = await startWithProvider(provider, { order, transaction, settings });
+    const result = await startWithProvider(provider, {
+      order,
+      transaction,
+      settings,
+    });
 
-    await fetch(SUPABASE_URL + "/rest/v1/payment_transactions?id=eq." + encodeURIComponent(transaction.id), {
-      method: "PATCH",
-      headers: { ...restHeaders(), "content-type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({
-        status: "pending",
-        authority: result.authority ?? null,
-        gateway_reference: result.gateway_reference ?? null,
-        gateway_request_id: result.provider_request_id ?? null,
-      }),
-    }).catch(() => {});
+    if (!result?.redirect_url || !/^https:\/\//i.test(String(result.redirect_url))) {
+      return response({ ok: false, code: "INVALID_GATEWAY_REDIRECT", error: "آدرس بازگشت به درگاه معتبر نیست." }, 502, req);
+    }
+
+    await updateTransaction(transaction.id, {
+      status: "pending",
+      authority: result.authority ?? null,
+      gateway_reference: result.gateway_reference ?? transaction.gateway_reference ?? null,
+      gateway_request_id: result.provider_request_id ?? transaction.gateway_request_id ?? null,
+      provider_status: "started",
+      last_verified_at: null,
+      error_code: null,
+      error_message: null,
+    });
 
     return response({
       ok: true,
       order_code: order.order_code,
       transaction_id: transaction.id,
-      redirect_url: result.redirect_url,
+      redirect_url: String(result.redirect_url),
       authority: result.authority ?? null,
     }, 200, req);
   } catch (e) {
     const message = String((e as Error)?.message ?? e);
-    if (transaction?.id) {
-      await markTransactionFailed(
-        transaction.id,
-        message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED" ? "NOT_IMPLEMENTED" : "START_FAILED",
-        message,
-      );
-    }
     if (message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED") {
-      return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_IMPLEMENTED", error: "اتصال این درگاه هنوز در کد فعال نشده است." }, 501, req);
+      return response({
+        ok: false,
+        code: "PAYMENT_PROVIDER_NOT_IMPLEMENTED",
+        error: "اتصال این درگاه هنوز در کد فعال نشده است.",
+      }, 501, req);
     }
-    return response({ ok: false, code: "PAYMENT_START_FAILED", error: "شروع پرداخت ناموفق بود." }, 502, req);
+
+    /*
+     * An initiation/network error is deliberately NOT converted to "payment
+     * failed" automatically. There may be a provider-side request already
+     * created. Leaving it initiated/pending allows later reconciliation.
+     */
+    return response({
+      ok: false,
+      code: "PAYMENT_START_FAILED",
+      error: "شروع پرداخت انجام نشد. سفارش شما حذف نشده و امکان بررسی/تلاش دوباره وجود دارد.",
+      order_code: order.order_code,
+    }, 502, req);
   }
 }
 
@@ -314,25 +516,13 @@ async function handleVerify(req: Request, body: any) {
     return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_CONFIGURED", error: "درگاه آنلاین هنوز برای فروشگاه پیکربندی نشده است." }, 503, req);
   }
 
-  let order: any = null;
   let transaction: any = null;
+  let order: any = null;
   const suppliedTransactionId = clean(body?.transaction_id, 80);
 
   if (suppliedTransactionId) {
-    const txUrl = SUPABASE_URL + "/rest/v1/payment_transactions?select=*&id=eq." +
-      encodeURIComponent(suppliedTransactionId) + "&limit=1";
-    const txResp = await fetch(txUrl, { headers: restHeaders() }).catch(() => null);
-    const txRows = txResp && txResp.ok ? await txResp.json().catch(() => []) : [];
-    transaction = txRows?.[0] ?? null;
-
-    if (transaction?.order_id) {
-      const orderUrl = SUPABASE_URL +
-        "/rest/v1/orders?select=id,order_code,customer_id,total,payment_method,payment_status,payment_provider,payment_reference,created_at,status,customer_mobile" +
-        "&id=eq." + encodeURIComponent(transaction.order_id) + "&limit=1";
-      const orderResp = await fetch(orderUrl, { headers: restHeaders() }).catch(() => null);
-      const orderRows = orderResp && orderResp.ok ? await orderResp.json().catch(() => []) : [];
-      order = orderRows?.[0] ?? null;
-    }
+    transaction = await getTransaction(suppliedTransactionId);
+    if (transaction?.order_id) order = await getOrderById(transaction.order_id);
   }
 
   if (!order) {
@@ -344,27 +534,24 @@ async function handleVerify(req: Request, body: any) {
   }
 
   if (!transaction) {
-    const q = SUPABASE_URL + "/rest/v1/payment_transactions?select=*" +
+    const q = "/rest/v1/payment_transactions?select=*" +
       "&order_id=eq." + encodeURIComponent(order.id) +
-      "&provider=eq." + encodeURIComponent(provider) + "&order=created_at.desc&limit=1";
-    const r = await fetch(q, { headers: restHeaders() }).catch(() => null);
-    const rows = r && r.ok ? await r.json().catch(() => []) : [];
-    transaction = rows?.[0] ?? null;
-  }
-
-  if (!transaction) {
-    const q = SUPABASE_URL + "/rest/v1/payment_transactions?select=*&order_id=eq." + encodeURIComponent(order.id) +
-      "&provider=eq." + encodeURIComponent(provider) + "&order=created_at.desc&limit=1";
-    const r = await fetch(q, { headers: restHeaders() }).catch(() => null);
-    const rows = r && r.ok ? await r.json().catch(() => []) : [];
-    transaction = rows?.[0] ?? null;
+      "&provider=eq." + encodeURIComponent(provider) +
+      "&order=created_at.desc&limit=1";
+    const { response: txResp, body: txRows } = await restJson(q);
+    transaction = txResp.ok && Array.isArray(txRows) ? txRows[0] ?? null : null;
   }
 
   if (!transaction) {
     return response({ ok: false, code: "TRANSACTION_NOT_FOUND", error: "تراکنش پرداخت پیدا نشد." }, 404, req);
   }
 
+  if (String(transaction.provider || "").toLowerCase() !== provider) {
+    return response({ ok: false, code: "PROVIDER_MISMATCH", error: "درگاه تراکنش با درگاه فعال فروشگاه مطابقت ندارد." }, 409, req);
+  }
+
   if (transaction.status === "paid" && order.payment_status === "paid") {
+    await drainNotificationQueue(String(transaction.id), String(order.id));
     return response({
       ok: true,
       order_code: order.order_code,
@@ -374,56 +561,133 @@ async function handleVerify(req: Request, body: any) {
     }, 200, req);
   }
 
+  const callbackParams = sanitizeCallbackParams(body?.callback_params);
+
   try {
     const result = await verifyWithProvider(provider, {
       order,
       transaction,
-      callbackParams: body?.callback_params ?? {},
+      callbackParams,
       settings,
     });
 
-    if (!result?.ok) {
-      await markTransactionFailed(transaction.id, "VERIFY_FAILED", String(result?.error || "تأیید پرداخت ناموفق بود."));
-      return response({ ok: false, code: "PAYMENT_VERIFY_FAILED", error: result?.error || "تأیید پرداخت ناموفق بود." }, 400, req);
+    const status = clean(result?.status ?? (result?.ok ? "paid" : "pending"), 40).toLowerCase();
+    const verificationPayload = sanitizeCallbackParams(result?.verification_payload);
+
+    if (status === "paid") {
+      const finalized = await callServiceRpc("azim_finalize_online_payment", {
+        p_transaction_id: transaction.id,
+        p_provider: provider,
+        p_gateway_reference: clean(result?.gateway_reference ?? transaction.gateway_reference, 200) || null,
+        p_confirmed_store_amount: result?.confirmed_store_amount == null ? null : Number(result.confirmed_store_amount),
+        p_confirmed_store_amount_unit: clean(result?.confirmed_store_amount_unit ?? transaction.amount_unit, 30) || null,
+        p_provider_status: clean(result?.provider_status, 120) || "paid",
+        p_gateway_request_id: clean(result?.provider_request_id ?? transaction.gateway_request_id, 200) || null,
+        p_verification_payload: verificationPayload,
+      });
+
+      await drainNotificationQueue(String(transaction.id), String(order.id));
+
+      if (finalized?.review_required) {
+        return response({
+          ok: false,
+          review_required: true,
+          order_code: order.order_code,
+          transaction_id: transaction.id,
+          error: finalized.message || "این پرداخت برای بررسی متوقف شد.",
+        }, 409, req);
+      }
+
+      return response({
+        ok: true,
+        order_code: order.order_code,
+        payment_status: finalized?.payment_status || "paid",
+        payment_reference: finalized?.payment_reference || transaction.gateway_reference || null,
+        already_verified: Boolean(finalized?.already_finalized),
+      }, 200, req);
     }
 
-    const paidAt = new Date().toISOString();
-    await fetch(SUPABASE_URL + "/rest/v1/payment_transactions?id=eq." + encodeURIComponent(transaction.id), {
-      method: "PATCH",
-      headers: { ...restHeaders(), "content-type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({
-        status: "paid",
-        gateway_reference: result.gateway_reference ?? transaction.gateway_reference ?? null,
-        callback_payload: body?.callback_params ?? {},
-        paid_at: paidAt,
-        updated_at: paidAt,
-      }),
-    });
+    if (status === "failed" || status === "cancelled" || status === "review_required") {
+      const terminal = await callServiceRpc("azim_mark_online_payment_terminal", {
+        p_transaction_id: transaction.id,
+        p_status: status,
+        p_provider_status: clean(result?.provider_status, 120) || status,
+        p_error_code: clean(result?.error_code, 120) || null,
+        p_error_message: clean(result?.error, 500) || null,
+        p_gateway_reference: clean(result?.gateway_reference ?? transaction.gateway_reference, 200) || null,
+        p_gateway_request_id: clean(result?.provider_request_id ?? transaction.gateway_request_id, 200) || null,
+        p_verification_payload: verificationPayload,
+      });
 
-    await fetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + encodeURIComponent(order.id), {
-      method: "PATCH",
-      headers: { ...restHeaders(), "content-type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({
-        payment_status: "paid",
-        payment_reference: result.gateway_reference ?? transaction.gateway_reference ?? null,
-        paid_at: paidAt,
-        updated_at: paidAt,
-      }),
-    });
+      await drainNotificationQueue(String(transaction.id), String(order.id));
 
-    return response({
-      ok: true,
-      order_code: order.order_code,
-      payment_status: "paid",
-      payment_reference: result.gateway_reference ?? transaction.gateway_reference ?? null,
-    }, 200, req);
-  } catch (e) {
-    const message = String((e as Error)?.message ?? e);
+      return response({
+        ok: false,
+        payment_status: terminal?.payment_status || status,
+        order_code: order.order_code,
+        transaction_id: transaction.id,
+        error: result?.error || (status === "cancelled" ? "پرداخت لغو شد." : "پرداخت ناموفق بود."),
+      }, status === "review_required" ? 409 : 400, req);
+    }
+
+    if (status === "pending") {
+      await updateTransaction(transaction.id, {
+        status: "pending",
+        provider_status: clean(result?.provider_status, 120) || "pending",
+        gateway_reference: clean(result?.gateway_reference ?? transaction.gateway_reference, 200) || transaction.gateway_reference || null,
+        gateway_request_id: clean(result?.provider_request_id ?? transaction.gateway_request_id, 200) || transaction.gateway_request_id || null,
+        verification_payload: verificationPayload,
+        last_verified_at: new Date().toISOString(),
+      });
+      return response({
+        ok: false,
+        pending: true,
+        order_code: order.order_code,
+        transaction_id: transaction.id,
+        error: "وضعیت پرداخت هنوز نهایی نشده است. سیستم می‌تواند دوباره آن را بررسی کند.",
+      }, 202, req);
+    }
+
+    await callServiceRpc("azim_mark_online_payment_terminal", {
+      p_transaction_id: transaction.id,
+      p_status: "review_required",
+      p_provider_status: "unexpected_status",
+      p_error_code: "UNKNOWN_PROVIDER_STATUS",
+      p_error_message: "وضعیت برگشتی درگاه برای سامانه ناشناخته بود.",
+      p_verification_payload: verificationPayload,
+    });
+    await drainNotificationQueue(String(transaction.id), String(order.id));
+
     return response({
       ok: false,
-      code: message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED" ? "PAYMENT_PROVIDER_NOT_IMPLEMENTED" : "PAYMENT_VERIFY_FAILED",
-      error: message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED" ? "تأیید این درگاه هنوز در کد فعال نشده است." : "تأیید پرداخت ناموفق بود.",
-    }, message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED" ? 501 : 502, req);
+      review_required: true,
+      order_code: order.order_code,
+      transaction_id: transaction.id,
+      error: "وضعیت این تراکنش قابل تشخیص نبود و برای بررسی متوقف شد.",
+    }, 409, req);
+  } catch (e) {
+    const message = String((e as Error)?.message ?? e);
+    if (message === "PAYMENT_PROVIDER_NOT_IMPLEMENTED") {
+      return response({
+        ok: false,
+        code: "PAYMENT_PROVIDER_NOT_IMPLEMENTED",
+        error: "تأیید این درگاه هنوز در کد فعال نشده است.",
+      }, 501, req);
+    }
+
+    /*
+     * Critical rule: provider/network errors are NOT mapped to failed/paid.
+     * The transaction stays pending/initiated for a later server-side
+     * reconciliation attempt.
+     */
+    return response({
+      ok: false,
+      code: "PAYMENT_VERIFY_UNAVAILABLE",
+      pending: true,
+      order_code: order.order_code,
+      transaction_id: transaction.id,
+      error: "نتیجه قطعی پرداخت از درگاه دریافت نشد؛ پرداخت برای بررسی مجدد نگه داشته شد.",
+    }, 502, req);
   }
 }
 
@@ -440,7 +704,7 @@ Deno.serve(async (req) => {
     if (action === "verify") return await handleVerify(req, body);
 
     return response({ ok: false, code: "BAD_ACTION", error: "درخواست پرداخت نامعتبر است." }, 400, req);
-  } catch (e) {
+  } catch (_e) {
     return response({ ok: false, code: "SERVER_ERROR", error: "خطای داخلی سامانه پرداخت." }, 500, req);
   }
 });
