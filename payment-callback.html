@@ -63,7 +63,24 @@
         body:JSON.stringify({action:'verify',order_code:code,transaction_id:tx,callback_params:callbackParams})
       });
       const data=await r.json().catch(()=>({}));
-      if(!r.ok || !data?.ok){ fail(data?.error||'تأیید پرداخت ناموفق بود.'); return; }
+
+      if(data?.pending || data?.review_required || data?.code==='PAYMENT_VERIFY_UNAVAILABLE'){
+        app.className='card wait';
+        title.textContent=data?.review_required ? 'پرداخت نیازمند بررسی است' : 'در حال بررسی پرداخت';
+        message.textContent=data?.review_required
+          ? 'نتیجه پرداخت قطعی نیست و برای جلوگیری از ثبت دوباره پرداخت، فعلاً دوباره پرداخت نکنید. بررسی سامانه ادامه دارد.'
+          : 'نتیجه قطعی پرداخت از درگاه دریافت نشد. فعلاً دوباره پرداخت نکنید؛ وضعیت سفارش دوباره بررسی می‌شود.';
+        if(data?.order_code||code){
+          codeBox.textContent='کد سفارش: '+(data?.order_code||code);
+          codeBox.classList.remove('hidden');
+        }
+        actions.innerHTML='<a class="secondary" href="order-status.html?code='+encodeURIComponent(data?.order_code||code)+'">پیگیری سفارش</a><a class="secondary" href="index.html">صفحه اصلی</a>';
+        actions.classList.remove('hidden');
+        try{ localStorage.removeItem('azim_pending_payment'); }catch(_){}
+        return;
+      }
+
+      if(!r.ok || !data?.ok){ fail(data?.error||'پرداخت توسط سامانه تأیید نشد.'); return; }
 
       app.className='card ok';
       title.textContent='پرداخت با موفقیت تأیید شد';
