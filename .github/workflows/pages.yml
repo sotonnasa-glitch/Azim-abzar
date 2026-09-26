@@ -206,7 +206,7 @@ jobs:
           html = Path('_site/index.html').read_text(encoding='utf-8')
           assert '<script src="./azim-motion.js?v=7" defer></script>' in html
           assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
-          assert 'azim-live-content.js?v=3' in html
+          assert 'azim-live-content.js?v=4' in html
           assert 'azim-home-gallery.js' not in html
           print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
           PY
@@ -221,9 +221,9 @@ jobs:
           contact = Path('_site/contact.html').read_text(encoding='utf-8')
           index = Path('_site/index.html').read_text(encoding='utf-8')
           products = Path('_site/products-v4.html').read_text(encoding='utf-8')
-          assert 'azim-live-content.js?v=3' in contact
+          assert 'azim-live-content.js?v=4' in contact
           assert 'supabase-config.js' in contact
-          assert 'azim-live-content.js?v=3' in index
+          assert 'azim-live-content.js?v=4' in index
           assert 'loadLiveCatalog' in products
           assert 'livePriceData' in products
           assert '۰۲۱-۳۳۹۰۰۰۰۰ | ۰۹۱۲-۰۰۰۰۰۰۰' not in contact
@@ -245,7 +245,7 @@ jobs:
           cfg = Path('_site/supabase-config.js').read_text(encoding='utf-8')
           live = Path('_site/azim-live-content.js').read_text(encoding='utf-8')
           assert 'supabase-config.js' in ai
-          assert 'azim-live-content.js?v=3' in ai
+          assert 'azim-live-content.js?v=4' in ai
           assert 'id="chatMessages"' in ai and 'id="chatForm"' in ai and 'id="chatInput"' in ai
           assert 'window.AZIM_AI_API_URL' in ai
           assert 'sb_publishable_' in cfg and 'functions/v1/azim-ai-chat' in cfg
