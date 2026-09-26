@@ -549,12 +549,12 @@ async function handleStart(req: Request, body: any) {
 
 async function handleVerify(req: Request, body: any) {
   const settings = await getSettings();
-  const enabled = String(settings?.online_enabled ?? "false").toLowerCase() === "true";
   const ready = String(settings?.gateway_ready ?? "false").toLowerCase() === "true";
   const provider = clean(settings?.provider, 60).toLowerCase();
 
-  if (!enabled || !ready || !provider) {
-    return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_CONFIGURED", error: "درگاه آنلاین هنوز برای فروشگاه پیکربندی نشده است." }, 503, req);
+  // Existing payments must remain verifiable even when new checkouts are disabled.
+  if (!ready || !provider) {
+    return response({ ok: false, code: "PAYMENT_PROVIDER_NOT_CONFIGURED", error: "اتصال درگاه برای بررسی تراکنش آماده نیست." }, 503, req);
   }
 
   let transaction: any = null;
