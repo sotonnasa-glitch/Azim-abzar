@@ -1,5 +1,10 @@
 export default {
   async fetch(request, env) {
+    const requestPath = new URL(request.url).pathname;
+    const blocked = /\/(?:HANDOVER|DEPLOYMENT_FA|TRANSFER_READY_FA|AI_AUDIT[^/]*?|\.env\.example|supabase-config\.example)\.md?$|\/(?:\.env\.example|supabase-config\.example\.js)$/i;
+    if (blocked.test(requestPath)) {
+      return new Response('Not found', { status: 404 });
+    }
     const response = await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
 
