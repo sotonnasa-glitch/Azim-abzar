@@ -1994,7 +1994,7 @@
               <span id="modalOrderBtnText">استعلام / سفارش</span>
             </a>
           </div>
-          <button type="button" class="az-product-ai-btn" id="modalProductAiBtn" style="margin-top:10px" data-ai-product-id="" data-ai-product-code="" data-ai-base-name="" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label"><b>مشاور فنی:</b> <span>راهنمای تخصصی و انتخاب سایز</span></span></button>
+          <button type="button" class="az-product-ai-btn" id="modalProductAiBtn" style="margin-top:10px" data-ai-product-id="" data-ai-product-code="" data-ai-base-name="" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">راهنمایی هوشمند محصول</span></button>
         </div>
       </div>
     </div>
@@ -2276,7 +2276,7 @@
             <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)">
               <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span><span>افزودن به سبد سفارش</span>
             </button>
-            <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label"><b>مشاور فنی:</b> <span>${esc(x.name)}</span></span></button>
+            <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
           </div>
         </article>
       `;
@@ -2825,7 +2825,7 @@
       document.getElementById('status').innerHTML = `<span style="color:#ff6b6b">خطا در بارگذاری کاتالوگ: ${esc(e.message)}</span>`;
     });
   </script>
-  <script src="./azim-product-ai.js?v=5" defer></script>
+  <script src="./azim-product-ai.js?v=6" defer></script>
   <script src="./azim-ai-widget.js?v=5" defer></script>
 </body>
 </html>
