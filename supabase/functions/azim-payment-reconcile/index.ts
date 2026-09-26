@@ -64,7 +64,6 @@ async function reconcile() {
       const headers: Record<string, string> = {
         "content-type": "application/json",
         "apikey": SERVICE_KEY,
-        "Authorization": "Bearer " + SERVICE_KEY,
       };
       const r = await fetch(gatewayUrl, {
         method: "POST",
@@ -84,9 +83,9 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
   if (!SUPABASE_URL || !SERVICE_KEY) return json({ ok: false, error: "Server is not configured" }, 500);
 
-  const authorization = req.headers.get("authorization") ?? "";
-  const secretOk = RECONCILE_SECRET && authorization === "Bearer " + RECONCILE_SECRET;
-  const serviceOk = authorization === "Bearer " + SERVICE_KEY;
+  const presentedKey = req.headers.get("apikey") ?? "";
+  const secretOk = RECONCILE_SECRET && presentedKey === RECONCILE_SECRET;
+  const serviceOk = presentedKey === SERVICE_KEY;
   if (!secretOk && !serviceOk) return json({ ok: false, error: "Unauthorized" }, 401);
 
   try {
