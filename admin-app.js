@@ -36,7 +36,8 @@
     audit: ['گزارش فعالیت', 'ردپای تغییرات پنل'],
     security: ['امنیت حساب', 'MFA، نشست و وضعیت دسترسی مدیریتی'],
     ai: ['هوش مصنوعی', 'چت عمومی و تنظیمات سرویس AI فروشگاه'],
-    'ai-products': ['ربات محصولات', 'مشاوره خودکار بر اساس اطلاعات واقعی کاتالوگ']
+    'ai-products': ['ربات محصولات', 'مشاوره خودکار بر اساس اطلاعات واقعی کاتالوگ'],
+    payment: ['مدیریت درگاه پرداخت', 'کنترل امن پرداخت آنلاین، تراکنش‌ها و بازگشت وجه']
   };
 
   const labels = {
@@ -71,7 +72,8 @@
     audit: ['owner','admin'],
     security: ['owner','admin'],
     ai: ['owner','admin','editor'],
-    'ai-products': ['owner','admin','editor']
+    'ai-products': ['owner','admin','editor'],
+    payment: ['owner','admin']
   };
   const canView = (name) => !viewRoles[name] || viewRoles[name].includes(state.me?.role);
 
@@ -541,7 +543,8 @@
       audit:['owner','admin'],
       security:['owner','admin'],
       ai:['owner','admin','editor'],
-      'ai-products':['owner','admin','editor']
+      'ai-products':['owner','admin','editor'],
+      payment:['owner','admin']
     };
     document.querySelectorAll('[data-menu-view]').forEach((btn) => {
       btn.style.display = (allowed[btn.dataset.menuView] || []).includes(role) ? '' : 'none';
@@ -569,7 +572,8 @@
       ['audit','گزارش فعالیت','Audit Log'],
       ['security','امنیت حساب','MFA، نشست و دسترسی'],
       ['ai-products','ربات محصولات','مشاوره خودکار محصولات'],
-      ['ai','هوش مصنوعی','چت عمومی و تنظیمات AI']
+      ['ai','هوش مصنوعی','چت عمومی و تنظیمات AI'],
+      ['payment','مدیریت درگاه پرداخت','تراکنش‌ها، وضعیت درگاه و بازگشت وجه']
     ];
     let active = 0;
     function render(q='') {
@@ -629,9 +633,34 @@
       const discountBtn = nav.querySelector('[data-view="discounts"]');
       if (discountBtn) discountBtn.after(btn);
     }
+    if (nav && !nav.querySelector('[data-view="payment"]')) {
+      const btn = document.createElement('button');
+      btn.dataset.view = 'payment';
+      btn.innerHTML = '__AZICON_INVOICE__ مدیریت درگاه پرداخت';
+      const target = nav.querySelector('[data-view="admins"]');
+      nav.insertBefore(btn, target || null);
+    }
+
+    const menuGrid = document.querySelector('.az-menu-grid');
+    if (menuGrid && !menuGrid.querySelector('[data-menu-view="payment"]')) {
+      const btn = document.createElement('button');
+      btn.className = 'az-menu-item az-menu-payment-item';
+      btn.dataset.menuView = 'payment';
+      btn.innerHTML = '<span class="az-menu-icon">__AZICON_INVOICE__</span><span class="az-menu-copy"><strong>مدیریت درگاه پرداخت</strong><small>کنترل امن پرداخت</small></span>';
+      const target = menuGrid.querySelector('[data-menu-view="admins"]');
+      menuGrid.insertBefore(btn, target || null);
+    }
 
     const main = document.querySelector('.main');
     const dash = $('view-dashboard');
+    if (main && !$('view-payment')) {
+      const sec = document.createElement('section');
+      sec.id = 'view-payment';
+      sec.className = 'view';
+      sec.innerHTML = '<div id="paymentAdminPanel"></div>';
+      const before = $('view-security');
+      if (before?.parentNode) before.before(sec); else main.appendChild(sec);
+    }
     ensureDiscountSection();
     ensureDiscountCodeSection();
     if (dash && !$('dashboardHealth')) {
@@ -808,6 +837,7 @@
       customers: ['owner', 'admin', 'sales'],
       media: ['owner', 'admin', 'editor'],
       content: ['owner', 'admin', 'editor'],
+      payment: ['owner', 'admin'],
       admins: ['owner', 'admin'],
       audit: ['owner', 'admin'],
       ai: ['owner', 'admin', 'editor'],
@@ -863,12 +893,13 @@
       if (name === 'discounts') return await loadDiscounts();
       if (name === 'discount-codes') return await loadDiscountCodes();
       if (name === 'ai-products') return await loadAIProducts();
+    if (name === 'payment') return await loadPaymentAdmin();
 
       const skeletons = {
         products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
         inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
         media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable',
-        security: 'securityPanel'
+        security: 'securityPanel', payment: 'paymentAdminPanel'
       };
       if (skeletons[name]) showSkeleton(skeletons[name]);
 
@@ -957,6 +988,254 @@
   }
   function miniStat(label, value) {
     return '<div class="az-mini-stat"><b>' + esc(label) + '</b><strong>' + Number(value || 0).toLocaleString('fa-IR') + '</strong></div>';
+  }
+
+  function paymentStatusLabel(status) {
+    const map = {
+      initiated:'ایجاد تراکنش',
+      pending:'در انتظار',
+      paid:'پرداخت شده',
+      failed:'ناموفق',
+      cancelled:'لغو شده',
+      refunded:'عودت کامل',
+      partially_refunded:'عودت بخشی',
+      review_required:'نیازمند بررسی'
+    };
+    return map[String(status || '')] || String(status || 'نامشخص');
+  }
+
+  function refundStatusLabel(status) {
+    const map = {
+      requested:'درخواست شده',
+      pending:'در انتظار',
+      processing:'در حال پردازش',
+      refunded:'عودت شده',
+      failed:'ناموفق',
+      cancelled:'لغو شده',
+      review_required:'نیازمند بررسی'
+    };
+    return map[String(status || '')] || String(status || 'نامشخص');
+  }
+
+  function paymentBadge(status, refund = false) {
+    const s = String(status || '');
+    const cls = ['paid','refunded'].includes(s) ? 'ok'
+      : ['failed','cancelled'].includes(s) ? 'red'
+      : ['review_required','pending','initiated','processing','requested'].includes(s) ? 'warn' : '';
+    return '<span class="badge ' + cls + '">' + esc(refund ? refundStatusLabel(s) : paymentStatusLabel(s)) + '</span>';
+  }
+
+  function paymentMoney(amount, unit) {
+    const n = Number(amount || 0);
+    if (!Number.isFinite(n)) return '—';
+    const u = String(unit || 'toman').toLowerCase();
+    const label = u === 'toman' ? 'تومان' : esc(u);
+    return new Intl.NumberFormat('fa-IR').format(n) + ' ' + label;
+  }
+
+  function paymentCard(label, value, sub, tone = '') {
+    return '<div class="az-payment-card ' + esc(tone) + '"><div class="k">' + esc(label) + '</div><div class="v">' + esc(String(value)) + '</div><div class="s">' + esc(sub || '') + '</div></div>';
+  }
+
+  async function ensurePaymentMFA() {
+    try {
+      const r = await state.db.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (r.error || r.data?.currentLevel !== 'aal2') {
+        toast('__AZICON_LOCK__ برای عملیات پرداخت باید کد امنیتی دومرحله‌ای تأیید شده باشد.');
+        return false;
+      }
+      return true;
+    } catch (_) {
+      toast('__AZICON_LOCK__ بررسی امنیت نشست پرداخت ممکن نشد.');
+      return false;
+    }
+  }
+
+  function paymentAdminHtml(data) {
+    const settings = data?.settings || {};
+    const txs = Array.isArray(data?.recent_transactions) ? data.recent_transactions : [];
+    const refunds = Array.isArray(data?.recent_refunds) ? data.recent_refunds : [];
+    const ts = data?.transaction_stats || {};
+    const rs = data?.refund_stats || {};
+    const ready = !!settings.gateway_ready && !!settings.provider;
+    const enabled = !!settings.online_enabled;
+    const onlineState = enabled ? 'فعال' : 'خاموش';
+    const readiness = settings.gateway_ready ? 'آماده' : 'آماده نیست';
+    const provider = settings.provider || 'هنوز انتخاب نشده';
+    const callback = settings.callback_path || 'payment-callback.html';
+
+    const txRows = txs.length ? txs.map((tx) => {
+      const refundBtn = ready && ['paid','partially_refunded'].includes(tx.status) && Number(tx.remaining_refundable || 0) > 0
+        ? '<button class="btn ghost" data-payment-refund="' + esc(tx.id) + '">درخواست عودت</button>'
+        : '';
+      return '<tr>' +
+        '<td><strong>' + esc(tx.order_code || '—') + '</strong><div class="muted">' + esc(tx.provider || '—') + '</div></td>' +
+        '<td>' + paymentMoney(tx.amount, tx.amount_unit) + '</td>' +
+        '<td>' + paymentBadge(tx.status) + (tx.provider_status ? '<div class="muted">' + esc(tx.provider_status) + '</div>' : '') + '</td>' +
+        '<td>' + esc(tx.gateway_reference_masked || '—') + '</td>' +
+        '<td>' + esc(dateFa(tx.created_at)) + '</td>' +
+        '<td>' + refundBtn + '</td>' +
+      '</tr>';
+    }).join('') : '<tr><td colspan="6"><div class="empty">هنوز تراکنشی ثبت نشده است.</div></td></tr>';
+
+    const refundRows = refunds.length ? refunds.map((rf) =>
+      '<tr>' +
+      '<td><strong>' + esc(rf.order_code || '—') + '</strong><div class="muted">' + esc(rf.id || '') + '</div></td>' +
+      '<td>' + paymentMoney(rf.amount, rf.amount_unit) + '</td>' +
+      '<td>' + paymentBadge(rf.status, true) + '</td>' +
+      '<td>' + esc(rf.reason || '—') + '</td>' +
+      '<td>' + esc(dateFa(rf.created_at)) + '</td>' +
+      '</tr>'
+    ).join('') : '<tr><td colspan="5"><div class="empty">درخواست عودت وجهی ثبت نشده است.</div></td></tr>';
+
+    return '<div class="az-payment-shell">' +
+      '<div class="az-payment-hero">' +
+        '<div><span class="az-section-kicker">PAYMENT CONTROL CENTER</span><h2>مدیریت امن درگاه پرداخت</h2><p>این بخش فقط برای مالک/مدیر ارشد و پس از MFA در دسترس است. از اینجا پرداختی دستی «موفق» یا «مرجوع» نمی‌شود؛ تأیید نهایی همیشه باید از خود درگاه انجام شود.</p></div>' +
+        '<div class="az-payment-hero-status ' + (enabled && ready ? 'ok' : 'warn') + '"><span>وضعیت پرداخت آنلاین</span><strong>' + esc(onlineState) + '</strong><small>' + esc(readiness + ' · ' + provider) + '</small></div>' +
+      '</div>' +
+      '<div class="az-payment-cards">' +
+        paymentCard('تراکنش‌های کل', Number(ts.paid||0)+Number(ts.pending||0)+Number(ts.failed||0)+Number(ts.cancelled||0)+Number(ts.initiated||0)+Number(ts.review_required||0)+Number(ts.refunded||0)+Number(ts.partially_refunded||0), 'ثبت‌شده در سامانه') +
+        paymentCard('در انتظار تعیین تکلیف', Number(data?.pending_count||0), 'پرداخت‌های initiated / pending', Number(data?.pending_count||0) ? 'warn' : 'ok') +
+        paymentCard('نیازمند بررسی', Number(data?.review_required_count||0), 'هیچ موردی نباید نادیده بماند', Number(data?.review_required_count||0) ? 'red' : 'ok') +
+        paymentCard('درخواست‌های عودت', Object.values(rs).reduce((a,v)=>a+Number(v||0),0), 'ثبت‌شده در سیستم') +
+      '</div>' +
+      '<div class="az-payment-grid">' +
+        '<div class="az-payment-panel">' +
+          '<div class="az-payment-panel-head"><div><h3>کنترل پرداخت آنلاین</h3><p>فعال‌سازی فقط وقتی مجاز است که provider واقعی و gateway_ready هر دو تأیید شده باشند.</p></div>' +
+          '<span class="badge ' + (enabled ? 'ok' : 'warn') + '">' + esc(onlineState) + '</span></div>' +
+          '<div class="az-payment-settings-grid">' +
+            '<div><span>درگاه</span><strong>' + esc(provider) + '</strong></div>' +
+            '<div><span>آمادگی اتصال</span><strong>' + esc(readiness) + '</strong></div>' +
+            '<div><span>واحد مبلغ</span><strong>' + esc(settings.store_amount_unit || 'toman') + '</strong></div>' +
+            '<div><span>مسیر Callback</span><strong dir="ltr">' + esc(callback) + '</strong></div>' +
+          '</div>' +
+          '<div class="az-payment-danger-note"><strong>🔐 قانون طلایی</strong><span>هیچ دکمه‌ای در این پنل پرداخت را دستی موفق نمی‌کند و هیچ کلید API/Secret در مرورگر یا GitHub قرار نمی‌گیرد.</span></div>' +
+          '<div class="az-payment-actions">' +
+            '<button class="btn ' + (enabled ? 'secondary' : '') + '" data-payment-toggle="' + (enabled ? '0' : '1') + '"' + ((!enabled && !ready) ? ' disabled title="تا اتصال درگاه واقعی، فعال‌سازی مجاز نیست."' : '') + '>' + (enabled ? '⛔ خاموش کردن پرداخت آنلاین' : '✅ فعال کردن پرداخت آنلاین') + '</button>' +
+            '<button class="btn ghost" type="button" data-payment-refresh>↻ بروزرسانی وضعیت</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="az-payment-panel">' +
+          '<div class="az-payment-panel-head"><div><h3>نقشه امنیتی پرداخت</h3><p>محل ذخیره و رفتار هر جزء حساس.</p></div></div>' +
+          '<div class="az-payment-security-list">' +
+            '<div><b>Secretها</b><span>فقط Supabase Secrets</span><i>🔒</i></div>' +
+            '<div><b>تأیید مبلغ</b><span>سمت سرور و تراکنش</span><i>✓</i></div>' +
+            '<div><b>تأیید موفقیت</b><span>فقط verify درگاه</span><i>✓</i></div>' +
+            '<div><b>Refund</b><span>درخواست → تأیید provider</span><i>✓</i></div>' +
+            '<div><b>مغایرت</b><span>review_required و اعلان مدیر</span><i>⚠</i></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="az-payment-panel">' +
+        '<div class="az-payment-panel-head"><div><h3>آخرین تراکنش‌ها</h3><p>فقط اطلاعات لازم برای پیگیری نمایش داده می‌شود؛ reference کامل ماسک شده است.</p></div></div>' +
+        '<div class="table-wrap"><table class="table"><thead><tr><th>سفارش</th><th>مبلغ</th><th>وضعیت</th><th>Reference</th><th>زمان</th><th>عملیات</th></tr></thead><tbody>' + txRows + '</tbody></table></div>' +
+      '</div>' +
+      '<div class="az-payment-panel">' +
+        '<div class="az-payment-panel-head"><div><h3>درخواست‌های بازگشت وجه</h3><p>ثبت درخواست به معنی انتقال پول نیست؛ اجرای نهایی فقط بعد از تأیید provider انجام می‌شود.</p></div></div>' +
+        '<div class="table-wrap"><table class="table"><thead><tr><th>سفارش</th><th>مبلغ</th><th>وضعیت</th><th>دلیل</th><th>زمان</th></tr></thead><tbody>' + refundRows + '</tbody></table></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function loadPaymentAdmin() {
+    const el = $('paymentAdminPanel');
+    if (!el) return;
+    if (!canView('payment')) {
+      el.innerHTML = '<div class="empty">این بخش فقط برای مالک و مدیر ارشد قابل دسترسی است.</div>';
+      return;
+    }
+    if (!(await ensurePaymentMFA())) {
+      el.innerHTML = '<div class="az-payment-lock"><strong>🔐 دسترسی پرداخت قفل است</strong><span>برای مشاهده/مدیریت اطلاعات درگاه، نشست باید با MFA به سطح AAL2 رسیده باشد.</span></div>';
+      return;
+    }
+    el.innerHTML = '<div class="az-skeleton"></div>';
+    const r = await state.db.rpc('azim_admin_payment_dashboard');
+    if (r.error) {
+      el.innerHTML = '<div class="az-payment-lock"><strong>خطا در بارگذاری مرکز پرداخت</strong><span>' + esc(errorText(r.error)) + '</span></div>';
+      return;
+    }
+    state.paymentAdmin = r.data || {};
+    el.innerHTML = paymentAdminHtml(state.paymentAdmin);
+    el.querySelector('[data-payment-refresh]')?.addEventListener('click', () => loadPaymentAdmin());
+    el.querySelector('[data-payment-toggle]')?.addEventListener('click', () => {
+      const next = el.querySelector('[data-payment-toggle]').dataset.paymentToggle === '1';
+      openPaymentToggleConfirm(next);
+    });
+    el.querySelectorAll('[data-payment-refund]').forEach((btn) => {
+      const tx = (state.paymentAdmin.recent_transactions || []).find(x => x.id === btn.dataset.paymentRefund);
+      if (tx) btn.addEventListener('click', () => openPaymentRefundForm(tx));
+    });
+  }
+
+  function openPaymentToggleConfirm(next) {
+    const action = next ? 'فعال‌سازی' : 'خاموش کردن';
+    const warning = next
+      ? 'فعال‌سازی پرداخت آنلاین یعنی مشتریان می‌توانند وارد جریان پرداخت شوند. فقط وقتی ادامه بده که provider و readiness را قبلاً بررسی کرده‌ای.'
+      : 'خاموش کردن پرداخت آنلاین، شروع پرداخت‌های جدید را متوقف می‌کند؛ تراکنش‌های قبلی حذف یا تغییر نمی‌کنند.';
+    openModal('تأیید ' + action + ' پرداخت آنلاین',
+      '<form id="paymentToggleForm" class="az-payment-confirm-form">' +
+      '<div class="az-payment-confirm-danger"><strong>⚠️ عملیات حساس مالی</strong><span>' + esc(warning) + '</span></div>' +
+      '<div class="field"><label>دلیل ثبت عملیات *</label><textarea class="textarea" name="reason" minlength="3" maxlength="500" required placeholder="مثلاً: فعال‌سازی پس از تأیید موفق اتصال درگاه"></textarea></div>' +
+      '<label class="check"><input type="checkbox" name="confirm" required> این تغییر را آگاهانه و با اطلاع از اثر آن تأیید می‌کنم.</label>' +
+      '<div class="mfa-status" id="paymentToggleStatus"></div>' +
+      '<div class="mfa-actions"><button class="btn" type="submit">' + esc(action) + '</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+      '</form>'
+    );
+    $('paymentToggleForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const status = $('paymentToggleStatus');
+      if (!(await ensurePaymentMFA())) { status.textContent='__AZICON_LOCK__ تأیید MFA لازم است.'; return; }
+      status.textContent='در حال ثبت امن تغییر…';
+      const r = await state.db.rpc('azim_admin_set_online_payment_enabled', {
+        p_enabled: !!next,
+        p_reason: form.elements.reason.value.trim()
+      });
+      if (r.error) {
+        status.className='mfa-status error';
+        status.textContent='__AZICON_ERROR__ ' + errorText(r.error);
+        return;
+      }
+      closeModal();
+      toast(next ? '__AZICON_SUCCESS__ پرداخت آنلاین فعال شد.' : '__AZICON_SUCCESS__ پرداخت آنلاین خاموش شد.');
+      await loadPaymentAdmin();
+    };
+  }
+
+  function openPaymentRefundForm(tx) {
+    if (!(state.paymentAdmin?.settings?.gateway_ready && state.paymentAdmin?.settings?.provider)) {
+      return toast('__AZICON_BLOCK__ بازگشت وجه تا اتصال درگاه واقعی در دسترس نیست.');
+    }
+    const max = Number(tx.remaining_refundable || 0);
+    openModal('درخواست بازگشت وجه امن',
+      '<form id="paymentRefundForm" class="grid2">' +
+      '<div class="az-payment-confirm-danger field full"><strong>⚠️ این مرحله پول را منتقل نمی‌کند</strong><span>فقط یک درخواست عودت ثبت می‌شود؛ اجرای واقعی باید با تأیید provider انجام شود.</span></div>' +
+      '<div class="field"><label>سفارش</label><input class="input" value="' + esc(tx.order_code || '—') + '" disabled></div>' +
+      '<div class="field"><label>مانده قابل عودت</label><input class="input" value="' + esc(paymentMoney(max, tx.amount_unit)) + '" disabled></div>' +
+      '<div class="field"><label>مبلغ عودت *</label><input class="input" name="amount" type="number" min="1" max="' + esc(max) + '" step="1" value="' + esc(max) + '" required></div>' +
+      '<div class="field full"><label>دلیل *</label><textarea class="textarea" name="reason" minlength="3" maxlength="500" required></textarea></div>' +
+      '<label class="check field full"><input type="checkbox" name="confirm" required> مبلغ و سفارش را دوباره بررسی کردم و ثبت درخواست را تأیید می‌کنم.</label>' +
+      '<div class="mfa-status field full" id="paymentRefundStatus"></div>' +
+      '<div class="field full"><div class="mfa-actions"><button class="btn" type="submit">ثبت درخواست عودت</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div></div>' +
+      '</form>'
+    );
+    $('paymentRefundForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const form=e.target, status=$('paymentRefundStatus');
+      if (!(await ensurePaymentMFA())) { status.textContent='__AZICON_LOCK__ تأیید MFA لازم است.'; return; }
+      const amount=Math.floor(Number(form.elements.amount.value));
+      if (!Number.isSafeInteger(amount) || amount<=0 || amount>max) {
+        status.className='mfa-status error'; status.textContent='__AZICON_ERROR__ مبلغ عودت نامعتبر است.'; return;
+      }
+      status.className='mfa-status'; status.textContent='در حال ثبت درخواست…';
+      const r=await state.db.rpc('azim_admin_request_online_refund',{
+        p_transaction_id:tx.id,p_amount:amount,p_reason:form.elements.reason.value.trim()
+      });
+      if(r.error){status.className='mfa-status error';status.textContent='__AZICON_ERROR__ '+errorText(r.error);return;}
+      closeModal();
+      toast('__AZICON_SUCCESS__ درخواست بازگشت وجه ثبت شد؛ انتقال پول انجام نشده است.');
+      await loadPaymentAdmin();
+    };
   }
 
   function renderProductTable(rows, compact) {
@@ -2914,7 +3193,11 @@
   };
 
   const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);
-  const canEditContentKey = (key) => can.edit() && (!sensitiveContentKeys.has(String(key || '').trim()) || can.all());
+  const canEditContentKey = (key) => {
+    const clean = String(key || '').trim();
+    if (clean === 'checkout_payment') return false;
+    return can.edit() && (!sensitiveContentKeys.has(clean) || can.all());
+  };
 
   async function loadContent() {
     const r = await state.db.from('site_content').select('*').order('updated_at', { ascending: false });
