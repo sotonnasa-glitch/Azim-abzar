@@ -1870,6 +1870,25 @@
       return;
     }
 
+    // Fetch the saved order lines as the source of truth for what was actually ordered.
+    const orderIds = rows.map(x => x.id).filter(Boolean);
+    const itemsRes = orderIds.length
+      ? await state.db.from('order_items')
+          .select('id,order_id,product_id,product_name,sku,quantity,unit_price,line_total,variant')
+          .in('order_id', orderIds)
+          .order('id')
+      : { data: [], error: null };
+
+    if (itemsRes.error) return showSectionError('ordersTable', itemsRes.error);
+
+    const itemsByOrder = new Map();
+    (itemsRes.data || []).forEach((item) => {
+      const key = String(item.order_id);
+      const list = itemsByOrder.get(key) || [];
+      list.push(item);
+      itemsByOrder.set(key, list);
+    });
+
     const totalValue = rows.reduce((sum, x) => sum + Number(x.total || 0), 0);
     const unpaidCount = rows.filter(x => x.payment_status !== 'paid').length;
     const pendingCount = rows.filter(x => ['pending','confirmed','processing'].includes(x.status)).length;
@@ -1888,6 +1907,21 @@
       const payment = labels[x.payment_status] || x.payment_status || '—';
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
       const discount = Number(x.discount || 0);
+      const orderItems = itemsByOrder.get(String(x.id)) || [];
+      const productsHtml = orderItems.length
+        ? '<div class="az-order-products"><span class="az-order-products-title">محصولات سفارش</span>' +
+            orderItems.map((it) => {
+              const variant = it?.variant && typeof it.variant === 'object'
+                ? (it.variant.label || it.variant.size || it.variant.name || '')
+                : String(it?.variant || '');
+              return '<div class="az-order-product-row">' +
+                '<div><b>' + esc(it.product_name || 'محصول') + '</b>' +
+                '<small>' + esc(it.sku || '—') + (variant ? ' · ' + esc(variant) : '') + '</small></div>' +
+                '<strong>×' + esc(Number(it.quantity || 0).toLocaleString('fa-IR')) + '</strong>' +
+                '</div>';
+            }).join('') +
+          '</div>'
+        : '<div class="az-order-products az-order-products-empty">محصولات این سفارش در دسترس نیست.</div>';
 
       return '<article class="az-order-card">' +
         '<div class="az-order-card-head">' +
@@ -1900,7 +1934,8 @@
         '</div>' +
         '<div class="az-order-card-body">' +
           '<div class="az-order-total"><span>مبلغ نهایی</span><strong>' + money(x.total) + '</strong>' + (discount ? '<small>پس از ' + money(discount) + ' تخفیف</small>' : '<small>بدون تخفیف</small>') + '</div>' +
-          '<div class="az-order-meta">' +
+          productsHtml +
+          '<div class="az-order-meta">'
             '<div><span>قبل تخفیف</span><b>' + money(x.subtotal) + '</b></div>' +
             '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'هماهنگی با واحد فروش') + '</b></div>' +
             '<div><span>کد تخفیف</span><b dir="ltr">' + esc(x.discount_code || '—') + '</b></div>' +
