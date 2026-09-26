@@ -20,6 +20,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Resolve public Supabase URL from frontend config
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path('supabase-config.js').read_text(encoding='utf-8')
+          m = re.search(r"AZIM_SUPABASE_URL\s*=\s*['\"]([^'\"]+)['\"]", text)
+          if not m:
+              raise SystemExit('AZIM_SUPABASE_URL_MISSING_FROM_CONFIG')
+          url = m.group(1).rstrip('/')
+          if not re.fullmatch(r'https://[A-Za-z0-9.-]+\.supabase\.co', url):
+              raise SystemExit('AZIM_SUPABASE_URL_INVALID')
+          with open('/tmp/supabase-url.env','w',encoding='utf-8') as f:
+              f.write('AZIM_SUPABASE_URL=' + url + '\n')
+          PY
+          cat /tmp/supabase-url.env >> "$GITHUB_ENV"
+          echo 'SUPABASE_PUBLIC_URL_RESOLVED_FROM_FRONTEND_CONFIG'
+
       - name: Build exact 908-product catalog
         shell: bash
         run: |
@@ -35,7 +55,8 @@ jobs:
           assert len({p['id'] for p in products}) == 908
           assert all(str(p.get('name','')).strip() for p in products)
           for p in products:
-              p['image'] = f'https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/{p["id"]}.jpg'
+              supabase_url = __import__('os').environ['AZIM_SUPABASE_URL']
+              p['image'] = f'{supabase_url}/storage/v1/object/public/catalog-images/{p["id"]}.jpg'
           (root / 'products.json').write_text(json.dumps(products, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
           print('EXACT CATALOG VERIFIED: 908 products P0001-P0908')
           print('IMAGE HOST: Supabase Storage / catalog-images')
@@ -63,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
           for sample in P0001 P0002 P0339 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
+            curl --fail --silent --show-error -I "${AZIM_SUPABASE_URL}/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
           echo 'REMOTE SUPABASE IMAGES VERIFIED'
 
@@ -78,7 +99,8 @@ jobs:
           p = json.loads((root / 'products.json').read_text(encoding='utf-8'))
           assert isinstance(p, list) and len(p) == 908
           assert [x['id'] for x in p] == [f'P{i:04d}' for i in range(1, 909)]
-          expected = 'https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/'
+          import os
+          expected = os.environ['AZIM_SUPABASE_URL'].rstrip('/') + '/storage/v1/object/public/catalog-images/'
           assert all(x.get('image','').startswith(expected) and x['image'].endswith(f'{x["id"]}.jpg') for x in p)
           assert 'catalog_site_mapping_908/products.json' in Path('products-v4.html').read_text(encoding='utf-8')
           assert 'azim-home-categories.js?v=1' in Path('index.html').read_text(encoding='utf-8')
@@ -94,7 +116,7 @@ jobs:
         run: |
           set -euo pipefail
           for sample in P0001 P0339 P0908; do
-            curl --fail --silent --show-error -I "https://lzkrwtnylkordkwkdyzp.supabase.co/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
+            curl --fail --silent --show-error -I "${AZIM_SUPABASE_URL}/storage/v1/object/public/catalog-images/${sample}.jpg" >/dev/null
           done
           echo 'REMOTE SUPABASE IMAGES VERIFIED'
 
@@ -116,7 +138,7 @@ jobs:
           node --check server.js
           node --input-type=module --check < api/chat.js
           node --check admin-app.js
-          grep -q "^const PORT = 3000;" server.js
+          grep -q "^const PORT = Number(process.env.PORT || 3000);" server.js
           grep -q "AZIM_ALLOWED_ORIGIN" server.js
           grep -q "isAdmin(msg.chat?.id)" supabase/functions/azim-telegram-admin/index.ts
           echo 'BACKEND SOURCE VERIFIED'
@@ -204,11 +226,11 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           html = Path('_site/index.html').read_text(encoding='utf-8')
-          assert '<script src="./azim-motion.js?v=7" defer></script>' in html
+          assert '<script src="./azim-motion.js?v=8" defer></script>' in html
           assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
           assert 'azim-live-content.js?v=4' in html
           assert 'azim-home-gallery.js' not in html
-          print('HOMEPAGE VERIFIED: native hero gallery + Motion V7 + copy V9')
+          print('HOMEPAGE VERIFIED: native hero gallery + optimized Motion V8 + copy V9')
           PY
 
       - name: Validate contact and catalog runtime
