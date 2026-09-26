@@ -116,7 +116,7 @@ jobs:
           node --check server.js
           node --input-type=module --check < api/chat.js
           node --check admin-app.js
-          grep -q "const PORT = Number(process.env.PORT || 3000)" server.js
+          grep -q "^const PORT = 3000;" server.js
           grep -q "AZIM_ALLOWED_ORIGIN" server.js
           grep -q "isAdmin(msg.chat?.id)" supabase/functions/azim-telegram-admin/index.ts
           echo 'BACKEND SOURCE VERIFIED'
