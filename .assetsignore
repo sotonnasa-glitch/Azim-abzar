@@ -27,3 +27,7 @@ oops*.txt
 dummy-delete-later*.txt
 __deploy_trigger*.txt
 __verification_marker*.txt
+audit/
+catalog_site_mapping_908/hq-image-match-manifest.json
+catalog_site_mapping_908/product_sizes.json
+catalog_site_mapping_908/products.jsonl

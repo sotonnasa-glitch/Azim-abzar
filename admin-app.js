@@ -1781,6 +1781,7 @@
   }
 
   async function saveInquiry(id) {
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه مدیریت درخواست‌های مشتری را ندارد.');
     const p = {
       status: $('inqStatus').value,
       priority: $('inqPriority').value,
@@ -2875,6 +2876,9 @@
     }
   };
 
+  const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);
+  const canEditContentKey = (key) => can.edit() && (!sensitiveContentKeys.has(String(key || '').trim()) || can.all());
+
   async function loadContent() {
     const r = await state.db.from('site_content').select('*').order('updated_at', { ascending: false });
     if (r.error) return showSectionError('contentTable', r.error);
@@ -2884,7 +2888,7 @@
       '<tr><td>' + esc(x.section_key) + '</td><td>' + esc(x.title || '—') + '</td><td>' +
       (x.is_active ? '<span class="badge ok">فعال</span>' : '<span class="badge red">غیرفعال</span>') +
       '</td><td>' + dateFa(x.updated_at) + '</td><td>' +
-      (can.edit() ? '<button class="btn secondary" data-edit-content="' + x.id + '">ویرایش</button>' : '') +
+      (canEditContentKey(x.section_key) ? '<button class="btn secondary" data-edit-content="' + x.id + '">ویرایش</button>' : '<span class="badge warn">فقط مدیران</span>') +
       '</td></tr>'
     ).join('');
     $('contentTable').innerHTML =
@@ -2920,6 +2924,8 @@
 
   async function editContent(id) {
     if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوا ندارد.');
+    const keyRow = state.contentRows.find((x) => x.id === id);
+    if (!canEditContentKey(keyRow?.section_key)) return toast('__AZICON_BLOCK__ تنظیمات پرداخت و هوش مصنوعی فقط برای مدیران قابل ویرایش است.');
     const r = await state.db.from('site_content').select('*').eq('id', id).single();
     if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal('ویرایش محتوا', contentForm(r.data));
@@ -2937,6 +2943,7 @@
     try {
       const s = e.target.elements;
       const key = s.section_key ? s.section_key.value.trim() : state.contentRows.find((x) => x.id === id)?.section_key;
+      if (!canEditContentKey(key)) return toast('__AZICON_BLOCK__ این بخش فقط توسط مدیران قابل ذخیره است.');
       let payload = {};
       const meta = contentMeta[key];
       if (meta) {

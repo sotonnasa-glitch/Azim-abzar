@@ -493,6 +493,71 @@ async function testServerRoutes() {
   }
 }
 
+
+// ------------------------------------------------------------------------------
+// 6. Suite: Audit Addendum Regression Guards
+// ------------------------------------------------------------------------------
+function testAuditAddendumGuards() {
+  suite('۶. تست اصلاحات الحاقیه ممیزی: مرز انتشار، نقش‌ها و cache');
+
+  const assetsIgnore = fs.readFileSync(path.join(__dirname, '.assetsignore'), 'utf8');
+  const pagesWorkflow = fs.readFileSync(path.join(__dirname, '.github', 'workflows', 'pages.yml'), 'utf8');
+  const adminJs = fs.readFileSync(path.join(__dirname, 'admin-app.js'), 'utf8');
+  const cartPages = ['cart.html', 'index.html', 'contact.html', 'products-v4.html']
+    .map(name => [name, fs.readFileSync(path.join(__dirname, name), 'utf8')]);
+
+  for (const needle of [
+    'audit/',
+    'catalog_site_mapping_908/hq-image-match-manifest.json',
+    'catalog_site_mapping_908/product_sizes.json',
+    'catalog_site_mapping_908/products.jsonl'
+  ]) {
+    if (assetsIgnore.includes(needle)) pass('مرز انتشار Cloudflare شامل مسیر داخلی است', needle);
+    else fail('مسیر داخلی در .assetsignore مسدود نشده', needle);
+  }
+
+  for (const needle of [
+    "--exclude='audit/'",
+    "--exclude='catalog_site_mapping_908/hq-image-match-manifest.json'",
+    "--exclude='catalog_site_mapping_908/product_sizes.json'",
+    "--exclude='catalog_site_mapping_908/products.jsonl'",
+    "test ! -d _site/audit",
+    "test ! -e _site/catalog_site_mapping_908/hq-image-match-manifest.json",
+    "test ! -e _site/catalog_site_mapping_908/product_sizes.json",
+    "test ! -e _site/catalog_site_mapping_908/products.jsonl"
+  ]) {
+    if (pagesWorkflow.includes(needle)) pass('مرز انتشار GitHub Pages برای فایل داخلی برقرار است', needle);
+    else fail('مرز انتشار GitHub Pages ناقص است', needle);
+  }
+
+  if (
+    adminJs.includes("const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);") &&
+    adminJs.includes("const canEditContentKey = (key) => can.edit()") &&
+    adminJs.includes("if (!canEditContentKey(key)) return toast('__AZICON_BLOCK__ این بخش فقط توسط مدیران قابل ذخیره است.')")
+  ) {
+    pass('ویرایش checkout_payment و ai_settings برای editor در UI/handler بسته شد');
+  } else {
+    fail('محافظ نقش برای محتوای حساس پنل کامل نیست');
+  }
+
+  const saveInquiryPos = adminJs.indexOf('async function saveInquiry(id)');
+  const saveInquiryBlock = saveInquiryPos >= 0 ? adminJs.slice(saveInquiryPos, saveInquiryPos + 700) : '';
+  if (saveInquiryBlock.includes("if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه مدیریت درخواست‌های مشتری را ندارد.');")) {
+    pass('saveInquiry علاوه بر RLS، کنترل نقش سمت پنل هم دارد');
+  } else {
+    fail('saveInquiry کنترل نقش سمت پنل ندارد');
+  }
+
+  const versions = cartPages.map(([name, html]) => [name, (html.match(/azim-cart\.js\?v=\d+/g) || [])]);
+  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=5');
+  if (!mismatched.length) {
+    pass('نسخه cache-busting azim-cart.js در هر ۴ صفحه یکسان و روی v5 است');
+  } else {
+    fail('نسخه cache-busting azim-cart.js بین صفحات ناهماهنگ است', mismatched.map(([n,h]) => n + ':' + h.join(',')).join(' | '));
+  }
+}
+
+// ------------------------------------------------------------------------------ 
 // ------------------------------------------------------------------------------
 // Main Execution
 // ------------------------------------------------------------------------------
@@ -509,6 +574,7 @@ async function main() {
   testCartAndCheckout();
   testContactForm();
   testOrderTrackingFlow();
+  testAuditAddendumGuards();
   await testServerRoutes();
 
   const duration = ((Date.now() - start) / 1000).toFixed(2);
