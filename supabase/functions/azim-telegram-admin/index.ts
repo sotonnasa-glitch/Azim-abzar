@@ -1343,9 +1343,19 @@ async function handleCallbackQuery(query: any) {
     if (txError) throw txError;
     if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
 
+    const { data: completedRefunds, error: refundHistoryError } = await supabase.from("payment_refunds")
+      .select("amount")
+      .eq("transaction_id", tx.id)
+      .eq("status", "refunded");
+    if (refundHistoryError) throw refundHistoryError;
+
+    const refundedAmount = (completedRefunds || []).reduce((sum: number, row: any) => sum + Number(row?.amount || 0), 0);
+    const remainingRefund = Math.max(0, Number(tx.amount || 0) - refundedAmount);
+    if (remainingRefund <= 0) throw new Error("کل مبلغ این تراکنش قبلاً مسترد شده است.");
+
     const refund = await supabase.rpc("azim_create_online_refund_request", {
       p_transaction_id: tx.id,
-      p_amount: Number(tx.amount || 0),
+      p_amount: remainingRefund,
       p_reason: "درخواست عودت وجه از پنل تلگرام ادمین",
       p_idempotency_key: "telegram-full-refund:" + orderCode,
     });
@@ -1354,7 +1364,7 @@ async function handleCallbackQuery(query: any) {
     await sendText(chatId,
       "🟠 درخواست عودت وجه ثبت شد.\n\n" +
       "سفارش: " + orderCode + "\n" +
-      "مبلغ درخواستی: " + money(tx.amount) + "\n\n" +
+      "مبلغ درخواستی: " + money(remainingRefund) + "\n\n"
       "تا وقتی خود درگاه عودت وجه را تأیید نکند، وضعیت پرداخت «مسترد شده» ثبت نمی‌شود.",
       { reply_markup: { inline_keyboard: [
         [{ text: "📄 سفارش", callback_data: "order:" + orderCode }],
