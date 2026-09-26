@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 // Dev server must run on port 3000 as per AI Studio runtime requirements
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 const ALLOWED_ORIGINS = new Set(
   String(process.env.AZIM_ALLOWED_ORIGIN || '')
     .split(',')
