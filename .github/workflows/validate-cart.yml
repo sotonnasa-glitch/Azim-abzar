@@ -10,6 +10,11 @@ on:
       - 'contact.html'
       - 'database/public-cart.sql'
       - '.github/workflows/validate-cart.yml'
+      - 'database/checkout-actions.sql'
+      - 'supabase/functions/azim-payment-gateway/index.ts'
+      - 'payment-callback.html'
+      - 'supabase/migrations/20260926190000_prepare_online_payment_gateway.sql'
+      - 'supabase/migrations/20260926190100_expose_payment_gateway_readiness.sql'
   pull_request:
     paths:
       - 'cart.html'
