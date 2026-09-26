@@ -2,8 +2,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 
-const PROJECT_URL = Deno.env.get("SUPABASE_URL") ?? "https://lzkrwtnylkordkwkdyzp.supabase.co";
-const PUBLIC_SITE_URL = (Deno.env.get("AZIM_PUBLIC_SITE_URL") ?? "https://sotonnasa-glitch.github.io/Azim-abzar").replace(/\/+$/, "");
+const PROJECT_URL = String(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
+if (!PROJECT_URL) throw new Error("SUPABASE_URL is missing");
+const PUBLIC_SITE_URL = String(Deno.env.get("AZIM_PUBLIC_SITE_URL") ?? "").replace(/\/+$/, "");
 const ADMIN_IDS = new Set(
   (Deno.env.get("TELEGRAM_ADMIN_CHAT_IDS") ?? "")
     .split(",")
