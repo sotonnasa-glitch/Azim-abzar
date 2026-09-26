@@ -64,9 +64,9 @@ jobs:
         run: |
           grep -q 'azim_cart_checkout' database/public-cart.sql
           grep -q 'SECURITY DEFINER' database/public-cart.sql
-          grep -q 'grant execute' database/public-cart.sql
           grep -Eq 'as \$(\$|function\$)' database/public-cart.sql
           grep -Eq '\$(\$|function\$);' database/public-cart.sql
+          grep -q 'grant execute' database/checkout-actions.sql
 
       - name: Check online payment gateway boundary
         run: |
