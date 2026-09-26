@@ -1295,7 +1295,16 @@
       });
       if(r.error){status.className='mfa-status error';status.textContent='__AZICON_ERROR__ '+errorText(r.error);return;}
       closeModal();
-      toast('__AZICON_SUCCESS__ درخواست بازگشت وجه ثبت شد؛ انتقال پول انجام نشده است.');
+      try {
+        const executed = await paymentEdgeAction('refund', { refund_id: r.data?.refund_id });
+        if (executed?.status === 'refunded') {
+          toast('__AZICON_SUCCESS__ بازگشت وجه توسط درگاه تأیید شد.');
+        } else {
+          toast('__AZICON_WARNING__ درخواست عودت ثبت شد؛ وضعیت نهایی درگاه هنوز قطعی نیست.');
+        }
+      } catch (executeError) {
+        toast('__AZICON_WARNING__ درخواست عودت ثبت شد، اما اجرای خودکار درگاه انجام نشد: ' + errorText(executeError));
+      }
       await loadPaymentAdmin();
     };
   }
