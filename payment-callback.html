@@ -76,7 +76,10 @@
         }
         actions.innerHTML='<a class="secondary" href="order-status.html?code='+encodeURIComponent(data?.order_code||code)+'">پیگیری سفارش</a><a class="secondary" href="index.html">صفحه اصلی</a>';
         actions.classList.remove('hidden');
-        try{ localStorage.removeItem('azim_pending_payment'); }catch(_){}
+        try{
+        localStorage.removeItem('azim_pending_payment');
+        localStorage.removeItem('azim_payment_recovery');
+      }catch(_){}
         return;
       }
 
