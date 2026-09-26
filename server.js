@@ -23,7 +23,7 @@ app.set('json spaces', 0);
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://lzkrwtnylkordkwkdyzp.supabase.co; connect-src 'self' https://lzkrwtnylkordkwkdyzp.supabase.co;"
+  'Content-Security-Policy': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://lzkrwtnylkordkwkdyzp.supabase.co; connect-src 'self' https://lzkrwtnylkordkwkdyzp.supabase.co;"
 };
 
 app.use((req, res, next) => {
