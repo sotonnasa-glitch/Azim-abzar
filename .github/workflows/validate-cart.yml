@@ -83,7 +83,20 @@ jobs:
           grep -q 'azim_finalize_online_payment' supabase/functions/azim-payment-gateway/index.ts
           grep -q 'azim_mark_online_payment_terminal' supabase/functions/azim-payment-gateway/index.ts
           grep -q 'SUPABASE_SECRET_KEYS' supabase/functions/azim-payment-gateway/index.ts
-          ! grep -q 'SUPABASE_ANON_KEY' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'SUPABASE_ANON_KEY' supabase/functions/azim-payment-gateway/index.ts
+          grep -q '/pg/v4/payment/request.json' supabase/functions/azim-payment-gateway/index.ts
+          grep -q '/pg/v4/payment/verify.json' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'async function refundWithProvider' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'action === "healthcheck"' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'action === "refund"' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'provider_session_id' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'provider_config' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'azim_admin_configure_payment_gateway' admin-app.js
+          grep -q "paymentEdgeAction('healthcheck'" admin-app.js
+          grep -q "paymentEdgeAction('refund'" admin-app.js
+          grep -q 'from public.products' database/public-cart.sql
+          grep -q 'v_product.price' database/public-cart.sql
+          grep -q 'v_variant_price' database/public-cart.sql
           test -f supabase/functions/azim-payment-reconcile/index.ts
           grep -q 'azim-payment-gateway' supabase/functions/azim-payment-reconcile/index.ts
           grep -q 'can_retry_payment' order-status.html
