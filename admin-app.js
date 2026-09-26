@@ -805,6 +805,7 @@
     $('newCategoryBtn').onclick = () => newCategory();
     $('newBrandBtn').onclick = () => newBrand();
     $('newContentBtn').onclick = () => newContent();
+    document.querySelectorAll('[data-open-payment-admin]').forEach((b) => b.onclick = () => setView('payment'));
     $('uploadMediaBtn').onclick = () => uploadMedia();
     $('homeCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('home'));
     $('contactCopyBtn')?.addEventListener('click', () => openFocusedSiteEditor('contact'));
@@ -3208,7 +3209,9 @@
       '<tr><td>' + esc(x.section_key) + '</td><td>' + esc(x.title || '—') + '</td><td>' +
       (x.is_active ? '<span class="badge ok">فعال</span>' : '<span class="badge red">غیرفعال</span>') +
       '</td><td>' + dateFa(x.updated_at) + '</td><td>' +
-      (canEditContentKey(x.section_key) ? '<button class="btn secondary" data-edit-content="' + x.id + '">ویرایش</button>' : '<span class="badge warn">فقط مدیران</span>') +
+      (x.section_key === 'checkout_payment'
+        ? '<button class="btn secondary" data-open-payment-admin>__AZICON_INVOICE__ مدیریت درگاه</button>'
+        : (canEditContentKey(x.section_key) ? '<button class="btn secondary" data-edit-content="' + x.id + '">ویرایش</button>' : '<span class="badge warn">فقط مدیران</span>')) +
       '</td></tr>'
     ).join('');
     $('contentTable').innerHTML =
