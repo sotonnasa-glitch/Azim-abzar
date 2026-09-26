@@ -104,11 +104,12 @@ app.get(['/', '/index.html'], (req, res) => {
 const BLOCKED_STATIC_PATHS = [
   /^\/(?:database|supabase|api|node_modules|\.github)(?:\/|$)/i,
   /^\/(?:server\.js|wrangler\.jsonc|\.assetsignore|\.gitignore|package(?:-lock)?\.json)$/i,
-  /^\/(?:HANDOVER|DEPLOYMENT_FA|AI_AUDIT[^/]*?)\.md$/i,
+  /^\/(?:HANDOVER|DEPLOYMENT_FA|TRANSFER_READY_FA|AI_AUDIT[^/]*?)\.md$/i,
   /\.(?:sql|b64|zip)$/i,
   /^(?:\/(?:test-automated\.mjs|Dockerfile|README\.md|MOTION_ENHANCEMENTS\.md|oops[^/]*\.txt|dummy-delete-later[^/]*\.txt|__[^/]*\.txt))$/i,
   /^\/(?:src|scripts|tools)(?:\/|$)/i,
-  /(?:^|\/)\.env(?:\.|$)/i
+  /(?:^|\/)\.env(?:\.|$)/i,
+  /^\/(?:supabase-config\.example\.js|\.env\.example)$/i
 ];
 
 app.use((req, res, next) => {
