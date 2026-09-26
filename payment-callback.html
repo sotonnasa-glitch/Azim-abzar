@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="نتیجه پرداخت آنلاین سفارش عظیم ابزار">
+  <title>نتیجه پرداخت | عظیم ابزار</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#030604;--panel:#0a100d;--line:#26312a;--text:#f5f8f5;--muted:#8e9b91;--gold:#f5b900;--green:#3fe084;--red:#ff6b72}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font-family:Vazirmatn,system-ui,sans-serif;color:var(--text);background:radial-gradient(circle at 50% 0%,rgba(245,185,0,.13),transparent 48%),linear-gradient(180deg,#030604,#07100b)}
+    .card{width:min(620px,100%);padding:34px 24px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(160deg,rgba(15,23,18,.97),rgba(7,11,9,.98));box-shadow:0 30px 90px rgba(0,0,0,.55);text-align:center}
+    .icon{width:70px;height:70px;margin:0 auto 18px;border-radius:20px;display:grid;place-items:center;border:1px solid rgba(245,185,0,.35);background:rgba(245,185,0,.08);font-size:32px}
+    h1{margin:0 0 10px;font-size:23px}p{color:var(--muted);line-height:2;font-size:13px;margin:8px 0}
+    .code{display:inline-block;margin:14px 0;padding:8px 14px;border-radius:10px;background:#050805;border:1px solid rgba(245,185,0,.2);color:#ffe06a;font-weight:900;direction:ltr}
+    .ok .icon{border-color:rgba(63,224,132,.35);background:rgba(63,224,132,.08)} .ok .icon::before{content:"✓"}
+    .fail .icon{border-color:rgba(255,107,114,.35);background:rgba(255,107,114,.08)} .fail .icon::before{content:"!"}
+    .wait .icon{animation:spin 1.1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+    a{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:12px;text-decoration:none;font-weight:900;font-size:11px}
+    .primary{background:linear-gradient(145deg,#ffe06a,#f5b900);color:#111}.secondary{border:1px solid #36433b;color:#e8ede9;background:#111813}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <main id="app" class="card wait">
+    <div class="icon">↻</div>
+    <h1 id="title">در حال بررسی پرداخت…</h1>
+    <p id="message">لطفاً صفحه را نبندید. نتیجه پرداخت از طریق سرور در حال بررسی است.</p>
+    <div id="code" class="code hidden"></div>
+    <div id="actions" class="actions hidden"></div>
+  </main>
+  <script src="./supabase-config.js"></script>
+  <script>
+  (async function(){
+    const q=new URLSearchParams(location.search);
+    const code=q.get('order_code')||'';
+    const tx=q.get('transaction_id')||'';
+    const callbackParams={};
+    q.forEach((v,k)=>{ if(k!=='order_code'&&k!=='transaction_id') callbackParams[k]=v; });
+
+    const app=document.getElementById('app'), title=document.getElementById('title');
+    const message=document.getElementById('message'), codeBox=document.getElementById('code'), actions=document.getElementById('actions');
+
+    function fail(text){
+      app.className='card fail';
+      title.textContent='پرداخت تأیید نشد';
+      message.textContent=text||'پرداخت توسط سامانه تأیید نشد.';
+      if(code){ codeBox.textContent='کد سفارش: '+code; codeBox.classList.remove('hidden'); }
+      actions.innerHTML='<a class="secondary" href="order-status.html?code='+encodeURIComponent(code)+'">پیگیری سفارش</a><a class="secondary" href="products-v4.html">بازگشت به محصولات</a>';
+      actions.classList.remove('hidden');
+    }
+
+    if(!tx && !code){ fail('شناسه پرداخت در آدرس برگشت پیدا نشد.'); return; }
+
+    try{
+      const r=await fetch((window.AZIM_SUPABASE_URL||'')+'/functions/v1/azim-payment-gateway',{
+        method:'POST',
+        headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({action:'verify',order_code:code,transaction_id:tx,callback_params:callbackParams})
+      });
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok || !data?.ok){ fail(data?.error||'تأیید پرداخت ناموفق بود.'); return; }
+
+      app.className='card ok';
+      title.textContent='پرداخت با موفقیت تأیید شد';
+      message.textContent='پرداخت سفارش شما توسط سامانه تأیید شد و وضعیت سفارش به‌روزرسانی شد.';
+      if(data.order_code){ codeBox.textContent='کد سفارش: '+data.order_code; codeBox.classList.remove('hidden'); }
+      actions.innerHTML='<a class="primary" href="order-status.html?code='+encodeURIComponent(data.order_code||code)+'">پیگیری سفارش</a><a class="secondary" href="products-v4.html">بازگشت به محصولات</a>';
+      actions.classList.remove('hidden');
+      try{ localStorage.removeItem('azim_pending_payment'); }catch(_){}
+    }catch(e){
+      fail('ارتباط با سامانه پرداخت برقرار نشد. چند لحظه بعد دوباره صفحه را باز کنید.');
+    }
+  })();
+  </script>
+</body>
+</html>
