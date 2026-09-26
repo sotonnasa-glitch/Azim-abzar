@@ -391,9 +391,22 @@
       }
     }
 
-    set('.az-footer-bottom .az-fbottom-inner > span:first-child', f.bottom_text);
-    const bottomStrong = footer.querySelector('.az-footer-bottom .az-fbottom-inner > span:first-child strong');
-    if (bottomStrong && f.brand) bottomStrong.textContent = f.brand;
+    const bottom = footer.querySelector('.az-footer-bottom .az-fbottom-inner > span:first-child');
+    if (bottom && f.bottom_text) {
+      const label = String(f.bottom_text);
+      bottom.textContent = label;
+      if (f.brand && label.includes(String(f.brand))) {
+        const pos = label.indexOf(String(f.brand));
+        const before = label.slice(0, pos);
+        const after = label.slice(pos + String(f.brand).length);
+        bottom.textContent = '';
+        if (before) bottom.appendChild(document.createTextNode(before));
+        const strong = document.createElement('strong');
+        strong.textContent = String(f.brand);
+        bottom.appendChild(strong);
+        if (after) bottom.appendChild(document.createTextNode(after));
+      }
+    }
     set('.az-footer-bottom .az-fbottom-sub', f.bottom_subtext);
   }
 
