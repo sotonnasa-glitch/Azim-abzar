@@ -1673,11 +1673,14 @@
       .nav {
         background: rgba(14,19,16,.96);
       }
-      /* On touch devices the moving hero strip is decorative; keep the
-         imagery, but stop the continuous compositor workload. */
+      /* Mobile: keep the hero imagery moving, but slow it down for a smooth low-cost loop. */
       .az-hero-photo-track {
-        animation: none !important;
-        transform: translate3d(0,0,0) !important;
+        animation: azSlidePhotoRightMobile 52s linear infinite !important;
+        will-change: transform;
+      }
+      @keyframes azSlidePhotoRightMobile {
+        0% { transform: translate3d(-35%, 0, 0); }
+        100% { transform: translate3d(0%, 0, 0); }
       }
       .az-ambient-canvas {
         display: none !important;
@@ -1686,6 +1689,16 @@
       * {
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
+      }
+      .az-hero-photo-overlay {
+        background: linear-gradient(to left,
+          rgba(6,9,7,0.88) 0%,
+          rgba(6,9,7,0.68) 48%,
+          rgba(6,9,7,0.24) 100%
+        );
+      }
+      .az-hero-photo-canvas {
+        opacity: 1;
       }
       .az-motion-stage {
         opacity: .48;
@@ -1841,14 +1854,14 @@
             <div class="az-hero-photo-canvas" aria-hidden="true">
                             <div class="az-hero-photo-track">
                 <!-- فقط دو دور یکسان؛ برای چرخه بی‌نهایت کافی است و لایه بسیار سبک‌تر می‌ماند. -->
-                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" decoding="async" referrerPolicy="no-referrer"></div>
-                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="ابزار حرفه‌ای کارگاهی و آلیاژ کروم وانادیوم" loading="eager" fetchpriority="high" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="ترکمتر دقیق و جعبه‌بکس ضربه‌ای" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="ترولی و جعبه‌ابزار مجهز کارگاهی" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
+                <div class="az-photo-panel"><img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="آچارهای جغجغه‌ای سخت‌کاری‌شده" loading="eager" decoding="async" referrerPolicy="no-referrer"></div>
               </div><div class="az-hero-photo-overlay"></div>
             </div>
 
