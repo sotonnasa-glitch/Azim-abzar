@@ -451,7 +451,7 @@ async function handleStart(req: Request, body: any) {
   }
 
   const existingQuery =
-    "/rest/v1/payment_transactions?select=id,status,authority,gateway_reference,gateway_request_id,provider,return_url,amount,amount_unit,created_at" +
+    "/rest/v1/payment_transactions?select=id,status,authority,gateway_reference,gateway_request_id,provider,return_url,amount,amount_unit,idempotency_key,created_at" +
     "&order_id=eq." + encodeURIComponent(order.id) +
     "&provider=eq." + encodeURIComponent(provider) +
     "&status=in.(initiated,pending)" +
@@ -472,7 +472,16 @@ async function handleStart(req: Request, body: any) {
     }
 
     if (transaction.return_url !== desiredReturnUrl) {
-      await updateTransaction(transaction.id, { return_url: desiredReturnUrl });
+      const saved = await updateTransaction(transaction.id, { return_url: desiredReturnUrl });
+      if (!saved) {
+        return response({
+          ok: false,
+          code: "PAYMENT_TRANSACTION_UPDATE_FAILED",
+          error: "ذخیره اطلاعات تراکنش انجام نشد؛ برای جلوگیری از خطای مالی، پرداخت شروع نشد.",
+          order_code: order.order_code,
+          transaction_id: transaction.id,
+        }, 502, req);
+      }
       transaction.return_url = desiredReturnUrl;
     }
 
@@ -480,13 +489,14 @@ async function handleStart(req: Request, body: any) {
       order,
       transaction,
       settings,
+      idempotency_key: transaction.idempotency_key ?? transaction.id,
     });
 
     if (!result?.redirect_url || !/^https:\/\//i.test(String(result.redirect_url))) {
       return response({ ok: false, code: "INVALID_GATEWAY_REDIRECT", error: "آدرس بازگشت به درگاه معتبر نیست." }, 502, req);
     }
 
-    await updateTransaction(transaction.id, {
+    const savedStart = await updateTransaction(transaction.id, {
       status: "pending",
       authority: result.authority ?? null,
       gateway_reference: result.gateway_reference ?? transaction.gateway_reference ?? null,
@@ -496,6 +506,15 @@ async function handleStart(req: Request, body: any) {
       error_code: null,
       error_message: null,
     });
+    if (!savedStart) {
+      return response({
+        ok: false,
+        code: "PAYMENT_START_PERSIST_FAILED",
+        error: "شروع درگاه انجام شد اما ثبت وضعیت تراکنش کامل نشد؛ برای جلوگیری از پرداخت تکراری، دوباره پرداخت نکنید.",
+        order_code: order.order_code,
+        transaction_id: transaction.id,
+      }, 502, req);
+    }
 
     return response({
       ok: true,
