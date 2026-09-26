@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync('admin.html', 'utf8');
 const js = readFileSync('admin-app.js', 'utf8');
+const paymentMigration = readFileSync('supabase/migrations/20260927003600_admin_payment_control_center.sql', 'utf8');
 
 const fail = (msg) => {
   console.error('ADMIN_STATIC_FAIL:', msg);
@@ -96,6 +97,23 @@ if (!js.includes("else if (name === 'security') await loadSecurity();")) {
 if (!js.includes("security: 'securityPanel'")) {
   fail('security panel is missing from load error/skeleton routing');
 }
+
+const paymentChecks = [
+  "function loadPaymentAdmin()",
+  "state.db.rpc('azim_admin_payment_dashboard')",
+  "state.db.rpc('azim_admin_set_online_payment_enabled'",
+  "state.db.rpc('azim_admin_request_online_refund'",
+  "if (clean === 'checkout_payment') return false;",
+  "payment: ['owner','admin']"
+];
+for (const needle of paymentChecks) {
+  if (!js.includes(needle)) fail('payment admin guard/hook missing: ' + needle);
+}
+if (!js.includes("data-view = 'payment'")) fail('payment admin navigation hook is missing');
+if (!paymentMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'")) fail('payment admin RPCs are missing AAL2 protection');
+if (!paymentMigration.includes("and section_key <> 'checkout_payment'")) fail('direct checkout_payment content DML is not blocked');
+if (!paymentMigration.includes("revoke all on function public.azim_admin_payment_dashboard() from public,anon;")) fail('payment dashboard RPC is not explicitly revoked from public/anon');
+if (!paymentMigration.includes("grant execute on function public.azim_admin_payment_dashboard() to authenticated;")) fail('payment dashboard RPC authenticated grant is missing');
 if (!js.includes("orderProducts: []")) {
   fail('order editor does not have an isolated product cache');
 }
@@ -120,7 +138,7 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (html.includes('admin-app.js?v=50')) {
+if (html.includes('admin-app.js?v=50') || html.includes('admin-app.js?v=55') || html.includes('admin-modern.css?v=33')) {
   fail('admin-app cache version was not bumped');
 }
 
