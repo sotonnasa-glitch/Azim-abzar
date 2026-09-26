@@ -12,9 +12,11 @@ on:
       - '.github/workflows/validate-cart.yml'
       - 'database/checkout-actions.sql'
       - 'supabase/functions/azim-payment-gateway/index.ts'
+      - 'supabase/functions/azim-payment-reconcile/index.ts'
       - 'payment-callback.html'
-      - 'supabase/migrations/20260926190000_prepare_online_payment_gateway.sql'
-      - 'supabase/migrations/20260926190100_expose_payment_gateway_readiness.sql'
+      - 'order-status.html'
+      - 'database/order-tracking.sql'
+      - 'supabase/migrations/*.sql'
   pull_request:
     paths:
       - 'cart.html'
@@ -78,3 +80,11 @@ jobs:
           grep -q 'payment-callback.html' supabase/functions/azim-payment-gateway/index.ts
           grep -q 'online_available' database/checkout-actions.sql
           grep -q 'azim-payment-gateway' cart.html
+          grep -q 'azim_finalize_online_payment' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'azim_mark_online_payment_terminal' supabase/functions/azim-payment-gateway/index.ts
+          grep -q 'SUPABASE_SECRET_KEYS' supabase/functions/azim-payment-gateway/index.ts
+          ! grep -q 'SUPABASE_ANON_KEY' supabase/functions/azim-payment-gateway/index.ts
+          test -f supabase/functions/azim-payment-reconcile/index.ts
+          grep -q 'azim-payment-gateway' supabase/functions/azim-payment-reconcile/index.ts
+          grep -q 'can_retry_payment' order-status.html
+          grep -q 'review_required' order-status.html
