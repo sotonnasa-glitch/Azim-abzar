@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env server.js",
-    "start": "node --env-file=.env server.js",
+    "dev": "node server.js",
+    "start": "node server.js",
     "build": "node -e \"console.log('Build complete')\"",
     "lint": "npm run check",
     "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js",

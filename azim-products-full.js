@@ -1,0 +1,1 @@
+window.AZIM_PRODUCTS=[{"name":"46","original_price":53000000,"price":63600000,"brand":"SELPRO","category_name":"آچار یکسررینگی","page":2,"code":"PDF-0001"}];window.AZIM_CATALOG=window.AZIM_PRODUCTS;

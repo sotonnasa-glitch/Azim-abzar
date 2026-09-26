@@ -1,0 +1,1 @@
+window.AZIM_PRODUCTS=[{"name":"محصول تست","variant":"","price":0,"original_price":0,"category":"ابزار","code":"TEMP","page":0}];

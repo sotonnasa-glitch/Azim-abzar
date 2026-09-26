@@ -1,2 +1,580 @@
+/* ========================================================
+   عظیم ابزار - دکمه ربات مکانیک مشاور هوشمند (اختصاصی محصولات)
+   طراحی لوکس صنعتی، فوق‌العاده زیبا، ترکیب طلایی متالیک و مشکی تیتانیوم
+   ======================================================== */
 
-.az-product-ai-btn{width:100%;margin-top:8px;display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 10px;border-radius:13px;border:1px solid rgba(73,226,211,.30);background:linear-gradient(180deg,rgba(31,49,47,.88),rgba(10,18,17,.98));color:#c7fffa;font:800 11.5px/1.55 Vazirmatn,Tahoma,sans-serif;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.az-product-ai-btn:hover{transform:translateY(-2px);border-color:rgba(101,245,231,.70);box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 18px rgba(75,222,211,.13)}.az-product-ai-btn:active{transform:scale(.99)}.az-product-ai-btn:focus-visible{outline:2px solid rgba(111,247,234,.75);outline-offset:3px}.az-product-ai-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 10%,rgba(255,255,255,.10) 48%,transparent 84%);transform:translateX(-140%);animation:azProductAiShimmer 7s ease-in-out infinite;pointer-events:none}.az-ai-robot-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:12px;background:rgba(4,13,12,.58);border:1px solid rgba(91,244,231,.16)}.az-ai-robot-svg{width:38px;height:38px;overflow:visible}.az-ai-robot-tool{transform-box:fill-box;transform-origin:0 50%;animation:azRobotWork 2.8s ease-in-out infinite}.az-ai-robot-wave{transform-box:fill-box;transform-origin:100% 18%;animation:azRobotWave 4.8s ease-in-out infinite}.az-ai-robot-leg{transform-box:fill-box;transform-origin:50% 0;animation:azRobotShift 4.8s ease-in-out infinite}.az-ai-robot-leg.r{animation-delay:.12s}.az-ai-robot-eye{animation:azRobotBlink 5.8s ease-in-out infinite}.az-ai-robot-spark{animation:azRobotSpark 3s ease-in-out infinite}.az-ai-label{position:relative;z-index:1;min-width:0;text-align:right}.az-ai-modal-backdrop{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(2,5,4,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}.az-ai-modal-backdrop.show{display:flex}.az-ai-modal{width:min(600px,100%);max-height:min(760px,calc(100vh - 24px));overflow:auto;border-radius:21px;border:1px solid rgba(86,226,215,.20);background:linear-gradient(180deg,rgba(18,29,27,.985),rgba(7,12,11,.995));box-shadow:0 30px 90px rgba(0,0,0,.68),0 0 34px rgba(75,222,211,.07);color:#f2f8f6}.az-ai-modal-head{display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.07)}.az-ai-modal-robot{width:49px;height:49px;display:grid;place-items:center;flex:0 0 49px;border-radius:14px;background:rgba(16,38,34,.85);border:1px solid rgba(91,244,231,.18)}.az-ai-modal-robot .az-ai-robot-svg{width:44px;height:44px}.az-ai-modal-title{min-width:0;flex:1}.az-ai-modal-title strong{display:block;font-size:14px;font-weight:900}.az-ai-modal-title small{display:block;margin-top:2px;color:#81918c;font-size:10px}.az-ai-modal-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:#dbe7e2;cursor:pointer;font-size:18px}.az-ai-modal-product{padding:11px 15px 0;color:#aab8b3;font-size:10.5px}.az-ai-modal-product b{color:#dffcf8}.az-ai-reply{margin:11px 15px;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:#edf8f5;font-size:12px;line-height:1.9;min-height:66px;white-space:pre-wrap}.az-ai-reply.loading{color:#91a29c}.az-ai-quick{display:flex;flex-wrap:wrap;gap:6px;padding:0 15px 9px}.az-ai-quick button{border:1px solid rgba(91,244,231,.18);background:rgba(36,72,67,.32);color:#aef8f1;border-radius:10px;padding:7px 9px;font:700 10px Vazirmatn;cursor:pointer}.az-ai-chat-form{display:flex;gap:7px;padding:0 15px 13px}.az-ai-chat-form input{flex:1;min-width:0;height:41px;border-radius:11px;border:1px solid rgba(255,255,255,.10);background:#09110f;color:#fff;padding:0 11px;font:700 11px Vazirmatn;outline:none}.az-ai-chat-form input:focus{border-color:rgba(91,244,231,.45)}.az-ai-chat-form button{border:1px solid rgba(91,244,231,.30);border-radius:11px;background:rgba(38,89,81,.58);color:#c6fffa;padding:0 14px;font:800 10.5px Vazirmatn;cursor:pointer}.az-ai-status{padding:0 15px 14px;color:#6f817b;font-size:9.5px}.az-ai-status.error{color:#ff9a9a}@keyframes azRobotWork{0%,63%,100%{transform:rotate(0)}68%{transform:rotate(-14deg)}73%{transform:rotate(8deg)}78%{transform:rotate(-8deg)}84%{transform:rotate(0)}}@keyframes azRobotWave{0%,68%,100%{transform:rotate(0)}72%{transform:rotate(-11deg)}75%{transform:rotate(20deg)}78%{transform:rotate(-16deg)}81%{transform:rotate(15deg)}84%{transform:rotate(0)}}@keyframes azRobotShift{0%,68%,100%{transform:translateY(0)}74%{transform:translateY(-1px)}80%{transform:translateY(0)}}@keyframes azRobotBlink{0%,45%,48%,100%{opacity:1}46%,47%{opacity:.15}}@keyframes azRobotSpark{0%,100%{opacity:.16}48%{opacity:.7}55%{opacity:.16}}@keyframes azProductAiShimmer{0%,75%,100%{transform:translateX(-140%)}83%{transform:translateX(140%)}}@media(max-width:700px){.az-product-ai-btn{min-height:45px}.az-ai-robot-icon{width:40px;height:40px;flex-basis:40px}.az-ai-robot-svg{width:36px;height:36px}.az-ai-modal{max-height:calc(100vh - 20px);border-radius:18px}}@media(prefers-reduced-motion:reduce){.az-product-ai-btn::after,.az-ai-robot-tool,.az-ai-robot-wave,.az-ai-robot-leg,.az-ai-robot-eye,.az-ai-robot-spark{animation:none!important}}
+.az-product-ai-btn {
+  width: 100%;
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  height: 38px;
+  padding: 3px 10px;
+  border-radius: 11px;
+  border: 1px solid rgba(245, 185, 0, 0.35);
+  background: linear-gradient(135deg, rgba(22, 28, 25, 0.96) 0%, rgba(11, 16, 14, 0.98) 100%);
+  color: #ffd84f;
+  font: 700 11px/1.3 'Vazirmatn', Tahoma, sans-serif;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 10px rgba(245, 185, 0, 0.08);
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+  user-select: none;
+}
+
+.az-product-ai-btn:hover {
+  transform: translateY(-2px);
+  border-color: #ffd84f;
+  background: linear-gradient(135deg, rgba(28, 38, 33, 0.98) 0%, rgba(14, 21, 18, 1) 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 18px rgba(245, 185, 0, 0.28);
+}
+
+.az-product-ai-btn:active {
+  transform: scale(0.985);
+}
+
+.az-product-ai-btn:focus-visible {
+  outline: 2px solid #ffd84f;
+  outline-offset: 2px;
+}
+
+/* شاین نور طلایی براق متحرک روی دکمه */
+.az-product-ai-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 216, 79, 0.15) 50%, transparent 80%);
+  transform: translateX(-150%);
+  animation: azBtnShimmer 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* قاب شیک آیکون ربات مکانیک */
+.az-ai-robot-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: radial-gradient(circle at 50% 30%, rgba(35, 48, 42, 0.8), rgba(8, 14, 11, 0.95));
+  border: 1px solid rgba(245, 185, 0, 0.32);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.4);
+  overflow: visible;
+  position: relative;
+}
+
+.az-ai-robot-svg {
+  width: 30px;
+  height: 30px;
+  overflow: visible;
+}
+
+/* متن دکمه مشاور فنی */
+.az-ai-label {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+  font-weight: 700;
+  font-size: 10.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.az-ai-label b {
+  color: #ffd84f;
+  font-weight: 900;
+  flex-shrink: 0;
+  background: rgba(245, 185, 0, 0.12);
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(245, 185, 0, 0.25);
+  font-size: 9.5px;
+}
+
+.az-ai-label span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #edf3f0;
+}
+
+/* ========================================================
+   انیمیشن زنده و هوشمند ربات مکانیک:
+   ۱) فاز ۱ (۰ تا ۲.۲ ثانیه): ربات با دقت روی مهره با آچار کار می‌کند.
+      آچار با چرخش پرقدرت می‌پیچد، جرقه‌های فنی زیبا می‌زند و دوباره با صدای جغجغه بازمی‌گردد.
+   ۲) فاز ۲ (۲.۲ تا ۲.۶ ثانیه): سفت کردن مهره تمام می‌شود، ربات متوجه حضور مشتری شده،
+      سرش را با کنجکاوی و نشاط بالا می‌آورد و چشمانش تبدیل به حالت خندان (^ _ ^) می‌شود.
+   ۳) فاز ۳ (۲.۶ تا ۴.۲ ثانیه): دست چپش را بالا می‌آورد و با انرژی و صمیمیت به مشتری دست تکان می‌دهد!
+   ۴) فاز ۴ (۴.۲ تا ۴.۶ ثانیه): دستش را پایین می‌آورد و با لبخند دوباره مشغول کار با آچار می‌شود.
+   ======================================================== */
+
+/* دست آچاربه‌دست (دست راست ربات) */
+.az-robot-arm-wrench {
+  transform-box: view-box;
+  transform-origin: 17.5px 26px;
+  animation: azWrenchWork 4.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes azWrenchWork {
+  0% { transform: rotate(0deg); }
+  /* کار با آچار: چرخش اول به سمت پایین برای محکم کردن پیچ */
+  8% { transform: rotate(-24deg); }
+  /* بازگشت جغجغه‌ای به عقب */
+  14% { transform: rotate(3deg); }
+  /* چرخش محکم دوم */
+  22% { transform: rotate(-28deg); }
+  /* بازگشت به عقب */
+  28% { transform: rotate(4deg); }
+  /* چرخش نهایی با حداکثر گشتاور */
+  36% { transform: rotate(-30deg); }
+  /* اتمام سفت کردن پیچ */
+  44% { transform: rotate(0deg); }
+  /* نگه‌داشتن آچار در کنار بدن حین دست تکان دادن به مشتری */
+  50%, 86% { transform: rotate(12deg); }
+  /* بازگشت به حالت کار */
+  92%, 100% { transform: rotate(0deg); }
+}
+
+/* دست سلام و احوال‌پرسی (دست چپ ربات) */
+.az-robot-arm-wave {
+  transform-box: view-box;
+  transform-origin: 32.5px 26px;
+  animation: azWaveHand 4.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes azWaveHand {
+  0%, 46% {
+    /* حین کار با آچار، دست چپ در کنار بدن قرار دارد */
+    transform: rotate(0deg);
+  }
+  52% {
+    /* یهو دست را برای مشتری بالا می‌آورد! */
+    transform: rotate(-135deg);
+  }
+  58% {
+    /* دست تکان دادن به چپ */
+    transform: rotate(-155deg);
+  }
+  64% {
+    /* دست تکان دادن به راست */
+    transform: rotate(-120deg);
+  }
+  70% {
+    /* دست تکان دادن به چپ */
+    transform: rotate(-155deg);
+  }
+  76% {
+    /* دست تکان دادن به راست */
+    transform: rotate(-120deg);
+  }
+  82% {
+    /* تکان دادن دوستانه نهایی */
+    transform: rotate(-140deg);
+  }
+  88%, 100% {
+    /* پایین آوردن آرام دست و بازگشت به موقعیت اولیه */
+    transform: rotate(0deg);
+  }
+}
+
+/* هاور روی دکمه: ربات بلافاصله کار را متوقف کرده و با اشتیاق تمام به مشتری دست تکان می‌دهد */
+.az-product-ai-btn:hover .az-robot-arm-wave {
+  animation: azWaveHover 0.75s ease-in-out infinite alternate !important;
+}
+
+@keyframes azWaveHover {
+  0% { transform: rotate(-120deg); }
+  100% { transform: rotate(-160deg); }
+}
+
+.az-product-ai-btn:hover .az-robot-arm-wrench {
+  animation: none !important;
+  transform: rotate(12deg) !important;
+}
+
+/* سر، کلاهخود و زاویه دید ربات */
+.az-robot-head {
+  transform-box: view-box;
+  transform-origin: 25px 22px;
+  animation: azHeadFocus 4.6s ease-in-out infinite;
+}
+
+@keyframes azHeadFocus {
+  0%, 46% {
+    /* خم شدن سر به سمت آچار و پیچ */
+    transform: rotate(-8deg) translateY(0.5px);
+  }
+  52% {
+    /* یهو سر بالا می‌آید و رو به مشتری قرار می‌گیرد */
+    transform: rotate(0deg) translateY(-0.8px);
+  }
+  58%, 84% {
+    /* کج شدن با طراوت و دوستانه سر حین احوال‌پرسی */
+    transform: rotate(5deg) translateY(-1px);
+  }
+  90%, 100% {
+    /* برگشت به کار با آچار */
+    transform: rotate(-8deg) translateY(0.5px);
+  }
+}
+
+.az-product-ai-btn:hover .az-robot-head {
+  transform: rotate(4deg) translateY(-1px) !important;
+  animation: none !important;
+}
+
+/* تغییر چشمان ربات بین حالت متمرکز روی کار و حالت خندان با مشتری */
+.az-robot-eyes-normal {
+  animation: azEyesNormalAnim 4.6s ease-in-out infinite;
+}
+
+.az-robot-eyes-smile {
+  animation: azEyesSmileAnim 4.6s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes azEyesNormalAnim {
+  0%, 46% {
+    opacity: 1;
+    transform: translateY(0.6px);
+  }
+  49% {
+    transform: scaleY(0.1);
+  }
+  52%, 84% {
+    opacity: 0;
+  }
+  88%, 100% {
+    opacity: 1;
+    transform: translateY(0.6px);
+  }
+}
+
+@keyframes azEyesSmileAnim {
+  0%, 46% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  52%, 84% {
+    opacity: 1;
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 3px #22d3ee);
+  }
+  88%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.az-product-ai-btn:hover .az-robot-eyes-normal {
+  opacity: 0 !important;
+}
+
+.az-product-ai-btn:hover .az-robot-eyes-smile {
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 4px #22d3ee) !important;
+}
+
+/* جرقه‌های فنی پرانرژی حین چرخش آچار */
+.az-robot-spark {
+  transform-origin: 10px 38px;
+  animation: azSparks 4.6s ease-out infinite;
+}
+
+.az-robot-spark.s2 {
+  animation-delay: 0.12s;
+}
+
+.az-robot-spark.s3 {
+  animation-delay: 0.24s;
+}
+
+.az-robot-spark.s4 {
+  animation-delay: 0.08s;
+}
+
+@keyframes azSparks {
+  0%, 7%, 13%, 21%, 27%, 35%, 41%, 100% {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  8%, 22%, 36% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+/* چراغ آنتن روی کلاهخود ربات */
+.az-robot-antenna-tip {
+  animation: azAntennaPulse 4.6s ease-in-out infinite;
+}
+
+@keyframes azAntennaPulse {
+  0%, 48% { fill: #f5b900; filter: none; }
+  52%, 84% { fill: #fff; filter: drop-shadow(0 0 5px #ffd84f); }
+  90%, 100% { fill: #f5b900; filter: none; }
+}
+
+/* پالس هسته انرژی سینه */
+.az-robot-core-pulse {
+  animation: azCorePulse 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes azCorePulse {
+  0% { opacity: 0.7; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 4px #22d3ee); }
+}
+
+@keyframes azBtnShimmer {
+  0%, 75%, 100% { transform: translateX(-150%); }
+  85% { transform: translateX(150%); }
+}
+
+/* ========================================================
+   پنجره مودال مشاوره فنی محصول
+   هماهنگ با تم طلایی و صنعتی عظیم ابزار (بدون بنفش)
+   ======================================================== */
+.az-ai-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(3, 7, 5, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.az-ai-modal-backdrop.show {
+  display: flex;
+}
+
+.az-ai-modal {
+  width: min(560px, 100%);
+  max-height: min(720px, calc(100vh - 28px));
+  overflow-y: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(245, 185, 0, 0.4);
+  background: linear-gradient(180deg, rgba(20, 26, 23, 0.99), rgba(9, 13, 11, 0.995));
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), 0 0 36px rgba(245, 185, 0, 0.16);
+  color: #f2f8f6;
+}
+
+.az-ai-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(245, 185, 0, 0.2);
+  background: rgba(255, 216, 79, 0.05);
+}
+
+.az-ai-modal-robot {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  border-radius: 13px;
+  background: radial-gradient(circle, rgba(32, 44, 38, 0.9), rgba(10, 15, 12, 0.98));
+  border: 1px solid rgba(245, 185, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.az-ai-modal-robot .az-ai-robot-svg {
+  width: 42px;
+  height: 42px;
+}
+
+.az-ai-modal-title {
+  min-width: 0;
+  flex: 1;
+}
+
+.az-ai-modal-title strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffd84f;
+}
+
+.az-ai-modal-title small {
+  display: block;
+  margin-top: 2px;
+  color: #9eb0a8;
+  font-size: 10.5px;
+}
+
+.az-ai-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #dbe7e2;
+  cursor: pointer;
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+
+.az-ai-modal-close:hover {
+  background: rgba(255, 80, 80, 0.22);
+  border-color: rgba(255, 80, 80, 0.45);
+  color: #ff9a9a;
+}
+
+.az-ai-modal-product {
+  padding: 14px 18px 0;
+  color: #9eb0a8;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.az-ai-modal-product b {
+  color: #ffd84f;
+}
+
+.az-ai-reply {
+  margin: 12px 18px;
+  padding: 16px;
+  border-radius: 13px;
+  border: 1px solid rgba(245, 185, 0, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f7f9f8;
+  font-size: 12px;
+  line-height: 1.95;
+  min-height: 80px;
+  white-space: pre-wrap;
+}
+
+.az-ai-reply.loading {
+  color: #ffd84f;
+  opacity: 0.85;
+}
+
+.az-ai-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 18px 12px;
+}
+
+.az-ai-quick button {
+  border: 1px solid rgba(245, 185, 0, 0.28);
+  background: rgba(245, 185, 0, 0.09);
+  color: #ffd84f;
+  border-radius: 9px;
+  padding: 7px 12px;
+  font: 700 10.5px 'Vazirmatn';
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.az-ai-quick button:hover {
+  background: rgba(245, 185, 0, 0.24);
+  border-color: #ffd84f;
+  transform: translateY(-1px);
+}
+
+.az-ai-chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 14px;
+}
+
+.az-ai-chat-form input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #090e0c;
+  color: #fff;
+  padding: 0 14px;
+  font: 700 11.5px 'Vazirmatn';
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.az-ai-chat-form input:focus {
+  border-color: #ffd84f;
+  box-shadow: 0 0 12px rgba(245, 185, 0, 0.25);
+}
+
+.az-ai-chat-form button {
+  border: 1px solid rgba(245, 185, 0, 0.45);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ffd84f, #f5b900);
+  color: #0b110e;
+  padding: 0 18px;
+  font: 800 11.5px 'Vazirmatn';
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.az-ai-chat-form button:hover {
+  background: linear-gradient(135deg, #fff2a3, #ffd84f);
+  box-shadow: 0 4px 16px rgba(245, 185, 0, 0.45);
+  transform: translateY(-1px);
+}
+
+.az-ai-status {
+  padding: 0 18px 16px;
+  color: #7b8e86;
+  font-size: 10.5px;
+}
+
+.az-ai-status.error {
+  color: #ff9a9a;
+}
+
+@media (max-width: 700px) {
+  .az-product-ai-btn {
+    min-height: 36px;
+    height: 36px;
+    padding: 2px 8px;
+  }
+  .az-ai-robot-icon {
+    width: 29px;
+    height: 29px;
+    flex-basis: 29px;
+  }
+  .az-ai-robot-svg {
+    width: 27px;
+    height: 27px;
+  }
+  .az-ai-label {
+    font-size: 10px;
+  }
+  .az-ai-modal {
+    max-height: calc(100vh - 20px);
+    border-radius: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .az-product-ai-btn::after,
+  .az-robot-arm-wrench,
+  .az-robot-arm-wave,
+  .az-robot-head,
+  .az-robot-eyes-normal,
+  .az-robot-eyes-smile,
+  .az-robot-spark,
+  .az-robot-antenna-tip,
+  .az-robot-core-pulse {
+    animation: none !important;
+  }
+}

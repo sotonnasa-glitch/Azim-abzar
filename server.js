@@ -7,10 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = Number(process.env.PORT || 3000);
-if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
-  throw new Error('Invalid PORT environment value');
-}
+// Dev server must run on port 3000 as per AI Studio runtime requirements
+const PORT = 3000;
 const ALLOWED_ORIGINS = new Set(
   String(process.env.AZIM_ALLOWED_ORIGIN || '')
     .split(',')
@@ -25,7 +23,7 @@ app.set('json spaces', 0);
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://lzkrwtnylkordkwkdyzp.supabase.co; connect-src 'self' https://lzkrwtnylkordkwkdyzp.supabase.co;"
+  'Content-Security-Policy': "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://lzkrwtnylkordkwkdyzp.supabase.co; connect-src 'self' https://lzkrwtnylkordkwkdyzp.supabase.co;"
 };
 
 app.use((req, res, next) => {

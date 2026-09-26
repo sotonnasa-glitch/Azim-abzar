@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./azim-footer.css?v=1">
-  <link rel="stylesheet" href="./azim-product-ai.css?v=2">
+  <link rel="stylesheet" href="./azim-product-ai.css?v=4">
   
   <style>
     :root {
@@ -1994,6 +1994,7 @@
               <span id="modalOrderBtnText">استعلام / سفارش</span>
             </a>
           </div>
+          <button type="button" class="az-product-ai-btn" id="modalProductAiBtn" style="margin-top:10px" data-ai-product-id="" data-ai-product-code="" data-ai-base-name="" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label"><b>مشاور فنی:</b> <span>راهنمای تخصصی و انتخاب سایز</span></span></button>
         </div>
       </div>
     </div>
@@ -2275,7 +2276,7 @@
             <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)">
               <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span><span>افزودن به سبد سفارش</span>
             </button>
-            <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
+            <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label"><b>مشاور فنی:</b> <span>${esc(x.name)}</span></span></button>
           </div>
         </article>
       `;
@@ -2435,6 +2436,16 @@
         }
       }
 
+      const modalAiBtn = document.getElementById('modalProductAiBtn');
+      if (modalAiBtn) {
+        modalAiBtn.dataset.aiProductId = item.product_id || '';
+        modalAiBtn.dataset.aiProductCode = item.id;
+        modalAiBtn.dataset.aiBaseName = item.name;
+        modalAiBtn.dataset.aiVariant = (vs && vs.length > 0) ? vs[0][0] : '';
+        const labelSpan = modalAiBtn.querySelector('.az-ai-label span');
+        if (labelSpan) labelSpan.textContent = item.name + (vs && vs.length > 0 ? ' (' + vs[0][0] + ')' : '');
+      }
+
       const modal = document.getElementById('quickModal');
       modal.classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -2457,6 +2468,12 @@
       const orderBtn = document.getElementById('modalOrderBtn');
       if (orderBtn) {
         orderBtn.href = `contact.html?product=${encodeURIComponent(activeModalItem.name)}&code=${encodeURIComponent(activeModalItem.id)}&size=${encodeURIComponent(v[0])}`;
+      }
+      const modalAiBtn = document.getElementById('modalProductAiBtn');
+      if (modalAiBtn && activeModalItem) {
+        modalAiBtn.dataset.aiVariant = v[0] || '';
+        const labelSpan = modalAiBtn.querySelector('.az-ai-label span');
+        if (labelSpan) labelSpan.textContent = activeModalItem.name + ' (' + v[0] + ')';
       }
     }
 
@@ -2808,7 +2825,7 @@
       document.getElementById('status').innerHTML = `<span style="color:#ff6b6b">خطا در بارگذاری کاتالوگ: ${esc(e.message)}</span>`;
     });
   </script>
-  <script src="./azim-product-ai.js?v=2" defer></script>
-  <script src="./azim-ai-widget.js?v=2" defer></script>
+  <script src="./azim-product-ai.js?v=4" defer></script>
+  <script src="./azim-ai-widget.js?v=4" defer></script>
 </body>
 </html>
