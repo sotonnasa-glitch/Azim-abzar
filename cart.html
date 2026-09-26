@@ -942,6 +942,32 @@ main{position:relative;padding:20px 0 64px}
     const fmt=n=>new Intl.NumberFormat('fa-IR').format(Math.max(0,Number(n)||0));
     const money=n=>fmt(n)+' تومان';
     let coupon=null;
+    let onlineRecovery=null;
+    try{
+      const savedRecovery=localStorage.getItem('azim_payment_recovery');
+      if(savedRecovery) onlineRecovery=JSON.parse(savedRecovery);
+    }catch(_){ onlineRecovery=null; }
+
+    function saveOnlineRecovery(data){
+      onlineRecovery=data||null;
+      try{
+        if(onlineRecovery) localStorage.setItem('azim_payment_recovery',JSON.stringify(onlineRecovery));
+        else localStorage.removeItem('azim_payment_recovery');
+      }catch(_){}
+    }
+
+    function renderOnlineRecovery(){
+      if(!onlineRecovery?.order_code) return;
+      const status=$('checkoutStatus');
+      if(!status) return;
+      status.className='coupon-status';
+      status.innerHTML=
+        '<div style="padding:10px 12px;border:1px solid rgba(245,185,0,.25);border-radius:11px;background:rgba(245,185,0,.05);line-height:1.9;">'+
+        '<strong style="color:#ffd84f;">💳 پرداخت همین سفارش ادامه دارد</strong><br>'+
+        '<span>سفارش <b>'+escapeHtml(onlineRecovery.order_code)+'</b> ثبت شده است و سفارش جدید نسازید.</span><br>'+
+        '<a class="btn secondary" style="display:inline-flex;margin-top:8px;min-height:36px;align-items:center;justify-content:center;" href="order-status.html?code='+encodeURIComponent(onlineRecovery.order_code)+'">مشاهده وضعیت و ادامه پرداخت</a>'+
+        '</div>';
+    }
 
     function render(){
       const items=C.items();
@@ -1043,6 +1069,7 @@ main{position:relative;padding:20px 0 64px}
     });
 
     $('clearCartBtn').onclick=()=>{ if(confirm('کل سبد سفارش پاک شود؟')){C.clear();coupon=null;render();} };
+    if(onlineRecovery?.order_code) renderOnlineRecovery();
     $('applyCouponBtn').onclick=applyCoupon;
     $('couponInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCoupon();}});
     $('mobile').addEventListener('change',()=>{if($('couponInput').value.trim()) applyCoupon();});
@@ -1055,6 +1082,10 @@ main{position:relative;padding:20px 0 64px}
 
     $('checkoutForm').onsubmit=async e=>{
       e.preventDefault();
+      if(onlineRecovery?.order_code){
+        renderOnlineRecovery();
+        return;
+      }
       const items=C.items();
       if(!items.length) return;
       const btn=$('submitOrderBtn'), status=$('checkoutStatus');
@@ -1082,6 +1113,14 @@ main{position:relative;padding:20px 0 64px}
         const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
 
         if(selectedPayment==='online'){
+          saveOnlineRecovery({
+            order_code:data.order_code||'',
+            mobile:$('mobile').value.trim(),
+            total:Number(data.total||0),
+            created_at:new Date().toISOString(),
+            status:'starting'
+          });
+          renderOnlineRecovery();
           btn.innerHTML='<span style="display:inline-block;animation:azSlowSpin 1s linear infinite">↗</span> در حال اتصال به درگاه…';
           const payUrl=(window.AZIM_SUPABASE_URL||'')+'/functions/v1/azim-payment-gateway';
           const payResp=await fetch(payUrl,{
@@ -1104,6 +1143,13 @@ main{position:relative;padding:20px 0 64px}
               created_at:new Date().toISOString()
             }));
           }catch(_){}
+          saveOnlineRecovery({
+            order_code:data.order_code||'',
+            mobile:$('mobile').value.trim(),
+            total:Number(data.total||0),
+            created_at:new Date().toISOString(),
+            status:'pending'
+          });
           C.clear();
           coupon=null;
           window.location.href=payData.redirect_url;
@@ -1162,10 +1208,23 @@ main{position:relative;padding:20px 0 64px}
 
         window.scrollTo({top:0,behavior:'smooth'});
       }catch(err){
-        status.textContent=cartFriendlyError(err,'خطا در ثبت سفارش.');
-        status.className='coupon-status err';
+        const message=cartFriendlyError(err,'خطا در ثبت سفارش.');
+        if(onlineRecovery?.order_code){
+          status.className='coupon-status err';
+          status.innerHTML=
+            '<div style="padding:10px 12px;border:1px solid rgba(255,82,82,.25);border-radius:11px;background:rgba(255,82,82,.05);line-height:1.9;">'+
+            '<strong style="color:#ff9999;">⚠️ شروع پرداخت انجام نشد</strong><br>'+
+            '<span>'+escapeHtml(message)+'</span><br>'+
+            '<span>کد سفارش: <b>'+escapeHtml(onlineRecovery.order_code)+'</b></span><br>'+
+            '<a class="btn secondary" style="display:inline-flex;margin-top:8px;min-height:36px;align-items:center;justify-content:center;" href="order-status.html?code='+encodeURIComponent(onlineRecovery.order_code)+'">بررسی و ادامه همین سفارش</a>'+
+            '</div>';
+          btn.disabled=true;
+        }else{
+          status.textContent=message;
+          status.className='coupon-status err';
+        }
       }finally{
-        btn.disabled=false;
+        if(!onlineRecovery?.order_code) btn.disabled=false;
         btn.innerHTML='<span>ثبت نهایی و صدور کد رهگیری</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
       }
     };
