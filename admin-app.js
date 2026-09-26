@@ -1052,6 +1052,37 @@
     }
   }
 
+  async function paymentEdgeAction(action, payload) {
+    const sessionResult = await state.db.auth.getSession();
+    const token = sessionResult?.data?.session?.access_token || '';
+    if (!token) throw new Error('نشست مدیر منقضی شده است؛ دوباره وارد شوید.');
+    const url = (window.AZIM_SUPABASE_URL || '') + '/functions/v1/azim-payment-gateway';
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { apikey: window.AZIM_SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...(payload || {}) })
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok || body?.ok === false) throw new Error(body?.error || body?.message || 'عملیات درگاه ناموفق بود.');
+    return body;
+  }
+
+  async function runPaymentHealthcheck() {
+    if (!(await ensurePaymentMFA())) return false;
+    try {
+      const result = await paymentEdgeAction('healthcheck', {});
+      toast(result.ok
+        ? '__AZICON_SUCCESS__ اتصال زرین‌پال تأیید شد.' + (result.refund_api_configured ? ' Refund آماده است.' : ' کلید امن Refund هنوز تنظیم نشده است.')
+        : '__AZICON_ERROR__ اتصال زرین‌پال تأیید نشد.');
+      await loadPaymentAdmin();
+      return !!result.ok;
+    } catch (error) {
+      toast('__AZICON_ERROR__ ' + errorText(error));
+      await loadPaymentAdmin();
+      return false;
+    }
+  }
+
   function paymentAdminHtml(data) {
     const settings = data?.settings || {};
     const txs = Array.isArray(data?.recent_transactions) ? data.recent_transactions : [];
@@ -1105,12 +1136,24 @@
           '<div class="az-payment-panel-head"><div><h3>کنترل پرداخت آنلاین</h3><p>فعال‌سازی فقط وقتی مجاز است که provider واقعی و gateway_ready هر دو تأیید شده باشند.</p></div>' +
           '<span class="badge ' + (enabled ? 'ok' : 'warn') + '">' + esc(onlineState) + '</span></div>' +
           '<div class="az-payment-settings-grid">' +
-            '<div><span>درگاه</span><strong>' + esc(provider) + '</strong></div>' +
+            '<div><span>درگاه</span><strong>' + esc(provider || 'زرین‌پال') + '</strong></div>' +
             '<div><span>آمادگی اتصال</span><strong>' + esc(readiness) + '</strong></div>' +
-            '<div><span>واحد مبلغ</span><strong>' + esc(settings.store_amount_unit || 'toman') + '</strong></div>' +
+            '<div><span>واحد فروشگاه</span><strong>تومان ← ریال برای زرین‌پال</strong></div>' +
             '<div><span>مسیر Callback</span><strong dir="ltr">' + esc(callback) + '</strong></div>' +
           '</div>' +
-          '<div class="az-payment-danger-note"><strong>🔐 قانون طلایی</strong><span>هیچ دکمه‌ای در این پنل پرداخت را دستی موفق نمی‌کند و هیچ کلید API/Secret در مرورگر یا GitHub قرار نمی‌گیرد.</span></div>' +
+          '<div class="az-payment-config-form">' +
+            '<div class="field"><label>Merchant ID زرین‌پال</label><input class="input" data-payment-merchant-id dir="ltr" autocomplete="off" value="' + esc(settings.merchant_id || '') + '" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>' +
+            '<div class="field"><label>محیط</label><select class="input" data-payment-sandbox><option value="false"' + (!settings.sandbox ? ' selected' : '') + '>اصلی (Live)</option><option value="true"' + (settings.sandbox ? ' selected' : '') + '>آزمایشی (Sandbox)</option></select></div>' +
+            '<div class="field full"><div class="az-payment-actions">' +
+              '<button class="btn" type="button" data-payment-configure>💾 ذخیره تنظیمات درگاه</button>' +
+              '<button class="btn ghost" type="button" data-payment-healthcheck>🩺 تست اتصال درگاه</button>' +
+            '</div></div>' +
+            '<div class="field full"><div class="mfa-status"><span>آخرین تست:</span> ' +
+              esc(settings.gateway_last_healthcheck_at ? dateFa(settings.gateway_last_healthcheck_at) : 'تست نشده') +
+              (settings.gateway_last_error ? ' <span class="error">• ' + esc(settings.gateway_last_error) + '</span>' : '') +
+            '</div></div>' +
+          '</div>' +
+          '<div class="az-payment-danger-note"><strong>🔐 قانون طلایی</strong><span>Merchant ID فقط شناسه درگاه است؛ کلید امن Refund هرگز در مرورگر یا GitHub قرار نمی‌گیرد. هر تغییر تنظیمات، درگاه را تا تست موفق اتصال خاموش نگه می‌دارد.</span></div>' +
           '<div class="az-payment-actions">' +
             '<button class="btn ' + (enabled ? 'secondary' : '') + '" data-payment-toggle="' + (enabled ? '0' : '1') + '"' + ((!enabled && !ready) ? ' disabled title="تا اتصال درگاه واقعی، فعال‌سازی مجاز نیست."' : '') + '>' + (enabled ? '⛔ خاموش کردن پرداخت آنلاین' : '✅ فعال کردن پرداخت آنلاین') + '</button>' +
             '<button class="btn ghost" type="button" data-payment-refresh>↻ بروزرسانی وضعیت</button>' +
@@ -1158,6 +1201,24 @@
     state.paymentAdmin = r.data || {};
     el.innerHTML = paymentAdminHtml(state.paymentAdmin);
     el.querySelector('[data-payment-refresh]')?.addEventListener('click', () => loadPaymentAdmin());
+
+    el.querySelector('[data-payment-configure]')?.addEventListener('click', async () => {
+      if (!(await ensurePaymentMFA())) return;
+      const merchantId = String(el.querySelector('[data-payment-merchant-id]')?.value || '').trim();
+      const sandbox = String(el.querySelector('[data-payment-sandbox]')?.value || 'false') === 'true';
+      if (!merchantId) return toast('__AZICON_ERROR__ Merchant ID را وارد کنید.');
+      const reason = window.prompt('دلیل تغییر تنظیمات درگاه را وارد کنید:', 'تنظیم/به‌روزرسانی اتصال زرین‌پال');
+      if (reason === null) return;
+      const r = await state.db.rpc('azim_admin_configure_payment_gateway', {
+        p_provider: 'zarinpal', p_merchant_id: merchantId, p_sandbox: sandbox, p_reason: String(reason).trim()
+      });
+      if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+      toast('__AZICON_SUCCESS__ تنظیمات ذخیره شد؛ اکنون اتصال را تست کنید.');
+      await loadPaymentAdmin();
+    });
+
+    el.querySelector('[data-payment-healthcheck]')?.addEventListener('click', () => runPaymentHealthcheck());
+
     el.querySelector('[data-payment-toggle]')?.addEventListener('click', () => {
       const next = el.querySelector('[data-payment-toggle]').dataset.paymentToggle === '1';
       openPaymentToggleConfirm(next);
