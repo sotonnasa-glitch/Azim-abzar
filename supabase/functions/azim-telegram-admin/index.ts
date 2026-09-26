@@ -58,7 +58,7 @@ function isAdmin(chatId: number | string) {
 }
 
 function money(n: unknown) {
-  return new Intl.NumberFormat("fa-IR").format(Number(n ?? 0)) + " ریال";
+  return new Intl.NumberFormat("fa-IR").format(Number(n ?? 0)) + " تومان";
 }
 
 async function sendText(
@@ -104,7 +104,7 @@ function backMenuMarkup() {
   };
 }
 
-function orderActionsMarkup(code: string, status: string, payment: string, shipping: string) {
+function orderActionsMarkup(code: string, status: string, payment: string, shipping: string, paymentMethod = "") {
   const rows: any[] = [];
 
   if (status === "pending") {
@@ -126,18 +126,28 @@ function orderActionsMarkup(code: string, status: string, payment: string, shipp
     rows.push([{ text: "📦 ثبت تحویل", callback_data: "order_status:" + code + ":delivered" }]);
   }
 
-  if (payment === "unpaid") {
+  if (paymentMethod === "online") {
+    if (payment === "paid") {
+      rows.push([{ text: "💰 درخواست عودت وجه", callback_data: "online_refund:" + code }]);
+    } else if (payment === "pending" || payment === "unpaid") {
+      rows.push([{ text: "⏳ منتظر تأیید خودکار درگاه", callback_data: "noop" }]);
+    } else if (payment === "failed" || payment === "cancelled") {
+      rows.push([{ text: "🔎 پرداخت تأیید نشده", callback_data: "noop" }]);
+    } else if (payment === "review_required") {
+      rows.push([{ text: "⚠️ پرداخت نیازمند بررسی", callback_data: "noop" }]);
+    }
+  } else if (payment === "unpaid") {
     rows.push([
       { text: "⏳ در انتظار پرداخت", callback_data: "order_payment:" + code + ":pending" },
-      { text: "💳 پرداخت شد", callback_data: "order_payment:" + code + ":paid" },
+      { text: "💳 تأیید دریافت وجه", callback_data: "order_payment:" + code + ":paid" },
     ]);
   } else if (payment === "pending") {
     rows.push([
-      { text: "💳 پرداخت شد", callback_data: "order_payment:" + code + ":paid" },
-      { text: "↩️ برگشت", callback_data: "order_payment:" + code + ":unpaid" },
+      { text: "💳 تأیید دریافت وجه", callback_data: "order_payment:" + code + ":paid" },
+      { text: "↩️ برگشت به پرداخت‌نشده", callback_data: "order_payment:" + code + ":unpaid" },
     ]);
   } else if (payment === "paid") {
-    rows.push([{ text: "↩️ برگشت وجه", callback_data: "order_payment:" + code + ":refunded" }]);
+    rows.push([{ text: "↩️ ثبت عودت وجه دستی", callback_data: "order_payment:" + code + ":refunded" }]);
   }
 
   if (shipping === "pending") {
@@ -175,6 +185,9 @@ function paymentStatusLabel(status: string) {
     paid: "پرداخت شده",
     partially_refunded: "بخشی از وجه مسترد شده",
     refunded: "مسترد شده",
+    failed: "پرداخت ناموفق",
+    cancelled: "پرداخت لغو شده",
+    review_required: "نیازمند بررسی",
   };
   return labels[status] ?? status ?? "نامشخص";
 }
@@ -297,7 +310,7 @@ async function showOrder(chatId: number | string, code: string) {
     "شرکت ارسال: " + (order.shipping_carrier ?? "-") + "\n" +
     "لینک پیگیری: " + (order.tracking_url ?? "-") + "\n\n" +
     "اقلام:\n" + (itemLines.join("\n") || "—"),
-    { reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status) }
+    { reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method) }
   );
 }
 
@@ -1301,6 +1314,56 @@ async function handleCallbackQuery(query: any) {
     return;
   }
 
+  if (data === "noop") {
+    await sendText(chatId, "ℹ️ وضعیت پرداخت آنلاین فقط با تأیید واقعی درگاه تغییر می‌کند؛ تغییر دستی وضعیت مالی مجاز نیست.", { reply_markup: backMenuMarkup() });
+    return;
+  }
+
+  if (data.startsWith("online_refund:")) {
+    const orderCode = data.slice("online_refund:".length);
+    const supabase = await getSupabase();
+
+    const { data: order, error: orderError } = await supabase.from("orders")
+      .select("id,order_code,payment_method,payment_status")
+      .eq("order_code", orderCode).maybeSingle();
+    if (orderError) throw orderError;
+    if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
+    if (order.payment_method !== "online") throw new Error("این سفارش پرداخت آنلاین نیست.");
+    if (!["paid","partially_refunded"].includes(String(order.payment_status))) {
+      throw new Error("این سفارش در وضعیت لازم برای درخواست عودت وجه نیست.");
+    }
+
+    const { data: tx, error: txError } = await supabase.from("payment_transactions")
+      .select("id,amount,status")
+      .eq("order_id", order.id)
+      .in("status", ["paid","partially_refunded"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (txError) throw txError;
+    if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
+
+    const refund = await supabase.rpc("azim_create_online_refund_request", {
+      p_transaction_id: tx.id,
+      p_amount: Number(tx.amount || 0),
+      p_reason: "درخواست عودت وجه از پنل تلگرام ادمین",
+      p_idempotency_key: "telegram-full-refund:" + orderCode,
+    });
+    if (refund.error) throw refund.error;
+
+    await sendText(chatId,
+      "🟠 درخواست عودت وجه ثبت شد.\n\n" +
+      "سفارش: " + orderCode + "\n" +
+      "مبلغ درخواستی: " + money(tx.amount) + "\n\n" +
+      "تا وقتی خود درگاه عودت وجه را تأیید نکند، وضعیت پرداخت «مسترد شده» ثبت نمی‌شود.",
+      { reply_markup: { inline_keyboard: [
+        [{ text: "📄 سفارش", callback_data: "order:" + orderCode }],
+        [{ text: "🔄 درخواست‌ها", callback_data: "service_requests" }]
+      ]}}
+    );
+    return;
+  }
+
   if (data.startsWith("order:")) {
     await showOrder(chatId, data.slice(6));
     return;
@@ -1331,6 +1394,9 @@ async function handleCallbackQuery(query: any) {
     if (nextStatus === "delivered" && current.shipping_status !== "delivered") {
       throw new Error("اول وضعیت ارسال را «تحویل شد» کن.");
     }
+    if (current.payment_method === "online" && ["processing","shipped","delivered"].includes(nextStatus) && current.payment_status !== "paid") {
+      throw new Error("سفارش آنلاین تا تأیید واقعی پرداخت قابل پردازش یا ارسال نیست.");
+    }
 
     const { data: order, error } = await supabase.from("orders")
       .update({ status: nextStatus, updated_at: new Date().toISOString() })
@@ -1340,7 +1406,7 @@ async function handleCallbackQuery(query: any) {
     if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
 
     await sendText(chatId, "✅ وضعیت سفارش " + orderCode + " به «" + nextStatus + "» تغییر کرد.", {
-      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status),
+      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method),
     });
     return;
   }
@@ -1373,12 +1439,12 @@ async function handleCallbackQuery(query: any) {
     const { data: order, error } = await supabase.from("orders")
       .update(paymentPatch)
       .eq("order_code", orderCode)
-      .select("order_code,status,payment_status,shipping_status").maybeSingle();
+      .select("order_code,status,payment_status,payment_method,shipping_status").maybeSingle();
     if (error) throw error;
     if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
 
     await sendText(chatId, "✅ وضعیت پرداخت " + orderCode + " به «" + nextPayment + "» تغییر کرد.", {
-      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status),
+      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method),
     });
     return;
   }
@@ -1403,12 +1469,12 @@ async function handleCallbackQuery(query: any) {
     const { data: order, error } = await supabase.from("orders")
       .update({ shipping_status: nextShipping, updated_at: new Date().toISOString() })
       .eq("order_code", orderCode)
-      .select("order_code,status,payment_status,shipping_status").maybeSingle();
+      .select("order_code,status,payment_status,payment_method,shipping_status").maybeSingle();
     if (error) throw error;
     if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
 
     await sendText(chatId, "✅ وضعیت ارسال " + orderCode + " به «" + nextShipping + "» تغییر کرد.", {
-      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status),
+      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method),
     });
     return;
   }
