@@ -142,7 +142,8 @@ function getKnowledgeAdvisorResponse(query) {
 همچنین برای جستجوی دقیق‌تر هر کالا، صفحه کاتالوگ محصولات با مشخصات و تصاویر در دسترس شماست.`;
 }
 
-const SUPABASE_URL = process.env.AZIM_SUPABASE_URL || process.env.SUPABASE_URL || 'https://lzkrwtnylkordkwkdyzp.supabase.co';
+const SUPABASE_URL = String(process.env.AZIM_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+if (!SUPABASE_URL) throw new Error('AZIM_SUPABASE_URL/SUPABASE_URL is required for the self-hosted AI backend.');
 const CHAT_RATE = new Map();
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 12;
