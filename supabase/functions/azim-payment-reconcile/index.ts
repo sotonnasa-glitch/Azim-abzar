@@ -36,13 +36,13 @@ async function currentSettings() {
 
 async function reconcile() {
   const settings = await currentSettings();
-  const ready = String(settings?.gateway_ready ?? "false").toLowerCase() === "true";
   const provider = String(settings?.provider ?? "").trim().toLowerCase();
 
   // Reconciliation is for already-created payments. Disabling new checkout
-  // must not stop settlement/recovery of an older pending transaction.
-  if (!ready || !provider) {
-    return { ok: true, skipped: true, reason: "gateway_not_ready", checked: 0 };
+  // or temporarily hiding the online payment option must not stop settlement
+  // and recovery of an older pending transaction.
+  if (!provider) {
+    return { ok: true, skipped: true, reason: "gateway_provider_missing", checked: 0 };
   }
 
   const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
