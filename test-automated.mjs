@@ -541,6 +541,28 @@ function testAuditAddendumGuards() {
     fail('محافظ نقش برای محتوای حساس پنل کامل نیست');
   }
 
+  if (
+    adminJs.includes("payment: ['مدیریت درگاه پرداخت', 'کنترل امن پرداخت آنلاین، تراکنش‌ها و بازگشت وجه']") &&
+    adminJs.includes("payment: ['owner','admin']") &&
+    adminJs.includes("async function ensurePaymentMFA()") &&
+    adminJs.includes("state.db.rpc('azim_admin_payment_dashboard')") &&
+    adminJs.includes("state.db.rpc('azim_admin_request_online_refund'")
+  ) {
+    pass('مرکز کنترل درگاه: منو، محدودیت نقش، MFA، داشبورد تراکنش و Refund در پنل وجود دارد');
+  } else {
+    fail('مرکز کنترل درگاه پرداخت یا یکی از قفل‌های حساس آن ناقص است');
+  }
+
+  if (
+    adminJs.includes("هیچ دکمه‌ای در این پنل پرداخت را دستی موفق نمی‌کند") &&
+    adminJs.includes("Reference کامل ماسک شده است") &&
+    adminJs.includes("پرداخت آنلاین فعال شد")
+  ) {
+    pass('پنل پرداخت از نمایش Secret، تأیید دستی پرداخت و Reference کامل جلوگیری می‌کند');
+  } else {
+    fail('محافظ‌های UI مرکز پرداخت کامل نیستند');
+  }
+
   const saveInquiryPos = adminJs.indexOf('async function saveInquiry(id)');
   const saveInquiryBlock = saveInquiryPos >= 0 ? adminJs.slice(saveInquiryPos, saveInquiryPos + 700) : '';
   if (saveInquiryBlock.includes("if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه مدیریت درخواست‌های مشتری را ندارد.');")) {
