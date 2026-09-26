@@ -2012,6 +2012,31 @@
           });
           if (result.error) throw result.error;
           saved = true;
+
+          // Notify the existing Azim Abzar Telegram admin bot after the inquiry is safely stored.
+          try {
+            const notifyUrl = window.AZIM_SUPABASE_URL + '/functions/v1/azim-consultation-notify';
+            const session = window.supabase.auth ? await client.auth.getSession() : null;
+            const token = session?.data?.session?.access_token || window.AZIM_SUPABASE_ANON_KEY;
+            await fetch(notifyUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': window.AZIM_SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + token
+              },
+              body: JSON.stringify({
+                full_name: name,
+                mobile: phone,
+                subject,
+                business,
+                details
+              })
+            });
+          } catch (notifyErr) {
+            // The inquiry is already saved; Telegram delivery failure must not lose the customer's request.
+            console.warn('Telegram consultation notification failed:', notifyErr);
+          }
         }
       } catch (err) {
         console.warn('Inquiry save failed; falling back to email.', err);
