@@ -870,10 +870,13 @@
 
     const paymentStatus = {
       unpaid: 'پرداخت نشده',
-      pending: 'در انتظار پرداخت',
+      pending: 'در انتظار بررسی پرداخت',
       paid: 'پرداخت شده',
       partially_refunded: 'بخشی از وجه مسترد شده',
-      refunded: 'مسترد شده'
+      refunded: 'مسترد شده',
+      failed: 'پرداخت ناموفق',
+      cancelled: 'پرداخت لغو شده',
+      review_required: 'نیازمند بررسی'
     };
 
     const shippingStatus = {
@@ -1028,6 +1031,16 @@
           '<button class="btn-copy-code" id="btnCopyTrack" type="button" data-copy-value="' + esc(data.tracking_code) + '">کپی کد</button>' +
         '</div>' : '';
 
+      const paymentInfo =
+        data.payment_method === 'online' && (data.payment_status === 'pending' || data.payment_status === 'review_required')
+          ? '<div class="action-box" style="border-color:rgba(245,185,0,.28);"><h3>⏳ پرداخت در حال بررسی</h3><p>نتیجه قطعی پرداخت هنوز ثبت نشده است. برای جلوگیری از پرداخت دوباره، فعلاً دوباره پرداخت نکنید. سامانه نتیجه درگاه را بررسی می‌کند.</p></div>'
+          : '';
+
+      const retryPayment =
+        data.can_retry_payment === true
+          ? '<div class="action-box" style="border-color:rgba(245,185,0,.28);"><h3>💳 پرداخت سفارش</h3><p>پرداخت قبلی توسط درگاه ناموفق/لغوشده ثبت شده است. برای ادامه می‌توانید همین سفارش را دوباره وارد درگاه کنید؛ سفارش جدید ساخته نمی‌شود.</p><button class="action-btn" type="button" id="retryPaymentBtn">ادامه پرداخت همین سفارش</button></div>'
+          : '';
+
       $('result').innerHTML =
         '<div class="order-head">' +
           '<div class="order-code-block">' +
@@ -1045,6 +1058,7 @@
 
         '<div class="timeline">' + stepsHtml + '</div>' +
 
+        paymentInfo + retryPayment +
         '<div class="details-table">' +
           '<div class="detail-row">' +
             '<span class="detail-lbl">مبلغ کل سفارش</span>' +
@@ -1080,7 +1094,35 @@
       });
       const cancelBtn=$('cancelOrderBtn');
       if(cancelBtn) cancelBtn.onclick=()=>openCancelForm();
+      const retryBtn=$('retryPaymentBtn');
+      if(retryBtn) retryBtn.onclick=()=>openPaymentRetryForm();
       document.querySelectorAll('[data-return-item]').forEach(btn=>{btn.onclick=()=>openReturnForm(items.find(x=>String(x.id)===String(btn.dataset.returnItem)));});
+    }
+
+    function openPaymentRetryForm(){
+      const box=$('actionBox');if(!box)return;
+      box.hidden=false;
+      box.innerHTML='<h3>💳 ادامه پرداخت همین سفارش</h3><p>شماره موبایلی که هنگام ثبت سفارش وارد کردید را وارد کنید. سفارش جدیدی ساخته نمی‌شود.</p><form id="paymentRetryForm"><div class="action-grid"><div class="full"><label>شماره موبایل سفارش</label><input id="paymentRetryMobile" inputmode="tel" maxlength="20" required placeholder="0912..."></div></div><div class="action-actions"><button class="btn" type="submit">رفتن به درگاه</button><button class="btn secondary" type="button" id="paymentRetryClose">بستن</button></div></form>';
+      $('paymentRetryClose').onclick=closeActionBox;
+      $('paymentRetryForm').onsubmit=async e=>{e.preventDefault();await submitPaymentRetry($('paymentRetryMobile').value);};
+      box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+
+    async function submitPaymentRetry(mobile){
+      try{
+        setMessage('در حال اتصال دوباره به درگاه…','loading');
+        const resp=await fetch((window.AZIM_SUPABASE_URL||'')+'/functions/v1/azim-payment-gateway',{
+          method:'POST',
+          headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+          body:JSON.stringify({action:'start',order_code:currentCode,mobile})
+        });
+        const body=await resp.json().catch(()=>({}));
+        if(!resp.ok||!body?.ok) throw new Error(body?.error||'شروع دوباره پرداخت ناموفق بود.');
+        try{localStorage.setItem('azim_pending_payment',JSON.stringify({order_code:currentCode,transaction_id:body.transaction_id,status:'pending'}));}catch(_){}
+        window.location.href=body.redirect_url;
+      }catch(err){
+        setMessage(err?.message||'شروع دوباره پرداخت ناموفق بود.','error');
+      }
     }
 
     function closeActionBox(){const box=$('actionBox');if(!box)return;box.hidden=true;box.innerHTML='';}
