@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
 const PUBLIC_SITE_URL = String(Deno.env.get("AZIM_PUBLIC_SITE_URL") ?? "").replace(/\/+$/, "");
 const ALLOWED_ORIGIN = String(Deno.env.get("AZIM_ALLOWED_ORIGIN") ?? "").replace(/\/+$/, "");
+const HAS_NEW_SECRET_KEY = Boolean(Deno.env.get("SUPABASE_SECRET_KEYS"));
 
 function secretKey() {
   try {
@@ -91,7 +92,7 @@ function normalizeMobile(value: unknown) {
 function restHeaders(extra: Record<string, string> = {}) {
   return {
     apikey: SERVICE_KEY,
-    Authorization: "Bearer " + SERVICE_KEY,
+    ...(HAS_NEW_SECRET_KEY ? {} : { Authorization: "Bearer " + SERVICE_KEY }),
     ...extra,
   };
 }
