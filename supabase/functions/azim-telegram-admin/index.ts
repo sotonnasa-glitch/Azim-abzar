@@ -1414,9 +1414,13 @@ async function handleCallbackQuery(query: any) {
     const [, orderCode, nextPayment] = data.split(":");
     const supabase = await getSupabase();
     const { data: current, error: currentError } = await supabase.from("orders")
-      .select("order_code,status,payment_status,shipping_status").eq("order_code", orderCode).maybeSingle();
+      .select("order_code,status,payment_status,payment_method,shipping_status").eq("order_code", orderCode).maybeSingle();
     if (currentError) throw currentError;
     if (!current) throw new Error("سفارش پیدا نشد: " + orderCode);
+
+    if (current.payment_method === "online" && ["paid","refunded","partially_refunded"].includes(nextPayment)) {
+      throw new Error("پرداخت آنلاین را نمی‌توان دستی تأیید یا مسترد کرد؛ وضعیت مالی فقط با سامانه درگاه تغییر می‌کند.");
+    }
 
     const transitions: Record<string,string[]> = {
       unpaid: ["pending","paid"],
@@ -1424,6 +1428,9 @@ async function handleCallbackQuery(query: any) {
       paid: ["refunded"],
       partially_refunded: ["refunded"],
       refunded: [],
+      failed: ["pending"],
+      cancelled: ["pending"],
+      review_required: ["pending"],
     };
     if (!transitions[current.payment_status]?.includes(nextPayment)) {
       throw new Error("تغییر وضعیت پرداخت «" + current.payment_status + "» به «" + nextPayment + "» مجاز نیست.");
