@@ -30,7 +30,10 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 
 function cors(req: Request) {
   const requestOrigin = req.headers.get("origin") ?? "";
-  const origin = ALLOWED_ORIGIN || (requestOrigin && /^https:\/\//i.test(requestOrigin) ? requestOrigin : "*");
+  let expectedOrigin = "";
+  try { expectedOrigin = PUBLIC_SITE_URL ? new URL(PUBLIC_SITE_URL).origin : ""; } catch {}
+  const origin = ALLOWED_ORIGIN ||
+    (requestOrigin && expectedOrigin && requestOrigin === expectedOrigin ? requestOrigin : (expectedOrigin || "*"));
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers": "content-type, apikey, authorization",
@@ -278,12 +281,17 @@ async function verifyWithProvider(_provider: string, _ctx: any) {
 async function claimNotification(row: any) {
   const id = clean(row?.id, 100);
   const currentAttempts = Number(row?.attempts || 0);
-  if (!id || currentAttempts >= 5) return null;
+  const currentStatus = clean(row?.status, 20);
+  if (!id || currentAttempts >= 5 || !["pending","failed","sending"].includes(currentStatus)) return null;
 
   const nextAttempts = currentAttempts + 1;
+  const statusFilter = currentStatus === "sending"
+    ? "&status=eq.sending&updated_at=lt." + encodeURIComponent(new Date(Date.now() - 10 * 60 * 1000).toISOString())
+    : "&status=eq." + encodeURIComponent(currentStatus);
+
   const { response: r, body } = await restJson(
     "/rest/v1/payment_notification_queue?id=eq." + encodeURIComponent(id) +
-    "&status=in.(pending,failed)&attempts=eq." + String(currentAttempts),
+    statusFilter + "&attempts=eq." + String(currentAttempts),
     {
       method: "PATCH",
       headers: { "content-type": "application/json", Prefer: "return=representation" },
@@ -369,10 +377,23 @@ async function drainNotificationQueue(transactionId?: string, orderId?: string) 
     query += "&order_id=eq." + encodeURIComponent(orderId);
   }
 
-  const { response: r, body: rows } = await restJson(query);
-  if (!r.ok || !Array.isArray(rows)) return;
+  const { response: r, body: rows0 } = await restJson(query);
+  if (!r.ok || !Array.isArray(rows0)) return;
+  let rows: any[] = [...rows0];
 
+  let staleQuery = "/rest/v1/payment_notification_queue?select=*&status=eq.sending&attempts=lt.5&updated_at=lt." +
+    encodeURIComponent(new Date(Date.now() - 10 * 60 * 1000).toISOString()) +
+    "&order=created_at.asc&limit=10";
+  if (transactionId) staleQuery += "&transaction_id=eq." + encodeURIComponent(transactionId);
+  else if (orderId) staleQuery += "&order_id=eq." + encodeURIComponent(orderId);
+
+  const stale = await restJson(staleQuery);
+  if (stale.response.ok && Array.isArray(stale.body)) rows = [...rows, ...stale.body];
+
+  const seen = new Set<string>();
   for (const row of rows) {
+    if (seen.has(String(row.id))) continue;
+    seen.add(String(row.id));
     const claimed = await claimNotification(row);
     if (!claimed) continue;
 
