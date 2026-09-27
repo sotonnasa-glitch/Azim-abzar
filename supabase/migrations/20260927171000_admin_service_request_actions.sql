@@ -1,5 +1,5 @@
 -- Admin-panel service request actions.
--- Keep sensitive transitions behind an AAL2 + owner/admin gate and reuse the
+-- Keep sensitive transitions behind an AAL2 + owner/admin gate; the wrapper itself runs as invoker and delegates to the protected workflow core and reuse the
 -- exact Telegram workflow functions so site/admin/Telegram share one state machine.
 begin;
 
@@ -9,7 +9,7 @@ create or replace function public.azim_admin_handle_return_request(
 )
 returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path to ''
 as $function$
 begin
@@ -36,7 +36,7 @@ create or replace function public.azim_admin_handle_cancel_request(
 )
 returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path to ''
 as $function$
 begin
