@@ -1092,124 +1092,46 @@ async function handleCallbackQuery(query: any) {
   if (data.startsWith("cancel_request:")) {
     const [, requestId, action] = data.split(":");
     const supabase = await getSupabase();
+    const { data: result, error } = await supabase.rpc("azim_telegram_handle_cancel_request", {
+      p_request_id: requestId, p_action: action, p_actor_ref: String(chatId)
+    });
+    if (error) throw error;
 
-    const { data: req, error: reqError } = await supabase
-      .from("order_action_requests")
-      .select("id,order_id,status,refund_status")
-      .eq("id",requestId).maybeSingle();
-    if (reqError) throw reqError;
-    if (!req) throw new Error("درخواست لغو پیدا نشد.");
-
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .select("id,order_code,status,payment_status,payment_method,shipping_status,total")
-      .eq("id",req.order_id).maybeSingle();
-    if (orderError) throw orderError;
-    if (!order) throw new Error("سفارش پیدا نشد.");
-
-    if (action==="approve") {
-      if (req.status!=="pending") throw new Error("این درخواست دیگر در وضعیت قابل تأیید نیست.");
-      if (!["pending","confirmed","processing"].includes(order.status) ||
-          ["shipped","delivered"].includes(String(order.shipping_status||""))) {
-        throw new Error("این سفارش دیگر قبل از ارسال قابل لغو نیست.");
-      }
-
-      const refundStatus = ["paid","partially_refunded"].includes(String(order.payment_status)) ? "pending" : "not_required";
-      const nextPayment = order.payment_status==="pending" ? "unpaid" : order.payment_status;
-
-      const { error: updateError } = await supabase.from("orders")
-        .update({status:"cancelled",payment_status:nextPayment,updated_at:new Date().toISOString()})
-        .eq("id",order.id);
-      if (updateError) throw updateError;
-
-      const { error: requestError } = await supabase.from("order_action_requests")
-        .update({status:"approved",refund_status:refundStatus,updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-
-      await sendText(chatId,
-        "✅ لغو سفارش تأیید شد.\n\nسفارش: " + order.order_code +
-        (refundStatus==="pending" ? "\n💰 عودت وجه لازم است." : "\n💳 عودت وجه لازم نیست."),
-        {reply_markup: refundStatus==="pending" ? {inline_keyboard:[
-          [{text:"💰 ثبت عودت وجه",callback_data:"cancel_request:"+requestId+":refund"}],
-          [{text:"⬅️ درخواست‌ها",callback_data:"service_requests"}]
-        ]} : backMenuMarkup()}
+    if (action === "approve") {
+      await sendText(
+        chatId,
+        "✅ لغو سفارش تأیید شد.\n\n" +
+        "سفارش: " + result.order_code +
+        (result.refund_status === "pending"
+          ? "\n💰 درخواست عودت وجه نیز امن ثبت شد و منتظر تأیید واقعی درگاه است."
+          : "\n💳 عودت وجه لازم نیست."),
+        { reply_markup: { inline_keyboard: [
+          [{ text: "⬅️ درخواست‌ها", callback_data: "service_requests" }],
+          [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }]
+        ]}}
       );
       return;
     }
 
-    if (action==="reject") {
-      if (req.status!=="pending") throw new Error("این درخواست دیگر در وضعیت قابل رد نیست.");
-      const { error: requestError } = await supabase.from("order_action_requests")
-        .update({status:"rejected",updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-
-      await sendText(chatId,"❌ درخواست لغو سفارش " + order.order_code + " رد شد.",{
-        reply_markup:{inline_keyboard:[[{
-          text:"🔄 درخواست‌ها",callback_data:"service_requests"
+    if (action === "reject") {
+      await sendText(chatId, "❌ درخواست لغو سفارش " + result.order_code + " رد شد.", {
+        reply_markup: { inline_keyboard: [[{
+          text: "🔄 درخواست‌ها", callback_data: "service_requests"
         }]]}
       });
       return;
     }
 
-    if (action==="refund") {
-      if (req.status!=="approved" || req.refund_status!=="pending" || !["paid","partially_refunded"].includes(String(order.payment_status))) {
-        throw new Error("این درخواست در وضعیت لازم برای ثبت عودت وجه نیست.");
-      }
-
-      if (order.payment_method==="online") {
-        const { data: tx, error: txError } = await supabase.from("payment_transactions")
-          .select("id,amount,status")
-          .eq("order_id",order.id)
-          .in("status",["paid","partially_refunded"])
-          .order("created_at",{ascending:false})
-          .limit(1)
-          .maybeSingle();
-        if (txError) throw txError;
-        if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
-
-        const refund = await supabase.rpc("azim_create_online_refund_request",{
-          p_transaction_id:tx.id,
-          p_amount:Number(order.total||0),
-          p_reason:"درخواست عودت وجه پس از لغو سفارش از پنل تلگرام",
-          p_idempotency_key:"telegram-cancel-refund:"+requestId
-        });
-        if (refund.error) throw refund.error;
-
-        const { error: linkError } = await supabase.from("payment_refunds")
-          .update({source_type:"cancel",source_request_id:requestId})
-          .eq("id",refund.data?.refund_id);
-        if (linkError) throw linkError;
-
-        await sendText(chatId,
-          "🟠 درخواست عودت وجه سفارش " + order.order_code + " ثبت شد.\n\n" +
-          "مبلغ: " + money(refund.data?.amount ?? order.total) + "\n\n" +
-          "تا تأیید واقعی درگاه، وضعیت پرداخت «مسترد شده» نمی‌شود.",
-          {reply_markup:{inline_keyboard:[
-            [{text:"⬅️ درخواست‌ها",callback_data:"service_requests"}],
-            [{text:"📄 سفارش",callback_data:"order:"+order.order_code}]
-          ]}}
-        );
-        return;
-      }
-
-      const { error: updateError } = await supabase.from("orders")
-        .update({payment_status:"refunded",updated_at:new Date().toISOString()})
-        .eq("id",order.id);
-      if (updateError) throw updateError;
-
-      const { error: requestError } = await supabase.from("order_action_requests")
-        .update({refund_status:"refunded",updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-
-      await sendText(chatId,"✅ عودت وجه سفارش " + order.order_code + " ثبت شد.",{
-        reply_markup:{inline_keyboard:[
-          [{text:"⬅️ درخواست‌ها",callback_data:"service_requests"}],
-          [{text:"📄 سفارش",callback_data:"order:"+order.order_code}]
-        ]}
-      });
+    if (action === "refund") {
+      await sendText(
+        chatId,
+        "🟠 درخواست عودت وجه سفارش " + result.order_code + " ثبت/در حال پردازش است.\n\n" +
+        "وضعیت «مسترد شده» فقط بعد از تأیید قطعی درگاه ثبت می‌شود.",
+        { reply_markup: { inline_keyboard: [
+          [{ text: "⬅️ درخواست‌ها", callback_data: "service_requests" }],
+          [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }]
+        ]}}
+      );
       return;
     }
   }
@@ -1217,155 +1139,61 @@ async function handleCallbackQuery(query: any) {
   if (data.startsWith("return_request:")) {
     const [, requestId, action] = data.split(":");
     const supabase = await getSupabase();
+    const { data: result, error } = await supabase.rpc("azim_telegram_handle_return_request", {
+      p_request_id: requestId, p_action: action, p_actor_ref: String(chatId)
+    });
+    if (error) throw error;
 
-    const { data: req, error: reqError } = await supabase.from("order_return_requests")
-      .select("id,order_id,order_item_id,quantity,status,refund_status,refund_amount,reason,details")
-      .eq("id",requestId).maybeSingle();
-    if (reqError) throw reqError;
-    if (!req) throw new Error("درخواست مرجوعی پیدا نشد.");
-
-    const { data: order, error: orderError } = await supabase.from("orders")
-      .select("id,order_code,status,payment_status,payment_method,shipping_status,total")
-      .eq("id",req.order_id).maybeSingle();
-    if (orderError) throw orderError;
-    if (!order) throw new Error("سفارش پیدا نشد.");
-
-    if (action==="approve") {
-      if (req.status!=="pending") throw new Error("این درخواست دیگر در وضعیت قابل تأیید نیست.");
-      if (order.status!=="delivered" && order.shipping_status!=="delivered") {
-        throw new Error("مرجوعی فقط برای سفارش تحویل‌شده قابل تأیید است.");
-      }
-      const refundStatus = ["paid","partially_refunded"].includes(String(order.payment_status)) ? "pending" : "not_required";
-      const { error: requestError } = await supabase.from("order_return_requests")
-        .update({status:"approved",refund_status:refundStatus,updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-
-      await sendText(chatId,
-        "✅ مرجوعی تأیید شد.\n\nسفارش: " + order.order_code +
-        (refundStatus==="pending" ? "\n📦 بعد از دریافت کالا، عودت وجه ثبت می‌شود." : "\n💳 عودت وجه لازم نیست."),
-        {reply_markup:{inline_keyboard:[
-          [{text:"📦 کالا دریافت شد",callback_data:"return_request:"+requestId+":received"}],
-          [{text:"📄 سفارش",callback_data:"order:"+order.order_code}]
+    if (action === "approve") {
+      await sendText(
+        chatId,
+        "✅ مرجوعی سفارش " + result.order_code + " تأیید شد.\n\n" +
+        (result.refund_status === "pending"
+          ? "📦 بعد از دریافت کالا، عودت وجه از مسیر امن پرداخت انجام می‌شود."
+          : "💳 عودت وجه لازم نیست."),
+        { reply_markup: { inline_keyboard: [
+          [{ text: "📦 کالا دریافت شد", callback_data: "return_request:" + requestId + ":received" }],
+          [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }]
         ]}}
       );
       return;
     }
 
-    if (action==="reject") {
-      if (req.status!=="pending") throw new Error("این درخواست دیگر در وضعیت قابل رد نیست.");
-      const { error: requestError } = await supabase.from("order_return_requests")
-        .update({status:"rejected",updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-      await sendText(chatId,"❌ درخواست مرجوعی سفارش " + order.order_code + " رد شد.",{
-        reply_markup:{inline_keyboard:[[{
-          text:"🔄 درخواست‌ها",callback_data:"service_requests"
+    if (action === "reject") {
+      await sendText(chatId, "❌ درخواست مرجوعی سفارش " + result.order_code + " رد شد.", {
+        reply_markup: { inline_keyboard: [[{
+          text: "🔄 درخواست‌ها", callback_data: "service_requests"
         }]]}
       });
       return;
     }
 
-    if (action==="received") {
-      if (req.status!=="approved") throw new Error("اول باید درخواست مرجوعی تأیید شده باشد.");
-      const nextStatus = req.refund_status==="pending" ? "received" : "closed";
-      const { error: requestError } = await supabase.from("order_return_requests")
-        .update({status:nextStatus,updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-
-      if (req.refund_status==="pending") {
-        await sendText(chatId,"📦 دریافت کالا ثبت شد. عودت وجه آماده ثبت است.",{
-          reply_markup:{inline_keyboard:[
-            [{text:"💰 ثبت عودت وجه",callback_data:"return_request:"+requestId+":refund"}],
-            [{text:"📄 سفارش",callback_data:"order:"+order.order_code}]
+    if (action === "received") {
+      if (result.refund_status === "pending") {
+        await sendText(chatId, "📦 دریافت کالا ثبت شد. عودت وجه آماده ثبت است.", {
+          reply_markup: { inline_keyboard: [
+            [{ text: "💰 ثبت عودت وجه", callback_data: "return_request:" + requestId + ":refund" }],
+            [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }]
           ]}
         });
       } else {
-        await sendText(chatId,"✅ دریافت کالا ثبت شد و درخواست بسته شد.",{
-          reply_markup:{inline_keyboard:[
-            [{text:"📄 سفارش",callback_data:"order:"+order.order_code}]
+        await sendText(chatId, "✅ دریافت کالا ثبت شد و درخواست بسته شد.", {
+          reply_markup: { inline_keyboard: [
+            [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }]
           ]}
         });
       }
       return;
     }
 
-    if (action==="refund") {
-      if (req.status!=="received" || req.refund_status!=="pending" || !["paid","partially_refunded"].includes(String(order.payment_status))) {
-        throw new Error("این مرجوعی هنوز در وضعیت لازم برای عودت وجه نیست.");
-      }
-
-      if (order.payment_method==="online") {
-        const { data: tx, error: txError } = await supabase.from("payment_transactions")
-          .select("id,amount,status")
-          .eq("order_id",order.id)
-          .in("status",["paid","partially_refunded"])
-          .order("created_at",{ascending:false})
-          .limit(1)
-          .maybeSingle();
-        if (txError) throw txError;
-        if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
-
-        const refundAmount=Number(req.refund_amount||0);
-        if (!Number.isSafeInteger(refundAmount) || refundAmount<=0) {
-          throw new Error("مبلغ عودت این مرجوعی معتبر نیست.");
-        }
-
-        const refund = await supabase.rpc("azim_create_online_refund_request",{
-          p_transaction_id:tx.id,
-          p_amount:refundAmount,
-          p_reason:"درخواست عودت وجه مرجوعی از پنل تلگرام",
-          p_idempotency_key:"telegram-return-refund:"+requestId
-        });
-        if (refund.error) throw refund.error;
-
-        const { error: linkError } = await supabase.from("payment_refunds")
-          .update({source_type:"return",source_request_id:requestId})
-          .eq("id",refund.data?.refund_id);
-        if (linkError) throw linkError;
-
-        await sendText(chatId,
-          "🟠 درخواست عودت وجه مرجوعی ثبت شد.\n\n" +
-          "سفارش: " + order.order_code +
-          "\n💰 مبلغ این مرجوعی: " + money(refund.data?.amount ?? refundAmount) +
-          "\n\nپس از تأیید واقعی درگاه، وضعیت پرداخت نهایی می‌شود.",
-          {reply_markup:{inline_keyboard:[
-            [{text:"📄 سفارش",callback_data:"order:"+order.order_code}],
-            [{text:"🔄 درخواست‌ها",callback_data:"service_requests"}]
-          ]}}
-        );
-        return;
-      }
-
-      const { data: paidReturns, error: paidError } = await supabase.from("order_return_requests")
-        .select("refund_amount")
-        .eq("order_id",order.id)
-        .eq("refund_status","refunded");
-      if (paidError) throw paidError;
-
-      const refundedBefore = (paidReturns ?? []).reduce((sum,r)=>sum+Number(r.refund_amount||0),0);
-      const totalRefund = refundedBefore + Number(req.refund_amount||0);
-      const nextPayment = totalRefund >= Number(order.total||0) ? "refunded" : "partially_refunded";
-
-      const { error: updateError } = await supabase.from("orders")
-        .update({payment_status:nextPayment,updated_at:new Date().toISOString()})
-        .eq("id",order.id);
-      if (updateError) throw updateError;
-
-      const { error: requestError } = await supabase.from("order_return_requests")
-        .update({refund_status:"refunded",status:"closed",updated_at:new Date().toISOString()})
-        .eq("id",requestId);
-      if (requestError) throw requestError;
-
-      await sendText(chatId,
-        "✅ عودت وجه مرجوعی ثبت شد.\n\n" +
-        "سفارش: " + order.order_code +
-        "\n💰 مبلغ این مرجوعی: " + money(req.refund_amount) +
-        "\n💳 وضعیت پرداخت: " + paymentStatusLabel(nextPayment),
-        {reply_markup:{inline_keyboard:[
-          [{text:"📄 سفارش",callback_data:"order:"+order.order_code}],
-          [{text:"🔄 درخواست‌ها",callback_data:"service_requests"}]
+    if (action === "refund") {
+      await sendText(
+        chatId,
+        "🟠 عودت وجه مرجوعی سفارش " + result.order_code + " ثبت/در حال پردازش است.\n\n" +
+        "وضعیت «مسترد شده» فقط بعد از تأیید قطعی درگاه ثبت می‌شود.",
+        { reply_markup: { inline_keyboard: [
+          [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }],
+          [{ text: "🔄 درخواست‌ها", callback_data: "service_requests" }]
         ]}}
       );
       return;
@@ -1402,52 +1230,21 @@ async function handleCallbackQuery(query: any) {
   if (data.startsWith("online_refund:")) {
     const orderCode = data.slice("online_refund:".length);
     const supabase = await getSupabase();
-
-    const { data: order, error: orderError } = await supabase.from("orders")
-      .select("id,order_code,payment_method,payment_status")
-      .eq("order_code", orderCode).maybeSingle();
-    if (orderError) throw orderError;
-    if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
-    if (order.payment_method !== "online") throw new Error("این سفارش پرداخت آنلاین نیست.");
-    if (!["paid","partially_refunded"].includes(String(order.payment_status))) {
-      throw new Error("این سفارش در وضعیت لازم برای درخواست عودت وجه نیست.");
-    }
-
-    const { data: tx, error: txError } = await supabase.from("payment_transactions")
-      .select("id,amount,status")
-      .eq("order_id", order.id)
-      .in("status", ["paid","partially_refunded"])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (txError) throw txError;
-    if (!tx) throw new Error("تراکنش پرداخت موفق برای این سفارش پیدا نشد.");
-
-    const { data: completedRefunds, error: refundHistoryError } = await supabase.from("payment_refunds")
-      .select("amount")
-      .eq("transaction_id", tx.id)
-      .eq("status", "refunded");
-    if (refundHistoryError) throw refundHistoryError;
-
-    const refundedAmount = (completedRefunds || []).reduce((sum: number, row: any) => sum + Number(row?.amount || 0), 0);
-    const remainingRefund = Math.max(0, Number(tx.amount || 0) - refundedAmount);
-    if (remainingRefund <= 0) throw new Error("کل مبلغ این تراکنش قبلاً مسترد شده است.");
-
-    const refund = await supabase.rpc("azim_create_online_refund_request", {
-      p_transaction_id: tx.id,
-      p_amount: remainingRefund,
+    const { data: result, error } = await supabase.rpc("azim_telegram_request_online_refund", {
+      p_order_code: orderCode,
+      p_actor_ref: String(chatId),
       p_reason: "درخواست عودت وجه از پنل تلگرام ادمین",
-      p_idempotency_key: "telegram-full-refund:" + orderCode,
     });
-    if (refund.error) throw refund.error;
+    if (error) throw error;
 
-    await sendText(chatId,
+    await sendText(
+      chatId,
       "🟠 درخواست عودت وجه ثبت شد.\n\n" +
-      "سفارش: " + orderCode + "\n" +
-      "مبلغ درخواستی: " + money(remainingRefund) + "\n\n" +
-      "تا وقتی خود درگاه عودت وجه را تأیید نکند، وضعیت پرداخت «مسترد شده» ثبت نمی‌شود.",
+      "سفارش: " + result.order_code + "\n" +
+      "مبلغ درخواستی: " + money(result.amount) + "\n\n" +
+      "تا وقتی خود درگاه عودت وجه را تأیید نکند، وضعیت پرداخت «مسترد شده» نمی‌شود.",
       { reply_markup: { inline_keyboard: [
-        [{ text: "📄 سفارش", callback_data: "order:" + orderCode }],
+        [{ text: "📄 سفارش", callback_data: "order:" + result.order_code }],
         [{ text: "🔄 درخواست‌ها", callback_data: "service_requests" }]
       ]}}
     );
@@ -1462,119 +1259,61 @@ async function handleCallbackQuery(query: any) {
   if (data.startsWith("order_status:")) {
     const [, orderCode, nextStatus] = data.split(":");
     const supabase = await getSupabase();
-    const { data: current, error: currentError } = await supabase.from("orders")
-      .select("order_code,status,payment_status,payment_method,shipping_status").eq("order_code", orderCode).maybeSingle();
-    if (currentError) throw currentError;
-    if (!current) throw new Error("سفارش پیدا نشد: " + orderCode);
-
-    const transitions: Record<string,string[]> = {
-      pending: ["confirmed","cancelled"],
-      confirmed: ["processing","cancelled"],
-      processing: ["shipped","cancelled"],
-      shipped: ["delivered"],
-      delivered: [],
-      cancelled: [],
-    };
-    if (!transitions[current.status]?.includes(nextStatus)) {
-      throw new Error("تغییر وضعیت «" + current.status + "» به «" + nextStatus + "» مجاز نیست.");
-    }
-    if (nextStatus === "shipped" && !["shipped","delivered"].includes(current.shipping_status)) {
-      throw new Error("اول وضعیت ارسال را «ارسال شد» کن.");
-    }
-    if (nextStatus === "delivered" && current.shipping_status !== "delivered") {
-      throw new Error("اول وضعیت ارسال را «تحویل شد» کن.");
-    }
-    if (current.payment_method === "online" && ["processing","shipped","delivered"].includes(nextStatus) && current.payment_status !== "paid") {
-      throw new Error("سفارش آنلاین تا تأیید واقعی پرداخت قابل پردازش یا ارسال نیست.");
-    }
-
-    const { data: order, error } = await supabase.from("orders")
-      .update({ status: nextStatus, updated_at: new Date().toISOString() })
-      .eq("order_code", orderCode)
-      .select("order_code,status,payment_status,payment_method,shipping_status").maybeSingle();
-    if (error) throw error;
-    if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
-
-    await sendText(chatId, "✅ وضعیت سفارش " + orderCode + " به «" + nextStatus + "» تغییر کرد.", {
-      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method),
+    const { data: result, error } = await supabase.rpc("azim_telegram_transition_order", {
+      p_order_code: orderCode, p_next_status: nextStatus, p_actor_ref: String(chatId)
     });
+    if (error) throw error;
+
+    await sendText(
+      chatId,
+      "✅ وضعیت سفارش " + result.order_code + " به «" + orderStatusLabel(result.status) + "» تغییر کرد." +
+      (result.refund_requested ? "\n💰 درخواست عودت وجه نیز ثبت شد و فقط بعد از تأیید واقعی درگاه نهایی می‌شود." : ""),
+      { reply_markup: orderActionsMarkup(
+        result.order_code, result.status, result.payment_status,
+        result.shipping_status, result.payment_method
+      )}
+    );
     return;
   }
+
   if (data.startsWith("order_payment:")) {
     const [, orderCode, nextPayment] = data.split(":");
     const supabase = await getSupabase();
-    const { data: current, error: currentError } = await supabase.from("orders")
-      .select("order_code,status,payment_status,payment_method,shipping_status").eq("order_code", orderCode).maybeSingle();
-    if (currentError) throw currentError;
-    if (!current) throw new Error("سفارش پیدا نشد: " + orderCode);
-
-    if (current.payment_method === "online" && ["paid","refunded","partially_refunded"].includes(nextPayment)) {
-      throw new Error("پرداخت آنلاین را نمی‌توان دستی تأیید یا مسترد کرد؛ وضعیت مالی فقط با سامانه درگاه تغییر می‌کند.");
-    }
-
-    const transitions: Record<string,string[]> = {
-      unpaid: ["pending","paid"],
-      pending: ["unpaid","paid"],
-      paid: ["refunded"],
-      partially_refunded: ["refunded"],
-      refunded: [],
-      failed: ["pending"],
-      cancelled: ["pending"],
-      review_required: ["pending"],
-    };
-    if (!transitions[current.payment_status]?.includes(nextPayment)) {
-      throw new Error("تغییر وضعیت پرداخت «" + current.payment_status + "» به «" + nextPayment + "» مجاز نیست.");
-    }
-
-    const paymentPatch: Record<string, unknown> = {
-      payment_status: nextPayment,
-      updated_at: new Date().toISOString(),
-    };
-    if (nextPayment === "paid") paymentPatch.paid_at = new Date().toISOString();
-    if (nextPayment === "unpaid" || nextPayment === "pending") paymentPatch.paid_at = null;
-
-    const { data: order, error } = await supabase.from("orders")
-      .update(paymentPatch)
-      .eq("order_code", orderCode)
-      .select("order_code,status,payment_status,payment_method,shipping_status").maybeSingle();
-    if (error) throw error;
-    if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
-
-    await sendText(chatId, "✅ وضعیت پرداخت " + orderCode + " به «" + nextPayment + "» تغییر کرد.", {
-      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method),
+    const { data: result, error } = await supabase.rpc("azim_telegram_set_offline_payment", {
+      p_order_code: orderCode, p_next_payment: nextPayment, p_actor_ref: String(chatId)
     });
+    if (error) throw error;
+
+    await sendText(
+      chatId,
+      "✅ وضعیت پرداخت " + result.order_code + " به «" + paymentStatusLabel(result.payment_status) + "» تغییر کرد.",
+      { reply_markup: orderActionsMarkup(
+        result.order_code, result.status, result.payment_status,
+        result.shipping_status, result.payment_method
+      )}
+    );
     return;
   }
+
   if (data.startsWith("order_shipping:")) {
     const [, orderCode, nextShipping] = data.split(":");
     const supabase = await getSupabase();
-    const { data: current, error: currentError } = await supabase.from("orders")
-      .select("order_code,status,payment_status,shipping_status").eq("order_code", orderCode).maybeSingle();
-    if (currentError) throw currentError;
-    if (!current) throw new Error("سفارش پیدا نشد: " + orderCode);
-
-    const transitions: Record<string,string[]> = {
-      pending: ["packed"],
-      packed: ["shipped"],
-      shipped: ["delivered"],
-      delivered: [],
-    };
-    if (!transitions[current.shipping_status]?.includes(nextShipping)) {
-      throw new Error("تغییر وضعیت ارسال «" + current.shipping_status + "» به «" + nextShipping + "» مجاز نیست.");
-    }
-
-    const { data: order, error } = await supabase.from("orders")
-      .update({ shipping_status: nextShipping, updated_at: new Date().toISOString() })
-      .eq("order_code", orderCode)
-      .select("order_code,status,payment_status,payment_method,shipping_status").maybeSingle();
-    if (error) throw error;
-    if (!order) throw new Error("سفارش پیدا نشد: " + orderCode);
-
-    await sendText(chatId, "✅ وضعیت ارسال " + orderCode + " به «" + nextShipping + "» تغییر کرد.", {
-      reply_markup: orderActionsMarkup(order.order_code, order.status, order.payment_status, order.shipping_status, order.payment_method),
+    const { data: result, error } = await supabase.rpc("azim_telegram_transition_shipping", {
+      p_order_code: orderCode, p_next_shipping: nextShipping, p_actor_ref: String(chatId)
     });
+    if (error) throw error;
+
+    await sendText(
+      chatId,
+      "✅ وضعیت ارسال " + result.order_code + " به «" + shippingStatusLabel(result.shipping_status) + "» تغییر کرد.",
+      { reply_markup: orderActionsMarkup(
+        result.order_code, result.status, result.payment_status,
+        result.shipping_status, result.payment_method
+      )}
+    );
     return;
   }
+
   await sendText(chatId, "دکمه شناخته نشد.", { reply_markup: mainMenuMarkup() });
 }
 
