@@ -823,6 +823,8 @@
     $('productVariantFilter').onchange = () => loadProducts();
     $('dashboardOpenSite')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
     $('inquiryFilter').onchange = () => loadInquiries();
+    $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
+    $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
   }
 
   function applyRoleUI() {
@@ -2244,10 +2246,18 @@
     await loadCustomers();
   }
 
+  let ordersSearchTimer = null;
+
   async function loadOrders() {
-    const r = await state.db.from('orders')
+    const search = String($('ordersSearch')?.value || '').trim();
+    let q = state.db.from('orders')
       .select('id,order_code,customer_id,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,notes,created_at')
-      .order('created_at', { ascending: false }).limit(200);
+      .order('created_at', { ascending: false }).limit(search ? 2000 : 200);
+    if (search) {
+      const s = search.replace(/[%(),]/g, ' ');
+      q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
+    }
+    const r = await q;
     if (r.error) return showSectionError('ordersTable', r.error);
     const rows = r.data || [];
     if (!rows.length) {
@@ -2377,7 +2387,7 @@
     ).join('');
     const itemRows = (items || []).map((it, idx) => orderItemRow(it, idx)).join('');
     return '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending') + '</div><form id="orderForm" class="grid2">'
-      '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" required value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
+      '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
       '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
       '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
       '<div class="field"><label>پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], x?.payment_status || 'unpaid', labels) + '</select></div>' +
