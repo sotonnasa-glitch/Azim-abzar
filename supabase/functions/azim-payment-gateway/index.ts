@@ -501,14 +501,36 @@ async function refundWithProvider(provider: string, ctx: any) {
   }
 
   const providerRefundId = clean(resource.id, 200) || null;
-  const returned = Number(resource.amount ?? refund.amount);
+  const returnedRial = Number(resource?.timeline?.refund_amount ?? resource?.amount ?? 0);
+  const requestedRial = amount;
+  const reportedStoreAmount =
+    Number.isSafeInteger(returnedRial) && returnedRial > 0 && returnedRial % 10 === 0
+      ? returnedRial / 10
+      : null;
   const timelineStatus = clean(resource?.timeline?.refund_status, 80).toLowerCase();
   const finalStatus = /^(refunded|success|succeeded|completed)$/.test(timelineStatus) ? "refunded" : "pending";
+
+  if (finalStatus === "refunded" && reportedStoreAmount !== Number(refund.amount)) {
+    return {
+      status: "review_required",
+      provider_refund_id: providerRefundId,
+      confirmed_amount: null,
+      error_code: "REFUND_AMOUNT_MISMATCH",
+      error: "مبلغ عودت تأییدشده توسط درگاه با مبلغ درخواست‌شده مطابقت ندارد.",
+      response_payload: {
+        resource,
+        provider: "zarinpal",
+        sandbox: String(settings?.sandbox).toLowerCase() === "true",
+        requested_rial: requestedRial,
+        returned_rial: returnedRial,
+      },
+    };
+  }
 
   return {
     status: finalStatus,
     provider_refund_id: providerRefundId,
-    confirmed_amount: Number(refund.amount),
+    confirmed_amount: finalStatus === "refunded" ? reportedStoreAmount : null,
     response_payload: {
       resource,
       provider: "zarinpal",
@@ -750,9 +772,52 @@ async function handleRefund(req: Request, body: any) {
       return response({ ok: true, already_finalized: true, refund_id: refund.id, status: "refunded" }, 200, req);
     }
 
-    if (!["requested","pending","processing"].includes(String(refund.status))) {
+    if (refund.status === "pending" || refund.status === "processing") {
+      return response({
+        ok: false,
+        pending: true,
+        code: "REFUND_ALREADY_IN_PROGRESS",
+        refund_id: refund.id,
+        status: refund.status,
+        error: "این عودت وجه قبلاً ارسال شده/در حال پردازش است؛ برای جلوگیری از عودت تکراری دوباره ارسال نمی‌شود.",
+      }, 409, req);
+    }
+
+    if (refund.status !== "requested") {
       return response({ ok: false, code: "REFUND_STATUS_INVALID", error: "این درخواست عودت در وضعیت قابل اجرا نیست." }, 409, req);
     }
+
+    if (order.payment_method !== "online" || !["paid","partially_refunded"].includes(String(transaction.status))) {
+      return response({
+        ok: false,
+        code: "REFUND_TRANSACTION_NOT_SETTLED",
+        error: "فقط تراکنش آنلاینِ تأییدشده قابل عودت وجه است.",
+      }, 409, req);
+    }
+
+    // Claim the request before contacting the provider. If two admins click
+    // at nearly the same time, only one can move requested -> processing.
+    const claim = await restJson(
+      "/rest/v1/payment_refunds?id=eq." + encodeURIComponent(refund.id) + "&status=eq.requested",
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json", Prefer: "return=representation" },
+        body: JSON.stringify({ status: "processing", updated_at: new Date().toISOString() }),
+      },
+    );
+    if (!claim.response.ok || !Array.isArray(claim.body) || !claim.body[0]) {
+      const latest = await restJson("/rest/v1/payment_refunds?select=id,status&id=eq." + encodeURIComponent(refund.id) + "&limit=1");
+      const latestRow = latest.response.ok && Array.isArray(latest.body) ? latest.body[0] : null;
+      return response({
+        ok: false,
+        pending: true,
+        code: "REFUND_ALREADY_IN_PROGRESS",
+        refund_id: refund.id,
+        status: latestRow?.status || "processing",
+        error: "این درخواست هم‌زمان توسط عملیات دیگری در حال پردازش است؛ دوباره ارسال نشد.",
+      }, 409, req);
+    }
+    refund.status = "processing";
 
     const provider = clean(transaction.provider, 60).toLowerCase();
     const settings = await getSettings();
