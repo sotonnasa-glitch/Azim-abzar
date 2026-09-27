@@ -572,7 +572,7 @@ function testAuditAddendumGuards() {
   if (
     paymentGatewayJs.includes('/pg/v4/payment/request.json') &&
     paymentGatewayJs.includes('/pg/v4/payment/verify.json') &&
-    paymentGatewayJs.includes('async function refundWithProvider(provider, ctx)') &&
+    paymentGatewayJs.includes('async function refundWithProvider(provider: string, ctx: any)') &&
     paymentGatewayJs.includes('action === "healthcheck"') &&
     paymentGatewayJs.includes('action === "refund"') &&
     paymentGatewayJs.includes('provider_session_id')
