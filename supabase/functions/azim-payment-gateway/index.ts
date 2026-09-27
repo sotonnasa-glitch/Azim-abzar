@@ -22,7 +22,14 @@ const SERVICE_KEY = secretKey();
 
 const RATE = new Map<string, { start: number; count: number }>();
 const WINDOW_MS = 10 * 60 * 1000;
-const DEFAULT_RATE_LIMIT = 12;
+const RATE_WINDOW_SECONDS = Math.max(60, Math.min(86400, Number(Deno.env.get("PAYMENT_RATE_LIMIT_WINDOW_SECONDS") || 600) || 600));
+const RATE_LIMITS: Record<string, number> = {
+  start: Math.max(1, Number(Deno.env.get("PAYMENT_RATE_LIMIT_START") || 6) || 6),
+  verify: Math.max(1, Number(Deno.env.get("PAYMENT_RATE_LIMIT_VERIFY") || 12) || 12),
+  refund: Math.max(1, Number(Deno.env.get("PAYMENT_RATE_LIMIT_REFUND") || 4) || 4),
+  healthcheck: Math.max(1, Number(Deno.env.get("PAYMENT_RATE_LIMIT_HEALTHCHECK") || 3) || 3),
+  default: Math.max(1, Number(Deno.env.get("PAYMENT_RATE_LIMIT_DEFAULT") || 12) || 12),
+};
 const MAX_CALLBACK_KEYS = 24;
 const MAX_CALLBACK_VALUE = 800;
 const MAX_CALLBACK_BYTES = 12000;
@@ -34,15 +41,16 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 function cors(req: Request) {
   const requestOrigin = req.headers.get("origin") ?? "";
   let expectedOrigin = "";
-  try { expectedOrigin = PUBLIC_SITE_URL ? new URL(PUBLIC_SITE_URL).origin : ""; } catch {}
-  const origin = ALLOWED_ORIGIN ||
-    (requestOrigin && expectedOrigin && requestOrigin === expectedOrigin ? requestOrigin : (expectedOrigin || "*"));
-  return {
-    "Access-Control-Allow-Origin": origin,
+  try { expectedOrigin = ALLOWED_ORIGIN || (PUBLIC_SITE_URL ? new URL(PUBLIC_SITE_URL).origin : ""); } catch {}
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": "content-type, apikey, authorization",
     "Access-Control-Allow-Methods": "POST,OPTIONS",
     "Vary": "Origin",
   };
+  if (requestOrigin && expectedOrigin && requestOrigin === expectedOrigin) {
+    headers["Access-Control-Allow-Origin"] = requestOrigin;
+  }
+  return headers;
 }
 
 function response(body: unknown, status: number, req: Request) {
@@ -58,22 +66,27 @@ function clientIp(req: Request) {
     "unknown";
 }
 
-function allowed(req: Request) {
-  const now = Date.now();
-  const key = clientIp(req);
-  const item = RATE.get(key) ?? { start: now, count: 0 };
-  if (now - item.start >= WINDOW_MS) {
-    item.start = now;
-    item.count = 0;
-  }
-  item.count++;
-  RATE.set(key, item);
-  if (RATE.size > 5000) {
-    for (const [k, v] of RATE) {
-      if (now - v.start >= WINDOW_MS) RATE.delete(k);
-    }
-  }
-  return item.count <= DEFAULT_RATE_LIMIT;
+async function rateKey(req: Request, scope: string) {
+  const raw = scope + ":" + clientIp(req);
+  const bytes = new TextEncoder().encode(raw);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+async function allowed(req: Request, scope: string) {
+  const key = await rateKey(req, scope);
+  const result = await callServiceRpc("azim_consume_payment_rate_limit", {
+    p_scope: scope,
+    p_bucket_key: key,
+    p_limit: RATE_LIMITS[scope] ?? RATE_LIMITS.default,
+    p_window_seconds: RATE_WINDOW_SECONDS,
+  });
+  return result?.allowed === true;
+}
+
+function isInternalReconcile(req: Request) {
+  return req.headers.get("x-azim-internal") === "reconcile"
+    && String(req.headers.get("apikey") ?? "") === SERVICE_KEY;
 }
 
 function clean(value: unknown, max = 500) {
@@ -270,6 +283,8 @@ async function getOrderById(orderId: string) {
   return rows?.[0] ?? null;
 }
 
+const SENSITIVE_PAYMENT_KEY = /(card|pan|cvv|cvc|iban|account|password|secret|token|authorization|cookie|magstripe)/i;
+
 function sanitizeCallbackParams(input: unknown) {
   if (!input || typeof input !== "object") return {};
   const source = input as Record<string, unknown>;
@@ -279,7 +294,7 @@ function sanitizeCallbackParams(input: unknown) {
 
   for (const key of keys) {
     const safeKey = clean(key, 80);
-    if (!safeKey || !/^[A-Za-z0-9_.-]+$/.test(safeKey)) continue;
+    if (!safeKey || !/^[A-Za-z0-9_.-]+$/.test(safeKey) || SENSITIVE_PAYMENT_KEY.test(safeKey)) continue;
     const value = clean(source[key], MAX_CALLBACK_VALUE);
     const projected = total + safeKey.length + value.length;
     if (projected > MAX_CALLBACK_BYTES) break;
@@ -287,6 +302,25 @@ function sanitizeCallbackParams(input: unknown) {
     total = projected;
   }
   return out;
+}
+
+function sanitizeProviderPayload(data: unknown, errors: unknown = null) {
+  const safeData: Record<string, unknown> = {};
+  if (data && typeof data === "object") {
+    for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+      if (SENSITIVE_PAYMENT_KEY.test(key)) continue;
+      if (value == null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        safeData[key.slice(0, 80)] = typeof value === "string" ? value.slice(0, 500) : value;
+      }
+    }
+  }
+  const safeErrors = Array.isArray(errors)
+    ? errors.slice(0, 10).map((e: any) => ({
+        code: e?.code == null ? null : String(e.code).slice(0, 120),
+        message: e?.message == null ? null : String(e.message).slice(0, 500),
+      }))
+    : [];
+  return { data: safeData, errors: safeErrors };
 }
 
 async function createTransaction(order: any, provider: string, settings: any, req: Request) {
@@ -390,16 +424,38 @@ async function startWithProvider(provider: string, ctx: any) {
 async function verifyWithProvider(provider: string, ctx: any) {
   if (provider !== "zarinpal") throw new Error("PAYMENT_PROVIDER_NOT_IMPLEMENTED");
   const { order, transaction, settings, callbackParams } = ctx;
-  if (String(callbackParams?.Status ?? "").toUpperCase() === "NOK") {
+  const callbackStatus = String(callbackParams?.Status ?? "").trim().toUpperCase();
+  const callbackAuthority = clean(callbackParams?.Authority, 200);
+  const storedAuthority = clean(transaction?.authority, 200);
+
+  if (callbackStatus === "NOK") {
     return {
       status: "cancelled",
       provider_status: "NOK",
       error: "پرداخت توسط کاربر لغو شد.",
-      verification_payload: { Status: "NOK", Authority: clean(callbackParams?.Authority, 200) },
+      verification_payload: sanitizeProviderPayload({ Status: "NOK", Authority: callbackAuthority }),
     };
   }
 
-  const authority = clean(callbackParams?.Authority || transaction?.authority, 200);
+  if (callbackStatus && callbackStatus !== "OK") {
+    return {
+      status: "review_required",
+      provider_status: "UNKNOWN_CALLBACK_STATUS",
+      error: "وضعیت callback درگاه ناشناخته بود.",
+      verification_payload: sanitizeProviderPayload({ Status: callbackStatus, Authority: callbackAuthority }),
+    };
+  }
+
+  if (callbackAuthority && storedAuthority && callbackAuthority !== storedAuthority) {
+    return {
+      status: "review_required",
+      provider_status: "AUTHORITY_MISMATCH",
+      error: "شناسه برگشتی درگاه با تراکنش ثبت‌شده یکسان نیست.",
+      verification_payload: sanitizeProviderPayload({ Status: callbackStatus || null, Authority: callbackAuthority, StoredAuthority: storedAuthority }),
+    };
+  }
+
+  const authority = callbackAuthority || storedAuthority;
   if (!authority) {
     return { status: "review_required", provider_status: "MISSING_AUTHORITY", error: "Authority در پاسخ درگاه پیدا نشد." };
   }
@@ -408,28 +464,44 @@ async function verifyWithProvider(provider: string, ctx: any) {
     return { status: "review_required", provider_status: "UNSUPPORTED_STORE_AMOUNT_UNIT", error: "واحد مبلغ فروشگاه برای زرین‌پال قابل تبدیل نیست." };
   }
 
-  const amount = tomanToRial(order.total);
+  const requestedRial = tomanToRial(order.total);
   const { response: r, body } = await zarinpalRest(settings, "/pg/v4/payment/verify.json", {
-    amount,
+    amount: requestedRial,
     authority,
   });
 
   const code = Number(body?.data?.code);
   const refId = body?.data?.ref_id ?? body?.data?.refId ?? null;
-  const providerPayload = body?.data && typeof body.data === "object"
-    ? { data: body.data, errors: body?.errors ?? null }
-    : { errors: body?.errors ?? null };
+  const providerPayload = sanitizeProviderPayload(body?.data, body?.errors);
 
   if (r.ok && (code === 100 || code === 101)) {
+    const rawConfirmedRial = body?.data?.amount ?? body?.data?.paid_amount ?? body?.data?.amount_rial ?? body?.data?.amountIRR ?? null;
+    const confirmedRial = rawConfirmedRial == null ? null : Number(rawConfirmedRial);
+
+    if (!Number.isSafeInteger(confirmedRial) || confirmedRial <= 0 || confirmedRial !== requestedRial) {
+      return {
+        status: "review_required",
+        provider_status: confirmedRial == null ? "MISSING_PROVIDER_AMOUNT" : "PROVIDER_AMOUNT_MISMATCH",
+        error: "مبلغ تأییدشده توسط درگاه با مبلغ سفارش یکسان نیست یا در پاسخ درگاه قابل استخراج نیست.",
+        verification_payload: sanitizeProviderPayload(
+          { ...((body?.data && typeof body.data === "object") ? body.data : {}), requested_amount_rial: requestedRial, confirmed_amount_rial: confirmedRial },
+          body?.errors,
+        ),
+      };
+    }
+
     return {
       status: "paid",
       provider_status: String(code),
       gateway_reference: refId == null ? clean(transaction?.gateway_reference, 200) || null : String(refId),
       provider_request_id: body?.data?.session_id ? String(body.data.session_id) : (body?.data?.sessionId ? String(body.data.sessionId) : clean(transaction?.gateway_request_id, 200) || null),
       provider_session_id: body?.data?.session_id ? String(body.data.session_id) : (body?.data?.sessionId ? String(body.data.sessionId) : clean(transaction?.provider_session_id, 200) || null),
-      confirmed_store_amount: Number(order.total),
+      confirmed_store_amount: confirmedRial / 10,
       confirmed_store_amount_unit: "toman",
-      verification_payload: providerPayload,
+      verification_payload: sanitizeProviderPayload(
+        { ...((body?.data && typeof body.data === "object") ? body.data : {}), requested_amount_rial: requestedRial, confirmed_amount_rial: confirmedRial },
+        body?.errors,
+      ),
     };
   }
 
@@ -536,7 +608,7 @@ async function refundWithProvider(provider: string, ctx: any) {
       provider: "zarinpal",
       sandbox: String(settings?.sandbox).toLowerCase() === "true",
       requested_rial: amount,
-      returned_rial: returned,
+      returned_rial: returnedRial,
     },
   };
 }
@@ -1198,11 +1270,15 @@ async function handleVerify(req: Request, body: any) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   if (req.method !== "POST") return response({ ok: false, code: "METHOD_NOT_ALLOWED", error: "Method not allowed" }, 405, req);
-  if (!allowed(req)) return response({ ok: false, code: "RATE_LIMIT", error: "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کنید." }, 429, req);
 
   try {
     const body = await req.json();
     const action = clean(body?.action, 20).toLowerCase();
+    const internalReconcile = isInternalReconcile(req);
+
+    if (!internalReconcile && !(await allowed(req, action))) {
+      return response({ ok: false, code: "RATE_LIMIT", error: "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کنید." }, 429, req);
+    }
 
     if (action === "start") return await handleStart(req, body);
     if (action === "verify") return await handleVerify(req, body);
