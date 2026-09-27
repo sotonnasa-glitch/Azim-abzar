@@ -829,6 +829,8 @@
     $('reportRefresh')?.addEventListener('click', () => loadReports());
     $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
     $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
+    $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
+    $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
   }
 
   function applyRoleUI() {
@@ -916,7 +918,7 @@
       else if (name === 'categories') await loadCategories();
       else if (name === 'brands') await loadBrands();
       else if (name === 'inquiries') await loadInquiries();
-      else if (name === 'orders') await loadOrders();
+      else if (name === 'orders') await Promise.all([loadOrders(), loadServiceRequests()]);
       else if (name === 'customers') await loadCustomers();
       else if (name === 'media') await loadMedia();
       else if (name === 'content') await loadContent();
@@ -2360,6 +2362,167 @@
         stat('ارزش سفارش‌ها', money(totalValue), 'جمع مبلغ نهایی') +
       '</div>' +
       '<div class="az-orders-list">' + body + '</div>';
+  }
+
+
+  function serviceRequestActionLabel(kind, action) {
+    const labels = {
+      cancel: { approve: '✅ تأیید لغو', reject: '❌ رد درخواست' },
+      return: { approve: '✅ تأیید مرجوعی', reject: '❌ رد', received: '📦 کالا دریافت شد', refund: '💰 ثبت عودت وجه' }
+    };
+    return labels[kind]?.[action] || action;
+  }
+
+  function serviceRequestButtons(kind, row) {
+    if (kind === 'cancel' && row.status === 'pending') {
+      return '<button class="btn" type="button" data-service-action data-kind="cancel" data-action="approve" data-id="' + esc(row.id) + '">✅ تأیید لغو</button>' +
+        '<button class="btn secondary" type="button" data-service-action data-kind="cancel" data-action="reject" data-id="' + esc(row.id) + '">❌ رد درخواست</button>';
+    }
+    if (kind === 'return' && row.status === 'pending') {
+      return '<button class="btn" type="button" data-service-action data-kind="return" data-action="approve" data-id="' + esc(row.id) + '">✅ تأیید مرجوعی</button>' +
+        '<button class="btn secondary" type="button" data-service-action data-kind="return" data-action="reject" data-id="' + esc(row.id) + '">❌ رد</button>';
+    }
+    if (kind === 'return' && row.status === 'approved') {
+      return '<button class="btn" type="button" data-service-action data-kind="return" data-action="received" data-id="' + esc(row.id) + '">📦 کالا دریافت شد</button>';
+    }
+    if (kind === 'return' && row.status === 'received' && row.refund_status === 'pending') {
+      return '<button class="btn" type="button" data-service-action data-kind="return" data-action="refund" data-id="' + esc(row.id) + '">💰 ثبت عودت وجه</button>';
+    }
+    return '';
+  }
+
+  async function loadServiceRequests() {
+    const panel = $('adminServiceRequestsPanel');
+    const box = $('serviceRequestsTable');
+    if (!panel || !box) return;
+    if (!can.all()) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    box.innerHTML = '<div class="empty">در حال دریافت درخواست‌ها…</div>';
+
+    try {
+      const [cancelRes, returnRes] = await Promise.all([
+        state.db.from('order_action_requests')
+          .select('id,order_id,reason,status,refund_status,customer_mobile,created_at,updated_at')
+          .eq('request_type','cancel')
+          .in('status',['pending','approved'])
+          .order('created_at',{ascending:false})
+          .limit(100),
+        state.db.from('order_return_requests')
+          .select('id,order_id,order_item_id,quantity,reason,details,status,refund_status,refund_amount,customer_mobile,created_at,updated_at')
+          .in('status',['pending','approved','received'])
+          .order('created_at',{ascending:false})
+          .limit(100)
+      ]);
+      if (cancelRes.error) throw cancelRes.error;
+      if (returnRes.error) throw returnRes.error;
+
+      const cancels = cancelRes.data || [];
+      const returns = returnRes.data || [];
+      const orderIds = [...new Set([...cancels.map(x=>x.order_id), ...returns.map(x=>x.order_id)].filter(Boolean))];
+      const itemIds = [...new Set(returns.map(x=>x.order_item_id).filter(Boolean))];
+
+      const [ordersRes, itemsRes] = await Promise.all([
+        orderIds.length
+          ? state.db.from('orders').select('id,order_code,status,payment_status,payment_method,shipping_status,total,customer_name,customer_mobile').in('id',orderIds)
+          : Promise.resolve({data:[],error:null}),
+        itemIds.length
+          ? state.db.from('order_items').select('id,order_id,product_name,sku,quantity,unit_price,line_total,variant').in('id',itemIds)
+          : Promise.resolve({data:[],error:null})
+      ]);
+      if (ordersRes.error) throw ordersRes.error;
+      if (itemsRes.error) throw itemsRes.error;
+
+      const orderMap = new Map((ordersRes.data || []).map(x=>[String(x.id),x]));
+      const itemMap = new Map((itemsRes.data || []).map(x=>[String(x.id),x]));
+      const countOpen = cancels.length + returns.length;
+
+      const statusText = (s) => ({
+        pending:'در حال بررسی', approved:'تأیید شد', rejected:'رد شد',
+        received:'کالا دریافت شد', closed:'بسته شد'
+      }[s] || s || '—');
+      const refundText = (s) => ({
+        not_required:'نیاز نیست', pending:'در انتظار عودت', refunded:'عودت شد'
+      }[s] || s || '—');
+
+      if (!countOpen) {
+        box.innerHTML = '<div class="empty">درخواست باز لغو یا مرجوعی وجود ندارد.</div>';
+        return;
+      }
+
+      const stats =
+        '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px">' +
+          '<div class="card"><div class="k">درخواست‌های لغو</div><div class="v">' + cancels.length.toLocaleString('fa-IR') + '</div></div>' +
+          '<div class="card"><div class="k">مرجوعی‌های باز</div><div class="v">' + returns.length.toLocaleString('fa-IR') + '</div></div>' +
+          '<div class="card"><div class="k">مجموع</div><div class="v">' + countOpen.toLocaleString('fa-IR') + '</div></div>' +
+        '</div>';
+
+      const cancelHtml = cancels.map(row => {
+        const o = orderMap.get(String(row.order_id)) || {};
+        return '<article class="card" style="margin-bottom:10px">' +
+          '<div class="panel-head"><div><strong>❌ درخواست لغو</strong><div class="muted">' + esc(o.order_code || 'سفارش نامشخص') + '</div></div><span class="badge warn">' + esc(statusText(row.status)) + '</span></div>' +
+          '<div class="muted" style="line-height:1.9">مشتری: ' + esc(o.customer_name || '—') + ' · پرداخت: ' + esc(labels[o.payment_status] || o.payment_status || '—') + ' · ارسال: ' + esc(labels[o.shipping_status] || o.shipping_status || '—') + '<br>دلیل: ' + esc(row.reason || '—') + '<br>وضعیت عودت: ' + esc(refundText(row.refund_status)) + '</div>' +
+          '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('cancel',row) + '</div>' +
+        '</article>';
+      }).join('');
+
+      const returnHtml = returns.map(row => {
+        const o = orderMap.get(String(row.order_id)) || {};
+        const item = itemMap.get(String(row.order_item_id)) || {};
+        const variant = item?.variant && typeof item.variant === 'object' ? (item.variant.label || item.variant.size || item.variant.name || '') : String(item?.variant || '');
+        return '<article class="card" style="margin-bottom:10px">' +
+          '<div class="panel-head"><div><strong>↩️ درخواست مرجوعی</strong><div class="muted">' + esc(o.order_code || 'سفارش نامشخص') + '</div></div><span class="badge warn">' + esc(statusText(row.status)) + '</span></div>' +
+          '<div class="muted" style="line-height:1.9">کالا: ' + esc(item.product_name || '—') + (variant ? ' · ' + esc(variant) : '') + '<br>تعداد: ' + esc(Number(row.quantity || 0).toLocaleString('fa-IR')) + ' · مبلغ قابل عودت: ' + money(row.refund_amount || 0) + '<br>دلیل: ' + esc(row.reason || '—') + (row.details ? '<br>توضیحات: ' + esc(row.details) : '') + '<br>وضعیت عودت: ' + esc(refundText(row.refund_status)) + '</div>' +
+          '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('return',row) + '</div>' +
+        '</article>';
+      }).join('');
+
+      box.innerHTML = stats +
+        '<div style="display:grid;gap:10px">' +
+        (cancelHtml || '') +
+        (returnHtml || '') +
+        '</div>';
+    } catch (err) {
+      box.innerHTML = '<div class="empty" style="color:#ff9b9b">بارگذاری درخواست‌های مشتری ناموفق بود: ' + esc(errorText(err)) + '</div>';
+    }
+  }
+
+  async function handleAdminServiceRequest(id, kind, action, button) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ این عملیات فقط برای مالک یا مدیر اصلی مجاز است.');
+    if (!(await requireAdminMFA())) return;
+    if (!id || !kind || !action) return;
+    const confirmText =
+      action === 'reject' ? 'از رد این درخواست مطمئنی؟' :
+      action === 'refund' ? 'ثبت عودت وجه این مرجوعی انجام شود؟' :
+      action === 'received' ? 'دریافت کالا را تأیید می‌کنی؟' :
+      'این عملیات روی وضعیت واقعی سفارش اعمال می‌شود. ادامه می‌دهی؟';
+    if (!window.confirm(confirmText)) return;
+
+    const oldText = button?.textContent || '';
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'در حال انجام…';
+    }
+    try {
+      const rpcName = kind === 'return' ? 'azim_admin_handle_return_request' : 'azim_admin_handle_cancel_request';
+      const { data, error } = await state.db.rpc(rpcName, {
+        p_request_id: id,
+        p_action: action
+      });
+      if (error) throw error;
+      const result = data || {};
+      if (result.ok === false) throw new Error(result.message || 'عملیات انجام نشد.');
+      toast('__AZICON_SUCCESS__ ' + (kind === 'return' ? 'درخواست مرجوعی' : 'درخواست لغو') + ' به‌روزرسانی شد.');
+      await Promise.all([loadServiceRequests(), loadOrders(), loadDashboard()]);
+    } catch (err) {
+      toast('__AZICON_ERROR__ ' + errorText(err));
+      if (button) {
+        button.disabled = false;
+        button.textContent = oldText;
+      }
+    }
   }
 
   async function loadCustomersForOrder() {
@@ -4331,6 +4494,7 @@
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
     const o = e.target.closest('[data-edit-order]'); if (o) openOrder(o.dataset.editOrder);
     const ro = e.target.closest('[data-restore-order]'); if (ro) openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder);
+    const sr = e.target.closest('[data-service-action]'); if (sr) handleAdminServiceRequest(sr.dataset.id, sr.dataset.kind, sr.dataset.action, sr);
     const m = e.target.closest('[data-delete-media]'); if (m) deleteMedia(m.dataset.deleteMedia);
     const co = e.target.closest('[data-edit-content]'); if (co) editContent(co.dataset.editContent);
     const fc = e.target.closest('[data-filter-category]'); if (fc) { $('productSearch').value=''; if ($('productCategoryFilter')) $('productCategoryFilter').value=fc.dataset.filterCategory; setView('products'); }
