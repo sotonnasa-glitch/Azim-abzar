@@ -1072,8 +1072,8 @@
     try {
       const result = await paymentEdgeAction('healthcheck', {});
       toast(result.ok
-        ? '__AZICON_SUCCESS__ اتصال زرین‌پال تأیید شد.' + (result.refund_api_configured ? ' Refund آماده است.' : ' کلید امن Refund هنوز تنظیم نشده است.')
-        : '__AZICON_ERROR__ اتصال زرین‌پال تأیید نشد.');
+        ? '__AZICON_SUCCESS__ اتصال درگاه تأیید شد.' + (result.refund_api_configured ? ' Refund آماده است.' : ' تنظیمات امن Refund هنوز کامل نیست.')
+        : '__AZICON_ERROR__ اتصال درگاه تأیید نشد.');
       await loadPaymentAdmin();
       return !!result.ok;
     } catch (error) {
@@ -1087,7 +1087,10 @@
     const settings = data?.settings || {};
     const txs = Array.isArray(data?.recent_transactions) ? data.recent_transactions : [];
     const refunds = Array.isArray(data?.recent_refunds) ? data.recent_refunds : [];
+    const reviews = Array.isArray(data?.recent_reviews) ? data.recent_reviews : [];
     const ts = data?.transaction_stats || {};
+    const activeFilter = state.paymentStatusFilter || 'all';
+    const visibleTxs = activeFilter === 'all' ? txs : txs.filter(tx => String(tx.status || '') === activeFilter);
     const rs = data?.refund_stats || {};
     const ready = !!settings.gateway_ready && !!settings.provider;
     const enabled = !!settings.online_enabled;
@@ -1096,7 +1099,7 @@
     const provider = settings.provider || 'هنوز انتخاب نشده';
     const callback = settings.callback_path || 'payment-callback.html';
 
-    const txRows = txs.length ? txs.map((tx) => {
+    const txRows = visibleTxs.length ? visibleTxs.map((tx) => {
       const refundBtn = ready && ['paid','partially_refunded'].includes(tx.status) && Number(tx.remaining_refundable || 0) > 0
         ? '<button class="btn ghost" data-payment-refund="' + esc(tx.id) + '">درخواست عودت</button>'
         : '';
@@ -1108,7 +1111,18 @@
         '<td>' + esc(dateFa(tx.created_at)) + '</td>' +
         '<td>' + refundBtn + '</td>' +
       '</tr>';
-    }).join('') : '<tr><td colspan="6"><div class="empty">هنوز تراکنشی ثبت نشده است.</div></td></tr>';
+    }).join('') : '<tr><td colspan="6"><div class="empty">' + (activeFilter === 'all' ? 'هنوز تراکنشی ثبت نشده است.' : 'برای این وضعیت تراکنشی در فهرست اخیر پیدا نشد.') + '</div></td></tr>';
+
+    const reviewRows = reviews.length ? reviews.map((rv) =>
+      '<tr>' +
+      '<td><strong>' + esc(rv.order_code || '—') + '</strong><div class="muted">' + esc(rv.review_type === 'refund' ? 'عودت وجه' : 'پرداخت') + '</div></td>' +
+      '<td>' + paymentMoney(rv.amount, rv.amount_unit) + '</td>' +
+      '<td><span class="badge red">نیازمند بررسی</span></td>' +
+      '<td>' + esc(rv.error_code || '—') + '</td>' +
+      '<td>' + esc(rv.error_message || '—') + '</td>' +
+      '<td>' + esc(dateFa(rv.created_at)) + '</td>' +
+      '</tr>'
+    ).join('') : '<tr><td colspan="6"><div class="empty">مغایرت باز یا مورد نیازمند بررسی ثبت نشده است.</div></td></tr>';
 
     const refundRows = refunds.length ? refunds.map((rf) =>
       '<tr>' +
@@ -1136,13 +1150,14 @@
           '<div class="az-payment-panel-head"><div><h3>کنترل پرداخت آنلاین</h3><p>فعال‌سازی فقط وقتی مجاز است که provider واقعی و gateway_ready هر دو تأیید شده باشند.</p></div>' +
           '<span class="badge ' + (enabled ? 'ok' : 'warn') + '">' + esc(onlineState) + '</span></div>' +
           '<div class="az-payment-settings-grid">' +
-            '<div><span>درگاه</span><strong>' + esc(provider || 'زرین‌پال') + '</strong></div>' +
+            '<div><span>درگاه</span><strong>' + esc(provider || 'هنوز انتخاب نشده') + '</strong></div>' +
             '<div><span>آمادگی اتصال</span><strong>' + esc(readiness) + '</strong></div>' +
-            '<div><span>واحد فروشگاه</span><strong>تومان ← ریال برای زرین‌پال</strong></div>' +
+            '<div><span>واحد فروشگاه</span><strong>' + esc(settings.provider_amount_unit || 'IRR') + '</strong></div>' +
             '<div><span>مسیر Callback</span><strong dir="ltr">' + esc(callback) + '</strong></div>' +
           '</div>' +
           '<div class="az-payment-config-form">' +
-            '<div class="field"><label>Merchant ID زرین‌پال</label><input class="input" data-payment-merchant-id dir="ltr" autocomplete="off" value="' + esc(settings.merchant_id || '') + '" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>' +
+            '<div class="field"><label>شناسه درگاه (provider)</label><input class="input" data-payment-provider dir="ltr" autocomplete="off" value="' + esc(settings.provider || '') + '" placeholder="مثلاً zarinpal"></div>' +
+            '<div class="field"><label>شناسه پذیرنده / Merchant ID</label><input class="input" data-payment-merchant-id dir="ltr" autocomplete="off" value="' + esc(settings.merchant_id || '') + '" placeholder="شناسه‌ای که خود درگاه اعلام می‌کند"></div>' +
             '<div class="field"><label>محیط</label><select class="input" data-payment-sandbox><option value="false"' + (!settings.sandbox ? ' selected' : '') + '>اصلی (Live)</option><option value="true"' + (settings.sandbox ? ' selected' : '') + '>آزمایشی (Sandbox)</option></select></div>' +
             '<div class="field full"><div class="az-payment-actions">' +
               '<button class="btn" type="button" data-payment-configure>💾 ذخیره تنظیمات درگاه</button>' +
@@ -1153,7 +1168,7 @@
               (settings.gateway_last_error ? ' <span class="error">• ' + esc(settings.gateway_last_error) + '</span>' : '') +
             '</div></div>' +
           '</div>' +
-          '<div class="az-payment-danger-note"><strong>🔐 قانون طلایی</strong><span>Merchant ID فقط شناسه درگاه است؛ کلید امن Refund هرگز در مرورگر یا GitHub قرار نمی‌گیرد. هر تغییر تنظیمات، درگاه را تا تست موفق اتصال خاموش نگه می‌دارد.</span></div>' +
+          '<div class="az-payment-danger-note"><strong>🔐 قانون طلایی</strong><span>شناسه پذیرنده فقط شناسه درگاه است؛ کلید API/Refund هرگز در مرورگر یا GitHub قرار نمی‌گیرد. هر تغییر تنظیمات، درگاه را تا تست موفق اتصال خاموش نگه می‌دارد.</span></div>' +
           '<div class="az-payment-actions">' +
             '<button class="btn ' + (enabled ? 'secondary' : '') + '" data-payment-toggle="' + (enabled ? '0' : '1') + '"' + ((!enabled && !ready) ? ' disabled title="تا اتصال درگاه واقعی، فعال‌سازی مجاز نیست."' : '') + '>' + (enabled ? '⛔ خاموش کردن پرداخت آنلاین' : '✅ فعال کردن پرداخت آنلاین') + '</button>' +
             '<button class="btn ghost" type="button" data-payment-refresh>↻ بروزرسانی وضعیت</button>' +
@@ -1171,12 +1186,17 @@
         '</div>' +
       '</div>' +
       '<div class="az-payment-panel">' +
-        '<div class="az-payment-panel-head"><div><h3>آخرین تراکنش‌ها</h3><p>فقط اطلاعات لازم برای پیگیری نمایش داده می‌شود؛ reference کامل ماسک شده است.</p></div></div>' +
+        '<div class="az-payment-panel-head"><div><h3>آخرین تراکنش‌ها</h3><p>فقط اطلاعات لازم برای پیگیری نمایش داده می‌شود؛ reference کامل ماسک شده است.</p></div>' +
+        '<div><select class="input" data-payment-status-filter><option value="all"' + (activeFilter === 'all' ? ' selected' : '') + '>همه وضعیت‌ها</option><option value="initiated"' + (activeFilter === 'initiated' ? ' selected' : '') + '>ایجاد تراکنش</option><option value="pending"' + (activeFilter === 'pending' ? ' selected' : '') + '>در انتظار</option><option value="paid"' + (activeFilter === 'paid' ? ' selected' : '') + '>پرداخت شده</option><option value="failed"' + (activeFilter === 'failed' ? ' selected' : '') + '>ناموفق</option><option value="cancelled"' + (activeFilter === 'cancelled' ? ' selected' : '') + '>لغو شده</option><option value="review_required"' + (activeFilter === 'review_required' ? ' selected' : '') + '>نیازمند بررسی</option><option value="partially_refunded"' + (activeFilter === 'partially_refunded' ? ' selected' : '') + '>عودت بخشی</option><option value="refunded"' + (activeFilter === 'refunded' ? ' selected' : '') + '>عودت کامل</option></select></div></div>' +
         '<div class="table-wrap"><table class="table"><thead><tr><th>سفارش</th><th>مبلغ</th><th>وضعیت</th><th>Reference</th><th>زمان</th><th>عملیات</th></tr></thead><tbody>' + txRows + '</tbody></table></div>' +
       '</div>' +
       '<div class="az-payment-panel">' +
         '<div class="az-payment-panel-head"><div><h3>درخواست‌های بازگشت وجه</h3><p>ثبت درخواست به معنی انتقال پول نیست؛ اجرای نهایی فقط بعد از تأیید provider انجام می‌شود.</p></div></div>' +
         '<div class="table-wrap"><table class="table"><thead><tr><th>سفارش</th><th>مبلغ</th><th>وضعیت</th><th>دلیل</th><th>زمان</th></tr></thead><tbody>' + refundRows + '</tbody></table></div>' +
+      '</div>' +
+      '<div class="az-payment-panel">' +
+        '<div class="az-payment-panel-head"><div><h3>لاگ مغایرت‌ها و بررسی‌های مالی</h3><p>این موارد خودکار paid/refunded نمی‌شوند و باید نتیجه درگاه تعیین تکلیف شود.</p></div></div>' +
+        '<div class="table-wrap"><table class="table"><thead><tr><th>سفارش</th><th>مبلغ</th><th>وضعیت</th><th>کد خطا</th><th>توضیح</th><th>زمان</th></tr></thead><tbody>' + reviewRows + '</tbody></table></div>' +
       '</div>' +
     '</div>';
   }
@@ -1204,13 +1224,15 @@
 
     el.querySelector('[data-payment-configure]')?.addEventListener('click', async () => {
       if (!(await ensurePaymentMFA())) return;
+      const provider = String(el.querySelector('[data-payment-provider]')?.value || '').trim().toLowerCase();
       const merchantId = String(el.querySelector('[data-payment-merchant-id]')?.value || '').trim();
       const sandbox = String(el.querySelector('[data-payment-sandbox]')?.value || 'false') === 'true';
-      if (!merchantId) return toast('__AZICON_ERROR__ Merchant ID را وارد کنید.');
-      const reason = window.prompt('دلیل تغییر تنظیمات درگاه را وارد کنید:', 'تنظیم/به‌روزرسانی اتصال زرین‌پال');
+      if (!provider) return toast('__AZICON_ERROR__ شناسه provider را وارد کنید.');
+      if (!merchantId) return toast('__AZICON_ERROR__ شناسه پذیرنده/ترمینال را وارد کنید.');
+      const reason = window.prompt('دلیل تغییر تنظیمات درگاه را وارد کنید:', 'تنظیم/به‌روزرسانی اتصال درگاه');
       if (reason === null) return;
       const r = await state.db.rpc('azim_admin_configure_payment_gateway', {
-        p_provider: 'zarinpal', p_merchant_id: merchantId, p_sandbox: sandbox, p_reason: String(reason).trim()
+        p_provider: provider, p_merchant_id: merchantId, p_sandbox: sandbox, p_reason: String(reason).trim()
       });
       if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
       toast('__AZICON_SUCCESS__ تنظیمات ذخیره شد؛ اکنون اتصال را تست کنید.');
@@ -1218,6 +1240,11 @@
     });
 
     el.querySelector('[data-payment-healthcheck]')?.addEventListener('click', () => runPaymentHealthcheck());
+    el.querySelector('[data-payment-status-filter]')?.addEventListener('change', (e) => {
+      state.paymentStatusFilter = String(e.target.value || 'all');
+      el.innerHTML = paymentAdminHtml(state.paymentAdmin);
+      loadPaymentAdmin();
+    });
 
     el.querySelector('[data-payment-toggle]')?.addEventListener('click', () => {
       const next = el.querySelector('[data-payment-toggle]').dataset.paymentToggle === '1';
