@@ -1084,6 +1084,7 @@
         '<div class="result-actions">' +
           cancelAction +
           '<button class="action-btn" type="button" onclick="doLookup(true)">↻ بروزرسانی وضعیت</button>' +
+          '<button class="action-btn" type="button" id="printInvoiceBtn">🧾 چاپ / ذخیره PDF</button>' +
           '<a class="action-btn" href="products-v4.html">مشاهده محصولات</a>' +
         '</div>' +
         '<div id="actionBox" class="action-box" hidden></div>';
@@ -1096,6 +1097,7 @@
       if(cancelBtn) cancelBtn.onclick=()=>openCancelForm();
       const retryBtn=$('retryPaymentBtn');
       if(retryBtn) retryBtn.onclick=()=>openPaymentRetryForm();
+      $('printInvoiceBtn')?.addEventListener('click',()=>window.print());
       document.querySelectorAll('[data-return-item]').forEach(btn=>{btn.onclick=()=>openReturnForm(items.find(x=>String(x.id)===String(btn.dataset.returnItem)));});
     }
 
