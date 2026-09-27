@@ -1,5 +1,7 @@
 -- Safe recovery for cancelled Telegram-managed orders.
--- Restores a cancelled order to pending only after any refund workflow is closed.
+-- A cancelled order can return to the live workflow only after any refund is terminal.
+-- For a previously refunded online payment, the old financial transaction remains
+-- historical while the order enters a fresh retryable payment state.
 
 create or replace function public.azim_telegram_restore_cancelled_order(
   p_order_code text,
@@ -57,6 +59,14 @@ begin
       when v_order.payment_status in ('refunded','failed','cancelled') then 'unpaid'
       else coalesce(v_order.payment_status,'unpaid')
     end;
+  end if;
+
+  -- Only terminally-refunded online orders use this guarded recovery
+  -- transition. The prior refunded transaction remains immutable history.
+  if v_order.payment_method='online'
+     and v_order.payment_status='refunded'
+     and v_new_payment_status='cancelled' then
+    perform set_config('azim.payment_transition','refund_verified',true);
   end if;
 
   update public.orders
