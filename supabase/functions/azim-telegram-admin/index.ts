@@ -63,6 +63,26 @@ function isSensitiveSiteContentKey(key: string) {
   return SENSITIVE_SITE_CONTENT_KEYS.has(String(key || "").trim());
 }
 
+async function recordTelegramAudit(
+  action: string,
+  entity: string,
+  entityId: string | null,
+  metadata: Record<string, unknown> = {},
+) {
+  try {
+    const supabase = await getSupabase();
+    await supabase.from("audit_logs").insert({
+      actor_id: null,
+      action,
+      entity,
+      entity_id: entityId,
+      metadata,
+    });
+  } catch (error) {
+    console.error("telegram audit log error:", error);
+  }
+}
+
 function money(n: unknown) {
   return new Intl.NumberFormat("fa-IR").format(Number(n ?? 0)) + " تومان";
 }
@@ -729,7 +749,7 @@ async function showCategory(chatId: number | string, slug: string) {
   if (!cat) throw new Error("دسته‌بندی پیدا نشد.");
 
   const { data, error } = await supabase.from("products")
-    .select("code,name,price,is_active").eq("category_name", cat.name)
+    .select("code,name,price,is_active").eq("category_name", cat.name).eq("is_active", true)
     .order("name").limit(20);
   if (error) throw error;
 
@@ -844,6 +864,9 @@ async function handleReplyMessage(msg: any) {
       await sendText(msg.chat.id, "بخش پیدا نشد: " + key);
       return true;
     }
+    await recordTelegramAudit("telegram_site_title_update", "site_content", data.section_key, {
+      section_key: data.section_key, title_after: data.title, actor_ref: String(msg.chat.id),
+    });
     await sendText(
       msg.chat.id,
       "✅ عنوان «" + data.section_key + "» به‌روزرسانی شد.\nعنوان جدید: " + data.title,
@@ -974,6 +997,9 @@ async function handleReplyMessage(msg: any) {
       await sendText(msg.chat.id, "محصول پیدا نشد: " + match[1]);
       return true;
     }
+    await recordTelegramAudit("telegram_product_price_update", "products", String(data.code), {
+      code: data.code, name: data.name, price: data.price, actor_ref: String(msg.chat.id),
+    });
     await sendText(msg.chat.id, "✅ قیمت «" + data.name + "» به " + money(data.price) + " تغییر کرد.", {
       reply_markup: productActionsMarkup(data.code, Boolean(data.is_active)),
     });
@@ -996,6 +1022,9 @@ async function handleReplyMessage(msg: any) {
       await sendText(msg.chat.id, "محصول پیدا نشد: " + parts[0]);
       return true;
     }
+    await recordTelegramAudit("telegram_product_status_update", "products", String(data.code), {
+      code: data.code, name: data.name, is_active: data.is_active, actor_ref: String(msg.chat.id),
+    });
     await sendText(msg.chat.id, "✅ محصول «" + data.name + "» " + (active ? "فعال" : "غیرفعال") + " شد.", {
       reply_markup: productActionsMarkup(data.code, Boolean(data.is_active)),
     });
@@ -1017,6 +1046,9 @@ async function handleReplyMessage(msg: any) {
       await sendText(msg.chat.id, "محصول پیدا نشد: " + parts[0]);
       return true;
     }
+    await recordTelegramAudit("telegram_product_price_update", "products", String(data.code), {
+      code: data.code, name: data.name, price: data.price, actor_ref: String(msg.chat.id),
+    });
     await sendText(msg.chat.id, "✅ قیمت «" + data.name + "» به " + money(data.price) + " تغییر کرد.", {
       reply_markup: productActionsMarkup(data.code, Boolean(data.is_active)),
     });
@@ -1075,7 +1107,12 @@ async function handleCallbackQuery(query: any) {
   }
 
   if (data.startsWith("site_view:")) {
-    await showSiteContentItem(chatId, data.slice("site_view:".length));
+    const key = data.slice("site_view:".length);
+    if (isSensitiveSiteContentKey(key)) {
+      await sendText(chatId, "🔒 این بخش حساس فقط از مسیر امن پنل ادمین قابل مشاهده و مدیریت است.", { reply_markup: backMenuMarkup() });
+      return;
+    }
+    await showSiteContentItem(chatId, key);
     return;
   }
 
@@ -1128,6 +1165,10 @@ async function handleCallbackQuery(query: any) {
       .select("section_key,title,is_active")
       .maybeSingle();
     if (error) throw error;
+
+    await recordTelegramAudit("telegram_site_content_toggle", "site_content", saved.section_key, {
+      section_key: saved.section_key, is_active: saved.is_active, actor_ref: String(chatId),
+    });
 
     await sendText(
       chatId,
