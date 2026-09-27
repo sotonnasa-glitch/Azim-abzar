@@ -1513,6 +1513,10 @@
 
                 <div class="form-row">
                   <div class="input-field">
+                    <label for="frm-email">ایمیل (اختیاری)</label>
+                    <input type="email" id="frm-email" autocomplete="email" placeholder="you@example.com" dir="ltr">
+                  </div>
+                  <div class="input-field">
                     <label for="frm-subject">دسته‌بندی درخواست مشاوره</label>
                     <select id="frm-subject">
                       <option value="مشاوره تخصصی ابزارآلات">مشاوره تخصصی انتخاب ابزار مناسب</option>
@@ -1952,6 +1956,7 @@
     function buildContactMessage() {
       const name = document.getElementById('frm-fullname').value.trim();
       const phone = document.getElementById('frm-mobile').value.trim();
+      const email = document.getElementById('frm-email')?.value.trim() || null;
       const subject = document.getElementById('frm-subject').value;
       const business = document.getElementById('frm-business').value.trim();
       const details = document.getElementById('frm-details').value.trim();
@@ -1986,60 +1991,58 @@
       btn.innerHTML = '<span>در حال ثبت درخواست مشاوره...</span>';
 
       let saved = false;
+      let saveError = null;
       try {
-        if (window.supabase && window.AZIM_SUPABASE_URL && window.AZIM_SUPABASE_ANON_KEY) {
-          const client = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
-          let productId = null;
-          try {
-            const code = (new URLSearchParams(window.location.search).get('code') || '').trim().toUpperCase();
-            if (code) {
-              const productResult = await client
-                .from('products')
-                .select('id')
-                .eq('code', code)
-                .maybeSingle();
-              if (!productResult.error) productId = productResult.data?.id || null;
-            }
-          } catch (_) {}
-
-          const result = await client.from('inquiries').insert({
-            full_name: name,
-            mobile: phone,
-            subject,
-            business: business || null,
-            details,
-            product_id: productId
-          });
-          if (result.error) throw result.error;
-          saved = true;
-
-          // Notify the existing Azim Abzar Telegram admin bot after the inquiry is safely stored.
-          try {
-            const notifyUrl = window.AZIM_SUPABASE_URL + '/functions/v1/azim-consultation-notify';
-            const session = window.supabase.auth ? await client.auth.getSession() : null;
-            const token = session?.data?.session?.access_token || window.AZIM_SUPABASE_ANON_KEY;
-            await fetch(notifyUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': window.AZIM_SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + token
-              },
-              body: JSON.stringify({
-                full_name: name,
-                mobile: phone,
-                subject,
-                business,
-                details
-              })
-            });
-          } catch (notifyErr) {
-            // The inquiry is already saved; Telegram delivery failure must not lose the customer's request.
-            console.warn('Telegram consultation notification failed:', notifyErr);
+        if (!(window.supabase && window.AZIM_SUPABASE_URL && window.AZIM_SUPABASE_ANON_KEY)) {
+          throw new Error('اتصال سامانه در دسترس نیست.');
+        }
+        const client = window.supabase.createClient(window.AZIM_SUPABASE_URL, window.AZIM_SUPABASE_ANON_KEY);
+        let productId = null;
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const code = (params.get('code') || '').trim().toUpperCase();
+          const directProductId = (params.get('product_id') || '').trim();
+          if (directProductId) productId = directProductId;
+          else if (code) {
+            const productResult = await client.from('products').select('id').eq('code', code).maybeSingle();
+            if (productResult.error) throw productResult.error;
+            productId = productResult.data?.id || null;
           }
+        } catch (e) {
+          if (String(e?.message || '').includes('JWT') === false) throw e;
+        }
+
+        const result = await client.from('inquiries').insert({
+          full_name: name,
+          mobile: phone,
+          email,
+          subject,
+          business: business || null,
+          details,
+          product_id: productId
+        });
+        if (result.error) throw result.error;
+        saved = true;
+
+        try {
+          const notifyUrl = window.AZIM_SUPABASE_URL + '/functions/v1/azim-consultation-notify';
+          await fetch(notifyUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': window.AZIM_SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({
+              full_name: name, mobile: phone, email, subject, business, details, product_id: productId
+            })
+          });
+        } catch (notifyErr) {
+          console.warn('Telegram consultation notification failed:', notifyErr);
         }
       } catch (err) {
-        console.warn('Inquiry save failed; falling back to email.', err);
+        saveError = err;
+        console.warn('Inquiry save failed:', err);
       }
 
       const alert = document.getElementById('formAlert');
@@ -2047,16 +2050,19 @@
         if (alert) {
           alert.textContent = 'درخواست مشاوره شما با موفقیت ثبت شد. کارشناسان فنی عظیم ابزار با شما تماس می‌گیرند.';
           alert.style.display = 'block';
+          alert.style.background = '';
         }
         triggerToast('درخواست شما با موفقیت در سیستم ثبت شد');
       } else {
-        const subjectText = encodeURIComponent('درخواست مشاوره فنی از عظیم ابزار');
-        const body = encodeURIComponent(buildContactMessage());
-        window.location.href = 'mailto:info@azimabzar.ir?subject=' + subjectText + '&body=' + body;
         if (alert) {
-          alert.textContent = 'ثبت آنلاین درخواست انجام نشد؛ برنامه ایمیل برای ارسال درخواست باز می‌شود.';
+          alert.textContent = 'ثبت درخواست انجام نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.' +
+            (saveError?.message ? ' (' + String(saveError.message).slice(0,160) + ')' : '');
           alert.style.display = 'block';
+          alert.style.background = 'rgba(220,70,70,.10)';
+          alert.style.borderColor = 'rgba(220,70,70,.45)';
+          alert.style.color = '#ff9d9d';
         }
+        triggerToast('ثبت درخواست انجام نشد');
       }
 
       setTimeout(function() {

@@ -1651,7 +1651,8 @@
       }
     }
   </style>
-<style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style></head>
+<style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style><script type="application/ld+json" id="productSchema">{}</script>
+</head>
 <body>
 
   <!-- Header with Glassmorphic Blur -->
@@ -1991,6 +1992,27 @@
             </a>
           </div>
           <button type="button" class="az-product-ai-btn" id="modalProductAiBtn" style="margin-top:10px" data-ai-product-id="" data-ai-product-code="" data-ai-base-name="" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">راهنمایی هوشمند محصول</span></button>
+          <section id="relatedProducts" style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
+            <strong style="color:#f3c34a">محصولات مشابه</strong>
+            <div id="relatedProductsList" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px"></div>
+          </section>
+          <section id="productReviews" style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+              <strong style="color:#f3c34a">نظرات کاربران</strong>
+              <span id="reviewSummary" style="font-size:11px;color:#9ba59f">در حال بارگذاری…</span>
+            </div>
+            <div id="reviewList" style="margin-top:10px;display:grid;gap:8px"></div>
+            <form id="reviewForm" style="display:grid;gap:8px;margin-top:12px">
+              <div style="display:grid;grid-template-columns:90px 1fr;gap:8px">
+                <select id="reviewRating" aria-label="امتیاز" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
+                  <option value="5">۵ ★</option><option value="4">۴ ★</option><option value="3">۳ ★</option><option value="2">۲ ★</option><option value="1">۱ ★</option>
+                </select>
+                <input id="reviewMobile" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="شماره موبایل" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
+              </div>
+              <textarea id="reviewComment" maxlength="1000" rows="3" placeholder="تجربه یا نظر شما درباره این محصول…" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit;resize:vertical"></textarea>
+              <button id="reviewSubmitBtn" type="submit" class="card-btn-view" style="cursor:pointer">ثبت نظر برای بررسی</button>
+            </form>
+          </section>
         </div>
       </div>
     </div>
@@ -2100,6 +2122,117 @@
       };
     }
 
+    function renderRelatedProducts(item) {
+      const list=document.getElementById('relatedProductsList');
+      if(!list || !item) return;
+      const cat=categoriesMap[item.id]||'';
+      const candidates=all.filter(x=>x.id!==item.id && ((cat && categoriesMap[x.id]===cat)));
+      const fallback=candidates.length?candidates:all.filter(x=>x.id!==item.id);
+      const rows=fallback.slice(0,4);
+      list.innerHTML='';
+      rows.forEach(x=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='card-btn-view';
+        b.style.cssText='padding:8px;text-align:right;font-size:10.5px;line-height:1.7';
+        b.textContent=x.name;
+        b.onclick=()=>openQuickView(x.id);
+        list.appendChild(b);
+      });
+    }
+
+    async function loadProductReviews(productId, productName) {
+      const summary = document.getElementById('reviewSummary');
+      const list = document.getElementById('reviewList');
+      if (!summary || !list || !productId || !window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) {
+        if (summary) summary.textContent = 'امکان نمایش نظرات در این لحظه نیست';
+        return;
+      }
+      summary.textContent = 'در حال بارگذاری…';
+      list.innerHTML = '';
+      try {
+        const url = window.AZIM_SUPABASE_URL + '/rest/v1/product_reviews?select=rating,comment,created_at&product_id=eq.' +
+          encodeURIComponent(productId) + '&approved=eq.true&order=created_at.desc&limit=10';
+        const res = await fetch(url,{headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY},cache:'no-store'});
+        if (!res.ok) throw new Error('review fetch failed');
+        const rows = await res.json();
+        const avg = rows.length ? rows.reduce((s,r)=>s+Number(r.rating||0),0)/rows.length : 0;
+        summary.textContent = rows.length ? ('میانگین ' + avg.toFixed(1) + ' از ۵ · ' + rows.length + ' نظر') : 'هنوز نظر تأییدشده‌ای ثبت نشده';
+        rows.forEach(r => {
+          const box=document.createElement('div');
+          box.style.cssText='background:#101411;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:9px 10px';
+          const head=document.createElement('div');
+          head.style.cssText='display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#f3c34a';
+          head.textContent='★'.repeat(Math.max(1,Math.min(5,Number(r.rating)||1)))+'  ·  '+new Date(r.created_at).toLocaleDateString('fa-IR');
+          const body=document.createElement('div');
+          body.style.cssText='margin-top:5px;font-size:11px;line-height:1.9;color:#c7cec9;white-space:pre-wrap';
+          body.textContent=String(r.comment||'');
+          box.append(head,body);
+          list.appendChild(box);
+        });
+      } catch (_) {
+        summary.textContent='خطا در دریافت نظرات';
+      }
+    }
+
+    function setupReviewForm(productId) {
+      const form=document.getElementById('reviewForm');
+      const btn=document.getElementById('reviewSubmitBtn');
+      if(!form || !productId) return;
+      form.onsubmit=async (ev)=>{
+        ev.preventDefault();
+        if(!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return;
+        const mobile=String(document.getElementById('reviewMobile')?.value||'').replace(/[\s-]/g,'');
+        const rating=Math.max(1,Math.min(5,Number(document.getElementById('reviewRating')?.value||5)));
+        const comment=String(document.getElementById('reviewComment')?.value||'').trim();
+        if(!/^09\d{9}$/.test(mobile)){showToast('شماره موبایل معتبر نیست.');return;}
+        if(comment.length<3){showToast('متن نظر کوتاه است.');return;}
+        if(btn) btn.disabled=true;
+        try{
+          const res=await fetch(window.AZIM_SUPABASE_URL+'/rest/v1/product_reviews',{
+            method:'POST',
+            headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+            body:JSON.stringify({product_id:productId,rating,comment,mobile,approved:false})
+          });
+          if(res.status===409){showToast('قبلاً برای این محصول با این شماره نظر ثبت شده است.');return;}
+          if(!res.ok) throw new Error('submit failed');
+          document.getElementById('reviewComment').value='';
+          showToast('نظر ثبت شد و پس از بررسی نمایش داده می‌شود.');
+        }catch(_){showToast('ثبت نظر انجام نشد؛ دوباره تلاش کنید.');}
+        finally{if(btn) btn.disabled=false;}
+      };
+    }
+
+    function getWishlist() {
+      try {
+        const raw=localStorage.getItem('azim_wishlist');
+        const arr=JSON.parse(raw||'[]');
+        return new Set(Array.isArray(arr)?arr.map(String):[]);
+      } catch (_) { return new Set(); }
+    }
+
+    function isWishlisted(id) { return getWishlist().has(String(id)); }
+
+    function toggleWishlist(id, button) {
+      const set=getWishlist();
+      const key=String(id);
+      if(set.has(key)) set.delete(key); else set.add(key);
+      try { localStorage.setItem('azim_wishlist',JSON.stringify([...set])); } catch(_){}
+      if(button) button.innerHTML=set.has(key) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی';
+      showToast(set.has(key) ? 'به علاقه‌مندی‌ها اضافه شد.' : 'از علاقه‌مندی‌ها حذف شد.');
+    }
+
+    async function shareProduct(id) {
+      const item=all.find(x=>x.id===id);
+      if(!item) return;
+      const url=new URL('./products-v4.html?id='+encodeURIComponent(id),location.href).href;
+      try {
+        if(navigator.share) { await navigator.share({title:item.name,text:'مشاهده '+item.name+' در عظیم ابزار',url}); return; }
+        await navigator.clipboard.writeText(url);
+        showToast('لینک محصول کپی شد.');
+      } catch (_) {}
+    }
+
     function showToast(msg) {
       const t = document.getElementById('azToast');
       t.textContent = msg;
@@ -2126,7 +2259,7 @@
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
         const base = window.AZIM_SUPABASE_URL + '/rest/v1/products';
-        const select = 'id,code,name,description,img,price,variants,is_active,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
+        const select = 'id,code,name,description,img,price,variants,is_active,stock_quantity,stock_tracking_enabled,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
         const pageSize = 1000;
         const rows = [];
         for (let offset = 0; offset < 10000; offset += pageSize) {
@@ -2181,6 +2314,8 @@
         description: String(x?.description ?? '').trim(),
         img: String(x?.img ?? '').trim(),
         category_name: String(x?.category_name ?? '').trim(),
+        stock_quantity: x?.stock_quantity == null ? null : Number(x.stock_quantity),
+        stock_tracking_enabled: x?.stock_tracking_enabled === true,
         is_active: x?.is_active !== false,
         discount_type: x?.discount_type || null,
         discount_value: x?.discount_value == null ? null : Number(x.discount_value),
@@ -2281,10 +2416,14 @@
               <span>مشاهده کامل جزئیات و سایزبندی</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
-            <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)">
-              <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span><span>افزودن به سبد سفارش</span>
+            <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)" ${x.stock_quantity != null && x.stock_quantity <= 0 ? 'disabled aria-disabled="true"' : ''}>
+              <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>${x.stock_quantity != null && x.stock_quantity <= 0 ? '<span>ناموجود</span>' : '<span>افزودن به سبد سفارش</span>'}
             </button>
-            <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
+                        <div style="display:flex;gap:7px;margin-top:7px">
+              <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="toggleWishlist('\${esc(x.id)}', this)"><span>${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
+              <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="shareProduct('\${esc(x.id)}')"><span>اشتراک‌گذاری</span></button>
+            </div>
+<button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
           </div>
         </article>
       `;
@@ -2326,6 +2465,10 @@
       const v = d.vs?.[idx];
       const base = v ? Number(v[1] || 0) : Number(d.base || 0);
       const net = discountedPrice(base, d.discount);
+      if (item.stock_quantity != null && item.stock_quantity <= 0) {
+        window.AZIM_CART.showToast('این کالا در حال حاضر ناموجود است.');
+        return;
+      }
       if (!(net > 0)) {
         window.AZIM_CART.showToast('برای این کالا قیمت قابل افزودن به سبد مشخص نیست.');
         return;
@@ -2396,6 +2539,9 @@
       const cat = categoriesMap[id] || 'ابزار تخصصی صنعتی';
 
       document.getElementById('modalTitle').textContent = item.name;
+      loadProductReviews(item.product_id || '', item.name);
+      setupReviewForm(item.product_id || '');
+      renderRelatedProducts(item);
       document.getElementById('modalCode').textContent = 'کد کالا: ' + item.id;
       document.getElementById('modalCat').textContent = 'دسته‌بندی اصلی: ' + cat;
       const modalDescription = document.getElementById('modalDescription');
@@ -2552,6 +2698,40 @@
       syncUrlState();
 
       const rows = filtered.slice((page - 1) * PER, page * PER);
+
+      // Product structured data for the products currently rendered on the catalog page.
+      const schemaEl = document.getElementById('productSchema');
+      if (schemaEl) {
+        schemaEl.textContent = JSON.stringify({
+          '@context':'https://schema.org',
+          '@type':'ItemList',
+          itemListElement: rows.map((item,index) => {
+            const d=getData(item.id);
+            const price=getProductPriceValue(item.id);
+            const stockTracked=item.stock_tracking_enabled === true;
+            return {
+              '@type':'ListItem',
+              position:index+1,
+              item:{
+                '@type':'Product',
+                name:item.name,
+                image:item.image ? [new URL(item.image,location.href).href] : undefined,
+                sku:item.id,
+                description:item.description || undefined,
+                offers: price>0 ? {
+                  '@type':'Offer',
+                  price:String(price),
+                  priceCurrency:'IRR',
+                  availability:stockTracked && Number(item.stock_quantity||0)<=0
+                    ? 'https://schema.org/OutOfStock'
+                    : 'https://schema.org/InStock',
+                  url:new URL('./products-v4.html?id='+encodeURIComponent(item.id),location.href).href
+                } : undefined
+              }
+            };
+          })
+        });
+      }
 
       const tcBadge = document.getElementById('totalCountBadge');
       if (tcBadge) tcBadge.textContent = fmt(all.length);
@@ -2808,7 +2988,9 @@
             product_id: d.id || null,
             name: d.name || staticMap.get(id)?.name || ('محصول ' + id),
             description: d.description || '',
-            image: catalogImageUrl(d.img || staticMap.get(id)?.image || '')
+            image: catalogImageUrl(d.img || staticMap.get(id)?.image || ''),
+            stock_quantity: d.stock_quantity,
+            stock_tracking_enabled: d.stock_tracking_enabled === true
           }))
           .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
         liveMap.forEach((d, id) => {

@@ -178,6 +178,9 @@ revoke all on function public.azim_checkout_options() from public;
 grant execute on function public.azim_checkout_options() to anon;
 revoke execute on function public.azim_checkout_options() from authenticated;
 
+drop function if exists public.azim_cart_checkout(jsonb,text);
+drop function if exists public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text);
+
 create or replace function public.azim_cart_checkout(
   p_mode text default 'preview',
   p_full_name text default null,
@@ -187,7 +190,8 @@ create or replace function public.azim_cart_checkout(
   p_city text default null,
   p_discount_code text default null,
   p_items jsonb default '[]'::jsonb,
-  p_payment_method text default 'phone'
+  p_payment_method text default 'phone',
+  p_terms_accepted boolean default false
 )
 returns jsonb language plpgsql security invoker set search_path to ''
 as $function$
@@ -197,6 +201,9 @@ declare
   v_method text := lower(trim(coalesce(p_payment_method,'phone')));
 begin
   if v_method not in ('online','phone','message') then raise exception using message='روش پرداخت نامعتبر است.'; end if;
+  if lower(coalesce(p_mode,'preview'))='submit' and p_terms_accepted is not true then
+    raise exception using message='پذیرش شرایط استفاده و حریم خصوصی برای ثبت سفارش الزامی است.';
+  end if;
   if v_method='online' and not exists (
     select 1 from public.site_content sc
     where sc.section_key='checkout_payment' and sc.is_active=true
@@ -214,9 +221,9 @@ begin
   return v_result || private.azim_set_checkout_payment_method(v_order_id,v_method);
 end;
 $function$;
-revoke all on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text) from public;
-grant execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text) to anon;
-revoke execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text) from authenticated;
+revoke all on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text,boolean) from public;
+grant execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text,boolean) to anon,authenticated;
+
 
 create or replace function private.azim_request_order_cancel_core(p_order_code text,p_mobile text,p_reason text)
 returns jsonb language plpgsql security definer set search_path to ''

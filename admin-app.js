@@ -22,6 +22,7 @@
 
   const viewInfo = {
     dashboard: ['داشبورد', 'نمای کلی فروشگاه، سفارش‌ها، مشتریان و سلامت سیستم'],
+    reports: ['گزارش فروش', 'درآمد ثبت‌شده، روند فروش و محصولات پرفروش'],
     products: ['محصولات', 'افزودن، ویرایش، قیمت، تصویر، دسته و وضعیت نمایش'],
     categories: ['دسته‌بندی‌ها', 'ساختار دسته‌بندی و تعداد محصولات هر دسته'],
     brands: ['برندها', 'مدیریت برند و اتصال آن به محصولات'],
@@ -58,6 +59,7 @@
 
   const viewRoles = {
     dashboard: ['owner','admin','editor','sales'],
+    reports: ['owner','admin','sales'],
     products: ['owner','admin','editor','sales'],
     categories: ['owner','admin','editor'],
     brands: ['owner','admin','editor'],
@@ -823,6 +825,10 @@
     $('productVariantFilter').onchange = () => loadProducts();
     $('dashboardOpenSite')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
     $('inquiryFilter').onchange = () => loadInquiries();
+    $('reportPeriod')?.addEventListener('change', () => loadReports());
+    $('reportRefresh')?.addEventListener('click', () => loadReports());
+    $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
+    $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
   }
 
   function applyRoleUI() {
@@ -894,13 +900,14 @@
       if (name === 'discounts') return await loadDiscounts();
       if (name === 'discount-codes') return await loadDiscountCodes();
       if (name === 'ai-products') return await loadAIProducts();
+      if (name === 'reports') return await loadReports();
     if (name === 'payment') return await loadPaymentAdmin();
 
       const skeletons = {
         products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
         inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
         media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable',
-        security: 'securityPanel', payment: 'paymentAdminPanel'
+        security: 'securityPanel', payment: 'paymentAdminPanel', reports: 'salesReport'
       };
       if (skeletons[name]) showSkeleton(skeletons[name]);
 
@@ -1378,7 +1385,7 @@
   async function loadProducts() {
     await ensureCaches();
     let q = state.db.from('products')
-      .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
+      .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,stock_quantity,stock_tracking_enabled,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
       .order('code', { ascending: true }).order('updated_at', { ascending: false }).limit(1000);
     const search = $('productSearch').value.trim();
     const status = $('productStatus').value;
@@ -1618,6 +1625,10 @@
           '<div class="az-simple-price-row">' +
             '<label class="az-simple-field"><span>قیمت اصلی</span><div class="az-simple-price"><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
             '<label class="az-simple-field"><span>قیمت فعلی</span><div class="az-simple-price primary"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
+          '</div>' + +
+          '<div class="az-simple-fields" style="margin-top:10px">' +
+            '<label class="az-simple-field"><span>موجودی</span><input class="input" name="stock_quantity" type="number" min="0" step="1" value="' + esc(p?.stock_quantity ?? 0) + '" placeholder="0"></label>' +
+            '<label class="az-simple-active" style="align-self:end"><input name="stock_tracking_enabled" type="checkbox" ' + (p?.stock_tracking_enabled ? 'checked' : '') + '><span>کنترل موجودی فعال باشد</span></label>' +
           '</div>' +
         '</div>' +
         '<div class="az-simple-section az-product-direct-discount">' +
@@ -1740,8 +1751,10 @@
       if (discountStarts && discountEnds && new Date(discountEnds) <= new Date(discountStarts)) throw new Error('پایان تخفیف باید بعد از شروع باشد.');
       const originalPrice = s.original_price.value === '' ? null : Number(s.original_price.value);
       const currentPrice = s.price.value === '' ? null : Number(s.price.value);
+      const stockQuantity = s.stock_quantity?.value === '' ? 0 : Number(s.stock_quantity?.value);
       if (originalPrice != null && (!Number.isFinite(originalPrice) || originalPrice < 0)) throw new Error('قیمت اصلی نامعتبر است.');
       if (currentPrice != null && (!Number.isFinite(currentPrice) || currentPrice < 0)) throw new Error('قیمت فعلی نامعتبر است.');
+      if (!Number.isInteger(stockQuantity) || stockQuantity < 0) throw new Error('موجودی باید یک عدد صحیح صفر یا بیشتر باشد.');
 
       const p = {
         name: s.name.value.trim(),
@@ -1755,6 +1768,8 @@
         price: currentPrice,
         img,
         is_active: s.is_active.checked,
+        stock_quantity: stockQuantity,
+        stock_tracking_enabled: !!s.stock_tracking_enabled?.checked,
         discount_type: discountType,
         discount_value: Number.isFinite(discountValue) ? discountValue : null,
         discount_is_active: discountActive,
@@ -1800,7 +1815,7 @@
       if (categories.error) throw categories.error;
       if (brands.error) throw brands.error;
       const allProducts = await state.db.from('products')
-        .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
+        .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,stock_quantity,stock_tracking_enabled,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
         .order('code', { ascending: true })
         .limit(2000);
       if (allProducts.error) throw allProducts.error;
@@ -2236,10 +2251,18 @@
     await loadCustomers();
   }
 
+  let ordersSearchTimer = null;
+
   async function loadOrders() {
-    const r = await state.db.from('orders')
-      .select('id,order_code,customer_id,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,notes,created_at')
-      .order('created_at', { ascending: false }).limit(200);
+    const search = String($('ordersSearch')?.value || '').trim();
+    let q = state.db.from('orders')
+      .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at')
+      .order('created_at', { ascending: false }).limit(search ? 2000 : 200);
+    if (search) {
+      const s = search.replace(/[%(),]/g, ' ');
+      q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
+    }
+    const r = await q;
     if (r.error) return showSectionError('ordersTable', r.error);
     const rows = r.data || [];
     if (!rows.length) {
@@ -2369,7 +2392,7 @@
     ).join('');
     const itemRows = (items || []).map((it, idx) => orderItemRow(it, idx)).join('');
     return '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending') + '</div><form id="orderForm" class="grid2">'
-      '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" required value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
+      '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
       '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
       '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
       '<div class="field"><label>پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], x?.payment_status || 'unpaid', labels) + '</select></div>' +
@@ -3290,7 +3313,7 @@
     }
   };
 
-  const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);
+  const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings', 'checkout_rules']);
   const canEditContentKey = (key) => {
     const clean = String(key || '').trim();
     if (clean === 'checkout_payment') return false;
@@ -3345,7 +3368,7 @@
   async function editContent(id) {
     if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوا ندارد.');
     const keyRow = state.contentRows.find((x) => x.id === id);
-    if (!canEditContentKey(keyRow?.section_key)) return toast('__AZICON_BLOCK__ تنظیمات پرداخت و هوش مصنوعی فقط برای مدیران قابل ویرایش است.');
+    if (!canEditContentKey(keyRow?.section_key)) return toast('__AZICON_BLOCK__ تنظیمات پرداخت، هوش مصنوعی و قواعد checkout فقط برای مدیران قابل ویرایش است.');
     const r = await state.db.from('site_content').select('*').eq('id', id).single();
     if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal('ویرایش محتوا', contentForm(r.data));
@@ -4060,6 +4083,28 @@
     }
   }
 
+  function setupAdminInvite() {
+    const open=$('inviteAdminBtn'), box=$('adminInviteBox'), form=$('adminInviteForm'), cancel=$('cancelInviteBtn');
+    if(!open||!box||!form) return;
+    open.style.display=can.all()?'':'none';
+    open.onclick=()=>{ box.hidden=false; $('inviteEmail')?.focus(); };
+    cancel?.addEventListener('click',()=>{box.hidden=true;form.reset();if($('inviteStatus'))$('inviteStatus').textContent='';});
+    form.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      if(!can.all()) return;
+      const status=$('inviteStatus'), email=String($('inviteEmail')?.value||'').trim().toLowerCase(),
+        name=String($('inviteName')?.value||'').trim(), role=String($('inviteRole')?.value||'sales');
+      if(status)status.textContent='در حال ارسال دعوت…';
+      try{
+        const {data,error}=await state.db.functions.invoke('azim-admin-invite',{body:{email,name,role}});
+        if(error)throw error;
+        if(!data?.ok)throw new Error(data?.error||'ارسال دعوت ناموفق بود.');
+        if(status)status.textContent='__AZICON_SUCCESS__ دعوت برای '+email+' ارسال شد.';
+        form.reset();box.hidden=true;await loadAdmins();
+      }catch(err){if(status)status.textContent='__AZICON_ERROR__ '+errorText(err);}
+    });
+  }
+
   async function loadAdmins() {
     const r = await state.db.from('admin_users').select('user_id,role,is_active,created_at').order('created_at');
     if (r.error) return showSectionError('adminsTable', r.error);
@@ -4154,6 +4199,55 @@
     }
   }
 
+  async function loadReports() {
+    const el=$('salesReport');
+    if(!el) return;
+    const days=Math.max(1,Math.min(3650,Number($('reportPeriod')?.value||30)||30));
+    const since=new Date(Date.now()-days*86400000).toISOString();
+    el.innerHTML='<div class="az-skeleton"></div>';
+    const [o,i]=await Promise.all([
+      state.db.from('orders').select('id,order_code,total,discount,shipping_cost,status,payment_status,created_at').gte('created_at',since).not('status','eq','cancelled').order('created_at',{ascending:true}).limit(5000),
+      state.db.from('order_items').select('order_id,product_name,quantity,line_total')
+    ]);
+    if(o.error||i.error){ el.innerHTML='<div class="empty">__AZICON_ERROR__ دریافت گزارش فروش ناموفق بود: '+esc(errorText(o.error||i.error))+'</div>'; return; }
+    const orders=o.data||[], items=i.data||[];
+    const paidLike=new Set(['paid','partially_refunded','refunded']);
+    const gross=orders.reduce((s,x)=>s+Number(x.total||0),0);
+    const count=orders.length;
+    const paid=orders.filter(x=>paidLike.has(String(x.payment_status||''))).reduce((s,x)=>s+Number(x.total||0),0);
+    const avg=count?gross/count:0;
+    const daily=new Map();
+    const orderIds=new Set(orders.map(x=>x.id));
+    for(const o of orders){
+      const k=new Date(o.created_at).toISOString().slice(0,10);
+      daily.set(k,(daily.get(k)||0)+Number(o.total||0));
+    }
+    const top=new Map();
+    for(const x of items){
+      if(!orderIds.has(x.order_id)) continue;
+      const key=String(x.product_name||'بدون نام');
+      const row=top.get(key)||{qty:0,amount:0};
+      row.qty+=Number(x.quantity||0); row.amount+=Number(x.line_total||0); top.set(key,row);
+    }
+    const topRows=[...top.entries()].sort((a,b)=>b[1].qty-a[1].qty).slice(0,10);
+    const dailyRows=[...daily.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    const card=(label,value,sub)=>'<div class="card"><div class="k">'+esc(label)+'</div><div class="v">'+esc(value)+'</div><div class="s">'+esc(sub||'')+'</div></div>';
+    el.innerHTML='<div class="cards" style="margin-top:12px">'+
+      card('سفارش غیرلغوشده',count.toLocaleString('fa-IR'),'در بازه انتخابی')+
+      card('فروش ثبت‌شده',money(gross),'جمع کل سفارش‌ها')+
+      card('پرداخت قطعی/عودت‌شده',money(paid),'بر اساس وضعیت پرداخت')+
+      card('میانگین سفارش',money(Math.round(avg)),'بدون سفارش‌های لغوشده')+
+      '</div>'+
+      '<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>روند روزانه فروش</h3><span class="muted">'+esc(days)+' روز اخیر</span></div>'+
+      '<div class="table-wrap"><table class="table"><thead><tr><th>روز</th><th>فروش</th></tr></thead><tbody>'+
+      (dailyRows.length?dailyRows.map(([d,v])=>'<tr><td dir="ltr">'+esc(d)+'</td><td>'+money(v)+'</td></tr>').join(''):'<tr><td colspan="2">داده‌ای نیست.</td></tr>')+
+      '</tbody></table></div></div>'+
+      '<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>محصولات پرفروش</h3><span class="muted">بر مبنای تعداد</span></div>'+
+      '<div class="table-wrap"><table class="table"><thead><tr><th>محصول</th><th>تعداد</th><th>مبلغ خطوط</th></tr></thead><tbody>'+
+      (topRows.length?topRows.map(([n,v])=>'<tr><td>'+esc(n)+'</td><td>'+Number(v.qty).toLocaleString('fa-IR')+'</td><td>'+money(v.amount)+'</td></tr>').join(''):'<tr><td colspan="3">داده‌ای نیست.</td></tr>')+
+      '</tbody></table></div></div>';
+  }
+
   async function loadAudit() {
     const r = await state.db.from('audit_logs').select('id,actor_id,action,entity,entity_id,metadata,created_at').order('created_at', { ascending: false }).limit(120);
     if (r.error) return showSectionError('auditTable', r.error);
@@ -4216,10 +4310,12 @@
         return;
       }
       if (!(await requireAdminMFA())) return;
+      setupAdminInvite();
       await loadDashboard();
     };
 
     if (await ensureAdmin()) {
+      setupAdminInvite();
       if (await requireAdminMFA()) await loadDashboard();
     }
   })();
