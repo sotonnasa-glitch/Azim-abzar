@@ -57,6 +57,12 @@ function isAdmin(chatId: number | string) {
   return ADMIN_IDS.has(String(chatId));
 }
 
+const SENSITIVE_SITE_CONTENT_KEYS = new Set(["checkout_payment", "ai_settings", "checkout_rules"]);
+
+function isSensitiveSiteContentKey(key: string) {
+  return SENSITIVE_SITE_CONTENT_KEYS.has(String(key || "").trim());
+}
+
 function money(n: unknown) {
   return new Intl.NumberFormat("fa-IR").format(Number(n ?? 0)) + " تومان";
 }
@@ -419,33 +425,41 @@ async function showReport(chatId: number | string) {
   if (error) throw error;
 
   const rows = data ?? [];
-  let totalSales = 0;
-  let paid = 0;
+  let registeredSales = 0;
+  let paidSales = 0;
+  let paidCount = 0;
   let pending = 0;
   let cancelled = 0;
   let delivered = 0;
 
   for (const o of rows as any[]) {
-    totalSales += Number(o.total ?? 0);
-    if (o.payment_status === "paid") paid++;
+    const total = Number(o.total ?? 0);
+    if (o.status === "cancelled") {
+      cancelled++;
+      continue;
+    }
+    registeredSales += total;
+    if (["paid", "partially_refunded", "refunded"].includes(String(o.payment_status ?? ""))) {
+      paidSales += total;
+      paidCount++;
+    }
     if (o.status === "pending") pending++;
-    if (o.status === "cancelled") cancelled++;
     if (o.status === "delivered") delivered++;
   }
 
   await sendText(
     chatId,
-    "📊 گزارش سفارش‌ها\n\n" +
-    "تعداد سفارش‌ها: " + rows.length + "\n" +
-    "مجموع مبلغ سفارش‌ها: " + money(totalSales) + "\n" +
-    "پرداخت‌شده: " + paid + "\n" +
+    "📊 گزارش فروش\n\n" +
+    "سفارش‌های غیرلغوشده: " + (rows as any[]).filter((o) => o.status !== "cancelled").length + "\n" +
+    "فروش ثبت‌شده: " + money(registeredSales) + "\n" +
+    "پرداخت قطعی/عودت‌شده: " + money(paidSales) + "\n" +
+    "تعداد پرداخت‌های قطعی/عودت‌شده: " + paidCount + "\n" +
     "در انتظار: " + pending + "\n" +
     "تحویل‌شده: " + delivered + "\n" +
     "لغوشده: " + cancelled,
     { reply_markup: backMenuMarkup() }
   );
 }
-
 
 async function showServiceRequests(chatId: number | string) {
   const supabase = await getSupabase();
@@ -733,6 +747,7 @@ async function showCategory(chatId: number | string, slug: string) {
 function siteContentMarkup(rows: any[]) {
   const out: any[] = [];
   for (const x of rows) {
+    if (isSensitiveSiteContentKey(x.section_key)) continue;
     out.push([{ text: (x.is_active ? "✅ " : "⛔ ") + (x.title || x.section_key), callback_data: "site_view:" + x.section_key }]);
   }
   out.push([{ text: "⬅️ منوی اصلی", callback_data: "menu" }]);
@@ -751,7 +766,7 @@ async function showSiteContent(chatId: number | string) {
 
   const text =
     "⚙️ تنظیمات سایت\n\n" +
-    "از اینجا بخش‌ها را انتخاب کن. می‌توانی عنوان بخش را عوض کنی یا آن را فعال/غیرفعال کنی.";
+    "از اینجا بخش‌های محتوایی قابل مدیریت را انتخاب کن. بخش‌های حساس مثل پرداخت و AI فقط از مسیرهای امن پنل ادمین مدیریت می‌شوند.";
   await sendText(chatId, text, { reply_markup: siteContentMarkup(data) });
 }
 
@@ -1066,6 +1081,10 @@ async function handleCallbackQuery(query: any) {
 
   if (data.startsWith("site_title:")) {
     const key = data.slice("site_title:".length);
+    if (isSensitiveSiteContentKey(key)) {
+      await sendText(chatId, "🔒 این بخش حساس فقط از مسیر امن پنل ادمین قابل تغییر است.", { reply_markup: backMenuMarkup() });
+      return;
+    }
     const supabase = await getSupabase();
     const { data: row, error } = await supabase.from("site_content")
       .select("section_key,title")
@@ -1088,6 +1107,10 @@ async function handleCallbackQuery(query: any) {
 
   if (data.startsWith("site_toggle:")) {
     const key = data.slice("site_toggle:".length);
+    if (isSensitiveSiteContentKey(key)) {
+      await sendText(chatId, "🔒 این بخش حساس فقط از مسیر امن پنل ادمین قابل تغییر است.", { reply_markup: backMenuMarkup() });
+      return;
+    }
     const supabase = await getSupabase();
     const { data: row, error: rowError } = await supabase.from("site_content")
       .select("section_key,title,is_active")
