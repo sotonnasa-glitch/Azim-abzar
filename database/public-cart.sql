@@ -98,7 +98,21 @@ begin
     if v_mobile !~ '^09[0-9]{9}$' then
       raise exception 'شماره موبایل واردشده معتبر نیست.';
     end if;
+    if v_idempotency_key is null or length(v_idempotency_key) < 16 or length(v_idempotency_key) > 100 then
+      raise exception 'شناسه ثبت سفارش نامعتبر است؛ صفحه را تازه‌سازی و دوباره تلاش کنید.';
+    end if;
+  end if;
 
+  if v_mobile <> '' then
+    select id into v_customer_id from public.customers where mobile=v_mobile order by created_at asc limit 1;
+  end if;
+
+  if v_mode='submit' then
+    select id,order_code,total,customer_id into v_order_id,v_order_code,v_total,v_customer_id
+    from public.orders where checkout_idempotency_key=v_idempotency_key limit 1 for update;
+    if found then
+      return jsonb_build_object('valid',true,'mode','submit','order_id',v_order_id,'order_code',v_order_code,'customer_id',v_customer_id,'total',v_total,'message','این درخواست قبلاً ثبت شده است.');
+    end if;
   end if;
 
   if v_customer_id is not null then
@@ -205,9 +219,7 @@ begin
       limit 1;
     end if;
 
-    if not found then
-      raise exception 'کد تخفیف پیدا نشد.';
-    end if;
+    if not found then raise exception 'کد تخفیف معتبر نیست.'; end if;
   else
     select d.* into v_discount
     from public.discounts d
@@ -296,19 +308,19 @@ begin
     v_discount_code := v_discount.code;
 
     if not v_discount.is_active then
-      raise exception 'این کد تخفیف غیرفعال است.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     if now() < v_discount.starts_at then
-      raise exception 'زمان شروع این کد تخفیف نرسیده است.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     if v_discount.ends_at is not null and now() > v_discount.ends_at then
-      raise exception 'این کد تخفیف منقضی شده است.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     if v_subtotal < coalesce(v_discount.min_order_amount,0) then
-      raise exception 'حداقل مبلغ سبد برای این کد رعایت نشده است.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     select count(*) into v_usage
@@ -318,7 +330,7 @@ begin
       and coalesce(o.status,'') <> 'cancelled';
 
     if v_discount.usage_limit is not null and v_usage >= v_discount.usage_limit then
-      raise exception 'ظرفیت استفاده از این کد تکمیل شده است.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     if v_customer_id is not null then
@@ -330,7 +342,7 @@ begin
         and coalesce(o.status,'') <> 'cancelled';
 
       if v_customer_usage >= coalesce(v_discount.per_customer_limit,1) then
-        raise exception 'این مشتری قبلاً از سقف مجاز این کد استفاده کرده است.';
+        raise exception 'کد تخفیف معتبر نیست.';
       end if;
 
       select exists(
@@ -342,18 +354,18 @@ begin
     end if;
 
     if v_discount.first_order_only and v_has_order then
-      raise exception 'این کد فقط برای اولین خرید قابل استفاده است.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     if v_discount.applies_to = 'customers' then
       if v_customer_id is null then
-        raise exception 'این کد برای مشتری مشخصی صادر شده و نیاز به شماره موبایل همان مشتری دارد.';
+        raise exception 'کد تخفیف معتبر نیست.';
       end if;
       if not exists(
         select 1 from public.discount_customers dc
         where dc.discount_id=v_discount.id and dc.customer_id=v_customer_id
       ) then
-        raise exception 'این کد برای این مشتری صادر نشده است.';
+        raise exception 'کد تخفیف معتبر نیست.';
       end if;
     end if;
 
@@ -386,7 +398,7 @@ begin
     end loop;
 
     if v_eligible <= 0 then
-      raise exception 'هیچ محصولی از سبد مشمول این کد تخفیف نیست.';
+      raise exception 'کد تخفیف معتبر نیست.';
     end if;
 
     if v_discount.discount_type='percentage' then
@@ -421,7 +433,7 @@ begin
     return v_result;
   end if;
 
-  v_ip_text := split_part(coalesce(current_setting('request.headers', true)::json->>'x-forwarded-for',''), ',', 1);
+  v_ip_text := split_part(coalesce(current_setting('request.headers', true)::json->>'cf-connecting-ip', current_setting('request.headers', true)::json->>'x-forwarded-for',''), ',', 1);
   begin
     v_ip := nullif(trim(v_ip_text),'')::inet;
   exception when others then
@@ -460,7 +472,7 @@ begin
   insert into public.orders(
     order_code,customer_id,status,payment_status,shipping_status,
     subtotal,discount,discount_id,discount_code,shipping_cost,total,
-    customer_name,customer_mobile,customer_email,shipping_address,shipping_city,notes
+    customer_name,customer_mobile,customer_email,shipping_address,shipping_city,checkout_idempotency_key,notes
   )
   values(
     v_order_code,v_customer_id,'pending','unpaid','pending',
@@ -470,6 +482,7 @@ begin
     nullif(trim(coalesce(p_email,'')),''),
     nullif(trim(coalesce(p_address,'')),''),
     nullif(trim(coalesce(p_city,'')),''),
+    v_idempotency_key,
     'ثبت‌شده از سبد خرید آنلاین؛ پرداخت و تأیید نهایی توسط فروشگاه انجام می‌شود.'
   )
   returning id into v_order_id;
