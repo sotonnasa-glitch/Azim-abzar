@@ -2182,6 +2182,7 @@
         img: String(x?.img ?? '').trim(),
         category_name: String(x?.category_name ?? '').trim(),
         stock_quantity: x?.stock_quantity == null ? null : Number(x.stock_quantity),
+        stock_tracking_enabled: x?.stock_tracking_enabled === true,
         is_active: x?.is_active !== false,
         discount_type: x?.discount_type || null,
         discount_value: x?.discount_value == null ? null : Number(x.discount_value),
@@ -2813,7 +2814,9 @@
             product_id: d.id || null,
             name: d.name || staticMap.get(id)?.name || ('محصول ' + id),
             description: d.description || '',
-            image: catalogImageUrl(d.img || staticMap.get(id)?.image || '')
+            image: catalogImageUrl(d.img || staticMap.get(id)?.image || ''),
+            stock_quantity: d.stock_quantity,
+            stock_tracking_enabled: d.stock_tracking_enabled === true
           }))
           .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
         liveMap.forEach((d, id) => {
