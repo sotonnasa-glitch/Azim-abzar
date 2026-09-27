@@ -676,7 +676,7 @@ function testAuditAddendumGuards() {
     'utf8'
   );
   const telegramShipmentMigration = fs.readFileSync(
-    path.join(__dirname, 'supabase', 'migrations', '20260927150000_require_telegram_tracking_before_shipment.sql'),
+    path.join(__dirname, 'supabase', 'migrations', '20260927151000_sync_telegram_shipping_state_machine.sql'),
     'utf8'
   );
   if (
