@@ -648,11 +648,12 @@ function testAuditAddendumGuards() {
     telegramAdminJs.includes('async function handleCallbackQuery(query: any)') &&
     telegramAdminJs.includes('supabase.rpc("azim_telegram_set_tracking"') &&
     telegramAdminJs.includes('callback_data: "order_tracking:" + code }') &&
-    telegramAdminJs.includes('🚚 تحویل به شرکت ارسال')
+    telegramAdminJs.includes('🚚 تحویل به شرکت ارسال') &&
+    !telegramAdminJs.includes('text: "🚚 ثبت ارسال"')
   ) {
-    pass('ثبت مرسوله تلگرام قبل از «تحویل به شرکت ارسال» اجباری و از RPC امن دیتابیس عبور می‌کند');
+    pass('ثبت مرسوله تلگرام قبل از «تحویل به شرکت ارسال» اجباری و دکمه قدیمی ارسال حذف شده است');
   } else {
-    fail('جریان اجباری ثبت کد/لینک مرسوله در تلگرام ناقص است');
+    fail('جریان ثبت مرسوله تلگرام یا حذف دکمه قدیمی ارسال ناقص است');
   }
 
   if (
@@ -661,7 +662,9 @@ function testAuditAddendumGuards() {
     telegramAdminJs.includes('saved.payment_method') &&
     telegramAdminJs.includes('لینک کامل پیگیری مرسوله را بفرست (الزامی است):') &&
     telegramAdminJs.includes('نام شرکت ارسال را بفرست') &&
-    telegramAdminJs.includes('نام شرکت ارسال نمی‌تواند خالی باشد')
+    telegramAdminJs.includes('نام شرکت ارسال نمی‌تواند خالی باشد') &&
+    telegramAdminJs.includes('order.status === "processing" && order.shipping_status === "packed"') &&
+    telegramAdminJs.includes('order.status === "shipped" && order.shipping_status === "shipped"')
   ) {
     pass('Webhook تلگرام در نبود Secret مالی fail-closed است و منوی سفارش روش پرداخت واقعی را حفظ می‌کند');
   } else {
@@ -693,11 +696,12 @@ function testAuditAddendumGuards() {
     telegramShipmentMigration.includes("tracking_code") &&
     telegramShipmentMigration.includes("tracking_url") &&
     telegramShipmentMigration.includes("shipping_carrier") &&
-    telegramShipmentMigration.includes("برای «تحویل به شرکت ارسال»")
+    telegramShipmentMigration.includes("برای «تحویل به شرکت ارسال»") &&
+    telegramShipmentMigration.includes("when v_next='delivered' then 'delivered'")
   ) {
-    pass('قبل از انتقال ارسال به «تحویل به شرکت ارسال»، کد مرسوله، لینک و شرکت ارسال در DB اجباری هستند');
+    pass('قبل از ارسال اطلاعات مرسوله اجباری است و تحویل، وضعیت ارسال و سفارش را همزمان نهایی می‌کند');
   } else {
-    fail('قفل دیتابیسی اطلاعات مرسوله قبل از ارسال کامل نیست');
+    fail('قفل دیتابیسی اطلاعات مرسوله یا همگام‌سازی تحویل کامل نیست');
   }
 
   if (
