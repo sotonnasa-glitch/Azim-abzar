@@ -437,13 +437,20 @@ function testOrderTrackingFlow() {
 
   const trackForm = doc.getElementById('trackForm');
   const orderCodeInput = doc.getElementById('orderCode');
+  const orderMobileInput = doc.getElementById('orderMobile');
   const trackBtn = doc.getElementById('trackBtn');
   const statusContainer = doc.getElementById('status');
 
-  if (trackForm && orderCodeInput && trackBtn) {
-    pass('فرم پیگیری وضعیت سفارش با فیلد کد سفارش و دکمه استعلام حاضر است');
+  if (trackForm && orderCodeInput && orderMobileInput && trackBtn) {
+    pass('فرم پیگیری وضعیت سفارش با کد سفارش، شماره موبایل و دکمه استعلام حاضر است');
   } else {
-    fail('فرم پیگیری سفارش یا دکمه‌های آن یافت نشد');
+    fail('فرم پیگیری سفارش، فیلدهای احراز یا دکمه استعلام یافت نشد');
+  }
+
+  if (html.includes("p_mobile") && html.includes("return_available") && html.includes("delivered_at")) {
+    pass('پیگیری سفارش به تطبیق موبایل و شرط تحویل/مهلت مرجوعی متصل است');
+  } else {
+    fail('منطق امنیتی پیگیری یا شرط مرجوعی در صفحه یافت نشد');
   }
 
   if (statusContainer) {
