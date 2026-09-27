@@ -49,6 +49,6 @@
 
 ## Reconciliation و Rate Limit
 
-`azim-payment-reconcile` تراکنش‌های `initiated/pending` قدیمی را دوباره Verify می‌کند و هر ۵ دقیقه با Supabase Cron اجرا می‌شود. Secret job در Supabase Vault نگهداری می‌شود. محدودیت درخواست پرداخت/Verify/Refund در جدول DB و RPC اتمیک ذخیره می‌شود، بنابراین به حافظه یک instance وابسته نیست.
+`azim-payment-reconcile` تراکنش‌های `initiated/pending` قدیمی‌تر از آستانه تنظیم‌شده (پیش‌فرض ۱۰ دقیقه، قابل تنظیم با `PAYMENT_RECONCILE_AGE_MINUTES`) را دوباره Verify می‌کند و هر ۵ دقیقه با Supabase Cron اجرا می‌شود. Secret job در Supabase Vault نگهداری می‌شود. محدودیت درخواست پرداخت/Verify/Refund در جدول DB و RPC اتمیک ذخیره می‌شود، بنابراین به حافظه یک instance وابسته نیست.
 
 تا زمانی که provider واقعی انتخاب و Adapter/Healthcheck/Refund آن تأیید نشده، `online_enabled=false` باقی می‌ماند.
