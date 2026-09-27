@@ -1992,6 +1992,23 @@
             </a>
           </div>
           <button type="button" class="az-product-ai-btn" id="modalProductAiBtn" style="margin-top:10px" data-ai-product-id="" data-ai-product-code="" data-ai-base-name="" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">راهنمایی هوشمند محصول</span></button>
+          <section id="productReviews" style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+              <strong style="color:#f3c34a">نظرات کاربران</strong>
+              <span id="reviewSummary" style="font-size:11px;color:#9ba59f">در حال بارگذاری…</span>
+            </div>
+            <div id="reviewList" style="margin-top:10px;display:grid;gap:8px"></div>
+            <form id="reviewForm" style="display:grid;gap:8px;margin-top:12px">
+              <div style="display:grid;grid-template-columns:90px 1fr;gap:8px">
+                <select id="reviewRating" aria-label="امتیاز" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
+                  <option value="5">۵ ★</option><option value="4">۴ ★</option><option value="3">۳ ★</option><option value="2">۲ ★</option><option value="1">۱ ★</option>
+                </select>
+                <input id="reviewMobile" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="شماره موبایل" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
+              </div>
+              <textarea id="reviewComment" maxlength="1000" rows="3" placeholder="تجربه یا نظر شما درباره این محصول…" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit;resize:vertical"></textarea>
+              <button id="reviewSubmitBtn" type="submit" class="card-btn-view" style="cursor:pointer">ثبت نظر برای بررسی</button>
+            </form>
+          </section>
         </div>
       </div>
     </div>
@@ -2098,6 +2115,68 @@
         img.src = './catalog_site_mapping_908/images/placeholder.svg';
         img.alt = 'تصویر ' + id + ' در دسترس نیست';
         img.style.display = '';
+      };
+    }
+
+    async function loadProductReviews(productId, productName) {
+      const summary = document.getElementById('reviewSummary');
+      const list = document.getElementById('reviewList');
+      if (!summary || !list || !productId || !window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) {
+        if (summary) summary.textContent = 'امکان نمایش نظرات در این لحظه نیست';
+        return;
+      }
+      summary.textContent = 'در حال بارگذاری…';
+      list.innerHTML = '';
+      try {
+        const url = window.AZIM_SUPABASE_URL + '/rest/v1/product_reviews?select=rating,comment,created_at&product_id=eq.' +
+          encodeURIComponent(productId) + '&approved=eq.true&order=created_at.desc&limit=10';
+        const res = await fetch(url,{headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY},cache:'no-store'});
+        if (!res.ok) throw new Error('review fetch failed');
+        const rows = await res.json();
+        const avg = rows.length ? rows.reduce((s,r)=>s+Number(r.rating||0),0)/rows.length : 0;
+        summary.textContent = rows.length ? ('میانگین ' + avg.toFixed(1) + ' از ۵ · ' + rows.length + ' نظر') : 'هنوز نظر تأییدشده‌ای ثبت نشده';
+        rows.forEach(r => {
+          const box=document.createElement('div');
+          box.style.cssText='background:#101411;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:9px 10px';
+          const head=document.createElement('div');
+          head.style.cssText='display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#f3c34a';
+          head.textContent='★'.repeat(Math.max(1,Math.min(5,Number(r.rating)||1)))+'  ·  '+new Date(r.created_at).toLocaleDateString('fa-IR');
+          const body=document.createElement('div');
+          body.style.cssText='margin-top:5px;font-size:11px;line-height:1.9;color:#c7cec9;white-space:pre-wrap';
+          body.textContent=String(r.comment||'');
+          box.append(head,body);
+          list.appendChild(box);
+        });
+      } catch (_) {
+        summary.textContent='خطا در دریافت نظرات';
+      }
+    }
+
+    function setupReviewForm(productId) {
+      const form=document.getElementById('reviewForm');
+      const btn=document.getElementById('reviewSubmitBtn');
+      if(!form || !productId) return;
+      form.onsubmit=async (ev)=>{
+        ev.preventDefault();
+        if(!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return;
+        const mobile=String(document.getElementById('reviewMobile')?.value||'').replace(/[\s-]/g,'');
+        const rating=Math.max(1,Math.min(5,Number(document.getElementById('reviewRating')?.value||5)));
+        const comment=String(document.getElementById('reviewComment')?.value||'').trim();
+        if(!/^09\d{9}$/.test(mobile)){showToast('شماره موبایل معتبر نیست.');return;}
+        if(comment.length<3){showToast('متن نظر کوتاه است.');return;}
+        if(btn) btn.disabled=true;
+        try{
+          const res=await fetch(window.AZIM_SUPABASE_URL+'/rest/v1/product_reviews',{
+            method:'POST',
+            headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+            body:JSON.stringify({product_id:productId,rating,comment,mobile,approved:false})
+          });
+          if(res.status===409){showToast('قبلاً برای این محصول با این شماره نظر ثبت شده است.');return;}
+          if(!res.ok) throw new Error('submit failed');
+          document.getElementById('reviewComment').value='';
+          showToast('نظر ثبت شد و پس از بررسی نمایش داده می‌شود.');
+        }catch(_){showToast('ثبت نظر انجام نشد؛ دوباره تلاش کنید.');}
+        finally{if(btn) btn.disabled=false;}
       };
     }
 
@@ -2403,6 +2482,8 @@
       const cat = categoriesMap[id] || 'ابزار تخصصی صنعتی';
 
       document.getElementById('modalTitle').textContent = item.name;
+      loadProductReviews(item.product_id || '', item.name);
+      setupReviewForm(item.product_id || '');
       document.getElementById('modalCode').textContent = 'کد کالا: ' + item.id;
       document.getElementById('modalCat').textContent = 'دسته‌بندی اصلی: ' + cat;
       const modalDescription = document.getElementById('modalDescription');
