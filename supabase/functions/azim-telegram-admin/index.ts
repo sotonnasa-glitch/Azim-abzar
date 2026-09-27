@@ -1009,7 +1009,7 @@ async function handleCallbackQuery(query: any) {
     console.error("callback acknowledgement error:", error);
   }
 
-  if (!isAdmin(chatId)) {
+  if (!authorized) {
     await sendText(chatId, "دسترسی مدیریتی برای این چت فعال نشده است.");
     return;
   }
@@ -1430,8 +1430,11 @@ async function handleMessage(msg: any) {
   if (chatId === undefined) return;
 
   const text = String(msg.text ?? "").trim();
+  const authorized = isAdmin(chatId);
 
-  if (msg.reply_to_message && !text.startsWith("/")) {
+  // IMPORTANT: reply-based admin actions must never be dispatched before authorization.
+  // Non-admin chats may use public commands like /id and /start, but never reply actions.
+  if (authorized && msg.reply_to_message && !text.startsWith("/")) {
     try {
       if (await handleReplyMessage(msg)) return;
     } catch (error) {
