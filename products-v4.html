@@ -1992,6 +1992,10 @@
             </a>
           </div>
           <button type="button" class="az-product-ai-btn" id="modalProductAiBtn" style="margin-top:10px" data-ai-product-id="" data-ai-product-code="" data-ai-base-name="" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">راهنمایی هوشمند محصول</span></button>
+          <section id="relatedProducts" style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
+            <strong style="color:#f3c34a">محصولات مشابه</strong>
+            <div id="relatedProductsList" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px"></div>
+          </section>
           <section id="productReviews" style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
               <strong style="color:#f3c34a">نظرات کاربران</strong>
@@ -2116,6 +2120,25 @@
         img.alt = 'تصویر ' + id + ' در دسترس نیست';
         img.style.display = '';
       };
+    }
+
+    function renderRelatedProducts(item) {
+      const list=document.getElementById('relatedProductsList');
+      if(!list || !item) return;
+      const cat=categoriesMap[item.id]||'';
+      const candidates=all.filter(x=>x.id!==item.id && ((cat && categoriesMap[x.id]===cat)));
+      const fallback=candidates.length?candidates:all.filter(x=>x.id!==item.id);
+      const rows=fallback.slice(0,4);
+      list.innerHTML='';
+      rows.forEach(x=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='card-btn-view';
+        b.style.cssText='padding:8px;text-align:right;font-size:10.5px;line-height:1.7';
+        b.textContent=x.name;
+        b.onclick=()=>openQuickView(x.id);
+        list.appendChild(b);
+      });
     }
 
     async function loadProductReviews(productId, productName) {
@@ -2518,6 +2541,7 @@
       document.getElementById('modalTitle').textContent = item.name;
       loadProductReviews(item.product_id || '', item.name);
       setupReviewForm(item.product_id || '');
+      renderRelatedProducts(item);
       document.getElementById('modalCode').textContent = 'کد کالا: ' + item.id;
       document.getElementById('modalCat').textContent = 'دسته‌بندی اصلی: ' + cat;
       const modalDescription = document.getElementById('modalDescription');
