@@ -887,30 +887,13 @@ async function handleReplyMessage(msg: any) {
     }
 
     const supabase = await getSupabase();
-    const { data: current, error: currentError } = await supabase.from("orders")
-      .select("id,order_code,status,payment_status,shipping_status")
-      .eq("order_code", orderCode)
-      .maybeSingle();
-    if (currentError) throw currentError;
-    if (!current) {
-      await sendText(msg.chat.id, "سفارش پیدا نشد: " + orderCode);
-      return true;
-    }
-    if (current.status === "cancelled" || current.status === "delivered") {
-      await sendText(msg.chat.id, "این سفارش دیگر قابل ثبت کد مرسوله نیست.");
-      return true;
-    }
-
-    const { data: saved, error } = await supabase.from("orders").update({
-      tracking_code: trackingCode,
-      tracking_url: trackingUrl || null,
-      shipping_carrier: carrier || null,
-      shipping_status: "shipped",
-      status: "shipped",
-      updated_at: new Date().toISOString()
-    }).eq("id", current.id)
-      .select("order_code,status,payment_status,shipping_status,tracking_code,tracking_url,shipping_carrier")
-      .maybeSingle();
+    const { data: saved, error } = await supabase.rpc("azim_telegram_set_tracking", {
+      p_order_code: orderCode,
+      p_tracking_code: trackingCode,
+      p_tracking_url: trackingUrl || null,
+      p_shipping_carrier: carrier || null,
+      p_actor_ref: String(msg.chat.id),
+    });
 
     if (error) throw error;
 
@@ -1002,6 +985,7 @@ async function handleReplyMessage(msg: any) {
 async function handleCallbackQuery(query: any) {
   const chatId = query.message?.chat?.id;
   if (chatId === undefined) return;
+  const authorized = isAdmin(chatId);
 
   try {
     await telegram("answerCallbackQuery", { callback_query_id: query.id });
