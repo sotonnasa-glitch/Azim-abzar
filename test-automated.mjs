@@ -634,9 +634,9 @@ function testAuditAddendumGuards() {
 
   if (
     telegramAdminJs.includes('paymentMethod === "online"') &&
-    telegramAdminJs.includes('supabase.rpc("azim_create_online_refund_request"') &&
-    telegramAdminJs.includes('p_idempotency_key:"telegram-cancel-refund:"') &&
-    telegramAdminJs.includes('p_idempotency_key:"telegram-return-refund:"')
+    telegramAdminJs.includes('supabase.rpc("azim_telegram_request_online_refund"') &&
+    telegramAdminJs.includes('درخواست عودت وجه ثبت شد') &&
+    telegramAdminJs.includes('فقط بعد از تأیید واقعی درگاه نهایی می‌شود')
   ) {
     pass('مسیرهای عودت وجه آنلاین در تلگرام به درخواست Refund امن متصل هستند');
   } else {
