@@ -2256,7 +2256,7 @@
   async function loadOrders() {
     const search = String($('ordersSearch')?.value || '').trim();
     let q = state.db.from('orders')
-      .select('id,order_code,customer_id,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,notes,created_at')
+      .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at')
       .order('created_at', { ascending: false }).limit(search ? 2000 : 200);
     if (search) {
       const s = search.replace(/[%(),]/g, ' ');
