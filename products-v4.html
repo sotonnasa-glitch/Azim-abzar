@@ -1651,7 +1651,8 @@
       }
     }
   </style>
-<style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style></head>
+<style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style><script type="application/ld+json" id="productSchema">{}</script>
+</head>
 <body>
 
   <!-- Header with Glassmorphic Blur -->
@@ -2558,6 +2559,40 @@
       syncUrlState();
 
       const rows = filtered.slice((page - 1) * PER, page * PER);
+
+      // Product structured data for the products currently rendered on the catalog page.
+      const schemaEl = document.getElementById('productSchema');
+      if (schemaEl) {
+        schemaEl.textContent = JSON.stringify({
+          '@context':'https://schema.org',
+          '@type':'ItemList',
+          itemListElement: rows.map((item,index) => {
+            const d=getData(item.id);
+            const price=getProductPriceValue(item.id);
+            const stockTracked=item.stock_tracking_enabled === true;
+            return {
+              '@type':'ListItem',
+              position:index+1,
+              item:{
+                '@type':'Product',
+                name:item.name,
+                image:item.image ? [new URL(item.image,location.href).href] : undefined,
+                sku:item.id,
+                description:item.description || undefined,
+                offers: price>0 ? {
+                  '@type':'Offer',
+                  price:String(price),
+                  priceCurrency:'IRR',
+                  availability:stockTracked && Number(item.stock_quantity||0)<=0
+                    ? 'https://schema.org/OutOfStock'
+                    : 'https://schema.org/InStock',
+                  url:new URL('./products-v4.html?id='+encodeURIComponent(item.id),location.href).href
+                } : undefined
+              }
+            };
+          })
+        });
+      }
 
       const tcBadge = document.getElementById('totalCountBadge');
       if (tcBadge) tcBadge.textContent = fmt(all.length);
