@@ -2126,7 +2126,7 @@
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
         const base = window.AZIM_SUPABASE_URL + '/rest/v1/products';
-        const select = 'id,code,name,description,img,price,variants,is_active,stock_quantity,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
+        const select = 'id,code,name,description,img,price,variants,is_active,stock_quantity,stock_tracking_enabled,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
         const pageSize = 1000;
         const rows = [];
         for (let offset = 0; offset < 10000; offset += pageSize) {
