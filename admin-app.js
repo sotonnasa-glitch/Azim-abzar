@@ -1378,7 +1378,7 @@
   async function loadProducts() {
     await ensureCaches();
     let q = state.db.from('products')
-      .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
+      .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,stock_quantity,stock_tracking_enabled,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
       .order('code', { ascending: true }).order('updated_at', { ascending: false }).limit(1000);
     const search = $('productSearch').value.trim();
     const status = $('productStatus').value;
@@ -1618,6 +1618,10 @@
           '<div class="az-simple-price-row">' +
             '<label class="az-simple-field"><span>قیمت اصلی</span><div class="az-simple-price"><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
             '<label class="az-simple-field"><span>قیمت فعلی</span><div class="az-simple-price primary"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
+          '</div>' + +
+          '<div class="az-simple-fields" style="margin-top:10px">' +
+            '<label class="az-simple-field"><span>موجودی</span><input class="input" name="stock_quantity" type="number" min="0" step="1" value="' + esc(p?.stock_quantity ?? 0) + '" placeholder="0"></label>' +
+            '<label class="az-simple-active" style="align-self:end"><input name="stock_tracking_enabled" type="checkbox" ' + (p?.stock_tracking_enabled ? 'checked' : '') + '><span>کنترل موجودی فعال باشد</span></label>' +
           '</div>' +
         '</div>' +
         '<div class="az-simple-section az-product-direct-discount">' +
@@ -1740,8 +1744,10 @@
       if (discountStarts && discountEnds && new Date(discountEnds) <= new Date(discountStarts)) throw new Error('پایان تخفیف باید بعد از شروع باشد.');
       const originalPrice = s.original_price.value === '' ? null : Number(s.original_price.value);
       const currentPrice = s.price.value === '' ? null : Number(s.price.value);
+      const stockQuantity = s.stock_quantity?.value === '' ? 0 : Number(s.stock_quantity?.value);
       if (originalPrice != null && (!Number.isFinite(originalPrice) || originalPrice < 0)) throw new Error('قیمت اصلی نامعتبر است.');
       if (currentPrice != null && (!Number.isFinite(currentPrice) || currentPrice < 0)) throw new Error('قیمت فعلی نامعتبر است.');
+      if (!Number.isInteger(stockQuantity) || stockQuantity < 0) throw new Error('موجودی باید یک عدد صحیح صفر یا بیشتر باشد.');
 
       const p = {
         name: s.name.value.trim(),
@@ -1755,6 +1761,8 @@
         price: currentPrice,
         img,
         is_active: s.is_active.checked,
+        stock_quantity: stockQuantity,
+        stock_tracking_enabled: !!s.stock_tracking_enabled?.checked,
         discount_type: discountType,
         discount_value: Number.isFinite(discountValue) ? discountValue : null,
         discount_is_active: discountActive,
@@ -1800,7 +1808,7 @@
       if (categories.error) throw categories.error;
       if (brands.error) throw brands.error;
       const allProducts = await state.db.from('products')
-        .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
+        .select('id,name,brand,cat,code,badge,description,img,original_price,price,page,category_name,is_active,stock_quantity,stock_tracking_enabled,variants,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at,updated_at,created_at')
         .order('code', { ascending: true })
         .limit(2000);
       if (allProducts.error) throw allProducts.error;
