@@ -22,6 +22,7 @@
 
   const viewInfo = {
     dashboard: ['داشبورد', 'نمای کلی فروشگاه، سفارش‌ها، مشتریان و سلامت سیستم'],
+    reports: ['گزارش فروش', 'درآمد ثبت‌شده، روند فروش و محصولات پرفروش'],
     products: ['محصولات', 'افزودن، ویرایش، قیمت، تصویر، دسته و وضعیت نمایش'],
     categories: ['دسته‌بندی‌ها', 'ساختار دسته‌بندی و تعداد محصولات هر دسته'],
     brands: ['برندها', 'مدیریت برند و اتصال آن به محصولات'],
@@ -58,6 +59,7 @@
 
   const viewRoles = {
     dashboard: ['owner','admin','editor','sales'],
+    reports: ['owner','admin','sales'],
     products: ['owner','admin','editor','sales'],
     categories: ['owner','admin','editor'],
     brands: ['owner','admin','editor'],
@@ -823,6 +825,8 @@
     $('productVariantFilter').onchange = () => loadProducts();
     $('dashboardOpenSite')?.addEventListener('click', () => window.open(new URL('/', window.location.origin).href, '_blank', 'noopener'));
     $('inquiryFilter').onchange = () => loadInquiries();
+    $('reportPeriod')?.addEventListener('change', () => loadReports());
+    $('reportRefresh')?.addEventListener('click', () => loadReports());
     $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
     $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
   }
@@ -896,13 +900,14 @@
       if (name === 'discounts') return await loadDiscounts();
       if (name === 'discount-codes') return await loadDiscountCodes();
       if (name === 'ai-products') return await loadAIProducts();
+      if (name === 'reports') return await loadReports();
     if (name === 'payment') return await loadPaymentAdmin();
 
       const skeletons = {
         products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
         inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
         media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable',
-        security: 'securityPanel', payment: 'paymentAdminPanel'
+        security: 'securityPanel', payment: 'paymentAdminPanel', reports: 'salesReport'
       };
       if (skeletons[name]) showSkeleton(skeletons[name]);
 
@@ -4192,6 +4197,55 @@
     } catch (err) {
       el.innerHTML = '<div class="empty">__AZICON_ERROR__ بررسی امنیتی ناموفق: ' + esc(errorText(err)) + '</div>';
     }
+  }
+
+  async function loadReports() {
+    const el=$('salesReport');
+    if(!el) return;
+    const days=Math.max(1,Math.min(3650,Number($('reportPeriod')?.value||30)||30));
+    const since=new Date(Date.now()-days*86400000).toISOString();
+    el.innerHTML='<div class="az-skeleton"></div>';
+    const [o,i]=await Promise.all([
+      state.db.from('orders').select('id,order_code,total,discount,shipping_cost,status,payment_status,created_at').gte('created_at',since).not('status','eq','cancelled').order('created_at',{ascending:true}).limit(5000),
+      state.db.from('order_items').select('order_id,product_name,quantity,line_total')
+    ]);
+    if(o.error||i.error){ el.innerHTML='<div class="empty">__AZICON_ERROR__ دریافت گزارش فروش ناموفق بود: '+esc(errorText(o.error||i.error))+'</div>'; return; }
+    const orders=o.data||[], items=i.data||[];
+    const paidLike=new Set(['paid','partially_refunded','refunded']);
+    const gross=orders.reduce((s,x)=>s+Number(x.total||0),0);
+    const count=orders.length;
+    const paid=orders.filter(x=>paidLike.has(String(x.payment_status||''))).reduce((s,x)=>s+Number(x.total||0),0);
+    const avg=count?gross/count:0;
+    const daily=new Map();
+    const orderIds=new Set(orders.map(x=>x.id));
+    for(const o of orders){
+      const k=new Date(o.created_at).toISOString().slice(0,10);
+      daily.set(k,(daily.get(k)||0)+Number(o.total||0));
+    }
+    const top=new Map();
+    for(const x of items){
+      if(!orderIds.has(x.order_id)) continue;
+      const key=String(x.product_name||'بدون نام');
+      const row=top.get(key)||{qty:0,amount:0};
+      row.qty+=Number(x.quantity||0); row.amount+=Number(x.line_total||0); top.set(key,row);
+    }
+    const topRows=[...top.entries()].sort((a,b)=>b[1].qty-a[1].qty).slice(0,10);
+    const dailyRows=[...daily.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    const card=(label,value,sub)=>'<div class="card"><div class="k">'+esc(label)+'</div><div class="v">'+esc(value)+'</div><div class="s">'+esc(sub||'')+'</div></div>';
+    el.innerHTML='<div class="cards" style="margin-top:12px">'+
+      card('سفارش غیرلغوشده',count.toLocaleString('fa-IR'),'در بازه انتخابی')+
+      card('فروش ثبت‌شده',money(gross),'جمع کل سفارش‌ها')+
+      card('پرداخت قطعی/عودت‌شده',money(paid),'بر اساس وضعیت پرداخت')+
+      card('میانگین سفارش',money(Math.round(avg)),'بدون سفارش‌های لغوشده')+
+      '</div>'+
+      '<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>روند روزانه فروش</h3><span class="muted">'+esc(days)+' روز اخیر</span></div>'+
+      '<div class="table-wrap"><table class="table"><thead><tr><th>روز</th><th>فروش</th></tr></thead><tbody>'+
+      (dailyRows.length?dailyRows.map(([d,v])=>'<tr><td dir="ltr">'+esc(d)+'</td><td>'+money(v)+'</td></tr>').join(''):'<tr><td colspan="2">داده‌ای نیست.</td></tr>')+
+      '</tbody></table></div></div>'+
+      '<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>محصولات پرفروش</h3><span class="muted">بر مبنای تعداد</span></div>'+
+      '<div class="table-wrap"><table class="table"><thead><tr><th>محصول</th><th>تعداد</th><th>مبلغ خطوط</th></tr></thead><tbody>'+
+      (topRows.length?topRows.map(([n,v])=>'<tr><td>'+esc(n)+'</td><td>'+Number(v.qty).toLocaleString('fa-IR')+'</td><td>'+money(v.amount)+'</td></tr>').join(''):'<tr><td colspan="3">داده‌ای نیست.</td></tr>')+
+      '</tbody></table></div></div>';
   }
 
   async function loadAudit() {
