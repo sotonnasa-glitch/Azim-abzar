@@ -2402,6 +2402,8 @@
       '<div class="field"><label>ارسال</label><select class="select" name="shipping_status">' + selectOptions(['pending','packed','shipped','delivered'], x?.shipping_status || 'pending', labels) + '</select></div>' +
       '<div class="field"><label>مبلغ نهایی محاسبه‌شده</label><input class="input" name="total" type="number" min="0" value="' + esc(x?.total ?? 0) + '" readonly aria-readonly="true"><div id="orderTotalPreview" class="muted" style="margin-top:4px">با اقلام، ارسال و تخفیف به‌صورت خودکار محاسبه می‌شود.</div></div>' +
       '<div class="field"><label>کد رهگیری</label><input class="input" name="tracking_code" value="' + esc(x?.tracking_code) + '"></div>' +
+      '<div class="field"><label>لینک کامل پیگیری مرسوله</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr" value="' + esc(x?.tracking_url || '') + '" placeholder="https://..."></div>' +
+      '<div class="field"><label>شرکت ارسال</label><input class="input" name="shipping_carrier" maxlength="120" value="' + esc(x?.shipping_carrier || '') + '" placeholder="نام شرکت ارسال"></div>' +
       '<div class="field"><label>کد تخفیف</label><div class="tools" style="width:100%"><input class="input" name="discount_code" dir="ltr" value="' + esc(x?.discount_code || '') + '" placeholder="مثلاً AZIM20"><button type="button" id="applyOrderDiscountBtn" class="btn secondary">اعمال تخفیف</button></div><div id="orderDiscountStatus" class="status"></div><input type="hidden" name="discount" value="' + esc(x?.discount ?? 0) + '"></div>' +
       '<div class="field"><label>هزینه ارسال</label><input class="input" name="shipping_cost" type="number" min="0" value="' + esc(x?.shipping_cost ?? 0) + '"></div>' +
       '<div class="field full"><label>یادداشت</label><textarea class="textarea" name="notes">' + esc(x?.notes) + '</textarea></div>' +
@@ -2634,7 +2636,9 @@
         p_tracking_code: s.tracking_code.value.trim() || null,
         p_notes: s.notes.value.trim() || null,
         p_discount_code: discountCode || null,
-        p_items: items
+        p_items: items,
+        p_tracking_url: s.tracking_url?.value.trim() || null,
+        p_shipping_carrier: s.shipping_carrier?.value.trim() || null
       });
       if (rpc.error) throw rpc.error;
 
