@@ -3,6 +3,34 @@
 
 begin;
 
+
+create or replace function private.azim_prepare_telegram_audit_actor()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_actor uuid;
+begin
+  if auth.uid() is not null then
+    return;
+  end if;
+  select user_id into v_actor
+  from public.admin_users
+  where is_active=true and role in ('owner','admin')
+  order by case when role='owner' then 0 else 1 end, created_at
+  limit 1;
+  if v_actor is null then
+    raise exception using message='برای ثبت عملیات تلگرام، یک مدیر فعال در سامانه لازم است.';
+  end if;
+  perform set_config('request.jwt.claim.sub',v_actor::text,true);
+end;
+$function$;
+
+revoke all on function private.azim_prepare_telegram_audit_actor() from public;
+
+
 CREATE OR REPLACE FUNCTION public.azim_telegram_handle_cancel_request(p_request_id uuid, p_action text, p_actor_ref text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -21,6 +49,7 @@ declare
   v_remaining bigint:=0;
   v_refunded bigint:=0;
 begin
+  perform private.azim_prepare_telegram_audit_actor();
   select * into v_req from public.order_action_requests where id=p_request_id for update;
   if not found then raise exception using message='درخواست لغو پیدا نشد.'; end if;
   if v_req.request_type<>'cancel' then raise exception using message='این درخواست از نوع لغو نیست.'; end if;
@@ -192,7 +221,7 @@ begin
 
   raise exception using message='عملیات لغو نامعتبر است.';
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.azim_telegram_handle_return_request(p_request_id uuid, p_action text, p_actor_ref text DEFAULT NULL::text)
@@ -213,6 +242,7 @@ declare
   v_total_refund bigint:=0;
   v_remaining bigint:=0;
 begin
+  perform private.azim_prepare_telegram_audit_actor();
   select * into v_req from public.order_return_requests where id=p_request_id for update;
   if not found then raise exception using message='درخواست مرجوعی پیدا نشد.'; end if;
 
@@ -352,7 +382,7 @@ begin
 
   raise exception using message='عملیات مرجوعی نامعتبر است.';
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.azim_telegram_request_online_refund(p_order_code text, p_actor_ref text DEFAULT NULL::text, p_reason text DEFAULT NULL::text)
@@ -368,6 +398,7 @@ declare
   v_refunded bigint:=0;
   v_remaining bigint:=0;
 begin
+  perform private.azim_prepare_telegram_audit_actor();
   select * into v_order from public.orders
   where order_code=upper(trim(coalesce(p_order_code,''))) for update;
   if not found then raise exception using message='سفارش پیدا نشد.'; end if;
@@ -406,7 +437,7 @@ begin
 
   return v_refund || jsonb_build_object('order_code',v_order.order_code,'payment_status',v_order.payment_status);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.azim_telegram_set_offline_payment(p_order_code text, p_next_payment text, p_actor_ref text DEFAULT NULL::text)
@@ -421,6 +452,7 @@ declare
   v_prev text;
   v_now timestamptz := now();
 begin
+  perform private.azim_prepare_telegram_audit_actor();
   select * into v_order
   from public.orders
   where order_code=upper(trim(coalesce(p_order_code,'')))
@@ -479,7 +511,7 @@ begin
     'payment_method',v_order.payment_method
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.azim_telegram_transition_order(p_order_code text, p_next_status text, p_reason text DEFAULT NULL::text, p_actor_ref text DEFAULT NULL::text)
@@ -499,6 +531,7 @@ declare
   v_remaining bigint := 0;
   v_refund jsonb;
 begin
+  perform private.azim_prepare_telegram_audit_actor();
   select * into v_order
   from public.orders
   where order_code=upper(trim(coalesce(p_order_code,'')))
@@ -631,7 +664,7 @@ begin
     ))
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.azim_telegram_transition_shipping(p_order_code text, p_next_shipping text, p_actor_ref text DEFAULT NULL::text)
@@ -646,6 +679,7 @@ declare
   v_prev text;
   v_now timestamptz := now();
 begin
+  perform private.azim_prepare_telegram_audit_actor();
   select * into v_order
   from public.orders
   where order_code=upper(trim(coalesce(p_order_code,'')))
@@ -699,7 +733,7 @@ begin
     'payment_method',v_order.payment_method
   );
 end;
-$function$
+$function$;
 
 
 
