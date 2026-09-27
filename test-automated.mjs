@@ -507,6 +507,7 @@ function testAuditAddendumGuards() {
   const paymentReconcileJs = fs.readFileSync(path.join(__dirname, 'supabase', 'functions', 'azim-payment-reconcile', 'index.ts'), 'utf8');
   const telegramAdminJs = fs.readFileSync(path.join(__dirname, 'supabase', 'functions', 'azim-telegram-admin', 'index.ts'), 'utf8');
   const checkoutSql = fs.readFileSync(path.join(__dirname, 'database', 'checkout-actions.sql'), 'utf8');
+  const publicCartSql = fs.readFileSync(path.join(__dirname, 'database', 'public-cart.sql'), 'utf8');
   const cartPages = ['cart.html', 'index.html', 'contact.html', 'products-v4.html']
     .map(name => [name, fs.readFileSync(path.join(__dirname, name), 'utf8')]);
 
@@ -558,9 +559,10 @@ function testAuditAddendumGuards() {
   }
 
   if (
-    adminJs.includes("هیچ دکمه‌ای در این پنل پرداخت را دستی موفق نمی‌کند") &&
+    adminJs.includes("پرداختی دستی «موفق» یا «مرجوع» نمی‌شود") &&
     adminJs.includes("reference کامل ماسک شده است") &&
-    adminJs.includes("پرداخت آنلاین فعال شد")
+    adminJs.includes("پرداخت آنلاین فعال شد") &&
+    adminJs.includes("gateway_reference_masked")
   ) {
     pass('پنل پرداخت از نمایش Secret، تأیید دستی پرداخت و Reference کامل جلوگیری می‌کند');
   } else {
@@ -592,10 +594,12 @@ function testAuditAddendumGuards() {
   }
 
   if (
-    checkoutSql.includes("from public.products") &&
-    checkoutSql.includes("v_product.price") &&
-    checkoutSql.includes("v_variant_price") &&
-    checkoutSql.includes("v_total")
+    publicCartSql.includes("from public.products") &&
+    publicCartSql.includes("v_product.price") &&
+    publicCartSql.includes("v_variant_price") &&
+    publicCartSql.includes("v_total") &&
+    checkoutSql.includes("v_method='online'") &&
+    checkoutSql.includes("gateway_ready")
   ) {
     pass('مبلغ پرداخت از قیمت جاری محصول/سایز در دیتابیس ساخته می‌شود و به مبلغ سفارش متصل است');
   } else {
@@ -605,9 +609,10 @@ function testAuditAddendumGuards() {
   if (
     paymentGatewayJs.includes('idempotency_key: transaction.idempotency_key ?? transaction.id') &&
     paymentGatewayJs.includes('const savedStart = await updateTransaction(transaction.id') &&
-    paymentGatewayJs.includes('if (!ready || !provider)') &&
-    paymentReconcileJs.includes('if (!ready || !provider)') &&
-    !paymentReconcileJs.includes('if (!ready || !enabled || !provider)')
+    paymentGatewayJs.includes('Existing payments can be verified') &&
+    paymentReconcileJs.includes('updated_at=lt.') &&
+    paymentReconcileJs.includes('action: "verify"') &&
+    paymentReconcileJs.includes('presentedKey === RECONCILE_SECRET')
   ) {
     pass('منطق retry/تأیید/پایش تراکنش: idempotency حفظ می‌شود و reconcile بعد از خاموشی checkout هم ادامه دارد');
   } else {
@@ -624,7 +629,7 @@ function testAuditAddendumGuards() {
   }
 
   if (
-    telegramAdminJs.includes('if (order.payment_method==="online")') &&
+    telegramAdminJs.includes('paymentMethod === "online"') &&
     telegramAdminJs.includes('supabase.rpc("azim_create_online_refund_request"') &&
     telegramAdminJs.includes('p_idempotency_key:"telegram-cancel-refund:"') &&
     telegramAdminJs.includes('p_idempotency_key:"telegram-return-refund:"')
