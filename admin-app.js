@@ -2377,6 +2377,9 @@
       return '<button class="btn" type="button" data-service-action data-kind="cancel" data-action="approve" data-id="' + esc(row.id) + '">✅ تأیید لغو</button>' +
         '<button class="btn secondary" type="button" data-service-action data-kind="cancel" data-action="reject" data-id="' + esc(row.id) + '">❌ رد درخواست</button>';
     }
+    if (kind === 'cancel' && row.status === 'approved' && row.refund_status === 'pending' && row.payment_method !== 'online') {
+      return '<button class="btn" type="button" data-service-action data-kind="cancel" data-action="refund" data-id="' + esc(row.id) + '">💰 ثبت عودت وجه دستی</button>';
+    }
     if (kind === 'return' && row.status === 'pending') {
       return '<button class="btn" type="button" data-service-action data-kind="return" data-action="approve" data-id="' + esc(row.id) + '">✅ تأیید مرجوعی</button>' +
         '<button class="btn secondary" type="button" data-service-action data-kind="return" data-action="reject" data-id="' + esc(row.id) + '">❌ رد</button>';
@@ -2462,7 +2465,7 @@
         const o = orderMap.get(String(row.order_id)) || {};
         return '<article class="card" style="margin-bottom:10px">' +
           '<div class="panel-head"><div><strong>❌ درخواست لغو</strong><div class="muted">' + esc(o.order_code || 'سفارش نامشخص') + '</div></div><span class="badge warn">' + esc(statusText(row.status)) + '</span></div>' +
-          '<div class="muted" style="line-height:1.9">مشتری: ' + esc(o.customer_name || '—') + ' · پرداخت: ' + esc(labels[o.payment_status] || o.payment_status || '—') + ' · ارسال: ' + esc(labels[o.shipping_status] || o.shipping_status || '—') + '<br>دلیل: ' + esc(row.reason || '—') + '<br>وضعیت عودت: ' + esc(refundText(row.refund_status)) + '</div>' +
+          '<div class="muted" style="line-height:1.9">مشتری: ' + esc(o.customer_name || '—') + ' · پرداخت: ' + esc(labels[o.payment_status] || o.payment_status || '—') + ' · روش پرداخت: ' + esc(o.payment_method || '—') + ' · ارسال: ' + esc(labels[o.shipping_status] || o.shipping_status || '—') + '<br>دلیل: ' + esc(row.reason || '—') + '<br>وضعیت عودت: ' + esc(refundText(row.refund_status)) + '</div>' +
           '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('cancel',row) + '</div>' +
         '</article>';
       }).join('');
