@@ -153,11 +153,15 @@ function orderActionsMarkup(code: string, status: string, payment: string, shipp
     rows.push([{ text: "↩️ ثبت عودت وجه دستی", callback_data: "order_payment:" + code + ":refunded" }]);
   }
 
-  if (shipping === "pending") {
+  if (shipping === "pending" && status === "processing") {
     rows.push([{ text: "📦 بسته‌بندی شد", callback_data: "order_shipping:" + code + ":packed" }]);
-  } else if (shipping === "packed") {
+  } else if (shipping === "pending" && status !== "processing") {
+    rows.push([{ text: "⏳ ابتدا سفارش را وارد «در حال آماده‌سازی» کن", callback_data: "noop" }]);
+  } else if (shipping === "packed" && status === "processing") {
     // «تحویل به شرکت ارسال» فقط بعد از ثبت کامل اطلاعات مرسوله انجام می‌شود.
     rows.push([{ text: "🚚 تحویل به شرکت ارسال", callback_data: "order_tracking:" + code }]);
+  } else if (shipping === "packed" && status !== "processing") {
+    rows.push([{ text: "⏳ ابتدا سفارش باید «در حال آماده‌سازی» باشد", callback_data: "noop" }]);
   } else if (shipping === "shipped") {
     rows.push([{ text: "✅ تحویل شد", callback_data: "order_shipping:" + code + ":delivered" }]);
     rows.push([{ text: "✏️ ویرایش اطلاعات مرسوله", callback_data: "order_tracking:" + code }]);
