@@ -122,6 +122,7 @@ begin
     'order_code',v_order.order_code,
     'status',v_order.status,
     'payment_status',v_order.payment_status,
+    'payment_method',v_order.payment_method,
     'shipping_status',v_order.shipping_status,
     'tracking_code',v_order.tracking_code,
     'tracking_url',v_order.tracking_url,
