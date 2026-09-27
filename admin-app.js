@@ -4078,6 +4078,28 @@
     }
   }
 
+  function setupAdminInvite() {
+    const open=$('inviteAdminBtn'), box=$('adminInviteBox'), form=$('adminInviteForm'), cancel=$('cancelInviteBtn');
+    if(!open||!box||!form) return;
+    open.style.display=can.all()?'':'none';
+    open.onclick=()=>{ box.hidden=false; $('inviteEmail')?.focus(); };
+    cancel?.addEventListener('click',()=>{box.hidden=true;form.reset();if($('inviteStatus'))$('inviteStatus').textContent='';});
+    form.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      if(!can.all()) return;
+      const status=$('inviteStatus'), email=String($('inviteEmail')?.value||'').trim().toLowerCase(),
+        name=String($('inviteName')?.value||'').trim(), role=String($('inviteRole')?.value||'sales');
+      if(status)status.textContent='در حال ارسال دعوت…';
+      try{
+        const {data,error}=await state.db.functions.invoke('azim-admin-invite',{body:{email,name,role}});
+        if(error)throw error;
+        if(!data?.ok)throw new Error(data?.error||'ارسال دعوت ناموفق بود.');
+        if(status)status.textContent='__AZICON_SUCCESS__ دعوت برای '+email+' ارسال شد.';
+        form.reset();box.hidden=true;await loadAdmins();
+      }catch(err){if(status)status.textContent='__AZICON_ERROR__ '+errorText(err);}
+    });
+  }
+
   async function loadAdmins() {
     const r = await state.db.from('admin_users').select('user_id,role,is_active,created_at').order('created_at');
     if (r.error) return showSectionError('adminsTable', r.error);
@@ -4234,10 +4256,12 @@
         return;
       }
       if (!(await requireAdminMFA())) return;
+      setupAdminInvite();
       await loadDashboard();
     };
 
     if (await ensureAdmin()) {
+      setupAdminInvite();
       if (await requireAdminMFA()) await loadDashboard();
     }
   })();
