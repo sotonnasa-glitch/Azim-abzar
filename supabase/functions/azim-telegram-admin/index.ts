@@ -127,8 +127,8 @@ function orderActionsMarkup(code: string, status: string, payment: string, shipp
   }
 
   if (paymentMethod === "online") {
-    if (payment === "paid") {
-      rows.push([{ text: "💰 درخواست عودت وجه", callback_data: "online_refund:" + code }]);
+    if (payment === "paid" || payment === "partially_refunded") {
+      rows.push([{ text: payment === "paid" ? "💰 درخواست عودت وجه" : "💰 درخواست عودت وجه تکمیلی", callback_data: "online_refund:" + code }]);
     } else if (payment === "pending" || payment === "unpaid") {
       rows.push([{ text: "⏳ منتظر تأیید خودکار درگاه", callback_data: "noop" }]);
     } else if (payment === "failed" || payment === "cancelled") {
@@ -1114,7 +1114,7 @@ async function handleCallbackQuery(query: any) {
         throw new Error("این سفارش دیگر قبل از ارسال قابل لغو نیست.");
       }
 
-      const refundStatus = order.payment_status==="paid" ? "pending" : "not_required";
+      const refundStatus = ["paid","partially_refunded"].includes(String(order.payment_status)) ? "pending" : "not_required";
       const nextPayment = order.payment_status==="pending" ? "unpaid" : order.payment_status;
 
       const { error: updateError } = await supabase.from("orders")
@@ -1154,7 +1154,7 @@ async function handleCallbackQuery(query: any) {
     }
 
     if (action==="refund") {
-      if (req.status!=="approved" || req.refund_status!=="pending" || order.payment_status!=="paid") {
+      if (req.status!=="approved" || req.refund_status!=="pending" || !["paid","partially_refunded"].includes(String(order.payment_status))) {
         throw new Error("این درخواست در وضعیت لازم برای ثبت عودت وجه نیست.");
       }
 
@@ -1176,6 +1176,11 @@ async function handleCallbackQuery(query: any) {
           p_idempotency_key:"telegram-cancel-refund:"+requestId
         });
         if (refund.error) throw refund.error;
+
+        const { error: linkError } = await supabase.from("payment_refunds")
+          .update({source_type:"cancel",source_request_id:requestId})
+          .eq("id",refund.data?.refund_id);
+        if (linkError) throw linkError;
 
         await sendText(chatId,
           "🟠 درخواست عودت وجه سفارش " + order.order_code + " ثبت شد.\n\n" +
@@ -1230,7 +1235,7 @@ async function handleCallbackQuery(query: any) {
       if (order.status!=="delivered" && order.shipping_status!=="delivered") {
         throw new Error("مرجوعی فقط برای سفارش تحویل‌شده قابل تأیید است.");
       }
-      const refundStatus = order.payment_status==="paid" ? "pending" : "not_required";
+      const refundStatus = ["paid","partially_refunded"].includes(String(order.payment_status)) ? "pending" : "not_required";
       const { error: requestError } = await supabase.from("order_return_requests")
         .update({status:"approved",refund_status:refundStatus,updated_at:new Date().toISOString()})
         .eq("id",requestId);
@@ -1287,7 +1292,7 @@ async function handleCallbackQuery(query: any) {
     }
 
     if (action==="refund") {
-      if (req.status!=="received" || req.refund_status!=="pending" || order.payment_status!=="paid") {
+      if (req.status!=="received" || req.refund_status!=="pending" || !["paid","partially_refunded"].includes(String(order.payment_status))) {
         throw new Error("این مرجوعی هنوز در وضعیت لازم برای عودت وجه نیست.");
       }
 
@@ -1314,6 +1319,11 @@ async function handleCallbackQuery(query: any) {
           p_idempotency_key:"telegram-return-refund:"+requestId
         });
         if (refund.error) throw refund.error;
+
+        const { error: linkError } = await supabase.from("payment_refunds")
+          .update({source_type:"return",source_request_id:requestId})
+          .eq("id",refund.data?.refund_id);
+        if (linkError) throw linkError;
 
         await sendText(chatId,
           "🟠 درخواست عودت وجه مرجوعی ثبت شد.\n\n" +
