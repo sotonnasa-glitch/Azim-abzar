@@ -644,6 +644,32 @@ function testAuditAddendumGuards() {
   }
 
   if (
+    telegramAdminJs.includes('const authorized = isAdmin(chatId);') &&
+    telegramAdminJs.includes('async function handleCallbackQuery(query: any)') &&
+    telegramAdminJs.includes('supabase.rpc("azim_telegram_set_tracking"')
+  ) {
+    pass('callbackهای تلگرام احراز دسترسی دارند و ثبت مرسوله از RPC امن دیتابیس عبور می‌کند');
+  } else {
+    fail('قفل callback تلگرام یا مسیر امن ثبت مرسوله ناقص است');
+  }
+
+  const telegramMigration = fs.readFileSync(
+    path.join(__dirname, 'supabase', 'migrations', '20260927142000_harden_telegram_tracking_update.sql'),
+    'utf8'
+  );
+  if (
+    telegramMigration.includes('create or replace function public.azim_telegram_set_tracking') &&
+    telegramMigration.includes("v_order.status<>'processing' or v_order.shipping_status<>'packed'") &&
+    telegramMigration.includes("v_order.payment_method='online' and v_order.payment_status<>'paid'") &&
+    telegramMigration.includes("telegram_tracking_update") &&
+    telegramMigration.includes('grant execute on function public.azim_telegram_set_tracking')
+  ) {
+    pass('RPC ثبت مرسوله محدود به state machine، پرداخت آنلاین تأییدشده و audit log است');
+  } else {
+    fail('hardening ثبت مرسوله تلگرام در migration کامل نیست');
+  }
+
+  if (
     paymentGatewayJs.includes('const saved = await updateTransaction(transaction.id, { return_url: desiredReturnUrl });') &&
     checkoutSql.includes("payment_method=v_method")
   ) {
