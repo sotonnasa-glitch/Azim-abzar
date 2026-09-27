@@ -2180,6 +2180,36 @@
       };
     }
 
+    function getWishlist() {
+      try {
+        const raw=localStorage.getItem('azim_wishlist');
+        const arr=JSON.parse(raw||'[]');
+        return new Set(Array.isArray(arr)?arr.map(String):[]);
+      } catch (_) { return new Set(); }
+    }
+
+    function isWishlisted(id) { return getWishlist().has(String(id)); }
+
+    function toggleWishlist(id, button) {
+      const set=getWishlist();
+      const key=String(id);
+      if(set.has(key)) set.delete(key); else set.add(key);
+      try { localStorage.setItem('azim_wishlist',JSON.stringify([...set])); } catch(_){}
+      if(button) button.innerHTML=set.has(key) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی';
+      showToast(set.has(key) ? 'به علاقه‌مندی‌ها اضافه شد.' : 'از علاقه‌مندی‌ها حذف شد.');
+    }
+
+    async function shareProduct(id) {
+      const item=all.find(x=>x.id===id);
+      if(!item) return;
+      const url=new URL('./products-v4.html?id='+encodeURIComponent(id),location.href).href;
+      try {
+        if(navigator.share) { await navigator.share({title:item.name,text:'مشاهده '+item.name+' در عظیم ابزار',url}); return; }
+        await navigator.clipboard.writeText(url);
+        showToast('لینک محصول کپی شد.');
+      } catch (_) {}
+    }
+
     function showToast(msg) {
       const t = document.getElementById('azToast');
       t.textContent = msg;
@@ -2366,7 +2396,11 @@
             <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)" ${x.stock_quantity != null && x.stock_quantity <= 0 ? 'disabled aria-disabled="true"' : ''}>
               <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>${x.stock_quantity != null && x.stock_quantity <= 0 ? '<span>ناموجود</span>' : '<span>افزودن به سبد سفارش</span>'}
             </button>
-            <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
+                        <div style="display:flex;gap:7px;margin-top:7px">
+              <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="toggleWishlist('\${esc(x.id)}', this)"><span>\${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
+              <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="shareProduct('\${esc(x.id)}')"><span>اشتراک‌گذاری</span></button>
+            </div>
+<button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
           </div>
         </article>
       `;
