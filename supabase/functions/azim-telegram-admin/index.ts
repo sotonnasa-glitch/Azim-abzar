@@ -487,9 +487,9 @@ async function showServiceRequests(chatId: number | string) {
     .from("order_action_requests")
     .select("id,order_id,reason,status,refund_status,created_at")
     .eq("request_type","cancel")
-    .or("status.eq.pending,and(status.eq.approved,refund_status.eq.pending)")
+    .in("status",["pending","approved"])
     .order("created_at",{ascending:false})
-    .limit(10);
+    .limit(50);
   if (cancelError) throw cancelError;
 
   const { data: returns, error: returnError } = await supabase
@@ -500,7 +500,7 @@ async function showServiceRequests(chatId: number | string) {
     .limit(10);
   if (returnError) throw returnError;
 
-  const cancelRows:any[] = cancels ?? [];
+  const cancelRows:any[] = (cancels ?? []).filter((r:any) => r.status==="pending" || (r.status==="approved" && r.refund_status==="pending"));
   const returnRows:any[] = returns ?? [];
 
   if (!cancelRows.length && !returnRows.length) {
