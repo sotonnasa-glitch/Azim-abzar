@@ -830,7 +830,6 @@
     $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
     $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
     $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
-    $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
   }
 
   function applyRoleUI() {
