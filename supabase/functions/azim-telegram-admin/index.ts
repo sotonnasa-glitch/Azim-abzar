@@ -548,11 +548,19 @@ async function showInactiveProducts(chatId: number | string) {
     return;
   }
 
-  const lines = data.map((p: any) => "• " + p.code + " — " + p.name + " — " + money(p.price));
+  const rows = (data as any[]).map((p: any) => [{
+    text: "✅ فعال‌سازی " + p.code + " — " + String(p.name).slice(0, 28),
+    callback_data: "product_toggle:" + p.code + ":1",
+  }]);
+  rows.push([{ text: "⬅️ مدیریت محصولات", callback_data: "products_menu" }]);
+  rows.push([{ text: "⬅️ منوی اصلی", callback_data: "menu" }]);
+
   await sendText(
     chatId,
-    "🛑 محصولات غیرفعال:\n\n" + lines.join("\n"),
-    { reply_markup: backMenuMarkup() }
+    "🛑 محصولات غیرفعال:\n\n" +
+    (data as any[]).map((p: any) => "• " + p.code + " — " + p.name + " — " + money(p.price)).join("\n") +
+    "\n\nبرای فعال‌سازی، روی محصول بزن.",
+    { reply_markup: { inline_keyboard: rows } }
   );
 }
 
