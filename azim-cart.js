@@ -140,7 +140,7 @@
     if(!SUPABASE_URL || !ANON_KEY || !state.items.length || state.syncing) return;
     state.syncing = true;
     try{
-      const url = SUPABASE_URL + '/rest/v1/products?select=id,code,name,img,price,variants,is_active,brand,category_name,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
+      const url = SUPABASE_URL + '/rest/v1/products?select=id,code,name,img,price,variants,is_active,stock_quantity,stock_tracking_enabled,brand,category_name,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
       const r = await fetch(url,{
         headers:{apikey:ANON_KEY,Authorization:'Bearer '+ANON_KEY},
         cache:'no-store'
