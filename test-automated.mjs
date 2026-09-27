@@ -653,6 +653,16 @@ function testAuditAddendumGuards() {
     fail('قفل callback تلگرام یا مسیر امن ثبت مرسوله ناقص است');
   }
 
+  if (
+    telegramAdminJs.includes('if (!BOT_TOKEN) {') &&
+    telegramAdminJs.includes('return new Response("service unavailable", { status: 503 });') &&
+    telegramAdminJs.includes('saved.payment_method')
+  ) {
+    pass('Webhook تلگرام در نبود Secret مالی fail-closed است و منوی سفارش روش پرداخت واقعی را حفظ می‌کند');
+  } else {
+    fail('fail-closed وبهوک یا حفظ روش پرداخت پس از ثبت مرسوله ناقص است');
+  }
+
   const telegramMigration = fs.readFileSync(
     path.join(__dirname, 'supabase', 'migrations', '20260927142000_harden_telegram_tracking_update.sql'),
     'utf8'
