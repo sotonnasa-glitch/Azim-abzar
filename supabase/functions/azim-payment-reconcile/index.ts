@@ -10,6 +10,7 @@ const SERVICE_KEY = (() => {
   return String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 })();
 const LEGACY_RECONCILE_SECRET = String(Deno.env.get("AZIM_PAYMENT_RECONCILE_SECRET") ?? "");
+const RECONCILE_AGE_MINUTES = Math.max(1, Math.min(1440, Number(Deno.env.get("PAYMENT_RECONCILE_AGE_MINUTES") || 10) || 10));
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -60,7 +61,7 @@ async function reconcile() {
     return { ok: true, skipped: true, reason: "gateway_provider_missing", checked: 0 };
   }
 
-  const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const cutoff = new Date(Date.now() - RECONCILE_AGE_MINUTES * 60 * 1000).toISOString();
   const q =
     "/rest/v1/payment_transactions?select=id,order_id,status,provider,updated_at" +
     "&provider=eq." + encodeURIComponent(provider) +
