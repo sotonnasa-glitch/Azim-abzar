@@ -54,6 +54,9 @@ begin
     return jsonb_build_object('ok',true,'already_finalized',true,'refund_id',v_refund.id,'status','refunded');
   end if;
 
+  v_source_type := nullif(trim(coalesce(v_refund.source_type,'')),'');
+  v_source_request_id := v_refund.source_request_id;
+
   if v_refund.status not in ('requested','pending','processing','failed','review_required','cancelled') then
     raise exception using message='وضعیت فعلی درخواست عودت وجه نامعتبر است.';
   end if;
