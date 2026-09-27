@@ -42,7 +42,8 @@ const requiredStaticHooks = {
   contactCopyCard: "$('contactCopyCard')?.addEventListener('click'",
   changePasswordBtn: "$('changePasswordBtn')?.addEventListener('click'",
   azMenuLogout: "$('azMenuLogout')?.addEventListener('click'",
-  commandClose: "$('commandClose').onclick=close;"
+  commandClose: "$('commandClose').onclick=close;",
+  refreshServiceRequestsBtn: "$('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());"
 };
 
 for (const [id, needle] of Object.entries(requiredStaticHooks)) {
@@ -72,10 +73,24 @@ const delegatedDataActions = [
   'data-edit-brand','data-toggle-brand','data-edit-inquiry','data-edit-customer',
   'data-edit-order','data-delete-media','data-edit-content','data-filter-category',
   'data-edit-discount','data-toggle-discount','data-delete-discount',
-  'data-new-discount-customer','data-new-discount-product','data-copy-discount'
+  'data-new-discount-customer','data-new-discount-product','data-copy-discount','data-service-action'
 ];
 for (const attr of delegatedDataActions) {
   if (!js.includes("closest('[" + attr + "]')")) fail('no click delegation for ' + attr);
+}
+
+
+const serviceChecks = [
+  "id=\"adminServiceRequestsPanel\"",
+  "id=\"serviceRequestsTable\"",
+  "async function loadServiceRequests()",
+  "async function handleAdminServiceRequest",
+  "azim_admin_handle_return_request",
+  "azim_admin_handle_cancel_request",
+  "await requireAdminMFA()"
+];
+for (const needle of serviceChecks) {
+  if (!html.includes(needle) && !js.includes(needle)) fail('order service request integration missing: ' + needle);
 }
 
 if (!js.includes("if (!canView(name)) return toast('__AZICON_BLOCK__ دسترسی این بخش برای نقش فعلی وجود ندارد.');")) {
