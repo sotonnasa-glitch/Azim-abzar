@@ -1,5 +1,6 @@
 -- Telegram shipping state hardening:
--- keep shipping_status synchronized with the order status machine and require tracking metadata.
+-- shipping_status and orders.status are synchronized for packed -> shipped -> delivered.
+-- tracking code, tracking URL and carrier are mandatory before shipped.
 
 create or replace function public.azim_telegram_transition_shipping(
   p_order_code text,
@@ -75,7 +76,13 @@ begin
   v_prev:=v_order.shipping_status;
 
   update public.orders
-  set shipping_status=v_next, updated_at=v_now
+  set shipping_status=v_next,
+      status=case
+        when v_next='shipped' then 'shipped'
+        when v_next='delivered' then 'delivered'
+        else v_order.status
+      end,
+      updated_at=v_now
   where id=v_order.id;
 
   insert into public.audit_logs(action,entity,entity_id,metadata)
@@ -87,6 +94,12 @@ begin
       'order_code',v_order.order_code,
       'shipping_before',v_prev,
       'shipping_after',v_next,
+      'status_before',v_order.status,
+      'status_after',case
+        when v_next='shipped' then 'shipped'
+        when v_next='delivered' then 'delivered'
+        else v_order.status
+      end,
       'actor_ref',left(coalesce(p_actor_ref,''),120)
     )
   );
@@ -94,8 +107,11 @@ begin
   select * into v_order from public.orders where id=v_order.id;
 
   return jsonb_build_object(
-    'ok',true,'order_code',v_order.order_code,'status',v_order.status,
-    'payment_status',v_order.payment_status,'shipping_status',v_order.shipping_status,
+    'ok',true,
+    'order_code',v_order.order_code,
+    'status',v_order.status,
+    'payment_status',v_order.payment_status,
+    'shipping_status',v_order.shipping_status,
     'payment_method',v_order.payment_method
   );
 end;
