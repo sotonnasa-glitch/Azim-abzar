@@ -788,14 +788,22 @@ async function handleRefund(req: Request, body: any) {
       }).catch(() => null);
       return response({ ok: false, review_required: true, code: message, error: message === "REFUND_SESSION_ID_MISSING" ? "شناسه نشست پرداخت برای عودت وجه در دسترس نیست؛ درخواست برای بررسی نگه داشته شد." : "کلید امن Refund درگاه تنظیم نشده است؛ درخواست برای بررسی نگه داشته شد." }, 409, req);
     }
+    // Refund provider/network failures are financially ambiguous: the provider
+    // may have accepted the refund even if our response was lost. Never mark it
+    // definitively failed in that situation.
     await callServiceRpc("azim_finalize_online_refund", {
       p_refund_id: refundId,
-      p_status: "failed",
+      p_status: "review_required",
       p_response_payload: {},
-      p_error_code: "REFUND_PROVIDER_ERROR",
+      p_error_code: "REFUND_PROVIDER_UNCERTAIN",
       p_error_message: clean(message, 500),
     }).catch(() => null);
-    return response({ ok: false, code: "REFUND_PROVIDER_ERROR", error: "اجرای عودت وجه نزد درگاه ناموفق شد و وضعیت برای بررسی ثبت شد." }, 502, req);
+    return response({
+      ok: false,
+      review_required: true,
+      code: "REFUND_PROVIDER_UNCERTAIN",
+      error: "نتیجه قطعی عودت وجه از درگاه دریافت نشد؛ برای جلوگیری از ثبت عودت تکراری، درخواست در وضعیت بررسی نگه داشته شد.",
+    }, 409, req);
   }
 }
 
