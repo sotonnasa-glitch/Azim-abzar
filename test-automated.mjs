@@ -607,12 +607,16 @@ function testAuditAddendumGuards() {
   }
 
   if (
-    paymentGatewayJs.includes('idempotency_key: transaction.idempotency_key ?? transaction.id') &&
+    paymentGatewayJs.includes('idempotency_key: crypto.randomUUID()') &&
     paymentGatewayJs.includes('const savedStart = await updateTransaction(transaction.id') &&
     paymentGatewayJs.includes('Existing payments can be verified') &&
+    paymentGatewayJs.includes('azim_consume_payment_rate_limit') &&
+    paymentGatewayJs.includes('AUTHORITY_MISMATCH') &&
+    paymentGatewayJs.includes('MISSING_PROVIDER_AMOUNT') &&
     paymentReconcileJs.includes('updated_at=lt.') &&
     paymentReconcileJs.includes('action: "verify"') &&
-    paymentReconcileJs.includes('presentedKey === RECONCILE_SECRET')
+    paymentReconcileJs.includes('azim_validate_reconcile_secret') &&
+    paymentReconcileJs.includes('"x-azim-internal": "reconcile"')
   ) {
     pass('منطق retry/تأیید/پایش تراکنش: idempotency حفظ می‌شود و reconcile بعد از خاموشی checkout هم ادامه دارد');
   } else {
@@ -652,6 +656,53 @@ function testAuditAddendumGuards() {
     pass('saveInquiry علاوه بر RLS، کنترل نقش سمت پنل هم دارد');
   } else {
     fail('saveInquiry کنترل نقش سمت پنل ندارد');
+  }
+
+  const ledgerMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20260927130000_payment_ledger_rate_limit_and_reconciliation.sql'), 'utf8');
+  const rpcMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20260927131500_harden_admin_payment_rpc_and_provider_config.sql'), 'utf8');
+  const rlsMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20260927132000_add_service_role_rls_policies_payment_tables.sql'), 'utf8');
+  const paymentStateDoc = fs.readFileSync(path.join(__dirname, 'PAYMENT_STATE_MACHINE_FA.md'), 'utf8');
+
+  if (
+    ledgerMigration.includes('payment_ledger_entries') &&
+    ledgerMigration.includes('guard_payment_ledger_append_only') &&
+    ledgerMigration.includes('azim_consume_payment_rate_limit') &&
+    ledgerMigration.includes('cron.schedule') &&
+    ledgerMigration.includes('azim_payment_reconcile_secret')
+  ) {
+    pass('Ledger append-only، Rate Limit اتمیک، Vault secret و Cron reconciliation در migration پرداخت ثبت شده‌اند');
+  } else {
+    fail('migration زیرساخت پرداخت کامل نیست');
+  }
+
+  if (
+    rpcMigration.includes('security invoker') &&
+    rpcMigration.includes('private.azim_admin_payment_dashboard_core') &&
+    rpcMigration.includes('recent_reviews')
+  ) {
+    pass('RPCهای حساس پنل پرداخت با wrapperهای INVOKER و coreهای غیر-exposed محافظت شده‌اند');
+  } else {
+    fail('hardening RPCهای حساس پنل ناقص است');
+  }
+
+  if (
+    rlsMigration.includes('payment_ledger_entries_service_role_select') &&
+    rlsMigration.includes('payment_transactions_service_role_select')
+  ) {
+    pass('برای جداول مالی public، policy صریح service_role ثبت شده و دسترسی کلاینت عادی باز نشده است');
+  } else {
+    fail('policyهای RLS مالی کامل نیستند');
+  }
+
+  if (
+    paymentStateDoc.includes('initiated → pending → paid') &&
+    paymentStateDoc.includes('requested → processing → refunded') &&
+    paymentStateDoc.includes('هر ۵ دقیقه') &&
+    paymentStateDoc.includes('online_enabled=false')
+  ) {
+    pass('state machine و شرط فعال‌سازی درگاه در مستندات ثبت شده است');
+  } else {
+    fail('مستند ماشین وضعیت پرداخت ناقص است');
   }
 
   const versions = cartPages.map(([name, html]) => [name, (html.match(/azim-cart\.js\?v=\d+/g) || [])]);
