@@ -121,12 +121,8 @@ function orderActionsMarkup(code: string, status: string, payment: string, shipp
       { text: "❌ لغو", callback_data: "order_status:" + code + ":cancelled" },
     ]);
   } else if (status === "processing") {
-    rows.push([
-      { text: "🚚 ثبت ارسال", callback_data: "order_status:" + code + ":shipped" },
-      { text: "❌ لغو", callback_data: "order_status:" + code + ":cancelled" },
-    ]);
-  } else if (status === "shipped") {
-    rows.push([{ text: "📦 ثبت تحویل", callback_data: "order_status:" + code + ":delivered" }]);
+    // تغییر وضعیت ارسال از بخش shipping کنترل می‌شود تا کد/لینک/شرکت ارسال اجباری بماند.
+    rows.push([{ text: "❌ لغو", callback_data: "order_status:" + code + ":cancelled" }]);
   }
 
   if (paymentMethod === "online") {
@@ -870,7 +866,7 @@ async function handleReplyMessage(msg: any) {
     }
     await sendText(msg.chat.id,
       "🚚 شرکت ارسال\nسفارش: " + orderCode + "\nکد مرسوله: " + trackingCode +
-      "\nلینک: " + (trackingUrl || "بدون لینک") +
+      "\nلینک: " + trackingUrl +
       "\n\nنام شرکت ارسال را بفرست (مثلاً پست، تیپاکس، چاپار). این مورد الزامی است:",
       { reply_markup: forceReplyMarkup() });
     return true;
@@ -1319,12 +1315,20 @@ async function handleCallbackQuery(query: any) {
       await sendText(chatId, "این سفارش دیگر قابل ثبت یا ویرایش اطلاعات مرسوله نیست.");
       return;
     }
-    if (order.shipping_status === "packed" && order.payment_method === "online" && order.payment_status !== "paid") {
-      await sendText(chatId, "⛔ این سفارش آنلاین هنوز پرداخت قطعی ندارد و قابل تحویل به شرکت ارسال نیست.");
+    const editableTrackingState =
+      (order.status === "processing" && order.shipping_status === "packed") ||
+      (order.status === "shipped" && order.shipping_status === "shipped");
+    if (!editableTrackingState) {
+      await sendText(chatId, "ابتدا سفارش را به «در حال آماده‌سازی» و ارسال را به «بسته‌بندی شده» برسان.");
+      return;
+    }
+    if (order.payment_method === "online" && order.payment_status !== "paid") {
+      await sendText(chatId, "⛔ این سفارش آنلاین هنوز پرداخت قطعی ندارد و قابل ثبت/ویرایش اطلاعات مرسوله نیست.");
       return;
     }
     await sendText(chatId,
-      "📦 ثبت کد مرسوله\nسفارش: " + order.order_code +
+      (order.status === "shipped" ? "✏️ ویرایش اطلاعات مرسوله" : "📦 ثبت کد مرسوله") +
+      "\nسفارش: " + order.order_code +
       "\n\nکد مرسوله شرکت ارسال را بفرست:",
       { reply_markup: forceReplyMarkup() });
     return;
