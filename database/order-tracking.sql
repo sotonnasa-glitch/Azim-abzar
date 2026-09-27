@@ -14,7 +14,7 @@ create table if not exists private.azim_order_tracking_rate_limits (
 create index if not exists azim_order_tracking_rate_limits_ip_idx
   on private.azim_order_tracking_rate_limits(ip, created_at desc);
 
-create or replace function private.azim_order_status(p_order_code text)
+create or replace function private.azim_order_status(p_order_code text, p_mobile text)
 returns jsonb
 language plpgsql
 security definer
@@ -22,6 +22,7 @@ set search_path to ''
 as $function$
 declare
   v_code text := upper(trim(coalesce(p_order_code,'')));
+  v_mobile text := private.azim_normalize_mobile(p_mobile);
   v_ip inet := null;
   v_ip_text text := split_part(
     coalesce(current_setting('request.headers',true)::json->>'x-forwarded-for',''),
@@ -29,9 +30,16 @@ declare
   );
   v_result jsonb;
 begin
-  if v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$'
-     and v_code !~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$' then
+  if not (
+    (v_code ~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$' and length(v_code)=24)
+    or
+    (v_code ~ '^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$' and length(v_code)=43)
+  ) then
     return jsonb_build_object('found',false,'message','شناسه سفارش نامعتبر است.');
+  end if;
+
+  if v_mobile !~ '^09[0-9]{9}$' then
+    return jsonb_build_object('found',false,'message','شماره موبایل معتبر وارد کنید.');
   end if;
 
   begin
@@ -41,12 +49,12 @@ begin
   end;
 
   if v_ip is not null and (
-    select count(*) from private.azim_order_tracking_rate_limits
+    select count(*)
+    from private.azim_order_tracking_rate_limits
     where ip=v_ip and created_at > now()-interval '10 minutes'
   ) >= 30 then
     return jsonb_build_object(
-      'found',false,
-      'rate_limited',true,
+      'found',false,'rate_limited',true,
       'message','تعداد درخواست‌های پیگیری زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.'
     );
   end if;
@@ -59,7 +67,6 @@ begin
     'status',o.status,
     'payment_status',o.payment_status,
     'payment_method',o.payment_method,
-    'payment_provider',o.payment_provider,
     'shipping_status',o.shipping_status,
     'tracking_code',nullif(o.tracking_code,''),
     'tracking_url',nullif(o.tracking_url,''),
@@ -67,26 +74,35 @@ begin
     'total',o.total,
     'created_at',o.created_at,
     'updated_at',o.updated_at,
-    'payment_transaction_id',pt.id,
-    'payment_transaction_status',pt.status,
-    'can_retry_payment',(
+    'delivered_at',o.delivered_at,
+    'return_deadline_at',
+      case
+        when o.status='delivered'
+         and o.shipping_status='delivered'
+         and o.delivered_at is not null
+        then o.delivered_at + interval '7 days'
+        else null
+      end,
+    'return_available',
+      o.status='delivered'
+      and o.shipping_status='delivered'
+      and o.delivered_at is not null
+      and now() <= o.delivered_at + interval '7 days',
+    'can_retry_payment',
       o.payment_method='online'
       and o.payment_status in ('failed','cancelled')
       and o.status <> 'cancelled'
-      and o.shipping_status not in ('shipped','delivered')
-    ),
-    'can_cancel',(
+      and o.shipping_status not in ('shipped','delivered'),
+    'can_cancel',
       o.status in ('pending','confirmed','processing')
-      and o.shipping_status not in ('shipped','delivered')
-    ),
-    'cancel_request_status',coalesce((
+      and o.shipping_status not in ('shipped','delivered'),
+    'cancel_request_status',(
       select r.status
       from public.order_action_requests r
-      where r.order_id=o.id
-        and r.request_type='cancel'
+      where r.order_id=o.id and r.request_type='cancel'
       order by r.created_at desc
       limit 1
-    ),null),
+    ),
     'items',coalesce((
       select jsonb_agg(
         jsonb_build_object(
@@ -98,8 +114,7 @@ begin
           'line_total',i.line_total,
           'variant',i.variant,
           'returnable_quantity',greatest(
-            0,
-            i.quantity-coalesce((
+            0,i.quantity-coalesce((
               select sum(r.quantity)
               from public.order_return_requests r
               where r.order_item_id=i.id and r.status<>'rejected'
@@ -130,20 +145,15 @@ begin
   )
   into v_result
   from public.orders o
-  left join lateral (
-    select p.id,p.status
-    from public.payment_transactions p
-    where p.order_id=o.id
-    order by p.created_at desc
-    limit 1
-  ) pt on true
+  left join public.customers c on c.id=o.customer_id
   where upper(o.order_code)=v_code
+    and private.azim_normalize_mobile(coalesce(c.mobile,o.customer_mobile,''))=v_mobile
   limit 1;
 
   if v_result is null then
     return jsonb_build_object(
       'found',false,
-      'message','سفارشی با این شناسه پیدا نشد.'
+      'message','اطلاعات سفارش و شماره موبایل مطابقت ندارد.'
     );
   end if;
 
@@ -151,17 +161,19 @@ begin
 end;
 $function$;
 
-revoke all on function private.azim_order_status(text) from public, anon, authenticated;
-grant execute on function private.azim_order_status(text) to anon;
+revoke all on function private.azim_order_status(text,text) from public, authenticated;
+grant execute on function private.azim_order_status(text,text) to anon, service_role;
 
-create or replace function public.azim_order_status(p_order_code text)
+drop function if exists public.azim_order_status(text);
+create or replace function public.azim_order_status(p_order_code text, p_mobile text)
 returns jsonb
 language sql
 security invoker
 set search_path to ''
 as $function$
-  select private.azim_order_status(p_order_code);
+  select private.azim_order_status(p_order_code,p_mobile);
 $function$;
 
-revoke all on function public.azim_order_status(text) from public, authenticated;
-grant execute on function public.azim_order_status(text) to anon;
+revoke all on function public.azim_order_status(text,text) from public, authenticated;
+grant execute on function public.azim_order_status(text,text) to anon;
+
