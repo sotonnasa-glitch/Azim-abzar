@@ -355,11 +355,18 @@
     const code = normalizeCode($('azInlineOrderCode')?.value);
     const mobile = normalizeMobile($('azInlineOrderMobile')?.value);
 
-    if (!code) return setMessage('کد سفارش را وارد کنید.', 'error');
-    if (!/^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$/.test(code) && !/^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$/.test(code)) {
-      return setMessage('کد سفارش معتبر نیست.', 'error');
+    if (!code) {
+      setMessage('کد سفارش را وارد کنید.', 'error');
+      return false;
     }
-    if (!/^09[0-9]{9}$/.test(mobile)) return setMessage('شماره موبایل معتبر وارد کنید.', 'error');
+    if (!/^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{5}$/.test(code) && !/^AZ-[0-9]{8}-[0-9]{6}-[0-9A-F]{24}$/.test(code)) {
+      setMessage('کد سفارش معتبر نیست.', 'error');
+      return false;
+    }
+    if (!/^09[0-9]{9}$/.test(mobile)) {
+      setMessage('شماره موبایل معتبر وارد کنید.', 'error');
+      return false;
+    }
 
     currentCode = code;
     currentMobile = mobile;
@@ -376,14 +383,17 @@
 
       if (!data?.found) {
         showResultBox(data?.message || 'سفارشی با این مشخصات پیدا نشد.');
-        return setMessage(data?.message || 'سفارش پیدا نشد.', 'error');
+        setMessage(data?.message || 'سفارش پیدا نشد.', 'error');
+        return false;
       }
 
       render(data);
       setMessage('آخرین وضعیت سفارش نمایش داده شد.', 'success');
+      return true;
     } catch (error) {
       showResultBox(error?.message || 'دریافت وضعیت سفارش ناموفق بود.');
       setMessage(error?.message || 'دریافت وضعیت سفارش ناموفق بود.', 'error');
+      return false;
     } finally {
       if (button) button.disabled = false;
     }
@@ -397,8 +407,12 @@
 
   $('azInlineTrackForm')?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    await lookup(false);
-    scheduleRefresh();
+    const ok = await lookup(false);
+    if (ok) scheduleRefresh();
+    else if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
   });
 
   root.querySelectorAll('[data-inline-code]').forEach((button) => {
