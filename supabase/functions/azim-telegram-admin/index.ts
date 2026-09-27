@@ -908,7 +908,13 @@ async function handleReplyMessage(msg: any) {
       "اطلاعات مرسوله در صفحه پیگیری سفارش مشتری ثبت شد.\n" +
       "🔗 لینک پیگیری مشتری:\n" +
       PUBLIC_SITE_URL + "/order-status.html?code=" + encodeURIComponent(saved.order_code),
-      { reply_markup: orderActionsMarkup(saved.order_code, saved.status, saved.payment_status, saved.shipping_status) }
+      { reply_markup: orderActionsMarkup(
+        saved.order_code,
+        saved.status,
+        saved.payment_status,
+        saved.shipping_status,
+        saved.payment_method
+      ) }
     );
     return true;
   }
@@ -1651,6 +1657,10 @@ Deno.serve(async (req) => {
 
     if (req.method !== "POST") {
       return new Response("method not allowed", { status: 405 });
+    }
+
+    if (!BOT_TOKEN) {
+      return new Response("service unavailable", { status: 503 });
     }
 
     const expectedSecret = (await tokenDigestHex()).slice(0, 64);
