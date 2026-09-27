@@ -1709,6 +1709,37 @@
         display: none;
       }
     }
+    /* Inline order tracking / post-delivery services */
+    .az-inline-tracking-section{margin-top:30px}
+    .az-inline-tracking-wrap{max-width:980px;margin:0 auto;padding:24px;border:1px solid rgba(245,185,0,.16);border-radius:24px;background:linear-gradient(145deg,rgba(18,22,19,.96),rgba(8,11,9,.98));box-shadow:0 18px 55px rgba(0,0,0,.28)}
+    .az-inline-tracking-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+    .az-inline-tracking-kicker{font-size:11px;letter-spacing:.08em;color:#f5c83f;font-weight:800;margin-bottom:5px}
+    .az-inline-tracking-title{font-size:24px;font-weight:900;color:#fff;margin:0 0 6px}
+    .az-inline-tracking-desc{margin:0;color:#8f9a93;font-size:13px;line-height:1.8}
+    .az-inline-tracking-form{display:grid;grid-template-columns:1.1fr 1fr auto;gap:10px;align-items:end}
+    .az-inline-tracking-field label,.az-inline-action-box label{display:block;color:#aab3ad;font-size:11px;margin-bottom:6px;font-weight:700}
+    .az-inline-tracking-field input,.az-inline-action-box input,.az-inline-action-box select,.az-inline-action-box textarea{width:100%;border:1px solid rgba(255,255,255,.1);background:#080c09;color:#fff;border-radius:12px;padding:12px 13px;font:inherit;font-size:13px;outline:none}
+    .az-inline-tracking-field input:focus,.az-inline-action-box input:focus,.az-inline-action-box select:focus,.az-inline-action-box textarea:focus{border-color:#f5b900;box-shadow:0 0 0 3px rgba(245,185,0,.1)}
+    .az-inline-track-btn{min-height:46px;border:0;border-radius:12px;padding:0 18px;background:linear-gradient(135deg,#ffd84f,#f5b900);color:#0b110e;font:inherit;font-weight:900;cursor:pointer}
+    .az-inline-track-btn:disabled{opacity:.55;cursor:not-allowed}
+    .az-inline-track-message{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:12px;background:rgba(255,255,255,.03);color:#bcc5bf}
+    .az-inline-track-message.loading{color:#f5d260}.az-inline-track-message.error{color:#ff9a9a;border:1px solid rgba(255,82,82,.2)}.az-inline-track-message.success{color:#76e39b;border:1px solid rgba(46,213,115,.18)}
+    .az-inline-result{margin-top:18px;padding:18px;border-radius:18px;border:1px solid rgba(245,185,0,.15);background:rgba(255,255,255,.02)}
+    .az-inline-result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .az-inline-result-head div{display:flex;flex-direction:column;gap:3px}.az-inline-result-head div span{font-size:10px;color:#7d8781}.az-inline-result-head div strong{font-size:15px;color:#f5d260}
+    .az-inline-status,.az-inline-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid rgba(46,213,115,.25);background:rgba(46,213,115,.08);color:#75e19b;font-size:11px;font-weight:800}
+    .az-inline-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}.az-inline-summary>div{padding:10px 11px;background:#080c09;border:1px solid rgba(255,255,255,.05);border-radius:11px}.az-inline-summary span{display:block;color:#758078;font-size:10px;margin-bottom:4px}.az-inline-summary b{font-size:11px;color:#eef2ef}
+    .az-inline-track-shipment{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:12px 0;padding:12px;border-radius:12px;border:1px dashed rgba(245,185,0,.25);background:rgba(245,185,0,.035)}
+    .az-inline-track-shipment>div{display:flex;flex-direction:column;gap:3px}.az-inline-track-shipment span{color:#7e8982;font-size:10px}.az-inline-track-shipment strong{font-size:14px;color:#ffd84f}.az-inline-track-shipment small,.az-inline-track-shipment a{font-size:10px;color:#aab3ad}.az-inline-track-shipment a{color:#f5c83f}
+    .az-inline-copy{border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:7px 10px;background:rgba(255,255,255,.04);color:#d9dfdb;cursor:pointer;font:inherit;font-size:10px}
+    .az-inline-note{margin:10px 0;padding:9px 11px;border-radius:10px;background:rgba(245,185,0,.045);border:1px solid rgba(245,185,0,.13);color:#9eaaa3;font-size:10px}.az-inline-note b{color:#f5d260}
+    .az-inline-items h3{margin:15px 0 8px;font-size:13px;color:#f1f4f2}.az-inline-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 12px;margin-top:8px;border-radius:12px;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.06)}
+    .az-inline-item-main{display:flex;flex-direction:column;gap:3px}.az-inline-item-main strong{color:#f1f4f2;font-size:11px}.az-inline-item-main span{color:#7f8a83;font-size:9px}.az-inline-item-side{color:#f5d260;font-size:11px;font-weight:800;white-space:nowrap}.az-inline-item-status,.az-inline-item-actions{grid-column:1/-1}.az-inline-action{border:1px solid rgba(245,185,0,.25);border-radius:9px;padding:8px 11px;background:rgba(245,185,0,.08);color:#f6d36d;font:inherit;font-size:10px;font-weight:800;cursor:pointer}.az-inline-action.danger{border-color:rgba(255,82,82,.25);background:rgba(255,82,82,.06);color:#ff9a9a}.az-inline-action.secondary{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#c5cdc8}
+    .az-inline-actions,.az-inline-form-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.az-inline-action-box{margin-top:12px;padding:13px;border-radius:12px;background:#080c09;border:1px solid rgba(255,255,255,.07)}.az-inline-action-box h3{margin:0 0 6px;font-size:13px;color:#fff}.az-inline-action-box p{margin:0 0 10px;color:#87928b;font-size:10px;line-height:1.8}.az-inline-action-box textarea{min-height:76px;resize:vertical}.az-inline-action-box input,.az-inline-action-box select,.az-inline-action-box textarea{margin-bottom:8px}
+    .az-inline-empty{padding:15px;text-align:center;color:#7d8881;font-size:11px}
+    @media(max-width:760px){.az-inline-tracking-form{grid-template-columns:1fr}.az-inline-summary{grid-template-columns:1fr 1fr}.az-inline-tracking-wrap{padding:18px;border-radius:19px}}
+    @media(max-width:430px){.az-inline-summary{grid-template-columns:1fr}.az-inline-tracking-title{font-size:20px}.az-inline-item{grid-template-columns:1fr}.az-inline-item-side{grid-column:1}}
+
   </style>
   <link rel="stylesheet" href="./azim-home-categories.css?v=1">
 </head>
@@ -1776,7 +1807,7 @@
         </a>
 
         <!-- دکمه ۴: پیگیری سفارش آنلاین با رادار متحرک ۳۶۰ درجه و سیگنال سونار -->
-        <a class="az-nav-btn az-nav-btn-tracking" href="order-status.html" id="nav-btn-tracking">
+        <a class="az-nav-btn az-nav-btn-tracking" href="#orderTrackingSection" id="nav-btn-tracking">
           <span class="az-anim-icon-wrap az-anim-tracking" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
               <!-- Sonar Rings Expanding -->
@@ -2117,6 +2148,31 @@
         </div>
       </div>
     </section>
+  <section id="orderTrackingSection" class="az-inline-tracking-section" aria-labelledby="orderTrackingTitle">
+    <div class="az-inline-tracking-wrap" id="azInlineOrderTracking">
+      <div class="az-inline-tracking-head">
+        <div>
+          <div class="az-inline-tracking-kicker">ORDER CENTER</div>
+          <h2 id="orderTrackingTitle" class="az-inline-tracking-title">پیگیری سفارش</h2>
+          <p class="az-inline-tracking-desc">کد سفارش و شماره موبایلی که هنگام ثبت سفارش وارد کرده‌اید را وارد کنید؛ وضعیت، ارسال و خدمات پس از تحویل همین‌جا نمایش داده می‌شود.</p>
+        </div>
+      </div>
+      <form id="azInlineTrackForm" class="az-inline-tracking-form" novalidate>
+        <div class="az-inline-tracking-field">
+          <label for="azInlineOrderCode">کد سفارش</label>
+          <input id="azInlineOrderCode" dir="ltr" autocomplete="off" spellcheck="false" maxlength="43" placeholder="AZ-20260921-152857-C7716">
+        </div>
+        <div class="az-inline-tracking-field">
+          <label for="azInlineOrderMobile">شماره موبایل سفارش</label>
+          <input id="azInlineOrderMobile" dir="ltr" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="09122394597">
+        </div>
+        <button id="azInlineTrackBtn" class="az-inline-track-btn" type="submit">استعلام سفارش</button>
+      </form>
+      <div id="azInlineTrackingMessage" class="az-inline-track-message" hidden></div>
+      <div class="az-inline-result" hidden></div>
+    </div>
+  </section>
+
   </main>
 
   <!-- Rich Comprehensive Footer (فوتر جامع و پرمحتوا با انیمیشن‌های زنده) -->
@@ -2223,7 +2279,7 @@
           <li><a href="index.html">صفحه اصلی فروشگاه</a></li>
           <li><a href="products-v4.html">کاتالوگ و لیست کامل محصولات</a></li>
           <li><a href="cart.html">سبد خرید و صدور پیش‌فاکتور</a></li>
-          <li><a href="order-status.html">پیگیری وضعیت و رهگیری سفارش</a></li>
+          <li><a href="#orderTrackingSection">پیگیری وضعیت و رهگیری سفارش</a></li>
           <li><a href="contact.html">مشاوره فنی و ارتباط با مدیریت</a></li>
         </ul>
       </div>
@@ -2267,6 +2323,7 @@
   <script src="./azim-motion.js?v=8" defer></script>
   <script src="./azim-home-copy.js?v=9" defer></script>
   <script src="./supabase-config.js"></script>
+  <script src="./azim-order-tracking-inline.js?v=1" defer></script>
   <script src="./azim-cart.js?v=5"></script>
   <script src="./azim-live-content.js?v=4" defer></script>
   <script src="./azim-home-categories.js?v=1" defer></script>
