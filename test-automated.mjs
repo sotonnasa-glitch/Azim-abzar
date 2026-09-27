@@ -68,7 +68,7 @@ function testNavigation() {
   const expectedNavRoutes = [
     { text: 'صفحه اصلی', route: '#home' },
     { text: 'کاتالوگ محصولات', route: 'products-v4.html' },
-    { text: 'پیگیری سفارش', route: 'order-status.html' },
+    { text: 'پیگیری سفارش', route: '#orderTrackingSection' },
     { text: 'ارتباط و سفارش', route: 'contact.html' }
   ];
 
@@ -82,6 +82,19 @@ function testNavigation() {
     } else {
       fail(`دکمه ناوبری «${item.text}» به مقصد صحیح متصل نیست`);
     }
+  });
+
+  const inlineTrackingHooks = [
+    'id="orderTrackingSection"',
+    'id="azInlineOrderTracking"',
+    'id="azInlineTrackForm"',
+    'id="azInlineOrderCode"',
+    'id="azInlineOrderMobile"',
+    './azim-order-tracking-inline.js?v=1'
+  ];
+  inlineTrackingHooks.forEach((needle) => {
+    if (indexHtml.includes(needle)) pass('هوک پیگیری سفارش در صفحه اصلی موجود است', needle);
+    else fail('هوک پیگیری سفارش در صفحه اصلی پیدا نشد', needle);
   });
 
   // Hero CTA buttons
