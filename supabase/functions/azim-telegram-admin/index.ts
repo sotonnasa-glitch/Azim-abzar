@@ -123,6 +123,8 @@ function orderActionsMarkup(code: string, status: string, payment: string, shipp
   } else if (status === "processing") {
     // تغییر وضعیت ارسال از بخش shipping کنترل می‌شود تا کد/لینک/شرکت ارسال اجباری بماند.
     rows.push([{ text: "❌ لغو", callback_data: "order_status:" + code + ":cancelled" }]);
+  } else if (status === "cancelled") {
+    rows.push([{ text: "🔄 بازگرداندن سفارش به جاری", callback_data: "restore_cancelled:" + code }]);
   }
 
   if (paymentMethod === "online") {
@@ -1152,6 +1154,74 @@ async function handleCallbackQuery(query: any) {
 
   if (data === "cancelled_orders") {
     await showArchivedOrders(chatId, "cancelled");
+    return;
+  }
+
+  if (data.startsWith("restore_cancelled:")) {
+    const orderCode = data.slice("restore_cancelled:".length);
+    const supabase = await getSupabase();
+    const { data: order, error } = await supabase.from("orders")
+      .select("order_code,status,payment_status,payment_method,shipping_status,total")
+      .eq("order_code", orderCode)
+      .maybeSingle();
+    if (error) throw error;
+    if (!order) {
+      await sendText(chatId, "سفارش پیدا نشد: " + orderCode);
+      return;
+    }
+    if (order.status !== "cancelled") {
+      await sendText(chatId, "این سفارش دیگر لغوشده نیست و بازگردانی لازم ندارد.", {
+        reply_markup: { inline_keyboard: [[{ text: "📄 سفارش", callback_data: "order:" + order.order_code }]] }
+      });
+      return;
+    }
+
+    await sendText(
+      chatId,
+      "🔄 بازگردانی سفارش\n\n" +
+      "سفارش: " + order.order_code + "\n" +
+      "مبلغ: " + money(order.total) + "\n" +
+      "پرداخت فعلی: " + paymentStatusLabel(order.payment_status) + "\n" +
+      "روش پرداخت: " + paymentMethodLabel(order.payment_method) + "\n\n" +
+      "سفارش به «در انتظار تأیید» برمی‌گردد و وضعیت ارسال «در انتظار ارسال» می‌شود.\n" +
+      "اطلاعات مرسوله قبلی پاک می‌شود.\n\n" +
+      "ادامه می‌دهی؟",
+      { reply_markup: { inline_keyboard: [
+        [{ text: "✅ تأیید بازگردانی", callback_data: "restore_cancelled_confirm:" + order.order_code }],
+        [{ text: "❌ انصراف", callback_data: "order:" + order.order_code }]
+      ]}}
+    );
+    return;
+  }
+
+  if (data.startsWith("restore_cancelled_confirm:")) {
+    const orderCode = data.slice("restore_cancelled_confirm:".length);
+    const supabase = await getSupabase();
+    const { data: result, error } = await supabase.rpc("azim_telegram_restore_cancelled_order", {
+      p_order_code: orderCode,
+      p_actor_ref: String(chatId),
+    });
+    if (error) throw error;
+
+    await sendText(
+      chatId,
+      "✅ سفارش بازگردانی شد.\n\n" +
+      "سفارش: " + result.order_code + "\n" +
+      "وضعیت سفارش: " + orderStatusLabel(result.status) + "\n" +
+      "وضعیت ارسال: " + shippingStatusLabel(result.shipping_status) + "\n" +
+      "وضعیت پرداخت: " + paymentStatusLabel(result.payment_status) + "\n" +
+      "روش پرداخت: " + paymentMethodLabel(result.payment_method) +
+      (result.payment_status === "cancelled" && result.payment_method === "online"
+        ? "\n\n💳 پرداخت قبلی نهایی/بازگردانده شده است؛ برای پرداخت مجدد از صفحه پیگیری سفارش ادامه دهید."
+        : ""),
+      { reply_markup: orderActionsMarkup(
+        result.order_code,
+        result.status,
+        result.payment_status,
+        result.shipping_status,
+        result.payment_method
+      )}
+    );
     return;
   }
 
