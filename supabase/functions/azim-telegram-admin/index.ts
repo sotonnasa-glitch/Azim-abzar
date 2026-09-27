@@ -328,15 +328,22 @@ async function showArchivedOrders(chatId: number | string, kind: "completed" | "
     return;
   }
 
-  const rows = (data as any[]).map((o) => ([
-    {
+  const rows = (data as any[]).map((o) => {
+    const orderButton = {
       text:
         (kind === "completed" ? "✅ " : "❌ ") +
         String(o.order_code).replace(/^AZ-/, "") +
         " • " + paymentStatusLabel(o.payment_status),
       callback_data: "order:" + o.order_code,
-    },
-  ]));
+    };
+    if (kind === "cancelled") {
+      return [
+        orderButton,
+        { text: "🔄 بازگردانی", callback_data: "restore_cancelled:" + o.order_code },
+      ];
+    }
+    return [orderButton];
+  });
 
   rows.push([
     { text: "🗂 آرشیو", callback_data: "order_archive" },
