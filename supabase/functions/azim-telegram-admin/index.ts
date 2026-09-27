@@ -486,7 +486,8 @@ async function showServiceRequests(chatId: number | string) {
   const { data: cancels, error: cancelError } = await supabase
     .from("order_action_requests")
     .select("id,order_id,reason,status,refund_status,created_at")
-    .eq("status","pending")
+    .eq("request_type","cancel")
+    .or("status.eq.pending,and(status.eq.approved,refund_status.eq.pending)")
     .order("created_at",{ascending:false})
     .limit(10);
   if (cancelError) throw cancelError;
@@ -520,20 +521,29 @@ async function showServiceRequests(chatId: number | string) {
       .eq("id",r.order_id).maybeSingle();
     if (error) throw error;
 
+    const cancelButtons:any[]=[];
+    if (r.status==="pending") {
+      cancelButtons.push([
+        {text:"✅ تأیید لغو",callback_data:"cancel_request:"+r.id+":approve"},
+        {text:"❌ رد درخواست",callback_data:"cancel_request:"+r.id+":reject"}
+      ]);
+    } else if (r.status==="approved" && r.refund_status==="pending" && order?.payment_method!=="online") {
+      cancelButtons.push([{text:"💰 ثبت عودت وجه دستی",callback_data:"cancel_request:"+r.id+":refund"}]);
+    } else if (r.status==="approved" && r.refund_status==="pending" && order?.payment_method==="online") {
+      cancelButtons.push([{text:"⏳ عودت آنلاین در حال پردازش",callback_data:"noop"}]);
+    }
+
     await sendText(chatId,
       "❌ درخواست لغو\n\n" +
       "سفارش: " + (order?.order_code ?? r.order_id) + "\n" +
-      "وضعیت: " + orderStatusLabel(order?.status) + "\n" +
+      "وضعیت درخواست: " + (r.status==="approved" ? "تأیید شده" : "در انتظار بررسی") + "\n" +
+      "وضعیت سفارش: " + orderStatusLabel(order?.status) + "\n" +
       "پرداخت: " + paymentStatusLabel(order?.payment_status) + "\n" +
       "روش پرداخت: " + paymentMethodLabel(order?.payment_method) + "\n" +
       "مبلغ: " + money(order?.total) + "\n" +
+      "وضعیت عودت: " + (r.refund_status==="pending" ? "در انتظار عودت" : "—") + "\n" +
       "دلیل: " + r.reason,
-      {reply_markup:{inline_keyboard:[
-        [
-          {text:"✅ تأیید لغو",callback_data:"cancel_request:"+r.id+":approve"},
-          {text:"❌ رد درخواست",callback_data:"cancel_request:"+r.id+":reject"}
-        ]
-      ]}}
+      {reply_markup:cancelButtons.length ? {inline_keyboard:cancelButtons} : backMenuMarkup()}
     );
   }
 
