@@ -2344,7 +2344,10 @@
         '</div>' +
         '<div class="az-order-card-foot">' +
           '<span class="az-order-foot-note">' + (x.customer_id ? 'مشتری ثبت‌شده' : 'بدون پرونده مشتری') + '</span>' +
+          '<div class="tools" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
+          (can.sales() && x.status === 'cancelled' ? '<button class="btn ghost az-order-restore" data-restore-order="' + esc(x.order_code || '') + '">🔄 بازگردانی سفارش</button>' : '') +
           (can.sales() ? '<button class="btn secondary az-order-manage" data-edit-order="' + x.id + '">مدیریت سفارش <span>←</span></button>' : '') +
+          '</div>' +
         '</div>' +
       '</article>';
     }).join('');
@@ -2461,6 +2464,59 @@
     state.orderItems = [];
     openModal('سفارش جدید', orderForm(null, c, []));
     wireOrderForm(null);
+  }
+
+  function openRestoreCancelledOrderConfirm(orderCode) {
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه بازگردانی سفارش ندارد.');
+    const code = String(orderCode || '').trim();
+    if (!code) return toast('__AZICON_ERROR__ کد سفارش برای بازگردانی موجود نیست.');
+
+    openModal('تأیید بازگردانی سفارش لغوشده',
+      '<div class="az-payment-confirm-danger">' +
+        '<strong>⚠️ بررسی قبل از بازگردانی</strong>' +
+        '<span>سفارش <b dir="ltr">' + esc(code) + '</b> دوباره وارد سفارش‌های جاری می‌شود.</span>' +
+        '<span>وضعیت سفارش «در انتظار» و وضعیت ارسال «در انتظار ارسال» خواهد شد.</span>' +
+        '<span>اطلاعات مرسوله قبلی (کد، لینک و شرکت ارسال) پاک می‌شود.</span>' +
+        '<span>اگر پرداخت آنلاین قبلی عودت کامل شده باشد، سفارش برای پرداخت مجدد آماده می‌شود؛ عودتِ در حال پردازش، بازگردانی را متوقف می‌کند.</span>' +
+      '</div>' +
+      '<div class="mfa-status" id="restoreOrderStatus"></div>' +
+      '<div class="mfa-actions">' +
+        '<button class="btn" type="button" id="confirmRestoreOrderBtn">✅ تأیید بازگردانی</button>' +
+        '<button class="btn secondary" type="button" onclick="closeModal()">انصراف</button>' +
+      '</div>'
+    );
+
+    $('confirmRestoreOrderBtn')?.addEventListener('click', async () => {
+      const status = $('restoreOrderStatus');
+      const btn = $('confirmRestoreOrderBtn');
+      if (btn) btn.disabled = true;
+      if (!(await requireAdminMFA())) {
+        if (status) status.textContent = '__AZICON_LOCK__ نشست مدیریتی باید با MFA سطح AAL2 تأیید شده باشد.';
+        if (btn) btn.disabled = false;
+        return;
+      }
+      if (status) status.textContent = 'در حال بازگردانی امن سفارش…';
+      try {
+        const r = await state.db.rpc('azim_admin_restore_cancelled_order', {
+          p_order_code: code,
+          p_actor_ref: state.user?.id ? 'admin-panel:' + state.user.id : 'admin-panel'
+        });
+        if (r.error) throw r.error;
+        const data = r.data || {};
+        closeModal();
+        let message = '__AZICON_SUCCESS__ سفارش ' + esc(data.order_code || code) + ' به سفارش‌های جاری بازگردانده شد.';
+        if (data.payment_method === 'online' && data.payment_status === 'cancelled') {
+          message += ' پرداخت آنلاین قبلی عودت شده بوده؛ مشتری می‌تواند پرداخت جدید را از صفحه پیگیری سفارش ادامه دهد.';
+        } else if (data.payment_method !== 'online' && data.payment_status === 'unpaid') {
+          message += ' وضعیت پرداخت روی «پرداخت نشده» قرار گرفت.';
+        }
+        toast(message);
+        await Promise.all([loadOrders(), loadDashboard()]);
+      } catch (err) {
+        if (status) status.textContent = '__AZICON_ERROR__ ' + errorText(err);
+        if (btn) btn.disabled = false;
+      }
+    });
   }
 
   function readOrderItems() {
@@ -4270,6 +4326,7 @@
     const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
     const o = e.target.closest('[data-edit-order]'); if (o) openOrder(o.dataset.editOrder);
+    const ro = e.target.closest('[data-restore-order]'); if (ro) openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder);
     const m = e.target.closest('[data-delete-media]'); if (m) deleteMedia(m.dataset.deleteMedia);
     const co = e.target.closest('[data-edit-content]'); if (co) editContent(co.dataset.editContent);
     const fc = e.target.closest('[data-filter-category]'); if (fc) { $('productSearch').value=''; if ($('productCategoryFilter')) $('productCategoryFilter').value=fc.dataset.filterCategory; setView('products'); }
