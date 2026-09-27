@@ -74,7 +74,10 @@ function mainMenuMarkup() {
   return {
     inline_keyboard: [
       [
-        { text: "📦 سفارش‌ها", callback_data: "orders" },
+        { text: "📦 سفارش‌های جاری", callback_data: "orders" },
+        { text: "🗂 آرشیو سفارش‌ها", callback_data: "order_archive" },
+      ],
+      [
         { text: "📊 گزارش فروش", callback_data: "report" },
       ],
       [
@@ -227,42 +230,127 @@ async function getOrdersMessage() {
   const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("orders")
-    .select("order_code,status,payment_status,payment_method,shipping_status,total,tracking_code,tracking_url,shipping_carrier,created_at")
+    .select("order_code,status,payment_status,payment_method,shipping_status,total,created_at")
+    .in("status", ["pending","confirmed","processing","shipped"])
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(20);
 
   if (error) throw error;
   if (!data?.length) {
-    return { text: "📦 هنوز سفارشی ثبت نشده است.", markup: backMenuMarkup() };
+    return {
+      text: "📦 سفارش جاری نداریم.\n\nبرای مشاهده سفارش‌های تحویل‌شده یا لغوشده، «آرشیو سفارش‌ها» را باز کن.",
+      markup: { inline_keyboard: [
+        [{ text: "🗂 آرشیو سفارش‌ها", callback_data: "order_archive" }],
+        [{ text: "⬅️ منوی اصلی", callback_data: "menu" }]
+      ]}
+    };
   }
-
-  const blocks = (data as any[]).map((o, i) => {
-    const tracking = o.tracking_code ? "\n🔖 کد مرسوله: " + o.tracking_code + "\n🚛 شرکت ارسال: " + (o.shipping_carrier || "—") + "\n🔗 لینک پیگیری: " + (o.tracking_url || "—") : "";
-    return (
-      "📦 سفارش " + String(i + 1) + "\n" +
-      "🧾 کد سفارش: " + o.order_code + "\n" +
-      "📌 وضعیت: " + orderStatusLabel(o.status) + "\n" +
-      "💳 پرداخت: " + paymentStatusLabel(o.payment_status) + "\n" +
-      "💳 روش پرداخت: " + paymentMethodLabel(o.payment_method) + "\n" +
-      "🚚 ارسال: " + shippingStatusLabel(o.shipping_status) + tracking + "\n" +
-      "💰 مبلغ: " + money(o.total) + "\n" +
-      "🕐 ثبت: " + orderDate(o.created_at)
-    );
-  });
 
   const rows = (data as any[]).map((o) => ([
     {
-      text: "📄 " + String(o.order_code).replace(/^AZ-/, ""),
+      text:
+        "📦 " + String(o.order_code).replace(/^AZ-/, "") +
+        " • " + orderStatusLabel(o.status) +
+        " • " + paymentStatusLabel(o.payment_status),
       callback_data: "order:" + o.order_code,
     },
   ]));
 
+  rows.push([{ text: "🗂 آرشیو سفارش‌ها", callback_data: "order_archive" }]);
   rows.push([{ text: "⬅️ منوی اصلی", callback_data: "menu" }]);
 
   return {
-    text: "📦 ۱۰ سفارش اخیر\n\n" + blocks.join("\n\n────────────\n\n"),
+    text:
+      "📦 سفارش‌های جاری\n\n" +
+      "تعداد نمایش: " + String(data.length) + "\n" +
+      "برای دیدن جزئیات هر سفارش روی همان سفارش بزن.",
     markup: { inline_keyboard: rows },
   };
+}
+
+async function showOrderArchive(chatId: number | string) {
+  const supabase = await getSupabase();
+
+  const { count: completedCount, error: completedCountError } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "delivered");
+  if (completedCountError) throw completedCountError;
+
+  const { count: cancelledCount, error: cancelledCountError } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "cancelled");
+  if (cancelledCountError) throw cancelledCountError;
+
+  await sendText(
+    chatId,
+    "🗂 آرشیو سفارش‌ها\n\n" +
+    "✅ تکمیل‌شده: " + String(completedCount ?? 0) + "\n" +
+    "❌ لغوشده: " + String(cancelledCount ?? 0) + "\n\n" +
+    "جزئیات هر سفارش فقط بعد از انتخاب آن نمایش داده می‌شود.",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "✅ تکمیل‌شده", callback_data: "completed_orders" },
+            { text: "❌ لغوشده", callback_data: "cancelled_orders" },
+          ],
+          [{ text: "⬅️ سفارش‌های جاری", callback_data: "orders" }],
+          [{ text: "⬅️ منوی اصلی", callback_data: "menu" }],
+        ],
+      },
+    }
+  );
+}
+
+async function showArchivedOrders(chatId: number | string, kind: "completed" | "cancelled") {
+  const supabase = await getSupabase();
+  const status = kind === "completed" ? "delivered" : "cancelled";
+  const title = kind === "completed" ? "✅ سفارش‌های تکمیل‌شده" : "❌ سفارش‌های لغوشده";
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("order_code,status,payment_status,payment_method,shipping_status,total,created_at")
+    .eq("status", status)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) throw error;
+
+  if (!data?.length) {
+    await sendText(chatId, title + "\n\nموردی ثبت نشده است.", {
+      reply_markup: { inline_keyboard: [
+        [{ text: "🗂 آرشیو سفارش‌ها", callback_data: "order_archive" }],
+        [{ text: "⬅️ منوی اصلی", callback_data: "menu" }],
+      ]},
+    });
+    return;
+  }
+
+  const rows = (data as any[]).map((o) => ([
+    {
+      text:
+        (kind === "completed" ? "✅ " : "❌ ") +
+        String(o.order_code).replace(/^AZ-/, "") +
+        " • " + paymentStatusLabel(o.payment_status),
+      callback_data: "order:" + o.order_code,
+    },
+  ]));
+
+  rows.push([
+    { text: "🗂 آرشیو", callback_data: "order_archive" },
+    { text: "📦 جاری", callback_data: "orders" },
+  ]);
+  rows.push([{ text: "⬅️ منوی اصلی", callback_data: "menu" }]);
+
+  await sendText(
+    chatId,
+    title + "\n\n" +
+    "آخرین " + String(data.length) + " مورد نمایش داده می‌شود.\n" +
+    "برای جزئیات روی سفارش بزن.",
+    { reply_markup: { inline_keyboard: rows } }
+  );
 }
 
 async function showOrder(chatId: number | string, code: string) {
@@ -1045,6 +1133,21 @@ async function handleCallbackQuery(query: any) {
   if (data === "orders") {
     const result = await getOrdersMessage();
     await sendText(chatId, result.text, { reply_markup: result.markup });
+    return;
+  }
+
+  if (data === "order_archive") {
+    await showOrderArchive(chatId);
+    return;
+  }
+
+  if (data === "completed_orders") {
+    await showArchivedOrders(chatId, "completed");
+    return;
+  }
+
+  if (data === "cancelled_orders") {
+    await showArchivedOrders(chatId, "cancelled");
     return;
   }
 
