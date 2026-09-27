@@ -536,7 +536,7 @@ function testAuditAddendumGuards() {
   }
 
   if (
-    adminJs.includes("const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);") &&
+    adminJs.includes("const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings', 'checkout_rules']);") &&
     adminJs.includes("if (clean === 'checkout_payment') return false;") &&
     adminJs.includes("if (!canEditContentKey(key)) return toast('__AZICON_BLOCK__ این بخش فقط توسط مدیران قابل ذخیره است.')") &&
     adminJs.includes("state.db.rpc('azim_admin_set_online_payment_enabled'")
