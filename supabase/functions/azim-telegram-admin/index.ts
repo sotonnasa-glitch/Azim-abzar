@@ -156,13 +156,11 @@ function orderActionsMarkup(code: string, status: string, payment: string, shipp
   if (shipping === "pending") {
     rows.push([{ text: "📦 بسته‌بندی شد", callback_data: "order_shipping:" + code + ":packed" }]);
   } else if (shipping === "packed") {
-    rows.push([{ text: "🚚 ارسال شد", callback_data: "order_shipping:" + code + ":shipped" }]);
+    // «تحویل به شرکت ارسال» فقط بعد از ثبت کامل اطلاعات مرسوله انجام می‌شود.
+    rows.push([{ text: "🚚 تحویل به شرکت ارسال", callback_data: "order_tracking:" + code }]);
   } else if (shipping === "shipped") {
     rows.push([{ text: "✅ تحویل شد", callback_data: "order_shipping:" + code + ":delivered" }]);
-  }
-
-  if (status !== "delivered" && status !== "cancelled") {
-    rows.push([{ text: "📦 ثبت کد مرسوله", callback_data: "order_tracking:" + code }]);
+    rows.push([{ text: "✏️ ویرایش اطلاعات مرسوله", callback_data: "order_tracking:" + code }]);
   }
 
   rows.push([{ text: "⬅️ سفارش‌ها", callback_data: "orders" }]);
@@ -840,7 +838,7 @@ async function handleReplyMessage(msg: any) {
     }
     await sendText(msg.chat.id,
       "🔗 لینک پیگیری\nسفارش: " + orderCode + "\nکد مرسوله: " + trackingCode +
-      "\n\nلینک کامل پیگیری را بفرست. اگر لینک نداری بنویس: بدون لینک",
+      "\n\nلینک کامل پیگیری مرسوله را بفرست (الزامی است):",
       { reply_markup: forceReplyMarkup() });
     return true;
   }
@@ -849,12 +847,16 @@ async function handleReplyMessage(msg: any) {
     const lines = replyText.split("\n");
     const orderCode = (lines.find((line) => line.startsWith("سفارش:")) || "").replace("سفارش:", "").trim();
     const trackingCode = (lines.find((line) => line.startsWith("کد مرسوله:")) || "").replace("کد مرسوله:", "").trim();
-    const trackingUrl = /^(بدون لینک|ندارم|—|-)$/.test(text) ? "" : text.trim();
+    const trackingUrl = text.trim();
     if (!orderCode || !trackingCode) {
       await sendText(msg.chat.id, "اطلاعات مرحله قبل پیدا نشد. دوباره از «ثبت کد مرسوله» شروع کن.");
       return true;
     }
-    if (trackingUrl && !/^https?:\/\//i.test(trackingUrl)) {
+    if (!trackingUrl) {
+      await sendText(msg.chat.id, "لینک پیگیری نمی‌تواند خالی باشد؛ لینک کامل مرسوله را بفرست.", { reply_markup: forceReplyMarkup() });
+      return true;
+    }
+    if (!/^https?:\/\//i.test(trackingUrl)) {
       await sendText(msg.chat.id, "لینک باید با http:// یا https:// شروع شود. دوباره بفرست.", { reply_markup: forceReplyMarkup() });
       return true;
     }
@@ -865,7 +867,7 @@ async function handleReplyMessage(msg: any) {
     await sendText(msg.chat.id,
       "🚚 شرکت ارسال\nسفارش: " + orderCode + "\nکد مرسوله: " + trackingCode +
       "\nلینک: " + (trackingUrl || "بدون لینک") +
-      "\n\nنام شرکت ارسال را بفرست (مثلاً پست، تیپاکس، چاپار). اگر لازم نیست بنویس: نامشخص",
+      "\n\nنام شرکت ارسال را بفرست (مثلاً پست، تیپاکس، چاپار). این مورد الزامی است:",
       { reply_markup: forceReplyMarkup() });
     return true;
   }
@@ -875,7 +877,11 @@ async function handleReplyMessage(msg: any) {
     const orderCode = (lines.find((line) => line.startsWith("سفارش:")) || "").replace("سفارش:", "").trim();
     const trackingCode = (lines.find((line) => line.startsWith("کد مرسوله:")) || "").replace("کد مرسوله:", "").trim();
     const trackingUrl = (lines.find((line) => line.startsWith("لینک:")) || "").replace("لینک:", "").trim();
-    const carrier = /^(نامشخص|ندارم|—|-)$/.test(text) ? "" : text.trim();
+    const carrier = text.trim();
+    if (!carrier) {
+      await sendText(msg.chat.id, "نام شرکت ارسال نمی‌تواند خالی باشد؛ مثلاً پست، تیپاکس یا چاپار را بفرست.", { reply_markup: forceReplyMarkup() });
+      return true;
+    }
     if (carrier.length > 80) {
       await sendText(msg.chat.id, "نام شرکت ارسال بیش از حد طولانی است؛ حداکثر ۸۰ کاراکتر.");
       return true;
@@ -1297,7 +1303,7 @@ async function handleCallbackQuery(query: any) {
     const orderCode = data.slice("order_tracking:".length);
     const supabase = await getSupabase();
     const { data: order, error } = await supabase.from("orders")
-      .select("order_code,status")
+      .select("order_code,status,shipping_status,payment_status,payment_method")
       .eq("order_code", orderCode)
       .maybeSingle();
     if (error) throw error;
@@ -1306,11 +1312,16 @@ async function handleCallbackQuery(query: any) {
       return;
     }
     if (order.status === "cancelled" || order.status === "delivered") {
-      await sendText(chatId, "این سفارش دیگر قابل ثبت کد مرسوله نیست.");
+      await sendText(chatId, "این سفارش دیگر قابل ثبت یا ویرایش اطلاعات مرسوله نیست.");
+      return;
+    }
+    if (order.shipping_status === "packed" && order.payment_method === "online" && order.payment_status !== "paid") {
+      await sendText(chatId, "⛔ این سفارش آنلاین هنوز پرداخت قطعی ندارد و قابل تحویل به شرکت ارسال نیست.");
       return;
     }
     await sendText(chatId,
-      "📦 ثبت کد مرسوله\nسفارش: " + order.order_code + "\n\nکد مرسوله را بفرست:",
+      "📦 ثبت کد مرسوله\nسفارش: " + order.order_code +
+      "\n\nکد مرسوله شرکت ارسال را بفرست:",
       { reply_markup: forceReplyMarkup() });
     return;
   }
@@ -1390,6 +1401,40 @@ async function handleCallbackQuery(query: any) {
 
   if (data.startsWith("order_shipping:")) {
     const [, orderCode, nextShipping] = data.split(":");
+
+    // «تحویل به شرکت ارسال» نباید بدون اطلاعات مرسوله اجرا شود.
+    // دکمه این مرحله به فرم ثبت کد/لینک/شرکت هدایت می‌شود و RPC ثبت مرسوله
+    // در پایان، وضعیت سفارش و ارسال را اتمیک به shipped می‌برد.
+    if (nextShipping === "shipped") {
+      const supabase = await getSupabase();
+      const { data: order, error } = await supabase.from("orders")
+        .select("order_code,status,shipping_status,payment_status,payment_method")
+        .eq("order_code", orderCode)
+        .maybeSingle();
+      if (error) throw error;
+      if (!order) {
+        await sendText(chatId, "سفارش پیدا نشد: " + orderCode);
+        return;
+      }
+      if (order.status === "cancelled" || order.status === "delivered") {
+        await sendText(chatId, "این سفارش دیگر قابل ارسال نیست.");
+        return;
+      }
+      if (order.shipping_status !== "packed") {
+        await sendText(chatId, "برای تحویل به شرکت ارسال، سفارش باید ابتدا «بسته‌بندی شده» باشد.");
+        return;
+      }
+      if (order.payment_method === "online" && order.payment_status !== "paid") {
+        await sendText(chatId, "⛔ سفارش آنلاین تا تأیید واقعی پرداخت قابل تحویل به شرکت ارسال نیست.");
+        return;
+      }
+      await sendText(chatId,
+        "📦 ثبت کد مرسوله\nسفارش: " + order.order_code +
+        "\n\nکد مرسوله شرکت ارسال را بفرست:",
+        { reply_markup: forceReplyMarkup() });
+      return;
+    }
+
     const supabase = await getSupabase();
     const { data: result, error } = await supabase.rpc("azim_telegram_transition_shipping", {
       p_order_code: orderCode, p_next_shipping: nextShipping, p_actor_ref: String(chatId)
