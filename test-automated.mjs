@@ -664,7 +664,8 @@ function testAuditAddendumGuards() {
     telegramAdminJs.includes('نام شرکت ارسال را بفرست') &&
     telegramAdminJs.includes('نام شرکت ارسال نمی‌تواند خالی باشد') &&
     telegramAdminJs.includes('order.status === "processing" && order.shipping_status === "packed"') &&
-    telegramAdminJs.includes('order.status === "shipped" && order.shipping_status === "shipped"')
+    telegramAdminJs.includes('order.status === "shipped" && order.shipping_status === "shipped"') &&
+    telegramAdminJs.includes('✅ فعال‌سازی " + p.code')
   ) {
     pass('Webhook تلگرام در نبود Secret مالی fail-closed است و منوی سفارش روش پرداخت واقعی را حفظ می‌کند');
   } else {
