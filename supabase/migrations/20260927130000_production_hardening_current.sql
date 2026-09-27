@@ -1,0 +1,670 @@
+begin;
+
+alter table public.products add column if not exists stock_quantity integer not null default 0;
+alter table public.products add column if not exists stock_tracking_enabled boolean not null default false;
+alter table public.orders add column if not exists checkout_idempotency_key text;
+alter table public.orders add column if not exists terms_accepted_at timestamptz;
+alter table public.orders add column if not exists terms_version text;
+alter table public.orders add column if not exists delivered_at timestamptz;
+
+create unique index if not exists orders_checkout_idempotency_key_uq
+on public.orders(checkout_idempotency_key) where checkout_idempotency_key is not null;
+create index if not exists products_stock_idx on public.products(stock_tracking_enabled,stock_quantity);
+
+create table if not exists public.product_reviews(
+  id uuid primary key default extensions.gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete restrict,
+  rating smallint not null check (rating between 1 and 5),
+  comment text not null check (length(btrim(comment)) between 3 and 1000),
+  mobile text not null check (mobile ~ '^09[0-9]{9}$'),
+  approved boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(product_id,mobile)
+);
+create index if not exists product_reviews_approved_idx on public.product_reviews(product_id,approved,created_at desc);
+alter table public.product_reviews enable row level security;
+
+drop policy if exists "Public read approved product reviews" on public.product_reviews;
+create policy "Public read approved product reviews" on public.product_reviews for select to anon,authenticated
+using (approved=true);
+drop policy if exists "Public submit pending product reviews" on public.product_reviews;
+create policy "Public submit pending product reviews" on public.product_reviews for insert to anon,authenticated
+with check (approved=false and mobile ~ '^09[0-9]{9}$' and rating between 1 and 5
+and length(btrim(comment)) between 3 and 1000
+and exists(select 1 from public.products p where p.id=product_id and p.is_active=true));
+drop policy if exists "Admin manage product reviews" on public.product_reviews;
+create policy "Admin manage product reviews" on public.product_reviews for all to authenticated
+using (private.has_azim_role(ARRAY['owner','admin','editor']))
+with check (private.has_azim_role(ARRAY['owner','admin','editor']));
+
+alter table private.azim_cart_rate_limits enable row level security;
+alter table private.azim_inquiry_rate_limits enable row level security;
+alter table private.azim_order_tracking_rate_limits enable row level security;
+alter table private.payment_rate_limits enable row level security;
+
+drop policy if exists rate_limits_no_client_read on private.azim_cart_rate_limits;
+create policy rate_limits_no_client_read on private.azim_cart_rate_limits for all to anon,authenticated using(false) with check(false);
+drop policy if exists inquiry_rate_limits_no_client_read on private.azim_inquiry_rate_limits;
+create policy inquiry_rate_limits_no_client_read on private.azim_inquiry_rate_limits for all to anon,authenticated using(false) with check(false);
+drop policy if exists tracking_rate_limits_no_client_read on private.azim_order_tracking_rate_limits;
+create policy tracking_rate_limits_no_client_read on private.azim_order_tracking_rate_limits for all to anon,authenticated using(false) with check(false);
+drop policy if exists payment_rate_limits_no_client_read on private.payment_rate_limits;
+create policy payment_rate_limits_no_client_read on private.payment_rate_limits for all to anon,authenticated using(false) with check(false);
+
+drop policy if exists "Sales manage orders" on public.orders;
+drop policy if exists "Sales manage order items" on public.order_items;
+drop policy if exists "Owner and admin manage orders" on public.orders;
+drop policy if exists "Sales read orders" on public.orders;
+drop policy if exists "Sales update orders" on public.orders;
+drop policy if exists "Owner and admin manage order items" on public.order_items;
+drop policy if exists "Sales read order items" on public.order_items;
+drop policy if exists "Sales update order items" on public.order_items;
+
+create policy "Owner and admin manage orders" on public.orders for all to authenticated
+using (private.has_azim_role(ARRAY['owner','admin']))
+with check (private.has_azim_role(ARRAY['owner','admin']));
+create policy "Sales read orders" on public.orders for select to authenticated using(private.has_azim_role(ARRAY['sales']));
+create policy "Sales update orders" on public.orders for update to authenticated
+using(private.has_azim_role(ARRAY['sales'])) with check(private.has_azim_role(ARRAY['sales']));
+create policy "Owner and admin manage order items" on public.order_items for all to authenticated
+using(private.has_azim_role(ARRAY['owner','admin']))
+with check(private.has_azim_role(ARRAY['owner','admin']));
+create policy "Sales read order items" on public.order_items for select to authenticated using(private.has_azim_role(ARRAY['sales']));
+create policy "Sales update order items" on public.order_items for update to authenticated
+using(private.has_azim_role(ARRAY['sales'])) with check(private.has_azim_role(ARRAY['sales']));
+
+alter table public.order_items drop constraint if exists order_items_order_id_fkey;
+alter table public.order_items add constraint order_items_order_id_fkey
+foreign key(order_id) references public.orders(id) on delete restrict;
+alter table public.order_return_requests drop constraint if exists order_return_requests_order_id_fkey;
+alter table public.order_return_requests add constraint order_return_requests_order_id_fkey
+foreign key(order_id) references public.orders(id) on delete restrict;
+alter table public.order_return_requests drop constraint if exists order_return_requests_order_item_id_fkey;
+alter table public.order_return_requests add constraint order_return_requests_order_item_id_fkey
+foreign key(order_item_id) references public.order_items(id) on delete restrict;
+
+create unique index if not exists customers_mobile_uq on public.customers(mobile) where mobile is not null and mobile<>'';
+create unique index if not exists discount_redemptions_order_uq on public.discount_redemptions(order_id) where order_id is not null;
+
+drop policy if exists "Staff read site content" on public.site_content;
+drop policy if exists "Staff insert allowed site content" on public.site_content;
+drop policy if exists "Staff update allowed site content" on public.site_content;
+drop policy if exists "Staff delete allowed site content" on public.site_content;
+drop policy if exists "Owner admin read all site content" on public.site_content;
+drop policy if exists "Owner admin write site content" on public.site_content;
+drop policy if exists "Owner admin update site content" on public.site_content;
+drop policy if exists "Owner admin delete site content" on public.site_content;
+drop policy if exists "Editor read non-sensitive site content" on public.site_content;
+drop policy if exists "Editor insert non-sensitive site content" on public.site_content;
+drop policy if exists "Editor update non-sensitive site content" on public.site_content;
+drop policy if exists "Editor delete non-sensitive site content" on public.site_content;
+create policy "Owner admin read all site content" on public.site_content for select to authenticated using(private.has_azim_role(ARRAY['owner','admin']));
+create policy "Owner admin write site content" on public.site_content for insert to authenticated with check(private.has_azim_role(ARRAY['owner','admin']));
+create policy "Owner admin update site content" on public.site_content for update to authenticated
+using(private.has_azim_role(ARRAY['owner','admin'])) with check(private.has_azim_role(ARRAY['owner','admin']));
+create policy "Owner admin delete site content" on public.site_content for delete to authenticated using(private.has_azim_role(ARRAY['owner','admin']));
+create policy "Editor read non-sensitive site content" on public.site_content for select to authenticated
+using(private.has_azim_role(ARRAY['editor']) and section_key not in ('checkout_payment','ai_settings','checkout_rules'));
+create policy "Editor insert non-sensitive site content" on public.site_content for insert to authenticated
+with check(private.has_azim_role(ARRAY['editor']) and section_key not in ('checkout_payment','ai_settings','checkout_rules'));
+create policy "Editor update non-sensitive site content" on public.site_content for update to authenticated
+using(private.has_azim_role(ARRAY['editor']) and section_key not in ('checkout_payment','ai_settings','checkout_rules'))
+with check(private.has_azim_role(ARRAY['editor']) and section_key not in ('checkout_payment','ai_settings','checkout_rules'));
+create policy "Editor delete non-sensitive site content" on public.site_content for delete to authenticated
+using(private.has_azim_role(ARRAY['editor']) and section_key not in ('checkout_payment','ai_settings','checkout_rules'));
+
+create or replace function private.set_audit_actor() returns trigger language plpgsql security definer set search_path to ''
+as $audit$ begin new.actor_id:=auth.uid(); return new; end; $audit$;
+revoke all on function private.set_audit_actor() from public,anon,authenticated;
+drop trigger if exists trg_audit_logs_actor on public.audit_logs;
+create trigger trg_audit_logs_actor before insert on public.audit_logs for each row execute function private.set_audit_actor();
+
+CREATE OR REPLACE FUNCTION private.azim_cart_checkout_v2(p_mode text DEFAULT 'preview'::text, p_full_name text DEFAULT NULL::text, p_mobile text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_address text DEFAULT NULL::text, p_city text DEFAULT NULL::text, p_discount_code text DEFAULT NULL::text, p_items jsonb DEFAULT '[]'::jsonb, p_terms_accepted boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_mode text := lower(trim(coalesce(p_mode,'preview')));
+  v_mobile text := private.azim_normalize_mobile(p_mobile);
+  v_code text := upper(regexp_replace(trim(coalesce(p_discount_code,'')), '\s+', '', 'g'));
+  v_idempotency_key text := nullif(trim(coalesce(current_setting('request.headers', true)::json->>'x-idempotency-key','')),'');
+  v_customer_id uuid;
+  v_discount record;
+  v_discount_id uuid;
+  v_discount_code text;
+  v_discount_amount bigint := 0;
+  v_subtotal bigint := 0;
+  v_eligible bigint := 0;
+  v_shipping bigint := 0;
+  v_total bigint := 0;
+  v_usage bigint := 0;
+  v_customer_usage bigint := 0;
+  v_has_order boolean := false;
+  v_order_id uuid;
+  v_order_code text;
+  v_ip inet;
+  v_ip_text text;
+  v_lines jsonb := '[]'::jsonb;
+  v_item jsonb;
+  v_product public.products%rowtype;
+  v_product_id uuid;
+  v_variant text;
+  v_variant_price bigint;
+  v_unit_price bigint;
+  v_quantity bigint;
+  v_line_total bigint;
+  v_count integer := 0;
+begin
+  if v_mode not in ('preview','submit') then
+    raise exception 'حالت درخواست نامعتبر است.';
+  end if;
+
+  if p_items is null or jsonb_typeof(p_items) <> 'array' then
+    raise exception 'سبد خرید نامعتبر است.';
+  end if;
+
+  select count(*) into v_count from jsonb_array_elements(p_items);
+  if v_count < 1 then
+    raise exception 'سبد خرید خالی است.';
+  end if;
+  if v_count > 30 then
+    raise exception 'حداکثر ۳۰ قلم در هر درخواست سفارش مجاز است.';
+  end if;
+
+  if v_mode='submit' then
+    if length(trim(coalesce(p_full_name,''))) < 2 then
+      raise exception 'نام و نام خانوادگی را وارد کنید.';
+    end if;
+    if v_mobile !~ '^09[0-9]{9}$' then
+      raise exception 'شماره موبایل واردشده معتبر نیست.';
+    end if;
+    if p_terms_accepted is not true then
+      raise exception 'پذیرش شرایط استفاده و حریم خصوصی برای ثبت سفارش الزامی است.';
+    end if;
+    if v_idempotency_key is null or length(v_idempotency_key) < 16 or length(v_idempotency_key) > 100 then
+      raise exception 'شناسه ثبت سفارش نامعتبر است؛ صفحه را تازه‌سازی و دوباره تلاش کنید.';
+    end if;
+  end if;
+
+  if v_mobile <> '' then
+    select id into v_customer_id
+    from public.customers
+    where mobile=v_mobile
+    limit 1;
+  end if;
+
+  if v_mode='submit' then
+    select id,order_code,total,customer_id into v_order_id,v_order_code,v_total,v_customer_id
+    from public.orders
+    where checkout_idempotency_key=v_idempotency_key
+    limit 1
+    for update;
+    if found then
+      return jsonb_build_object(
+        'valid',true,'mode','submit','order_id',v_order_id,'order_code',v_order_code,
+        'customer_id',v_customer_id,'total',v_total,'message','این درخواست قبلاً ثبت شده است.'
+      );
+    end if;
+  end if;
+
+  if v_customer_id is not null then
+    select exists(
+      select 1 from public.orders o
+      where o.customer_id=v_customer_id and o.status <> 'cancelled'
+    ) into v_has_order;
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_items) loop
+    begin
+      v_product_id := (v_item->>'product_id')::uuid;
+    exception when others then
+      raise exception 'شناسه یکی از محصولات نامعتبر است.';
+    end;
+
+    v_variant := nullif(trim(coalesce(v_item->>'variant_label','')), '');
+    v_quantity := coalesce((v_item->>'quantity')::bigint,1);
+
+    if v_quantity < 1 or v_quantity > 99 then
+      raise exception 'تعداد هر محصول باید بین ۱ تا ۹۹ باشد.';
+    end if;
+
+    if v_mode='submit' then
+      select * into v_product
+      from public.products
+      where id=v_product_id
+      limit 1
+      for update;
+    else
+      select * into v_product
+      from public.products
+      where id=v_product_id
+      limit 1;
+    end if;
+
+    if not found then
+      raise exception 'یکی از محصولات دیگر در کاتالوگ وجود ندارد.';
+    end if;
+
+    if v_product.is_active=false then
+      raise exception 'محصول «%» در حال حاضر قابل سفارش نیست.',v_product.name;
+    end if;
+
+    if v_mode='submit'
+       and coalesce(v_product.stock_tracking_enabled,false)
+       and v_quantity > coalesce(v_product.stock_quantity,0) then
+      raise exception 'موجودی «%» برای تعداد درخواستی کافی نیست. موجودی فعلی: %',
+        v_product.name,coalesce(v_product.stock_quantity,0);
+    end if;
+
+    if v_variant is null
+       and jsonb_typeof(v_product.variants)='array'
+       and jsonb_array_length(coalesce(v_product.variants,'[]'::jsonb))>0 then
+      raise exception 'برای «%» انتخاب سایز / مدل الزامی است.',v_product.name;
+    end if;
+
+    v_unit_price := v_product.price;
+    v_variant_price := null;
+
+    if v_variant is not null then
+      select nullif(trim(coalesce(v->>'price','')), '')::bigint
+        into v_variant_price
+      from jsonb_array_elements(coalesce(v_product.variants,'[]'::jsonb)) v
+      where coalesce(v->>'size',v->>'label',v->>'name')=v_variant
+      limit 1;
+
+      if not found then
+        raise exception 'سایز / مدل انتخاب‌شده برای «%» دیگر وجود ندارد.',v_product.name;
+      end if;
+
+      if v_variant_price is not null then
+        v_unit_price:=v_variant_price;
+      end if;
+    end if;
+
+    if v_unit_price is null or v_unit_price<=0 then
+      raise exception 'قیمت محصول «%» ثبت نشده و قابل سفارش آنلاین نیست.',v_product.name;
+    end if;
+
+    if coalesce(v_product.discount_is_active,false)
+       and (v_product.discount_starts_at is null or now()>=v_product.discount_starts_at)
+       and (v_product.discount_ends_at is null or now()<=v_product.discount_ends_at)
+       and v_product.discount_value is not null
+       and v_product.discount_value>0 then
+      if v_product.discount_type='percentage' then
+        v_unit_price:=floor(
+          v_unit_price*(100-least(100,greatest(1,v_product.discount_value)))/100.0
+        )::bigint;
+      elsif v_product.discount_type='fixed' then
+        v_unit_price:=greatest(0,v_unit_price-v_product.discount_value);
+      end if;
+    end if;
+
+    v_line_total:=v_unit_price*v_quantity;
+    v_subtotal:=v_subtotal+v_line_total;
+
+    v_lines:=v_lines||jsonb_build_array(jsonb_build_object(
+      'product_id',v_product.id,
+      'product_name',v_product.name,
+      'sku',v_product.code,
+      'variant_label',v_variant,
+      'quantity',v_quantity,
+      'unit_price',v_unit_price,
+      'line_total',v_line_total,
+      'brand',v_product.brand,
+      'category_name',coalesce(v_product.category_name,v_product.cat)
+    ));
+  end loop;
+
+  if v_code<>'' then
+    if v_mode='submit' then
+      select * into v_discount
+      from public.discounts
+      where upper(code)=v_code
+      limit 1
+      for update;
+    else
+      select * into v_discount
+      from public.discounts
+      where upper(code)=v_code
+      limit 1;
+    end if;
+
+    if not found then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+  else
+    select d.* into v_discount
+    from public.discounts d
+    where d.auto_apply=true
+      and d.is_active=true
+      and now()>=d.starts_at
+      and (d.ends_at is null or now()<=d.ends_at)
+      and v_subtotal>=coalesce(d.min_order_amount,0)
+      and (
+        d.usage_limit is null
+        or (
+          select count(*)
+          from public.discount_redemptions r
+          left join public.orders o on o.id=r.order_id
+          where r.discount_id=d.id
+            and coalesce(o.status,'')<>'cancelled'
+        )<d.usage_limit
+      )
+      and (
+        v_customer_id is null
+        or (
+          select count(*)
+          from public.discount_redemptions r
+          left join public.orders o on o.id=r.order_id
+          where r.discount_id=d.id
+            and r.customer_id=v_customer_id
+            and coalesce(o.status,'')<>'cancelled'
+        )<coalesce(d.per_customer_limit,1)
+      )
+      and (not d.first_order_only or (v_customer_id is not null and not v_has_order))
+      and (
+        d.applies_to<>'customers'
+        or (
+          v_customer_id is not null
+          and exists(
+            select 1 from public.discount_customers dc
+            where dc.discount_id=d.id and dc.customer_id=v_customer_id
+          )
+        )
+      )
+      and (
+        d.applies_to='all'
+        or (
+          d.applies_to='products'
+          and exists(
+            select 1 from jsonb_array_elements(v_lines) x
+            where exists(
+              select 1 from public.discount_products dp
+              where dp.discount_id=d.id
+                and dp.product_id=(x->>'product_id')::uuid
+            )
+          )
+        )
+        or (
+          d.applies_to='categories'
+          and exists(
+            select 1 from jsonb_array_elements(v_lines) x
+            where exists(
+              select 1
+              from public.discount_categories dc
+              join public.categories cat on cat.id=dc.category_id
+              where dc.discount_id=d.id
+                and cat.name=coalesce(x->>'category_name','')
+            )
+          )
+        )
+        or (
+          d.applies_to='brands'
+          and exists(
+            select 1 from jsonb_array_elements(v_lines) x
+            where exists(
+              select 1
+              from public.discount_brands db
+              join public.brands b on b.id=db.brand_id
+              where db.discount_id=d.id
+                and b.name=coalesce(x->>'brand','')
+            )
+          )
+        )
+      )
+    order by d.priority desc,d.created_at desc
+    limit 1
+    for update;
+  end if;
+
+  if v_discount.id is not null then
+    v_discount_id:=v_discount.id;
+    v_discount_code:=v_discount.code;
+
+    if not v_discount.is_active then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+    if now()<v_discount.starts_at then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+    if v_discount.ends_at is not null and now()>v_discount.ends_at then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+    if v_subtotal<coalesce(v_discount.min_order_amount,0) then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+
+    select count(*) into v_usage
+    from public.discount_redemptions r
+    left join public.orders o on o.id=r.order_id
+    where r.discount_id=v_discount.id
+      and coalesce(o.status,'')<>'cancelled';
+
+    if v_discount.usage_limit is not null and v_usage>=v_discount.usage_limit then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+
+    if v_customer_id is not null then
+      select count(*) into v_customer_usage
+      from public.discount_redemptions r
+      left join public.orders o on o.id=r.order_id
+      where r.discount_id=v_discount.id
+        and r.customer_id=v_customer_id
+        and coalesce(o.status,'')<>'cancelled';
+      if v_customer_usage>=coalesce(v_discount.per_customer_limit,1) then
+        raise exception 'کد تخفیف معتبر نیست.';
+      end if;
+      select exists(
+        select 1 from public.orders o
+        where o.customer_id=v_customer_id and o.status<>'cancelled'
+      ) into v_has_order;
+    else
+      v_has_order:=false;
+    end if;
+
+    if v_discount.first_order_only and v_has_order then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+
+    if v_discount.applies_to='customers' then
+      if v_customer_id is null or not exists(
+        select 1 from public.discount_customers dc
+        where dc.discount_id=v_discount.id and dc.customer_id=v_customer_id
+      ) then
+        raise exception 'کد تخفیف معتبر نیست.';
+      end if;
+    end if;
+
+    for v_item in select value from jsonb_array_elements(v_lines) loop
+      if v_discount.applies_to='all' then
+        v_eligible:=v_eligible+coalesce((v_item->>'line_total')::bigint,0);
+      elsif v_discount.applies_to='products' and exists(
+        select 1 from public.discount_products dp
+        where dp.discount_id=v_discount.id
+          and dp.product_id=(v_item->>'product_id')::uuid
+      ) then
+        v_eligible:=v_eligible+coalesce((v_item->>'line_total')::bigint,0);
+      elsif v_discount.applies_to='categories' and exists(
+        select 1
+        from public.discount_categories dc
+        join public.categories cat on cat.id=dc.category_id
+        where dc.discount_id=v_discount.id
+          and cat.name=coalesce(v_item->>'category_name','')
+      ) then
+        v_eligible:=v_eligible+coalesce((v_item->>'line_total')::bigint,0);
+      elsif v_discount.applies_to='brands' and exists(
+        select 1
+        from public.discount_brands db
+        join public.brands b on b.id=db.brand_id
+        where db.discount_id=v_discount.id
+          and b.name=coalesce(v_item->>'brand','')
+      ) then
+        v_eligible:=v_eligible+coalesce((v_item->>'line_total')::bigint,0);
+      end if;
+    end loop;
+
+    if v_eligible<=0 then
+      raise exception 'کد تخفیف معتبر نیست.';
+    end if;
+
+    if v_discount.discount_type='percentage' then
+      v_discount_amount:=floor(v_eligible*v_discount.value/100.0)::bigint;
+    else
+      v_discount_amount:=v_discount.value;
+    end if;
+
+    if v_discount.max_discount is not null then
+      v_discount_amount:=least(v_discount_amount,v_discount.max_discount);
+    end if;
+
+    v_discount_amount:=greatest(0,least(v_discount_amount,v_eligible));
+  end if;
+
+  v_total:=greatest(0,v_subtotal+v_shipping-v_discount_amount);
+
+  if v_mode='preview' then
+    return jsonb_build_object(
+      'valid',true,'mode','preview','subtotal',v_subtotal,'eligible_subtotal',v_eligible,
+      'discount',v_discount_amount,'shipping_cost',v_shipping,'total',v_total,
+      'discount_id',v_discount_id,'discount_code',v_discount_code,
+      'message',case when v_discount_id is null then 'سبد آماده است.' else 'کد تخفیف معتبر است.' end
+    );
+  end if;
+
+  v_ip_text:=split_part(
+    coalesce(
+      current_setting('request.headers',true)::json->>'cf-connecting-ip',
+      current_setting('request.headers',true)::json->>'x-forwarded-for',''
+    ),',',1
+  );
+  begin
+    v_ip:=nullif(trim(v_ip_text),'')::inet;
+  exception when others then
+    v_ip:=null;
+  end;
+
+  if v_ip is not null and (
+    select count(*) from private.azim_cart_rate_limits
+    where ip=v_ip and created_at>now()-interval '10 minutes'
+  )>=8 then
+    raise exception 'تعداد درخواست‌های ثبت سفارش زیاد است؛ چند دقیقه بعد دوباره تلاش کنید.';
+  end if;
+
+  if v_mobile<>'' and (
+    select count(*) from private.azim_cart_rate_limits
+    where mobile=v_mobile and created_at>now()-interval '10 minutes'
+  )>=5 then
+    raise exception 'برای این شماره، تعداد درخواست‌های ثبت سفارش در این بازه زیاد است.';
+  end if;
+
+  if v_customer_id is null then
+    insert into public.customers(full_name,mobile,email,address,city,notes)
+    values(
+      left(trim(p_full_name),120),v_mobile,
+      nullif(trim(coalesce(p_email,'')),''),
+      nullif(trim(coalesce(p_address,'')),''),
+      nullif(trim(coalesce(p_city,'')),''),
+      'ثبت‌شده از سبد خرید سایت'
+    )
+    returning id into v_customer_id;
+  end if;
+
+  v_order_code:='AZ-'||to_char(now(),'YYYYMMDD-HH24MISS')||'-'||upper(encode(extensions.gen_random_bytes(12),'hex'));
+
+  insert into public.orders(
+    order_code,customer_id,status,payment_status,shipping_status,
+    subtotal,discount,discount_id,discount_code,shipping_cost,total,
+    customer_name,customer_mobile,customer_email,shipping_address,shipping_city,
+    checkout_idempotency_key,terms_accepted_at,terms_version,notes
+  )
+  values(
+    v_order_code,v_customer_id,'pending','unpaid','pending',
+    v_subtotal,v_discount_amount,v_discount_id,v_discount_code,v_shipping,v_total,
+    left(trim(p_full_name),120),v_mobile,
+    nullif(trim(coalesce(p_email,'')),''),
+    nullif(trim(coalesce(p_address,'')),''),
+    nullif(trim(coalesce(p_city,'')),''),
+    v_idempotency_key,now(),'v1',
+    'ثبت‌شده از سبد خرید آنلاین؛ پرداخت و تأیید نهایی توسط فروشگاه انجام می‌شود.'
+  )
+  returning id into v_order_id;
+
+  insert into public.order_items(
+    order_id,product_id,product_name,sku,quantity,unit_price,variant,line_total
+  )
+  select
+    v_order_id,
+    (x->>'product_id')::uuid,
+    x->>'product_name',
+    nullif(x->>'sku',''),
+    (x->>'quantity')::integer,
+    (x->>'unit_price')::bigint,
+    case when nullif(x->>'variant_label','') is null then null
+      else jsonb_build_object('label',x->>'variant_label') end,
+    (x->>'line_total')::bigint
+  from jsonb_array_elements(v_lines) x;
+
+  if v_discount_id is not null then
+    insert into public.discount_redemptions(
+      discount_id,customer_id,order_id,code_used,discount_amount,redeemed_at,created_by
+    )
+    values(v_discount_id,v_customer_id,v_order_id,v_discount_code,v_discount_amount,now(),null);
+  end if;
+
+  for v_item in select value from jsonb_array_elements(v_lines) loop
+    if coalesce((select stock_tracking_enabled from public.products where id=(v_item->>'product_id')::uuid),false) then
+      update public.products
+      set stock_quantity=stock_quantity-coalesce((v_item->>'quantity')::bigint,0)
+      where id=(v_item->>'product_id')::uuid
+        and stock_quantity>=coalesce((v_item->>'quantity')::bigint,0);
+      if not found then
+        raise exception 'موجودی یکی از محصولات همزمان تغییر کرده است؛ سفارش دوباره محاسبه شود.';
+      end if;
+    end if;
+  end loop;
+
+  insert into private.azim_cart_rate_limits(ip,mobile)
+  values(v_ip,nullif(v_mobile,''));
+
+  return jsonb_build_object(
+    'valid',true,'mode','submit','subtotal',v_subtotal,'eligible_subtotal',v_eligible,
+    'discount',v_discount_amount,'shipping_cost',v_shipping,'total',v_total,
+    'discount_id',v_discount_id,'discount_code',v_discount_code,
+    'order_id',v_order_id,'order_code',v_order_code,'customer_id',v_customer_id,
+    'message','درخواست سفارش ثبت شد؛ برای هماهنگی نهایی فروشگاه با شما تماس می‌گیرد.'
+  );
+end;
+$function$
+;
+
+drop function if exists private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb);
+create or replace function public.azim_cart_checkout(
+  p_mode text default 'preview',p_full_name text default null,p_mobile text default null,p_email text default null,
+  p_address text default null,p_city text default null,p_discount_code text default null,p_items jsonb default '[]'::jsonb,
+  p_payment_method text default 'phone',p_terms_accepted boolean default false
+) returns jsonb language plpgsql security invoker set search_path to ''
+as $checkout_api$
+declare v_result jsonb; v_order_id uuid; v_method text:=lower(trim(coalesce(p_payment_method,'phone')));
+begin
+  if v_method not in ('online','phone','message') then raise exception using message='روش پرداخت نامعتبر است.'; end if;
+  if v_method='online' and not exists (
+    select 1 from public.site_content sc where sc.section_key='checkout_payment' and sc.is_active=true
+    and lower(coalesce(sc.payload->>'online_enabled','false'))='true'
+    and lower(coalesce(sc.payload->>'gateway_ready','false'))='true'
+    and nullif(trim(coalesce(sc.payload->>'provider','')),'') is not null
+  ) then raise exception using message='درگاه آنلاین هنوز کامل پیکربندی نشده است؛ تماس یا پیام را انتخاب کنید.'; end if;
+  v_result:=private.azim_cart_checkout_v2(p_mode,p_full_name,p_mobile,p_email,p_address,p_city,p_discount_code,p_items,p_terms_accepted);
+  if lower(coalesce(p_mode,'preview'))<>'submit' then return v_result||jsonb_build_object('payment_method',v_method); end if;
+  v_order_id:=nullif(v_result->>'order_id','')::uuid;
+  return v_result||private.azim_set_checkout_payment_method(v_order_id,v_method);
+end;
+$checkout_api$;
+revoke all on function private.azim_cart_checkout_v2(text,text,text,text,text,text,text,jsonb,boolean) from public;
+grant execute on function private.azim_cart_checkout_v2(text,text,text,text,text,text,text,jsonb,boolean) to anon;
+revoke all on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text,boolean) from public;
+grant execute on function public.azim_cart_checkout(text,text,text,text,text,text,text,jsonb,text,boolean) to anon,authenticated;
+
+commit;
