@@ -665,7 +665,9 @@ function testAuditAddendumGuards() {
     telegramAdminJs.includes('نام شرکت ارسال نمی‌تواند خالی باشد') &&
     telegramAdminJs.includes('order.status === "processing" && order.shipping_status === "packed"') &&
     telegramAdminJs.includes('order.status === "shipped" && order.shipping_status === "shipped"') &&
-    telegramAdminJs.includes('✅ فعال‌سازی " + p.code')
+    telegramAdminJs.includes('✅ فعال‌سازی " + p.code') &&
+    telegramAdminJs.includes('restore_cancelled:') &&
+    telegramAdminJs.includes('azim_telegram_restore_cancelled_order')
   ) {
     pass('Webhook تلگرام در نبود Secret مالی fail-closed است و منوی سفارش روش پرداخت واقعی را حفظ می‌کند');
   } else {
@@ -678,6 +680,10 @@ function testAuditAddendumGuards() {
   );
   const telegramShipmentMigration = fs.readFileSync(
     path.join(__dirname, 'supabase', 'migrations', '20260927151000_sync_telegram_shipping_state_machine.sql'),
+    'utf8'
+  );
+  const telegramRestoreMigration = fs.readFileSync(
+    path.join(__dirname, 'supabase', 'migrations', '20260927153000_restore_cancelled_telegram_order.sql'),
     'utf8'
   );
   if (
@@ -703,6 +709,21 @@ function testAuditAddendumGuards() {
     pass('قبل از ارسال اطلاعات مرسوله اجباری است و تحویل، وضعیت ارسال و سفارش را همزمان نهایی می‌کند');
   } else {
     fail('قفل دیتابیسی اطلاعات مرسوله یا همگام‌سازی تحویل کامل نیست');
+  }
+
+  if (
+    telegramRestoreMigration.includes('azim_telegram_restore_cancelled_order') &&
+    telegramRestoreMigration.includes("status='pending'") &&
+    telegramRestoreMigration.includes("shipping_status='pending'") &&
+    telegramRestoreMigration.includes('tracking_code=null') &&
+    telegramRestoreMigration.includes('tracking_url=null') &&
+    telegramRestoreMigration.includes('shipping_carrier=null') &&
+    telegramRestoreMigration.includes('telegram_restore_cancelled_order') &&
+    telegramRestoreMigration.includes('refund_verified')
+  ) {
+    pass('بازگردانی سفارش لغوشده به‌صورت امن، با پاک‌سازی مرسوله و شروع مجدد چرخه پرداخت کنترل شده است');
+  } else {
+    fail('منطق بازگردانی سفارش لغوشده کامل نیست');
   }
 
   if (
