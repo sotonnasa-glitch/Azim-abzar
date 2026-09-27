@@ -2126,7 +2126,7 @@
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return null;
       try {
         const base = window.AZIM_SUPABASE_URL + '/rest/v1/products';
-        const select = 'id,code,name,description,img,price,variants,is_active,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
+        const select = 'id,code,name,description,img,price,variants,is_active,stock_quantity,category_name,brand,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at';
         const pageSize = 1000;
         const rows = [];
         for (let offset = 0; offset < 10000; offset += pageSize) {
@@ -2181,6 +2181,7 @@
         description: String(x?.description ?? '').trim(),
         img: String(x?.img ?? '').trim(),
         category_name: String(x?.category_name ?? '').trim(),
+        stock_quantity: x?.stock_quantity == null ? null : Number(x.stock_quantity),
         is_active: x?.is_active !== false,
         discount_type: x?.discount_type || null,
         discount_value: x?.discount_value == null ? null : Number(x.discount_value),
@@ -2281,8 +2282,8 @@
               <span>مشاهده کامل جزئیات و سایزبندی</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
-            <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)">
-              <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span><span>افزودن به سبد سفارش</span>
+            <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)" ${x.stock_quantity != null && x.stock_quantity <= 0 ? 'disabled aria-disabled="true"' : ''}>
+              <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>${x.stock_quantity != null && x.stock_quantity <= 0 ? '<span>ناموجود</span>' : '<span>افزودن به سبد سفارش</span>'}
             </button>
             <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
           </div>
@@ -2326,6 +2327,10 @@
       const v = d.vs?.[idx];
       const base = v ? Number(v[1] || 0) : Number(d.base || 0);
       const net = discountedPrice(base, d.discount);
+      if (item.stock_quantity != null && item.stock_quantity <= 0) {
+        window.AZIM_CART.showToast('این کالا در حال حاضر ناموجود است.');
+        return;
+      }
       if (!(net > 0)) {
         window.AZIM_CART.showToast('برای این کالا قیمت قابل افزودن به سبد مشخص نیست.');
         return;
