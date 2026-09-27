@@ -9,7 +9,7 @@ const SERVICE_KEY = (() => {
   } catch {}
   return String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 })();
-const RECONCILE_SECRET = String(Deno.env.get("AZIM_PAYMENT_RECONCILE_SECRET") ?? "");
+const LEGACY_RECONCILE_SECRET = String(Deno.env.get("AZIM_PAYMENT_RECONCILE_SECRET") ?? "");
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -32,6 +32,21 @@ async function currentSettings() {
     "/rest/v1/site_content?select=payload&section_key=eq.checkout_payment&is_active=eq.true&limit=1",
   );
   return response.ok ? (body?.[0]?.payload ?? {}) : {};
+}
+
+async function validateReconcileSecret(presented: string) {
+  if (presented && LEGACY_RECONCILE_SECRET && presented === LEGACY_RECONCILE_SECRET) return true;
+  if (!presented) return false;
+  try {
+    const { response, body } = await rest("/rest/v1/rpc/azim_validate_reconcile_secret", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ p_presented_secret: presented }),
+    });
+    return response.ok && body === true;
+  } catch {
+    return false;
+  }
 }
 
 async function reconcile() {
@@ -65,6 +80,7 @@ async function reconcile() {
       const headers: Record<string, string> = {
         "content-type": "application/json",
         "apikey": SERVICE_KEY,
+        "x-azim-internal": "reconcile",
       };
       const r = await fetch(gatewayUrl, {
         method: "POST",
@@ -84,10 +100,11 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
   if (!SUPABASE_URL || !SERVICE_KEY) return json({ ok: false, error: "Server is not configured" }, 500);
 
-  const presentedKey = req.headers.get("apikey") ?? "";
-  const secretOk = RECONCILE_SECRET && presentedKey === RECONCILE_SECRET;
-  const serviceOk = presentedKey === SERVICE_KEY;
-  if (!secretOk && !serviceOk) return json({ ok: false, error: "Unauthorized" }, 401);
+  const presentedSecret = req.headers.get("x-azim-reconcile-secret") ?? "";
+  const serviceKey = req.headers.get("apikey") ?? "";
+  const secretOk = await validateReconcileSecret(presentedSecret);
+  const legacyServiceOk = serviceKey === SERVICE_KEY && serviceKey !== "";
+  if (!secretOk && !legacyServiceOk) return json({ ok: false, error: "Unauthorized" }, 401);
 
   try {
     return json(await reconcile());
