@@ -3313,7 +3313,7 @@
     }
   };
 
-  const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings']);
+  const sensitiveContentKeys = new Set(['checkout_payment', 'ai_settings', 'checkout_rules']);
   const canEditContentKey = (key) => {
     const clean = String(key || '').trim();
     if (clean === 'checkout_payment') return false;
@@ -3368,7 +3368,7 @@
   async function editContent(id) {
     if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه ویرایش محتوا ندارد.');
     const keyRow = state.contentRows.find((x) => x.id === id);
-    if (!canEditContentKey(keyRow?.section_key)) return toast('__AZICON_BLOCK__ تنظیمات پرداخت و هوش مصنوعی فقط برای مدیران قابل ویرایش است.');
+    if (!canEditContentKey(keyRow?.section_key)) return toast('__AZICON_BLOCK__ تنظیمات پرداخت، هوش مصنوعی و قواعد checkout فقط برای مدیران قابل ویرایش است.');
     const r = await state.db.from('site_content').select('*').eq('id', id).single();
     if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
     openModal('ویرایش محتوا', contentForm(r.data));
