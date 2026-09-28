@@ -123,7 +123,7 @@
 
         <div class="az-notify-grid">
           <div class="az-notify-card">
-            <h3>📱 پیامک — کاوه‌نگار</h3>
+            <h3>📱 پیامک — کاوه‌نگار <span class="az-notify-muted">(Kavenegar)</span></h3>
             <p>برای مشتری‌های ایرانی. اعتبار و هزینه پیامک از حساب خود صاحب سایت کسر می‌شود.</p>
             <div class="az-notify-status"><span class="az-notify-dot ${configured.sms?'ok':''}"></span><b>${configured.sms?'کلید API ذخیره شده':'کلید API تنظیم نشده'}</b></div>
             <div class="grid2">
