@@ -2024,22 +2024,8 @@
         if (result.error) throw result.error;
         saved = true;
 
-        try {
-          const notifyUrl = window.AZIM_SUPABASE_URL + '/functions/v1/azim-consultation-notify';
-          await fetch(notifyUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': window.AZIM_SUPABASE_ANON_KEY,
-              'Authorization': 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
-            },
-            body: JSON.stringify({
-              full_name: name, mobile: phone, email, subject, business, details, product_id: productId
-            })
-          });
-        } catch (notifyErr) {
-          console.warn('Telegram consultation notification failed:', notifyErr);
-        }
+        // Telegram notification is triggered server-side by the inquiries INSERT trigger.
+        // No notification secret or server endpoint is exposed to the public browser.
       } catch (err) {
         saveError = err;
         console.warn('Inquiry save failed:', err);
