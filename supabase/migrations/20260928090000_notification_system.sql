@@ -42,6 +42,8 @@ create table if not exists public.notification_logs (
 create unique index if not exists notification_logs_dedupe_key_idx on public.notification_logs(dedupe_key);
 create index if not exists notification_logs_order_created_idx on public.notification_logs(order_id, created_at desc);
 create index if not exists notification_logs_status_created_idx on public.notification_logs(status, created_at desc);
+create index if not exists notification_logs_customer_id_idx on public.notification_logs(customer_id);
+create index if not exists notification_settings_updated_by_idx on public.notification_settings(updated_by);
 
 alter table public.notification_settings enable row level security;
 alter table public.notification_logs enable row level security;
@@ -50,6 +52,12 @@ revoke all on table public.notification_settings from public, anon, authenticate
 revoke all on table public.notification_logs from public, anon, authenticated;
 grant all on table public.notification_settings to service_role;
 grant all on table public.notification_logs to service_role;
+
+create policy notification_settings_no_direct_access on public.notification_settings
+for all to public using (false) with check (false);
+
+create policy notification_logs_no_direct_access on public.notification_logs
+for all to public using (false) with check (false);
 
 create or replace function public.azim_notification_get_secret(p_name text)
 returns text
