@@ -2,6 +2,8 @@
 -- Project: lzkrwtnylkordkwkdyzp
 -- This migration mirrors the live schema installed by the implementation agent.
 
+create extension if not exists supabase_vault;
+
 create table if not exists public.notification_settings (
   id boolean primary key default true check (id),
   sms_enabled boolean not null default false,
