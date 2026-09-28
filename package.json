@@ -8,7 +8,7 @@
     "start": "node server.js",
     "build": "node -e \"console.log('Build complete')\"",
     "lint": "npm run check",
-    "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js",
+    "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js && node --check azim-notification-admin.js",
     "test": "node test-automated.mjs && node test-notifications.mjs"
   },
   "dependencies": {
