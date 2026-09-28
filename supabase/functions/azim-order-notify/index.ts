@@ -9,7 +9,7 @@ const SERVICE_KEY = (() => {
     if (parsed?.default) return String(parsed.default);
   } catch {}
   return String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
-});
+})();
 
 const EVENT_LABELS: Record<string,string> = {
   order_created:"ثبت سفارش",
