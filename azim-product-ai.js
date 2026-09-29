@@ -199,7 +199,12 @@
   function setQuick() {
     const root = ensureModal();
     const q = root.querySelector('#azAiQuick');
-    const items = ['برای این کار مناسبه؟','چه نکته‌ای موقع انتخابش مهمه؟','بین سایزها کدوم مناسب‌تره؟'];
+    const hasVariant = !!current.variant;
+    const items = [
+      'این ابزار برای چه کارهایی مناسبه؟',
+      'برای انتخاب این ابزار به چه نکته‌ای دقت کنم؟',
+      hasVariant ? 'این سایز دقیقاً برای چه اندازه‌ایه؟' : 'قبل از خرید این ابزار چه چیزی مهمه؟'
+    ];
     q.innerHTML = items.map(x => '<button type="button" data-ai-q="' + esc(x) + '">' + esc(x) + '</button>').join('');
     q.querySelectorAll('[data-ai-q]').forEach(b => b.onclick = () => {
       root.querySelector('#azAiQuestion').value = b.dataset.aiQ;
