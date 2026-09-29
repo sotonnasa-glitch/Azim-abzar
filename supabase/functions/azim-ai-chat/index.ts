@@ -244,9 +244,37 @@ async function logUsage(data: Record<string, unknown>) {
   }
 }
 
-async function gemini(message: string, systemInstruction: string, model: string, maxOutputTokens: number) {
+async function gemini(
+  message: string,
+  systemInstruction: string,
+  model: string,
+  maxOutputTokens: number,
+  thinkingLevel = "medium"
+) {
   const key = Deno.env.get("GEMINI_API_KEY") ?? "";
   if (!key) return null;
+
+  const generationConfig: Record<string, unknown> = {
+    maxOutputTokens: Math.max(120, Math.min(320, Number(maxOutputTokens) || 200)),
+  };
+
+  if (/^gemini-3\./.test(model)) {
+    generationConfig.thinkingConfig = {
+      thinkingLevel: ["minimal", "low", "medium", "high"].includes(thinkingLevel)
+        ? thinkingLevel
+        : "medium",
+    };
+  } else if (/^gemini-2\.5/.test(model)) {
+    const budgets: Record<string, number> = {
+      minimal: 256,
+      low: 512,
+      medium: 1024,
+      high: 2048,
+    };
+    generationConfig.thinkingConfig = {
+      thinkingBudget: budgets[thinkingLevel] ?? 512,
+    };
+  }
 
   const r = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -257,10 +285,7 @@ async function gemini(message: string, systemInstruction: string, model: string,
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: [{ role: "user", parts: [{ text: message }] }],
-        generationConfig: {
-          maxOutputTokens: Math.max(80, Math.min(260, Number(maxOutputTokens) || 160)),
-          temperature: 0.15,
-        },
+        generationConfig,
       }),
     }
   );
@@ -378,16 +403,33 @@ Deno.serve(async (req) => {
       const context = productContext(product, selectedVariant, includePrice);
 
       const task = normalizedMessage
-        ? "سؤال مشتری: " + normalizedMessage
-        : "محصول را برای مشتری در یک یا دو جمله معرفی کن. از نام و سایز واقعی محصول استفاده کن و کاربرد معمول این ابزار را توضیح بده. قیمت و برند را فقط در صورت نیاز یا ثبت واقعی ذکر کن.";
+        ? "سؤال مشتری: " + normalizedMessage + "\n" +
+          "نوع سؤال را تشخیص بده (کاربرد، سایز، سازگاری، خرید، قیمت یا مقایسه) و مستقیم همان را جواب بده. " +
+          "اگر پاسخ به یک شرط فنی وابسته است، شرط لازم را صریح و کوتاه بگو؛ اگر داده حیاتی برای نتیجه وجود ندارد، فقط همان داده را بپرس. " +
+          "از پاسخ مبهم، تکرار نام محصول، و گفتن «اطلاعات کافی نیست» بدون توضیح مشخص خودداری کن."
+        : "محصول را در یک یا دو جمله معرفی کن. کاربرد معمول ابزار را از نام/دسته/سایز و دانش عمومی ابزارشناسی توضیح بده. " +
+          "قیمت یا برند را فقط در صورت نیاز ذکر کن.";
 
       const userPrompt = context + "\n\n" + task;
-      const primaryModel = String(settings?.model || "gemini-3.5-flash-lite");
-      const fallbackModel = String(settings?.fallback_model || "gemini-2.5-flash-lite");
-      const maxOutputTokens = Number(settings?.max_reply_tokens || 160);
+      const primaryModel = String(settings?.product_model || settings?.model || "gemini-3.8-flash");
+      const fallbackModel = String(settings?.product_fallback_model || "gemini-3.5-flash-lite");
+      const productThinkingLevel = String(settings?.product_thinking_level || "medium");
+      const maxOutputTokens = Number(settings?.max_reply_tokens || 200);
 
-      const first = await gemini(userPrompt, PRODUCT_SYSTEM, primaryModel, maxOutputTokens);
-      const second = first ? null : await gemini(userPrompt, PRODUCT_SYSTEM, fallbackModel, maxOutputTokens);
+      const first = await gemini(
+        userPrompt,
+        PRODUCT_SYSTEM,
+        primaryModel,
+        maxOutputTokens,
+        productThinkingLevel
+      );
+      const second = first ? null : await gemini(
+        userPrompt,
+        PRODUCT_SYSTEM,
+        fallbackModel,
+        maxOutputTokens,
+        "low"
+      );
       const third = first || second ? null : await openai(
         userPrompt,
         PRODUCT_SYSTEM,
@@ -448,13 +490,22 @@ Deno.serve(async (req) => {
     const geminiModel = String(settings?.model || "gemini-3.5-flash-lite");
     const geminiFallbackModel = String(settings?.fallback_model || "gemini-2.5-flash-lite");
     const openaiModel = String(settings?.openai_fallback_model || "gpt-4o-mini");
-    const maxOutputTokens = Math.min(260, Math.max(100, Number(settings?.max_general_reply_tokens || 220)));
+    const maxOutputTokens = Math.min(300, Math.max(120, Number(settings?.max_general_reply_tokens || 220)));
+    const generalThinkingLevel = String(settings?.thinking_level || "low");
 
     let result = primaryProvider === "openai"
       ? await openai(message, systemInstruction, openaiModel, maxOutputTokens)
-      : await gemini(message, systemInstruction, geminiModel, maxOutputTokens);
+      : await gemini(message, systemInstruction, geminiModel, maxOutputTokens, generalThinkingLevel);
 
-    if (!result && primaryProvider === "gemini") result = await gemini(message, systemInstruction, geminiFallbackModel, maxOutputTokens);
+    if (!result && primaryProvider === "gemini") {
+      result = await gemini(
+        message,
+        systemInstruction,
+        geminiFallbackModel,
+        maxOutputTokens,
+        "low"
+      );
+    }
     if (!result) result = primaryProvider === "openai"
       ? await gemini(message, systemInstruction, geminiModel, maxOutputTokens)
       : await openai(message, systemInstruction, openaiModel, maxOutputTokens);
