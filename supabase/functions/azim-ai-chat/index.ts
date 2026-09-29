@@ -16,7 +16,14 @@ const FALLBACK_SYSTEM =
   "به مشتریان برای انتخاب و آشنایی با ابزارهای مکانیکی، تعمیرگاهی، کارگاهی و ابزار دستی کمک کن. " +
   "اگر اطلاعات کافی نیست، شفاف بگو و قیمت یا موجودی قطعی را حدس نزن.";
 
-const PRODUCT_SYSTEM = "تو مشاور هوشمند محصولات «عظیم ابزار» هستی.\nفقط بر اساس اطلاعات واقعی محصول که در پیام به تو داده شده پاسخ بده و هیچ مشخصه، کاربرد، سازگاری، قیمت یا موجودی را حدس نزن.\nپاسخ باید خیلی کوتاه، دقیق و کاربردی باشد؛ برای معرفی اولیه حداکثر ۲ جمله.\nچیزهای بدیهی مثل «آچار برای باز و بسته کردن پیچ است» را تکرار نکن؛ نکته‌ای بگو که به انتخاب یا استفاده کمک کند.\nاگر اطلاعات کافی برای پاسخ دقیق نیست، همان را کوتاه و شفاف بگو.\nاگر کاربر درباره یک سایز/مدل مشخص سؤال کرد، همان واریانت را مبنا قرار بده.\nبه فارسی روان پاسخ بده و از مقدمه‌چینی، تبلیغات و متن طولانی پرهیز کن.";
+const PRODUCT_SYSTEM = "تو مشاور هوشمند محصولات «عظیم ابزار» هستی.\n" +
+  "اطلاعات دقیق محصول (نام، سایز/مدل، برندِ واقعی، دسته، توضیحات و قیمت) از دیتابیس به تو داده می‌شود. این اطلاعات برای مشخصات اختصاصی محصول مرجع قطعی هستند.\n" +
+  "برای راهنمایی عمومی ابزار، از دانش عمومی و متعارف ابزارشناسی استفاده کن؛ لازم نیست فقط به متن توضیحات ثبت‌شده محدود شوی. اما هیچ ویژگی اختصاصیِ ثبت‌نشده مثل جنس، آلیاژ، برند، استاندارد، گشتاور مجاز، کیفیت ساخت یا سازگاری ویژه را حدس نزن.\n" +
+  "اگر نام ابزار و سایز آن از دیتابیس مشخص است، می‌توانی معنی و کاربرد معمول همان ابزار و سایز را به زبان ساده توضیح بدهی. مثلاً سایز ۴۶ آچار را می‌توانی به‌عنوان مناسب اتصال شش‌گوش ۴۶ میلی‌متری توضیح بدهی، بدون ادعای مشخصات ساخت کارخانه.\n" +
+  "اگر سؤال درباره مناسب بودن برای یک کار است و خودِ کار مشخص نشده، فقط یک سؤال کوتاه برای فهم کاربرد بپرس. اگر کار مشخص شده، مستقیم بگو برای چه چیزی مناسب است یا نیست و دلیل کوتاه بده.\n" +
+  "اگر اطلاعات اختصاصی کافی نیست، فقط بخش اختصاصی را نامشخص اعلام کن؛ از گفتن جمله کلی «اطلاعات کافی نیست» برای کاربردهای عمومی خودداری کن.\n" +
+  "قیمت را فقط وقتی بگو که کاربر درباره قیمت/هزینه سؤال کرده باشد. برند را فقط اگر برند واقعی در دیتابیس ثبت شده یا کاربر درباره برند پرسیده ذکر کن؛ مقدار «بدون برند» را به‌عنوان یک برند به مشتری معرفی نکن.\n" +
+  "پاسخ فارسی، طبیعی، کوتاه و کاربردی باشد. برای معرفی اولیه ۱ تا ۲ جمله؛ بدون تبلیغ و مقدمه‌چینی.";
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "*";
@@ -120,29 +127,42 @@ function findSelectedVariant(product: any, requestedLabel: string, requestedInde
   return variants[0];
 }
 
-function productContext(product: any, selectedVariant: any) {
+function productContext(product: any, selectedVariant: any, includePrice = false) {
   const variants = Array.isArray(product?.variants)
     ? product.variants.map(normalizeVariant).filter((v: any) => v.label)
     : [];
 
+  const clean = (value: unknown) => String(value ?? "").trim();
+  const name = clean(product?.name);
+  const code = clean(product?.code);
+  const rawBrand = clean(product?.brand);
+  const brand = rawBrand && !/^بدون\s*برند$/i.test(rawBrand) ? rawBrand : "";
+  const category = clean(product?.category_name || product?.cat);
+  const description = clean(product?.description);
+
   const lines = [
-    "نام محصول: " + String(product?.name ?? "").trim(),
-    "کد کالا: " + String(product?.code ?? "").trim(),
-    "برند: " + String(product?.brand ?? "").trim(),
-    "دسته: " + String(product?.category_name ?? product?.cat ?? "").trim(),
-    "توضیحات ثبت‌شده: " + String(product?.description ?? "").trim(),
+    "نام محصول: " + name,
+    code ? "کد کالا: " + code : "",
+    brand ? "برند ثبت‌شده: " + brand : "",
+    category ? "دسته: " + category : "",
+    description && description !== name ? "توضیحات ثبت‌شده: " + description : "",
   ];
 
   if (selectedVariant?.label) {
     lines.push("واریانت انتخاب‌شده: " + selectedVariant.label);
-    if (selectedVariant.price != null) lines.push("قیمت ثبت‌شده این واریانت: " + selectedVariant.price);
+    if (includePrice && selectedVariant.price != null) {
+      lines.push("قیمت ثبت‌شده این واریانت: " + selectedVariant.price);
+    }
   }
 
   if (variants.length) {
-    lines.push("واریانت‌های موجود: " + variants.map((v: any) => {
-      return v.price != null ? v.label + " (" + v.price + ")" : v.label;
-    }).join("، "));
-  } else if (product?.price != null) {
+    lines.push(
+      "واریانت‌های ثبت‌شده: " +
+      variants.map((v: any) => {
+        return includePrice && v.price != null ? v.label + " (" + v.price + ")" : v.label;
+      }).join("، ")
+    );
+  } else if (includePrice && product?.price != null) {
     lines.push("قیمت ثبت‌شده محصول: " + Number(product.price));
   }
 
@@ -353,11 +373,13 @@ Deno.serve(async (req) => {
       if (!product) return response({ error: "محصول موردنظر در پایگاه داده پیدا نشد یا فعال نیست." }, 404, req);
 
       const selectedVariant = findSelectedVariant(product, requestedVariant, requestedVariantIndex);
-      const context = productContext(product, selectedVariant);
+      const normalizedMessage = message.trim();
+      const includePrice = /قیمت|چنده|هزینه|تومان|ریال|ارزش خرید/i.test(normalizedMessage);
+      const context = productContext(product, selectedVariant, includePrice);
 
-      const task = message
-        ? "سؤال مشتری: " + message
-        : "این محصول را خیلی کوتاه و دقیق معرفی کن. یک یا دو جمله بگو و فقط نکته‌ای را بگو که به انتخاب این محصول کمک کند؛ کاربرد کاملاً بدیهی را تکرار نکن.";
+      const task = normalizedMessage
+        ? "سؤال مشتری: " + normalizedMessage
+        : "محصول را برای مشتری در یک یا دو جمله معرفی کن. از نام و سایز واقعی محصول استفاده کن و کاربرد معمول این ابزار را توضیح بده. قیمت و برند را فقط در صورت نیاز یا ثبت واقعی ذکر کن.";
 
       const userPrompt = context + "\n\n" + task;
       const primaryModel = String(settings?.model || "gemini-3.5-flash-lite");
