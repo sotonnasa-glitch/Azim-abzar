@@ -5,7 +5,7 @@ const files = [
   "azim-notification-admin.js",
   "supabase/functions/azim-notification-config/index.ts",
   "supabase/functions/azim-order-notify/index.ts",
-  "supabase/migrations/20260928090000_notification_system.sql",
+  "supabase/migrations-archive/20260928090000_notification_system.sql",
   "admin.html"
 ];
 for (const file of files) assert.ok(existsSync(file), "Missing " + file);
@@ -13,7 +13,7 @@ for (const file of files) assert.ok(existsSync(file), "Missing " + file);
 const admin = readFileSync("azim-notification-admin.js","utf8");
 const cfg = readFileSync("supabase/functions/azim-notification-config/index.ts","utf8");
 const notify = readFileSync("supabase/functions/azim-order-notify/index.ts","utf8");
-const migration = readFileSync("supabase/migrations/20260928090000_notification_system.sql","utf8");
+const migration = readFileSync("supabase/migrations-archive/20260928090000_notification_system.sql","utf8");
 const html = readFileSync("admin.html","utf8");
 
 for (const needle of [
