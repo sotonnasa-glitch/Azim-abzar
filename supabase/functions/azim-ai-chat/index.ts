@@ -169,7 +169,10 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
   if (!isRingWrench && !isWrench) return null;
 
   if (variant && /سایز|اندازه|چه\s*اندازه|برای\s*چه/.test(q) && !/قیمت|چند/.test(q)) {
-    return "سایز " + variant + " یعنی دهانه آچار برای اتصال شش‌گوش با اندازه اسمی " + variant + " میلی‌متر است.";
+    if (/^\d+(?:\.\d+)?$/.test(variant)) {
+      return "سایز " + variant + " یعنی دهانه آچار برای اتصال شش‌گوش با اندازه اسمی " + variant + " میلی‌متر است.";
+    }
+    return "سایز ثبت‌شده این محصول «" + variant + "» است؛ برای اطمینان از سازگاری، همین سایز را با استاندارد و اندازه واقعی اتصال تطبیق بده.";
   }
 
   if (isRingWrench && /(چه\s*کار|کاربرد|به\s*چه\s*درد|چه\s*استفاده)/.test(q)) {
