@@ -112,15 +112,46 @@ function normalizeVariant(v: unknown) {
   return { label, price: Number.isFinite(price) ? price : null };
 }
 
-function findSelectedVariant(product: any, requestedLabel: string, requestedIndex: number) {
-  const variants = Array.isArray(product?.variants) ? product.variants.map(normalizeVariant).filter((v: any) => v.label) : [];
+function normalizeLabel(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("fa")
+    .replace(/[يى]/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+    .replace(/\s+/g, " ");
+}
+
+function extractVariantFromMessage(message: string, variants: any[]) {
+  const q = normalizeLabel(message);
+  if (!q || !variants.length) return "";
+  const ordered = [...variants].sort((a, b) => String(b.label).length - String(a.label).length);
+  const hit = ordered.find((v: any) => {
+    const label = normalizeLabel(v.label);
+    return label && q.includes(label);
+  });
+  return hit?.label || "";
+}
+
+function findSelectedVariant(product: any, requestedLabel: string, requestedIndex: number, message = "") {
+  const variants = Array.isArray(product?.variants)
+    ? product.variants.map(normalizeVariant).filter((v: any) => v.label)
+    : [];
   if (!variants.length) return null;
 
-  const label = String(requestedLabel || "").trim();
+  const label = normalizeLabel(requestedLabel);
   if (label) {
-    const exact = variants.find((v: any) => v.label === label);
+    const exact = variants.find((v: any) => normalizeLabel(v.label) === label);
     if (exact) return exact;
   }
+
+  const fromMessage = extractVariantFromMessage(message, variants);
+  if (fromMessage) {
+    const exact = variants.find((v: any) => normalizeLabel(v.label) === normalizeLabel(fromMessage));
+    if (exact) return exact;
+  }
+
   if (Number.isInteger(requestedIndex) && requestedIndex >= 0 && requestedIndex < variants.length) {
     return variants[requestedIndex];
   }
@@ -397,7 +428,12 @@ Deno.serve(async (req) => {
       const product = await getProduct(productId, productCode);
       if (!product) return response({ error: "محصول موردنظر در پایگاه داده پیدا نشد یا فعال نیست." }, 404, req);
 
-      const selectedVariant = findSelectedVariant(product, requestedVariant, requestedVariantIndex);
+      const selectedVariant = findSelectedVariant(
+        product,
+        requestedVariant,
+        requestedVariantIndex,
+        message
+      );
       const normalizedMessage = message.trim();
       const includePrice = /قیمت|چنده|هزینه|تومان|ریال|ارزش خرید/i.test(normalizedMessage);
       const context = productContext(product, selectedVariant, includePrice);
@@ -405,10 +441,11 @@ Deno.serve(async (req) => {
       const task = normalizedMessage
         ? "سؤال مشتری: " + normalizedMessage + "\n" +
           "نوع سؤال را تشخیص بده (کاربرد، سایز، سازگاری، خرید، قیمت یا مقایسه) و مستقیم همان را جواب بده. " +
-          "اگر پاسخ به یک شرط فنی وابسته است، شرط لازم را صریح و کوتاه بگو؛ اگر داده حیاتی برای نتیجه وجود ندارد، فقط همان داده را بپرس. " +
-          "از پاسخ مبهم، تکرار نام محصول، و گفتن «اطلاعات کافی نیست» بدون توضیح مشخص خودداری کن."
-        : "محصول را در یک یا دو جمله معرفی کن. کاربرد معمول ابزار را از نام/دسته/سایز و دانش عمومی ابزارشناسی توضیح بده. " +
-          "قیمت یا برند را فقط در صورت نیاز ذکر کن.";
+          "قبل از پاسخ، هر ادعا را با اطلاعات محصول و دانش عمومی ابزارشناسی بررسی کن. " +
+          "اگر نتیجه به یک شرط فنی وابسته است، شرط لازم را صریح و کوتاه بگو؛ اگر داده حیاتی برای نتیجه وجود ندارد، فقط همان داده را بپرس. " +
+          "از پاسخ مبهم، تکرار بی‌دلیل نام محصول، ادعای مشخصات ساخت، یا گفتن «اطلاعات کافی نیست» بدون توضیح مشخص خودداری کن."
+        : "محصول را در یک یا دو جمله معرفی کن. از نام و سایز واقعی محصول استفاده کن و کاربرد معمول ابزار را توضیح بده. " +
+          "قبل از پاسخ، ادعاهای فنی را بررسی کن و هیچ مشخصه ساختِ ثبت‌نشده‌ای را به محصول نسبت نده.";
 
       const userPrompt = context + "\n\n" + task;
       const primaryModel = String(settings?.product_model || settings?.model || "gemini-3.8-flash");
