@@ -4233,7 +4233,9 @@
     e.preventDefault();
     if (!can.edit()) return toast('__AZICON_BLOCK__ نقش شما اجازه تنظیم AI ندارد.');
     const s = e.target.elements;
+    const existingPayload = (row && row.payload && typeof row.payload === 'object') ? row.payload : {};
     const payload = {
+      ...existingPayload,
       enabled: s.enabled.checked,
       provider: s.provider.value,
       model: s.model.value.trim(),
