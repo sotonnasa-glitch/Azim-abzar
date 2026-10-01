@@ -85,7 +85,7 @@ function restHeaders() {
 async function getProduct(productId: string, productCode: string) {
   if (!SUPABASE_URL || !SERVICE_KEY) return null;
   const base = SUPABASE_URL + "/rest/v1/products";
-  const select = "id,code,name,brand,cat,category_name,description,variants,price,is_active";
+  const select = "id,code,name,brand,cat,category_name,description,variants,price,stock_quantity,stock_tracking_enabled,is_active";
   try {
     let url = base + "?select=" + encodeURIComponent(select) + "&limit=1";
     if (productId) url += "&id=eq." + encodeURIComponent(productId);
@@ -166,9 +166,36 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
 
   const isRingWrench = name.includes("یکسررینگی") || name.includes("رینگی") || name.includes("رینگ");
   const isWrench = name.includes("آچار") || category.includes("آچار");
+
+  const asksPrice = /(?:قیمت|چنده|هزینه|تومان|ریال|ارزش\s*خرید)/.test(q);
+  const asksStock = /(?:موجودی|موجوده|موجود\s*دارید|دارید|در\s*انبار|انبار)/.test(q);
+
+  const formatToman = (value: unknown) =>
+    new Intl.NumberFormat("fa-IR").format(Math.max(0, Number(value) || 0)) + " تومان";
+
+  if (asksPrice) {
+    if (variant && selectedVariant?.price != null) {
+      return "قیمت ثبت‌شده سایز " + variant + " این محصول: " + formatToman(selectedVariant.price) + ".";
+    }
+    if (product?.price != null) {
+      return "قیمت پایه ثبت‌شده این محصول: " + formatToman(product.price) + ".";
+    }
+    return "برای این محصول قیمت ثبت‌شده‌ای در دیتابیس وجود ندارد.";
+  }
+
+  if (asksStock) {
+    if (product?.stock_tracking_enabled === true) {
+      const stock = Math.max(0, Number(product?.stock_quantity) || 0);
+      return stock > 0
+        ? "موجودی ثبت‌شده این محصول در سیستم: " + new Intl.NumberFormat("fa-IR").format(stock) + " عدد."
+        : "موجودی ثبت‌شده این محصول در سیستم: صفر؛ فعلاً ناموجود است.";
+    }
+    return "موجودی عددی این محصول در سیستم ثبت نشده است؛ برای اطلاع از موجودی فعلی باید از فروشگاه استعلام شود.";
+  }
+
   if (!isRingWrench && !isWrench) return null;
 
-  if (variant && /(?:سایز|اندازه|چه\s*سایزی|کدوم\s*سایز|سایز\s*انتخاب|اندازه\s*اتصال|اتصال\s*با\s*سایز)/.test(q) && !/قیمت|چند/.test(q)) {
+  if (variant && /(?:سایز|اندازه|چه\s*سایزی|کدوم\s*سایز|سایز\s*انتخاب|اندازه\s*اتصال|اتصال\s*با\s*سایز)/.test(q)) {
     if (/^\d+(?:\.\d+)?$/.test(variant)) {
       return "سایز " + variant + " یعنی دهانه آچار برای اتصال شش‌گوش با اندازه اسمی " + variant + " میلی‌متر است.";
     }
