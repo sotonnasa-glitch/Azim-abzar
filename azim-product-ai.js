@@ -201,9 +201,9 @@
     const q = root.querySelector('#azAiQuick');
     const hasVariant = !!current.variant;
     const items = [
-      'این ابزار معمولاً برای چه کارهایی استفاده می‌شود؟',
-      hasVariant ? 'سایز انتخاب‌شده دقیقاً یعنی چه؟' : 'برای انتخاب این ابزار به چه نکته‌ای دقت کنم؟',
-      'هنگام استفاده از این ابزار به چه نکته‌ای توجه کنم؟'
+      'کاربرد معمول این ابزار چیست؟',
+      hasVariant ? 'سایز انتخاب‌شده دقیقاً برای چه اندازه اتصالی است؟' : 'برای انتخاب این ابزار چه مشخصه‌ای مهم است؟',
+      'برای بررسی سازگاری این محصول با کارم، چه اطلاعاتی لازم است؟'
     ];
     q.innerHTML = items.map(x => '<button type="button" data-ai-q="' + esc(x) + '">' + esc(x) + '</button>').join('');
     q.querySelectorAll('[data-ai-q]').forEach(b => b.onclick = () => {
@@ -319,7 +319,7 @@
     } catch (_) {}
     btn.dataset.aiVariant = variant;
     const label = btn.querySelector('.az-ai-label');
-    if (label) label.textContent = labelFor(btn.dataset.aiBaseName, variant) + '؟ من راهنماییت می‌کنم';
+    if (label) label.textContent = variant ? 'راهنمایی درباره سایز ' + variant : 'راهنمایی درباره این محصول';
   });
 
   window.AZIM_PRODUCT_AI = { openFromElement:open, close, robotSvg, labelFor, hydrate };
