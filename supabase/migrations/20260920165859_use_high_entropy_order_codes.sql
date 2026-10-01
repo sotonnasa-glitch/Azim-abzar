@@ -1,21 +1,3 @@
-
-begin;
-
-create or replace function private.azim_normalize_mobile(p_mobile text)
-returns text language plpgsql immutable set search_path to ''
-as $function$
-declare
-  v text := regexp_replace(trim(coalesce(p_mobile,'')), '[[:space:]()-]', '', 'g');
-begin
-  v := translate(v, '۰۱۲۳۴۵۶۷۸۹', '0123456789');
-  if left(v,4)='0098' then v := '0'||substr(v,5);
-  elsif left(v,3)='+98' then v := '0'||substr(v,4);
-  elsif left(v,2)='98' then v := '0'||substr(v,3);
-  end if;
-  return v;
-end;
-$function$;
-
 CREATE OR REPLACE FUNCTION private.azim_cart_checkout(p_mode text DEFAULT 'preview'::text, p_full_name text DEFAULT NULL::text, p_mobile text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_address text DEFAULT NULL::text, p_city text DEFAULT NULL::text, p_discount_code text DEFAULT NULL::text, p_items jsonb DEFAULT '[]'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -24,7 +6,7 @@ CREATE OR REPLACE FUNCTION private.azim_cart_checkout(p_mode text DEFAULT 'previ
 AS $function$
 declare
   v_mode text := lower(trim(coalesce(p_mode,'preview')));
-  v_mobile text := private.azim_normalize_mobile(p_mobile);
+  v_mobile text := regexp_replace(trim(coalesce(p_mobile,'')), '\s+', '', 'g');
   v_code text := upper(regexp_replace(trim(coalesce(p_discount_code,'')), '\s+', '', 'g'));
   v_customer_id uuid := null;
   v_discount record;
@@ -34,7 +16,6 @@ declare
   v_subtotal bigint := 0;
   v_eligible bigint := 0;
   v_total bigint := 0;
-  -- Shipping is quoted separately by the sales team at checkout; the provisional total excludes it.
   v_shipping bigint := 0;
   v_usage bigint := 0;
   v_customer_usage bigint := 0;
@@ -75,17 +56,16 @@ begin
     if length(trim(coalesce(p_full_name,''))) < 2 then
       raise exception 'نام و نام خانوادگی را وارد کنید.';
     end if;
-    if v_mobile !~ '^09[0-9]{9}$' then
+    if length(v_mobile) < 7 or length(v_mobile) > 20 then
       raise exception 'شماره موبایل واردشده معتبر نیست.';
     end if;
-
   end if;
 
-  if v_customer_id is not null then
-    select exists(
-      select 1 from public.orders o
-      where o.customer_id = v_customer_id and o.status <> 'cancelled'
-    ) into v_has_order;
+  if v_mobile <> '' then
+    select c.id into v_customer_id
+    from public.customers c
+    where c.mobile = v_mobile
+    limit 1;
   end if;
 
   for v_item in select value from jsonb_array_elements(p_items) loop
@@ -117,12 +97,6 @@ begin
 
     v_unit_price := v_product.price;
     v_variant_price := null;
-
-    if v_variant is null
-       and jsonb_typeof(v_product.variants) = 'array'
-       and jsonb_array_length(coalesce(v_product.variants,'[]'::jsonb)) > 0 then
-      raise exception 'برای «%» انتخاب سایز / مدل الزامی است.', v_product.name;
-    end if;
 
     if v_variant is not null then
       select nullif(trim(coalesce(v->>'price','')), '')::bigint
@@ -189,86 +163,11 @@ begin
       raise exception 'کد تخفیف پیدا نشد.';
     end if;
   else
-    select d.* into v_discount
-    from public.discounts d
-    where d.auto_apply = true
-      and d.is_active = true
-      and now() >= d.starts_at
-      and (d.ends_at is null or now() <= d.ends_at)
-      and v_subtotal >= coalesce(d.min_order_amount,0)
-      and (
-        d.usage_limit is null
-        or (
-          select count(*) from public.discount_redemptions r
-          left join public.orders o on o.id=r.order_id
-          where r.discount_id=d.id
-            and coalesce(o.status,'') <> 'cancelled'
-        ) < d.usage_limit
-      )
-      and (
-        v_customer_id is null
-        or (
-          select count(*) from public.discount_redemptions r
-          left join public.orders o on o.id=r.order_id
-          where r.discount_id=d.id
-            and r.customer_id=v_customer_id
-            and coalesce(o.status,'') <> 'cancelled'
-        ) < coalesce(d.per_customer_limit,1)
-      )
-      and (not d.first_order_only or (v_customer_id is not null and not v_has_order))
-      and (
-        d.applies_to <> 'customers'
-        or (
-          v_customer_id is not null
-          and exists (
-            select 1 from public.discount_customers dc
-            where dc.discount_id=d.id and dc.customer_id=v_customer_id
-          )
-        )
-      )
-      and (
-        d.applies_to = 'all'
-        or (
-          d.applies_to = 'products'
-          and exists (
-            select 1 from jsonb_array_elements(v_lines) x
-            where exists (
-              select 1 from public.discount_products dp
-              where dp.discount_id=d.id
-                and dp.product_id=(x->>'product_id')::uuid
-            )
-          )
-        )
-        or (
-          d.applies_to = 'categories'
-          and exists (
-            select 1 from jsonb_array_elements(v_lines) x
-            where exists (
-              select 1
-              from public.discount_categories dc
-              join public.categories cat on cat.id=dc.category_id
-              where dc.discount_id=d.id
-                and cat.name=coalesce(x->>'category_name','')
-            )
-          )
-        )
-        or (
-          d.applies_to = 'brands'
-          and exists (
-            select 1 from jsonb_array_elements(v_lines) x
-            where exists (
-              select 1
-              from public.discount_brands db
-              join public.brands b on b.id=db.brand_id
-              where db.discount_id=d.id
-                and b.name=coalesce(x->>'brand','')
-            )
-          )
-        )
-      )
-    order by d.priority desc, d.created_at desc
-    limit 1
-    for update;
+    select * into v_discount
+    from public.discounts
+    where auto_apply = true
+    order by priority desc, created_at desc
+    limit 1;
   end if;
 
   if v_discount.id is not null then
@@ -422,35 +321,33 @@ begin
     raise exception 'برای این شماره، تعداد درخواست‌های ثبت سفارش در این بازه زیاد است.';
   end if;
 
-  if v_customer_id is null then
-    insert into public.customers(full_name,mobile,email,address,city,notes)
-    values(
-      left(trim(p_full_name),120),
-      v_mobile,
-      nullif(trim(coalesce(p_email,'')),''),
-      nullif(trim(coalesce(p_address,'')),''),
-      nullif(trim(coalesce(p_city,'')),''),
-      'ثبت‌شده از سبد خرید سایت'
-    )
-    returning id into v_customer_id;
-  end if;
-
-  v_order_code := 'AZ-' || to_char(now(),'YYYYMMDD-HH24MISS') || '-' || upper(encode(extensions.gen_random_bytes(12),'hex'));
-
-  insert into public.orders(
-    order_code,customer_id,status,payment_status,shipping_status,
-    subtotal,discount,discount_id,discount_code,shipping_cost,total,
-    customer_name,customer_mobile,customer_email,shipping_address,shipping_city,notes
-  )
+  insert into public.customers(full_name,mobile,email,address,city,notes)
   values(
-    v_order_code,v_customer_id,'pending','unpaid','pending',
-    v_subtotal,v_discount_amount,v_discount_id,v_discount_code,v_shipping,v_total,
     left(trim(p_full_name),120),
     v_mobile,
     nullif(trim(coalesce(p_email,'')),''),
     nullif(trim(coalesce(p_address,'')),''),
     nullif(trim(coalesce(p_city,'')),''),
-    'ثبت‌شده از سبد خرید آنلاین؛ پرداخت و تأیید نهایی توسط فروشگاه انجام می‌شود.'
+    'ثبت‌شده از سبد خرید سایت'
+  )
+  on conflict (mobile) do update set
+    full_name=coalesce(nullif(left(trim(excluded.full_name),120),''),public.customers.full_name),
+    email=coalesce(nullif(trim(excluded.email),''),public.customers.email),
+    address=coalesce(nullif(trim(excluded.address),''),public.customers.address),
+    city=coalesce(nullif(trim(excluded.city),''),public.customers.city),
+    updated_at=now()
+  returning id into v_customer_id;
+
+  v_order_code := 'AZ-' || to_char(now(),'YYYYMMDD-HH24MISS') || '-' || upper(encode(extensions.gen_random_bytes(12),'hex'));
+
+  insert into public.orders(
+    order_code,customer_id,status,payment_status,shipping_status,
+    subtotal,discount,discount_id,discount_code,shipping_cost,total,notes
+  )
+  values(
+    v_order_code,v_customer_id,'pending','unpaid','pending',
+    v_subtotal,v_discount_amount,v_discount_id,v_discount_code,v_shipping,v_total,
+    'ثبت از سبد خرید آنلاین؛ پرداخت و تأیید نهایی توسط فروشگاه انجام می‌شود.'
   )
   returning id into v_order_id;
 
@@ -487,9 +384,4 @@ begin
     'message','درخواست سفارش ثبت شد؛ برای هماهنگی نهایی فروشگاه با شما تماس می‌گیرد.'
   );
 end;
-$function$;
-
-alter function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb)
-  set statement_timeout='5s';
-
-commit;
+$function$

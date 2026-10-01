@@ -1,10 +1,12 @@
+
 begin;
 
+-- 1) Prevent admin -> owner/admin privilege escalation.
 drop policy if exists "Admins manage admin users" on public.admin_users;
 drop policy if exists "Owner admin manage admin users" on public.admin_users;
 drop policy if exists "Admin users write" on public.admin_users;
-drop policy if exists "Owner manages all admin users" on public.admin_users;
-drop policy if exists "Admins manage staff only" on public.admin_users;
+drop policy if exists "Owner manages admin users" on public.admin_users;
+drop policy if exists "Admins can manage staff" on public.admin_users;
 
 create policy "Owner manages all admin users"
 on public.admin_users
@@ -32,6 +34,7 @@ with check (
   and role in ('editor','sales')
 );
 
+-- 2) Editors must not be able to change payment/AI controls.
 drop policy if exists "Admins manage site content" on public.site_content;
 drop policy if exists "Editors manage site content" on public.site_content;
 drop policy if exists "Owner admin manage site content" on public.site_content;
@@ -55,6 +58,7 @@ with check (
   and section_key not in ('checkout_payment','ai_settings')
 );
 
+-- 3) Make audit actor identity server-authoritative.
 create or replace function private.enforce_audit_actor()
 returns trigger
 language plpgsql
@@ -71,11 +75,13 @@ end;
 $$;
 
 revoke all on function private.enforce_audit_actor() from public, anon, authenticated;
+
 drop trigger if exists trg_enforce_audit_actor on public.audit_logs;
 create trigger trg_enforce_audit_actor
 before insert on public.audit_logs
 for each row execute function private.enforce_audit_actor();
 
+-- 4) Preserve customer/order data as an immutable order-time snapshot.
 alter table public.orders
   add column if not exists customer_name text,
   add column if not exists customer_mobile text,
@@ -83,6 +89,7 @@ alter table public.orders
   add column if not exists shipping_address text,
   add column if not exists shipping_city text;
 
+-- Backfill the existing production order without changing customer records.
 update public.orders o
 set customer_name = coalesce(o.customer_name,c.full_name),
     customer_mobile = coalesce(o.customer_mobile,c.mobile),
@@ -92,6 +99,7 @@ set customer_name = coalesce(o.customer_name,c.full_name),
 from public.customers c
 where o.customer_id = c.id;
 
+-- 5) Keep who last edited a discount.
 alter table public.discounts
   add column if not exists updated_by uuid references auth.users(id) on delete set null;
 
@@ -114,6 +122,7 @@ create trigger discounts_touch_editor
 before update on public.discounts
 for each row execute function private.touch_discount_editor();
 
+-- 6) Discount redemptions are immutable business history; clients cannot edit/delete them directly.
 revoke insert, update, delete, truncate on table public.discount_redemptions from authenticated;
 drop policy if exists "Admins manage discount redemptions" on public.discount_redemptions;
 drop policy if exists "Sales manage discount redemptions" on public.discount_redemptions;
