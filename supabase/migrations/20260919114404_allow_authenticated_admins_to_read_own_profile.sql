@@ -1,0 +1,1 @@
+CREATE POLICY "Authenticated users can read own admin profile" ON public.admin_users FOR SELECT TO authenticated USING (user_id = auth.uid());

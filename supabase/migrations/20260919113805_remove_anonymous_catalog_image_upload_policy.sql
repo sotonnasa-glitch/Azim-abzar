@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Temporary catalog image upload" ON storage.objects;
