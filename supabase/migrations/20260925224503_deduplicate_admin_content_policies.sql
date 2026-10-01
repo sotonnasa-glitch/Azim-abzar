@@ -1,5 +1,7 @@
+
 begin;
 
+-- Clean up legacy overlapping admin-user policies.
 drop policy if exists "Owner admin delete admin users" on public.admin_users;
 drop policy if exists "Owner admin insert admin users" on public.admin_users;
 drop policy if exists "Owner admin update admin users" on public.admin_users;
@@ -41,6 +43,7 @@ on public.admin_users
 for delete to authenticated
 using ((select private.has_azim_role(array['owner'::text])));
 
+-- Collapse site-content policies into one policy so only one predicate is evaluated.
 drop policy if exists "Owner admin manage site content" on public.site_content;
 drop policy if exists "Editors manage non-sensitive site content" on public.site_content;
 
@@ -62,6 +65,7 @@ with check (
   )
 );
 
+-- Keep only the intended immutable-redemption SELECT policy.
 drop policy if exists "Discount redemptions select" on public.discount_redemptions;
 drop policy if exists "Staff can read discount redemptions" on public.discount_redemptions;
 create policy "Staff can read discount redemptions"
