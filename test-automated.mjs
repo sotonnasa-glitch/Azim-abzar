@@ -695,15 +695,15 @@ function testAuditAddendumGuards() {
   }
 
   const telegramMigration = fs.readFileSync(
-    path.join(__dirname, 'supabase', 'migrations', '20260927142000_harden_telegram_tracking_update.sql'),
+    path.join(__dirname, 'supabase', 'migrations-archive', '20260927142000_harden_telegram_tracking_update.sql'),
     'utf8'
   );
   const telegramShipmentMigration = fs.readFileSync(
-    path.join(__dirname, 'supabase', 'migrations', '20260927151000_sync_telegram_shipping_state_machine.sql'),
+    path.join(__dirname, 'supabase', 'migrations-archive', '20260927151000_sync_telegram_shipping_state_machine.sql'),
     'utf8'
   );
   const telegramRestoreMigration = fs.readFileSync(
-    path.join(__dirname, 'supabase', 'migrations', '20260927153000_restore_cancelled_telegram_order.sql'),
+    path.join(__dirname, 'supabase', 'migrations-archive', '20260927153000_restore_cancelled_telegram_order.sql'),
     'utf8'
   );
   if (
@@ -761,9 +761,9 @@ function testAuditAddendumGuards() {
     fail('saveInquiry کنترل نقش سمت پنل ندارد');
   }
 
-  const ledgerMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20260927130000_payment_ledger_rate_limit_and_reconciliation.sql'), 'utf8');
-  const rpcMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20260927131500_harden_admin_payment_rpc_and_provider_config.sql'), 'utf8');
-  const rlsMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20260927132000_add_service_role_rls_policies_payment_tables.sql'), 'utf8');
+  const ledgerMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20260927130000_payment_ledger_rate_limit_and_reconciliation.sql'), 'utf8');
+  const rpcMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20260927131500_harden_admin_payment_rpc_and_provider_config.sql'), 'utf8');
+  const rlsMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20260927132000_add_service_role_rls_policies_payment_tables.sql'), 'utf8');
   const paymentStateDoc = fs.readFileSync(path.join(__dirname, 'PAYMENT_STATE_MACHINE_FA.md'), 'utf8');
 
   if (
