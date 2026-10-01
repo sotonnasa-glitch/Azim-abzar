@@ -2354,6 +2354,7 @@
         : [];
       return {
         id: x?.id || null,
+        code: String(x?.code ?? '').trim().toUpperCase(),
         p: x?.price ?? null,
         v: vs,
         name: String(x?.name ?? '').trim(),
