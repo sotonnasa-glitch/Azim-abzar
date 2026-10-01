@@ -1,0 +1,32 @@
+name: Live smoke tests
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Read public Supabase config
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "AZIM_SUPABASE_URL=$(node -e "const fs=require('fs');const s=fs.readFileSync('supabase-config.js','utf8');const m=s.match(/window\\.AZIM_SUPABASE_URL='([^']+)'/);if(!m)process.exit(1);process.stdout.write(m[1])")" >> "$GITHUB_ENV"
+          echo "AZIM_SUPABASE_KEY=$(node -e "const fs=require('fs');const s=fs.readFileSync('supabase-config.js','utf8');const m=s.match(/window\\.AZIM_SUPABASE_ANON_KEY='([^']+)'/);if(!m)process.exit(1);process.stdout.write(m[1])")" >> "$GITHUB_ENV"
+
+      - name: Run live AI + checkout + tracking smoke tests
+        run: node scripts/live-smoke.mjs
