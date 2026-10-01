@@ -1,0 +1,1 @@
+drop function private.azim_cart_checkout(text,text,text,text,text,text,text,jsonb);

@@ -1,7 +1,3 @@
--- Keep the legacy 11-argument admin order-save RPC safe while older deployed
--- frontend bundles are still in circulation. New frontend versions also send
--- tracking URL and carrier through the 13-argument signature.
-
 create or replace function public.azim_save_order_with_discount(
   p_order_id uuid default null,
   p_order_code text default null,
@@ -67,6 +63,7 @@ begin
     if v_status='delivered' and v_shipping<>'delivered' then
       raise exception using message='سفارش تحویل شده باید وضعیت ارسال «تحویل شده» داشته باشد.';
     end if;
+
     if v_tracking_code is null then
       raise exception using message='برای ارسال، کد مرسوله اجباری است.';
     end if;

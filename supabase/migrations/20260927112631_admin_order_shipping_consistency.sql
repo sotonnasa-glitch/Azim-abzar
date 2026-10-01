@@ -1,5 +1,3 @@
--- Keep the admin order editor aligned with the Telegram shipping state machine.
--- The legacy 11-argument RPC is retired for authenticated clients.
 
 create or replace function public.azim_save_order_with_discount(
   p_order_id uuid default null,
@@ -107,12 +105,20 @@ $function$;
 
 revoke all on function public.azim_save_order_with_discount(
   uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb
-) from public,anon,authenticated;
+) from public;
+revoke all on function public.azim_save_order_with_discount(
+  uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb
+) from anon;
+revoke all on function public.azim_save_order_with_discount(
+  uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb
+) from authenticated;
 
 revoke all on function public.azim_save_order_with_discount(
   uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb,text,text
-) from public,anon;
-
+) from public;
+revoke all on function public.azim_save_order_with_discount(
+  uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb,text,text
+) from anon;
 grant execute on function public.azim_save_order_with_discount(
   uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb,text,text
 ) to authenticated;
