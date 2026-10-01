@@ -169,6 +169,7 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
 
   const asksPrice = /(?:قیمت|چنده|هزینه|تومان|ریال|ارزش\s*خرید)/.test(q);
   const asksStock = /(?:موجودی|موجوده|موجود\s*دارید|دارید|در\s*انبار|انبار)/.test(q);
+  const asksSuitability = /(?:مناسب|سازگار|به\s*درد|جواب\s*می(?:ده|دهد)|می[\u200c ]?خوره|می[\u200c ]?خورد)/.test(q);
 
   const formatToman = (value: unknown) =>
     new Intl.NumberFormat("fa-IR").format(Math.max(0, Number(value) || 0)) + " تومان";
@@ -191,6 +192,10 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
         : "موجودی ثبت‌شده این محصول در سیستم: صفر؛ فعلاً ناموجود است.";
     }
     return "موجودی عددی این محصول در سیستم ثبت نشده است؛ برای اطلاع از موجودی فعلی باید از فروشگاه استعلام شود.";
+  }
+
+  if (asksSuitability) {
+    return "برای بررسی مناسب بودن این ابزار، بگو دقیقاً قرار است چه کاری انجام بدهی و اندازه یا نوع اتصال چیست.";
   }
 
   if (!isRingWrench && !isWrench) return null;
@@ -557,7 +562,17 @@ Deno.serve(async (req) => {
         maxOutputTokens
       );
 
-      const result = first || second || third;
+      let result = first || second || third;
+
+      if (result && /برای\s*این\s*کار\s*مناسب(?:ه|است)?/i.test(result.reply.trim()) && result.reply.trim().length < 120) {
+        result = {
+          ...result,
+          provider: "guardrail",
+          model: "product-safety-rule",
+          reply: "برای بررسی مناسب بودن این ابزار، بگو دقیقاً قرار است چه کاری انجام بدهی و اندازه یا نوع اتصال چیست.",
+        };
+      }
+
       if (!result) {
         await logUsage({
           mode: "product",
