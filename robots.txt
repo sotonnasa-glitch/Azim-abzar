@@ -1,9 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /admin.html
+Disallow: /payment-callback.html
+Disallow: /order-status.html
+Disallow: /cart.html
 Disallow: /audit/
 Disallow: /database/
 Disallow: /supabase/
 Disallow: /src/
 Disallow: /scripts/
 Disallow: /tools/
-Sitemap: https://sotonnasa-glitch.github.io/Azim-abzar/sitemap.xml
+Sitemap: https://azimabzar.com/sitemap.xml
