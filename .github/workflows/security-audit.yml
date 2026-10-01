@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -27,8 +27,23 @@ jobs:
           cache: npm
           cache-dependency-path: package.json
 
-      - name: Generate lockfile without running scripts
-        run: npm install --package-lock-only --ignore-scripts
+      - name: Generate lockfile
+        shell: bash
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            if [[ -n "$(git status --porcelain package-lock.json)" ]]; then
+              git add package-lock.json
+              git commit -m "chore(deps): add npm lockfile"
+              git push
+            fi
+          fi
+
+      - name: Verify reproducible npm install
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Dependency vulnerability audit
         run: npm audit --omit=dev --audit-level=high
