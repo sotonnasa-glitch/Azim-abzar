@@ -201,9 +201,9 @@
     const q = root.querySelector('#azAiQuick');
     const hasVariant = !!current.variant;
     const items = [
-      'این ابزار برای چه کارهایی مناسبه؟',
-      'برای انتخاب این ابزار به چه نکته‌ای دقت کنم؟',
-      hasVariant ? 'این سایز دقیقاً برای چه اندازه‌ایه؟' : 'قبل از خرید این ابزار چه چیزی مهمه؟'
+      'این ابزار معمولاً برای چه کارهایی استفاده می‌شود؟',
+      hasVariant ? 'سایز انتخاب‌شده دقیقاً یعنی چه؟' : 'برای انتخاب این ابزار به چه نکته‌ای دقت کنم؟',
+      'هنگام استفاده از این ابزار به چه نکته‌ای توجه کنم؟'
     ];
     q.innerHTML = items.map(x => '<button type="button" data-ai-q="' + esc(x) + '">' + esc(x) + '</button>').join('');
     q.querySelectorAll('[data-ai-q]').forEach(b => b.onclick = () => {
