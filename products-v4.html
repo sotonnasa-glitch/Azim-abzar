@@ -2389,11 +2389,19 @@
     }
 
     function getData(id) {
-      const d = livePriceData[id] || priceData[id] || {};
-      let vs = Array.isArray(d.v) ? d.v : [];
-      if (id === 'P0008' && !vs.length) vs = P0008;
-      const fallback = basePrices[id] ?? null;
-      return { vs, base: (d.p != null ? d.p : fallback), discount: d.discount_type ? d : {} };
+      const live = livePriceData[id] || {};
+      const local = priceData[id] || {};
+      const liveVariants = Array.isArray(live.v) ? live.v : [];
+      const localVariants = Array.isArray(local.v) ? local.v : [];
+      const vs = liveVariants.length ? liveVariants : (localVariants.length ? localVariants : (id === 'P0008' ? P0008 : []));
+      const liveBase = live.p != null ? Number(live.p) : 0;
+      const localBase = local.p != null ? Number(local.p) : Number(basePrices[id] ?? 0);
+      const base = liveBase > 0 ? liveBase : localBase;
+      return {
+        vs,
+        base,
+        discount: live.discount_type ? live : (local.discount_type ? local : {})
+      };
     }
 
     function getProductPriceValue(id) {
@@ -2409,9 +2417,12 @@
 
 
     function optionLabel(v, d) {
-      if (v[1] == null) return `${v[0]} — قیمت درج نشده`;
-      const net = discountedPrice(v[1], d.discount);
-      return net < Number(v[1]) ? `${v[0]} — ${fmt(net)} تومان · تخفیف` : `${v[0]} — ${fmt(v[1])} تومان`;
+      const raw = Number(v?.[1] || 0);
+      const fallback = Number(d?.base || 0);
+      const effective = raw > 0 ? raw : fallback;
+      if (!(effective > 0)) return `${v[0]} — قیمت در لیست درج نشده`;
+      const net = discountedPrice(effective, d.discount);
+      return net < effective ? `${v[0]} — ${fmt(net)} تومان · تخفیف` : `${v[0]} — ${fmt(effective)} تومان`;
     }
 
     function card(x) {
