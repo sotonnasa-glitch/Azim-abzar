@@ -297,7 +297,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm install --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           node server.js > /tmp/azim-express.log 2>&1 &
           server_pid=$!
           cleanup() {
