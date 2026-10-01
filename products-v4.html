@@ -2170,8 +2170,9 @@
           box.append(head,body);
           list.appendChild(box);
         });
-      } catch (_) {
-        summary.textContent='خطا در دریافت نظرات';
+      } catch (error) {
+        console.warn('Azim Abzar review load failed:', error);
+        summary.textContent='نمایش نظرات فعلاً با مشکل مواجه شد؛ دوباره تلاش کنید.';
       }
     }
 
@@ -2182,7 +2183,10 @@
       form.onsubmit=async (ev)=>{
         ev.preventDefault();
         if(!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return;
-        const mobile=String(document.getElementById('reviewMobile')?.value||'').replace(/[\s-]/g,'');
+        const mobile=String(document.getElementById('reviewMobile')?.value||'')
+          .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+          .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+          .replace(/[\s-]/g,'');
         const rating=Math.max(1,Math.min(5,Number(document.getElementById('reviewRating')?.value||5)));
         const comment=String(document.getElementById('reviewComment')?.value||'').trim();
         if(!/^09\d{9}$/.test(mobile)){showToast('شماره موبایل معتبر نیست.');return;}
