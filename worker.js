@@ -9,7 +9,7 @@ export default {
     const liveHotfixFiles = new Set(["/azim-product-ai.js", "/products-v4.html"]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/main" + requestPath;
+        const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@6c57817ae77e05fa74966e5059517c1b2e61d9cf" + requestPath;
         const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
