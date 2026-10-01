@@ -2260,6 +2260,44 @@
       }
     }
 
+    async function loadLiveCategories() {
+      if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) {
+        throw new Error('اتصال دیتابیس فروشگاه تنظیم نشده است.');
+      }
+
+      const url =
+        window.AZIM_SUPABASE_URL +
+        '/rest/v1/categories?select=name,slug,description,image,sort_order,is_active&is_active=eq.true&order=sort_order.asc&limit=100';
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            apikey: window.AZIM_SUPABASE_ANON_KEY,
+            Authorization: 'Bearer ' + window.AZIM_SUPABASE_ANON_KEY
+          },
+          cache: 'no-store',
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error('دسته‌بندی‌های زنده HTTP ' + response.status);
+        }
+
+        const rows = await response.json();
+        return Array.isArray(rows) ? rows : [];
+      } catch (e) {
+        if (e?.name === 'AbortError') {
+          throw new Error('دریافت دسته‌بندی‌های زنده بیشتر از زمان مجاز طول کشید.');
+        }
+        throw e;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
     async function loadLiveCatalogPage(requestPage = page) {
       if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) {
         return { rows: [], total: 0, ok: false };
