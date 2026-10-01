@@ -158,6 +158,27 @@ function findSelectedVariant(product: any, requestedLabel: string, requestedInde
   return variants[0];
 }
 
+function knownProductAnswer(product: any, selectedVariant: any, question: string) {
+  const q = normalizeLabel(question);
+  const name = normalizeLabel(product?.name);
+  const category = normalizeLabel(product?.category_name || product?.cat);
+  const variant = String(selectedVariant?.label || "").trim();
+
+  const isRingWrench = name.includes("یکسررینگی") || name.includes("رینگی") || name.includes("رینگ");
+  const isWrench = name.includes("آچار") || category.includes("آچار");
+  if (!isRingWrench && !isWrench) return null;
+
+  if (variant && /سایز|اندازه|چه\s*اندازه|برای\s*چه/.test(q) && !/قیمت|چند/.test(q)) {
+    return "سایز " + variant + " یعنی دهانه آچار برای اتصال شش‌گوش با اندازه اسمی " + variant + " میلی‌متر است.";
+  }
+
+  if (isRingWrench && /(چه\s*کار|کاربرد|به\s*چه\s*درد|چه\s*استفاده)/.test(q)) {
+    return "این آچار برای باز و بسته کردن مهره و سرپیچ‌های شش‌گوش با سایز متناسب استفاده می‌شود؛ برای اتصال، سایز آچار باید با اندازه واقعی آن یکی باشد.";
+  }
+
+  return null;
+}
+
 function productContext(product: any, selectedVariant: any, includePrice = false) {
   const variants = Array.isArray(product?.variants)
     ? product.variants.map(normalizeVariant).filter((v: any) => v.label)
@@ -446,6 +467,31 @@ Deno.serve(async (req) => {
           "از پاسخ مبهم، تکرار بی‌دلیل نام محصول، ادعای مشخصات ساخت، یا گفتن «اطلاعات کافی نیست» بدون توضیح مشخص خودداری کن."
         : "محصول را در یک یا دو جمله معرفی کن. از نام و سایز واقعی محصول استفاده کن و کاربرد معمول ابزار را توضیح بده. " +
           "قبل از پاسخ، ادعاهای فنی را بررسی کن و هیچ مشخصه ساختِ ثبت‌نشده‌ای را به محصول نسبت نده.";
+
+      const knownAnswer = knownProductAnswer(product, selectedVariant, normalizedMessage);
+      if (knownAnswer) {
+        await logUsage({
+          mode: "product",
+          product_id: product.id,
+          product_code: product.code,
+          variant_label: selectedVariant?.label || null,
+          provider: "deterministic",
+          model: "catalog-rule",
+          prompt_chars: normalizedMessage.length,
+          reply_chars: knownAnswer.length,
+          input_tokens: 0,
+          output_tokens: 0,
+          success: true,
+        });
+        return response({
+          reply: knownAnswer,
+          source: "catalog-rule",
+          provider: "deterministic",
+          model: "catalog-rule",
+          product: { id: product.id, code: product.code, name: product.name },
+          variant: selectedVariant?.label || null,
+        }, 200, req);
+      }
 
       const userPrompt = context + "\n\n" + task;
       const primaryModel = String(settings?.product_model || settings?.model || "gemini-3.8-flash");
