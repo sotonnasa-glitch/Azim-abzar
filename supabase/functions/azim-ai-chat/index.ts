@@ -200,6 +200,13 @@ function productContext(product: any, selectedVariant: any, includePrice = false
     description && description !== name ? "توضیحات ثبت‌شده: " + description : "",
   ];
 
+  const combinedName = normalizeLabel([name, category].filter(Boolean).join(" "));
+  if (combinedName.includes("یکسررینگی") || combinedName.includes("رینگی") || combinedName.includes("رینگ")) {
+    lines.push("دانش عمومی ابزارشناسی: آچار یکسررینگی برای باز و بسته کردن اتصالات شش‌گوش با سایز متناظر استفاده می‌شود؛ اندازه آچار باید با اندازه واقعی اتصال برابر باشد.");
+  } else if (combinedName.includes("آچار") || combinedName.includes("بکس")) {
+    lines.push("دانش عمومی ابزارشناسی: آچار و بکس در سایز مشخص برای اتصالات شش‌گوش همان سایز به‌کار می‌روند؛ نوع دسترسی و اندازه واقعی اتصال در انتخاب مهم است.");
+  }
+
   if (selectedVariant?.label) {
     lines.push("واریانت انتخاب‌شده: " + selectedVariant.label);
     if (includePrice && selectedVariant.price != null) {
