@@ -1,6 +1,3 @@
--- Remove the overloaded/default-argument ambiguity between the legacy 11-argument
--- and new 13-argument admin order-save RPC signatures.
-
 drop function if exists public.azim_save_order_with_discount(
   uuid,text,uuid,text,text,text,bigint,text,text,text,jsonb,text,text
 );
