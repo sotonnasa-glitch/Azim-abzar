@@ -201,9 +201,9 @@
     const q = root.querySelector('#azAiQuick');
     const hasVariant = !!current.variant;
     const items = [
-      'کاربرد معمول این ابزار چیست؟',
-      hasVariant ? 'سایز انتخاب‌شده دقیقاً برای چه اندازه اتصالی است؟' : 'برای انتخاب این ابزار چه مشخصه‌ای مهم است؟',
-      'برای بررسی سازگاری این محصول با کارم، چه اطلاعاتی لازم است؟'
+      'این ابزار دقیقاً چه کاری انجام می‌دهد؟',
+      hasVariant ? 'سایز ' + current.variant + ' برای چه مهره یا اتصالی است؟' : 'مهم‌ترین مشخصه این ابزار برای انتخاب چیست؟',
+      'اگر کاربردم را بگویم، می‌توانی بگویی این مدل مناسب است یا نه؟'
     ];
     q.innerHTML = items.map(x => '<button type="button" data-ai-q="' + esc(x) + '">' + esc(x) + '</button>').join('');
     q.querySelectorAll('[data-ai-q]').forEach(b => b.onclick = () => {
@@ -233,12 +233,27 @@
 
   async function open(btn) {
     const root = ensureModal();
+    let initialVariant = btn.dataset.aiVariant || '';
+    if (!initialVariant) {
+      const card = btn.closest('.card');
+      const select = card?.querySelector('select[data-id]');
+      if (select) {
+        try {
+          if (typeof window.__AZIM_GET_PRODUCT_VARIANT__ === 'function') {
+            initialVariant = window.__AZIM_GET_PRODUCT_VARIANT__(select.dataset.id, Number(select.value || 0)) || '';
+          } else {
+            initialVariant = (select.selectedOptions?.[0]?.textContent || '').split(' — ')[0].trim();
+          }
+        } catch (_) {}
+      }
+    }
     current = {
       id:btn.dataset.aiProductId || '',
       code:btn.dataset.aiProductCode || '',
       name:btn.dataset.aiBaseName || 'محصول',
-      variant:btn.dataset.aiVariant || ''
+      variant:initialVariant
     };
+    btn.dataset.aiVariant = initialVariant;
     const title = labelFor(current.name, current.variant);
     root.querySelector('#azAiModalTitle').textContent = title;
     root.querySelector('#azAiModalProduct').innerHTML = '<b>' + esc(title) + '</b> · اطلاعات محصول مستقیماً از دیتابیس خوانده می‌شود.';
