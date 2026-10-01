@@ -6,7 +6,15 @@ export default {
     // Live hotfix bridge: serve the two most recently corrected public files
     // from the canonical GitHub main branch while the full Worker asset bundle
     // remains unchanged. All other requests continue to use ASSETS.
-    const liveHotfixFiles = new Set(["/azim-product-ai.js", "/products-v4.html"]);
+    const liveHotfixFiles = new Set([
+      "/azim-product-ai.js",
+      "/products-v4.html",
+      "/supabase-config.js",
+      "/catalog_site_mapping_908/products.json",
+      "/catalog_site_mapping_908/price-size-data.json",
+      "/catalog_site_mapping_908/prices.json",
+      "/catalog_site_mapping_908/category-map.json"
+    ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
         const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@6c57817ae77e05fa74966e5059517c1b2e61d9cf" + requestPath;
@@ -19,9 +27,12 @@ export default {
         });
         if (hotfix.ok) {
           const headers = new Headers(hotfix.headers);
-          headers.set("content-type", requestPath.endsWith(".js")
+          const hotfixType = requestPath.endsWith(".js")
             ? "application/javascript; charset=utf-8"
-            : "text/html; charset=utf-8");
+            : requestPath.endsWith(".json")
+              ? "application/json; charset=utf-8"
+              : "text/html; charset=utf-8";
+          headers.set("content-type", hotfixType);
           headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
           headers.set("pragma", "no-cache");
           headers.set("expires", "0");
