@@ -1,3 +1,6 @@
+-- Scope the internal payment transition capability to the finalization
+-- function call. A successful verified payment/refund must not leave the
+-- transaction-local guard setting available to later writes in the same DB transaction.
 
 create or replace function public.azim_finalize_online_payment(
   p_transaction_id uuid,
@@ -20,12 +23,12 @@ declare
   v_now timestamptz:=now();
   v_ref text:=nullif(trim(coalesce(p_gateway_reference,'')),'');
   v_unit text:=lower(trim(coalesce(p_confirmed_store_amount_unit,'')));
-  v_payload jsonb:=case when jsonb_typeof(coalesce(p_verification_payload,'{}'::jsonb))='object' then coalesce(p_verification_payload,'{}'::jsonb) else '{}'::jsonb end;
+  v_payload jsonb:=case when jsonb_typeof(coalesce(p_verification_payload,'{}'::jsonb))='object'
+    then coalesce(p_verification_payload,'{}'::jsonb) else '{}'::jsonb end;
   v_prev_transition text:=coalesce(current_setting('azim.payment_transition',true),'');
 begin
   select * into v_tx from public.payment_transactions where id=p_transaction_id for update;
   if not found then raise exception using message='تراکنش پرداخت پیدا نشد.'; end if;
-
   select * into v_order from public.orders where id=v_tx.order_id for update;
   if not found then raise exception using message='سفارش مرتبط با تراکنش پیدا نشد.'; end if;
 
@@ -56,7 +59,6 @@ begin
      or lower(trim(coalesce(v_tx.amount_unit,''))) <> v_unit
      or v_order.total <> v_tx.amount
      or v_order.payment_method <> 'online' then
-
     update public.payment_transactions
     set status='review_required',
         provider_status=coalesce(p_provider_status,'amount_mismatch'),
@@ -71,25 +73,20 @@ begin
     perform private.azim_payment_event(
       v_order.id,v_tx.id,'review_required',v_tx.status,'review_required','gateway',null,
       'review:'||v_tx.id::text,
-      jsonb_build_object(
-        'provider_status',p_provider_status,'confirmed_store_amount',p_confirmed_store_amount,
+      jsonb_build_object('provider_status',p_provider_status,'confirmed_store_amount',p_confirmed_store_amount,
         'confirmed_store_amount_unit',v_unit,'transaction_amount',v_tx.amount,
-        'transaction_amount_unit',v_tx.amount_unit,'order_total',v_order.total,
-        'reason','amount_or_order_mismatch'
-      )
+        'transaction_amount_unit',v_tx.amount_unit,'order_total',v_order.total,'reason','amount_or_order_mismatch')
     );
 
     perform private.azim_payment_admin_notice(
       v_order.id,v_tx.id,'payment_review_required',
-      jsonb_build_object(
-        'order_code',v_order.order_code,'amount',v_tx.amount,'amount_unit',v_tx.amount_unit,
-        'gateway_reference',v_ref,'reason','amount_or_order_mismatch'
-      )
+      jsonb_build_object('order_code',v_order.order_code,'amount',v_tx.amount,
+        'amount_unit',v_tx.amount_unit,'gateway_reference',v_ref,'reason','amount_or_order_mismatch')
     );
 
     return jsonb_build_object(
-      'ok',false,'review_required',true,'order_code',v_order.order_code,'transaction_id',v_tx.id,
-      'message','مبلغ پرداخت با سفارش مطابقت نداشت و برای بررسی دستی متوقف شد.'
+      'ok',false,'review_required',true,'order_code',v_order.order_code,
+      'transaction_id',v_tx.id,'message','مبلغ پرداخت با سفارش مطابقت نداشت و برای بررسی دستی متوقف شد.'
     );
   end if;
 
@@ -110,45 +107,32 @@ begin
       paid_at=coalesce(paid_at,v_now),updated_at=v_now
   where id=v_order.id;
 
-  -- Restore the transition guard setting before returning so a later write in
-  -- the same database transaction cannot inherit the "verified" capability.
   perform set_config('azim.payment_transition',v_prev_transition,true);
 
   perform private.azim_payment_event(
     v_order.id,v_tx.id,'payment_verified',v_tx.status,'paid','gateway',null,
     'paid:'||v_tx.id::text,
-    jsonb_build_object(
-      'provider_status',p_provider_status,'gateway_reference',v_ref,
+    jsonb_build_object('provider_status',p_provider_status,'gateway_reference',v_ref,
       'gateway_request_id',p_gateway_request_id,'confirmed_store_amount',p_confirmed_store_amount,
-      'confirmed_store_amount_unit',v_unit
-    )
+      'confirmed_store_amount_unit',v_unit)
   );
 
   perform private.azim_payment_admin_notice(
     v_order.id,v_tx.id,'payment_paid',
-    jsonb_build_object(
-      'order_code',v_order.order_code,'amount',v_tx.amount,'amount_unit',v_tx.amount_unit,
-      'gateway_reference',coalesce(v_ref,v_tx.gateway_reference),'status','paid'
-    )
+    jsonb_build_object('order_code',v_order.order_code,'amount',v_tx.amount,'amount_unit',v_tx.amount_unit,
+      'gateway_reference',coalesce(v_ref,v_tx.gateway_reference),'status','paid')
   );
 
   if v_order.status='cancelled' then
-    insert into public.payment_refunds(
-      order_id,transaction_id,amount,amount_unit,status,reason,requested_by
-    )
-    values(
-      v_order.id,v_tx.id,v_tx.amount,v_tx.amount_unit,'requested',
-      'پرداخت بعد از لغو سفارش دریافت شد؛ عودت وجه باید تعیین تکلیف شود.','system'
-    )
-    on conflict (transaction_id)
-      where status in ('requested','pending','processing') do nothing;
+    insert into public.payment_refunds(order_id,transaction_id,amount,amount_unit,status,reason,requested_by)
+    values(v_order.id,v_tx.id,v_tx.amount,v_tx.amount_unit,'requested',
+      'پرداخت بعد از لغو سفارش دریافت شد؛ عودت وجه باید تعیین تکلیف شود.','system')
+    on conflict (transaction_id) where status in ('requested','pending','processing') do nothing;
 
     perform private.azim_payment_admin_notice(
       v_order.id,v_tx.id,'payment_paid_after_cancel',
-      jsonb_build_object(
-        'order_code',v_order.order_code,'amount',v_tx.amount,
-        'reason','order_cancelled_before_payment_confirmation'
-      )
+      jsonb_build_object('order_code',v_order.order_code,'amount',v_tx.amount,
+        'reason','order_cancelled_before_payment_confirmation')
     );
   end if;
 
@@ -189,7 +173,6 @@ begin
 
   select * into v_refund from public.payment_refunds where id=p_refund_id for update;
   if not found then raise exception using message='درخواست عودت وجه پیدا نشد.'; end if;
-
   select * into v_tx from public.payment_transactions where id=v_refund.transaction_id for update;
   select * into v_order from public.orders where id=v_refund.order_id for update;
 
@@ -204,10 +187,8 @@ begin
   if v_status='refunded' then
     if p_confirmed_amount is null or p_confirmed_amount<>v_refund.amount then
       update public.payment_refunds
-      set status='review_required',
-          error_code='REFUND_AMOUNT_MISMATCH',
-          error_message='مبلغ عودت تأییدشده با مبلغ درخواست‌شده یکسان نیست.',
-          updated_at=v_now
+      set status='review_required',error_code='REFUND_AMOUNT_MISMATCH',
+          error_message='مبلغ عودت تأییدشده با مبلغ درخواست‌شده یکسان نیست.',updated_at=v_now
       where id=v_refund.id;
       return jsonb_build_object('ok',false,'review_required',true,'refund_id',v_refund.id);
     end if;
@@ -218,10 +199,8 @@ begin
 
     if v_total_refunded+v_refund.amount>v_tx.amount then
       update public.payment_refunds
-      set status='review_required',
-          error_code='REFUND_OVER_LIMIT',
-          error_message='مجموع عودت وجه از مبلغ تراکنش بیشتر می‌شود.',
-          updated_at=v_now
+      set status='review_required',error_code='REFUND_OVER_LIMIT',
+          error_message='مجموع عودت وجه از مبلغ تراکنش بیشتر می‌شود.',updated_at=v_now
       where id=v_refund.id;
       return jsonb_build_object('ok',false,'review_required',true,'refund_id',v_refund.id);
     end if;
@@ -232,7 +211,8 @@ begin
   update public.payment_refunds
   set status=v_status,
       provider_refund_id=coalesce(nullif(trim(coalesce(p_provider_refund_id,'')),''),provider_refund_id),
-      response_payload=case when jsonb_typeof(coalesce(p_response_payload,'{}'::jsonb))='object' then coalesce(p_response_payload,'{}'::jsonb) else response_payload end,
+      response_payload=case when jsonb_typeof(coalesce(p_response_payload,'{}'::jsonb))='object'
+        then coalesce(p_response_payload,'{}'::jsonb) else response_payload end,
       error_code=coalesce(nullif(trim(coalesce(p_error_code,'')),''),error_code),
       error_message=coalesce(nullif(trim(coalesce(p_error_message,'')),''),error_message),
       refunded_at=case when v_status='refunded' then coalesce(refunded_at,v_now) else refunded_at end,
@@ -241,8 +221,7 @@ begin
 
   if v_status='refunded' then
     select coalesce(sum(amount),0) into v_total_refunded
-    from public.payment_refunds
-    where transaction_id=v_tx.id and status='refunded';
+    from public.payment_refunds where transaction_id=v_tx.id and status='refunded';
 
     perform set_config('azim.payment_transition','refund_verified',true);
 
@@ -262,28 +241,22 @@ begin
   perform private.azim_payment_event(
     v_order.id,v_tx.id,'refund_'||v_status,v_before,v_status,'gateway',null,
     'refund-final:'||v_refund.id::text||':'||v_status,
-    jsonb_build_object(
-      'refund_id',v_refund.id,'amount',v_refund.amount,
-      'provider_refund_id',p_provider_refund_id,'confirmed_amount',p_confirmed_amount
-    )
+    jsonb_build_object('refund_id',v_refund.id,'amount',v_refund.amount,
+      'provider_refund_id',p_provider_refund_id,'confirmed_amount',p_confirmed_amount)
   );
 
   if v_status in ('review_required','failed') then
     perform private.azim_payment_admin_notice(
       v_order.id,v_tx.id,
       case when v_status='review_required' then 'refund_review_required' else 'refund_failed' end,
-      jsonb_build_object(
-        'order_code',v_order.order_code,'refund_id',v_refund.id,'amount',v_refund.amount,
-        'status',v_status,'error_code',p_error_code,
-        'error_message',left(coalesce(p_error_message,''),500)
-      )
+      jsonb_build_object('order_code',v_order.order_code,'refund_id',v_refund.id,
+        'amount',v_refund.amount,'status',v_status,'error_code',p_error_code,
+        'error_message',left(coalesce(p_error_message,''),500))
     );
   end if;
 
-  return jsonb_build_object(
-    'ok',true,'already_finalized',false,'refund_id',v_refund.id,
-    'status',v_status,'order_code',v_order.order_code
-  );
+  return jsonb_build_object('ok',true,'already_finalized',false,'refund_id',v_refund.id,
+    'status',v_status,'order_code',v_order.order_code);
 end;
 $function$;
 
