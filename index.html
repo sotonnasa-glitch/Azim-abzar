@@ -1705,6 +1705,67 @@
         opacity: .48;
       }
     }
+    /* === Mobile header navigation fix: keep all 5 actions fully inside the viewport === */
+    @media (max-width: 650px) {
+      .head {
+        padding: 8px 0;
+        gap: 8px;
+      }
+      .nav {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        width: 100%;
+        max-width: 100%;
+        gap: 4px;
+        padding: 5px;
+        overflow: hidden;
+        white-space: normal;
+        direction: rtl;
+        align-items: stretch;
+        justify-content: stretch;
+      }
+      .az-nav-btn {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        min-height: 58px;
+        padding: 5px 2px;
+        gap: 3px;
+        border-radius: 10px;
+        flex-shrink: 1;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 8.5px;
+        line-height: 1.25;
+        overflow: hidden;
+      }
+      .az-nav-btn > span:last-child {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.25;
+      }
+      .az-anim-icon-wrap {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        border-radius: 9px;
+      }
+      .az-anim-home svg,
+      .az-anim-catalog svg,
+      .az-anim-tracking svg,
+      .az-anim-ai svg,
+      .az-anim-contact svg {
+        width: 19px;
+        height: 19px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .az-ambient-canvas {
         display: none;
