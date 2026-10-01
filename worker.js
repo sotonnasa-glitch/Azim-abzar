@@ -3,6 +3,40 @@ export default {
     const url = new URL(request.url);
     const requestPath = decodeURIComponent(url.pathname || "/");
 
+    // Live hotfix bridge: serve the two most recently corrected public files
+    // from the canonical GitHub main branch while the full Worker asset bundle
+    // remains unchanged. All other requests continue to use ASSETS.
+    const liveHotfixFiles = new Set(["/azim-product-ai.js", "/products-v4.html"]);
+    if (liveHotfixFiles.has(requestPath)) {
+      try {
+        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/main" + requestPath;
+        const hotfix = await fetch(rawUrl, {
+          headers: {
+            "accept": requestPath.endsWith(".js")
+              ? "application/javascript,text/javascript,*/*"
+              : "text/html,application/xhtml+xml,*/*"
+          }
+        });
+        if (hotfix.ok) {
+          const headers = new Headers(hotfix.headers);
+          headers.set("content-type", requestPath.endsWith(".js")
+            ? "application/javascript; charset=utf-8"
+            : "text/html; charset=utf-8");
+          headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+          headers.set("pragma", "no-cache");
+          headers.set("expires", "0");
+          headers.set("x-content-type-options", "nosniff");
+          return new Response(hotfix.body, {
+            status: hotfix.status,
+            statusText: hotfix.statusText,
+            headers
+          });
+        }
+      } catch (_) {
+        // Fall back to the deployed static asset bundle below.
+      }
+    }
+
     // Defense in depth: never expose source, deployment, audit, database or build internals.
     const blocked = [
       /^\/(?:audit|database|supabase|src|scripts|tools)(?:\/|$)/i,
