@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync('admin.html', 'utf8');
 const js = readFileSync('admin-app.js', 'utf8');
-const paymentMigration = readFileSync('supabase/migrations/20260927003600_admin_payment_control_center.sql', 'utf8');
+const paymentMigration = readFileSync('supabase/migrations/20260926211435_admin_payment_control_center.sql', 'utf8');
 
 const fail = (msg) => {
   console.error('ADMIN_STATIC_FAIL:', msg);
@@ -78,7 +78,6 @@ const delegatedDataActions = [
 for (const attr of delegatedDataActions) {
   if (!js.includes("closest('[" + attr + "]')")) fail('no click delegation for ' + attr);
 }
-
 
 const serviceChecks = [
   "id=\"adminServiceRequestsPanel\"",
