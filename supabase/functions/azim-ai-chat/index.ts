@@ -166,9 +166,10 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
 
   const isRingWrench = name.includes("یکسررینگی") || name.includes("رینگی") || name.includes("رینگ");
   const isWrench = name.includes("آچار") || category.includes("آچار");
-
   const asksPrice = /(?:قیمت|چنده|هزینه|تومان|ریال|ارزش\s*خرید)/.test(q);
   const asksStock = /(?:موجودی|موجوده|موجود\s*دارید|دارید|در\s*انبار|انبار)/.test(q);
+  const asksSize = /(?:سایز|اندازه|چه\s*سایزی|کدوم\s*سایز|سایز\s*انتخاب|اندازه\s*اتصال|اتصال\s*با\s*سایز)/.test(q);
+  const asksUse = /(?:کاربرد|چه\s*کار|چه\s*استفاده|به\s*چه\s*درد|برای\s*چی|چه\s*کاری)/.test(q);
   const asksSuitability = /(?:مناسب|سازگار|به\s*درد|جواب\s*می(?:ده|دهد)|می[\u200c ]?خوره|می[\u200c ]?خورد)/.test(q);
 
   const formatToman = (value: unknown) =>
@@ -194,34 +195,42 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
     return "موجودی عددی این محصول در سیستم ثبت نشده است؛ برای اطلاع از موجودی فعلی باید از فروشگاه استعلام شود.";
   }
 
+  if (!isRingWrench && !isWrench) return null;
+
+  if (asksSize && variant) {
+    if (/^\d+(?:\.\d+)?$/.test(variant)) {
+      return "سایز " + variant + " یعنی دهانه آچار برای اتصال شش‌گوش با اندازه اسمی " + variant + " میلی‌متر است.";
+    }
+    return "سایز ثبت‌شده این محصول «" + variant + "» است؛ برای اطمینان از سازگاری، همین سایز را با اندازه و استاندارد اتصال تطبیق بده.";
+  }
+
+  if (asksUse) {
+    if (isRingWrench) {
+      return variant
+        ? "این آچار یکسررینگی برای باز و بسته کردن مهره و پیچ‌های شش‌گوش با سایز متناسب استفاده می‌شود. سایز انتخاب‌شده: " + variant + "."
+        : "این آچار یکسررینگی برای باز و بسته کردن مهره و پیچ‌های شش‌گوش با سایز متناسب استفاده می‌شود.";
+    }
+    return "این آچار برای باز و بسته کردن اتصالات با اندازه و نوع متناسب با دهانه آن استفاده می‌شود.";
+  }
+
   if (asksSuitability) {
     const hasConcreteTask = /(?:بستن|باز\s*کردن|باز\s*و\s*بسته|سفت\s*کردن|شل\s*کردن|تعویض|تعمیر|مونتاژ|دمونتاژ|مهره|پیچ|اتصال|شش\s*گوش|خودرو|ماشین|کارگاه|قطعه)/.test(q);
 
     if (!hasConcreteTask) {
-      return "برای بررسی مناسب بودن این ابزار، بگو دقیقاً قرار است چه کاری انجام بدهی و اندازه یا نوع اتصال چیست.";
+      return "برای بررسی سازگاری، بگو دقیقاً چه قطعه یا مهره‌ای را می‌خواهی باز یا بسته کنی و اندازه آن چیست.";
+    }
+
+    if (/میلی\s*متر/.test(q) && variant && /^\d+(?:\.\d+)?$/.test(variant)) {
+      return "اگر اندازه واقعی اتصال " + variant + " میلی‌متر باشد، از نظر سایز با آچار " + variant + " متناسب است؛ نوع اتصال و فضای دسترسی را هم باید در نظر گرفت.";
     }
 
     if (isWrench && /(?:مهره|پیچ|اتصال|بستن|باز\s*کردن|سفت\s*کردن|شل\s*کردن)/.test(q)) {
-      return "بله، این آچار برای باز و بسته کردن اتصال‌های شش‌گوش با سایز متناسب استفاده می‌شود؛ برای اطمینان، اندازه واقعی مهره یا پیچ را با سایز آچار تطبیق بده.";
+      return "برای اتصال شش‌گوش با سایز متناسب، این نوع آچار کاربرد دارد؛ اندازه واقعی مهره یا پیچ را با سایز آچار تطبیق بده.";
     }
-  }
-
-  if (!isRingWrench && !isWrench) return null;
-
-  if (variant && /(?:سایز|اندازه|چه\s*سایزی|کدوم\s*سایز|سایز\s*انتخاب|اندازه\s*اتصال|اتصال\s*با\s*سایز)/.test(q)) {
-    if (/^\d+(?:\.\d+)?$/.test(variant)) {
-      return "سایز " + variant + " یعنی دهانه آچار برای اتصال شش‌گوش با اندازه اسمی " + variant + " میلی‌متر است.";
-    }
-    return "سایز ثبت‌شده این محصول «" + variant + "» است؛ برای اطمینان از سازگاری، همین سایز را با استاندارد و اندازه واقعی اتصال تطبیق بده.";
-  }
-
-  if (isRingWrench && /(چه\s*کار|کاربرد|به\s*چه\s*درد|چه\s*استفاده)/.test(q)) {
-    return "این آچار برای باز و بسته کردن مهره و سرپیچ‌های شش‌گوش با سایز متناسب استفاده می‌شود؛ برای اتصال، سایز آچار باید با اندازه واقعی آن یکی باشد.";
   }
 
   return null;
 }
-
 function productContext(product: any, selectedVariant: any, includePrice = false) {
   const variants = Array.isArray(product?.variants)
     ? product.variants.map(normalizeVariant).filter((v: any) => v.label)
