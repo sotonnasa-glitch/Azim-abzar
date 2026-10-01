@@ -3057,6 +3057,49 @@
       });
     }
 
+    // Live category loader for the catalog.
+    // Failure is non-fatal: the catalog keeps working with its local category map.
+    async function loadLiveCategories() {
+      const base = String(window.AZIM_SUPABASE_URL || '').replace(/\/+$/, '');
+      const key = String(window.AZIM_SUPABASE_ANON_KEY || '').trim();
+      if (!base || !key) return [];
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const params = new URLSearchParams({
+          select: 'name,slug,description,image,sort_order,is_active',
+          is_active: 'eq.true',
+          order: 'sort_order.asc',
+          limit: '100'
+        });
+
+        const response = await fetch(base + '/rest/v1/categories?' + params.toString(), {
+          headers: {
+            apikey: key,
+            Authorization: 'Bearer ' + key,
+            Accept: 'application/json'
+          },
+          cache: 'no-store',
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          console.warn('Azim Abzar live categories unavailable:', response.status);
+          return [];
+        }
+
+        const rows = await response.json();
+        return Array.isArray(rows) ? rows.filter(row => row && row.is_active !== false) : [];
+      } catch (error) {
+        console.warn('Azim Abzar live categories load failed:', error);
+        return [];
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
     // Main Init
     async function init() {
       const [products, variants, prices, catMap, categoryRows] = await Promise.all([
