@@ -252,15 +252,15 @@ function knownProductAnswer(product: any, selectedVariant: any, question: string
   const asksUse = /(?:کاربرد|چه\s*کار|چه\s*استفاده|به\s*چه\s*درد|برای\s*چی|چه\s*کاری)/.test(q);
   const asksSuitability = /(?:مناسب|سازگار|به\s*درد|جواب\s*می(?:ده|دهد)|می[\u200c ]?خوره|می[\u200c ]?خورد)/.test(q);
 
-  const formatRial = (value: unknown) =>
-    new Intl.NumberFormat("fa-IR").format(Math.max(0, Number(value) || 0)) + " ریال";
+  const formatToman = (value: unknown) =>
+    new Intl.NumberFormat("fa-IR").format(Math.max(0, Number(value) || 0)) + " تومان";
 
   if (asksPrice) {
     if (variant && selectedVariant?.price != null) {
-      return "قیمت ثبت‌شده سایز " + variant + " این محصول: " + formatRial(selectedVariant.price) + ".";
+      return "قیمت ثبت‌شده سایز " + variant + " این محصول: " + formatToman(selectedVariant.price) + ".";
     }
     if (product?.price != null) {
-      return "قیمت پایه ثبت‌شده این محصول: " + formatRial(product.price) + ".";
+      return "قیمت پایه ثبت‌شده این محصول: " + formatToman(product.price) + ".";
     }
     return "برای این محصول قیمت ثبت‌شده‌ای در دیتابیس وجود ندارد.";
   }
