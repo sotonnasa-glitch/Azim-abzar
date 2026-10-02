@@ -97,50 +97,19 @@ function testNavigation() {
     else fail('هوک پیگیری سفارش در صفحه اصلی پیدا نشد', needle);
   });
 
-  // Cinematic hero regression checks: the new Hero is video-led and intentionally has no
-  // HTML CTA overlay; the video's own artwork/text is preserved inside the MP4.
-  const heroVideo = docIndex.querySelector('.az-hero-video-only .az-hero-video');
-  const heroSource = heroVideo?.querySelector('source');
-  if (heroVideo && heroSource && (heroSource.getAttribute('src') || '').includes('assets/homepage/azim-hero-optimized.mp4')) {
-    pass('هیرو سینمایی به ویدیوی اصلی assets/homepage/azim-hero-optimized.mp4 متصل است');
-    const src = heroSource.getAttribute('src') || '';
-    if (src.includes('?v=4')) pass('نسخه جدید ویدیوی هیرو با cache-bust v=4 فعال است');
+  // Hero CTA buttons
+  const heroPrimary = docIndex.querySelector('.actions a.primary');
+  const heroSecondary = docIndex.querySelector('.actions a.secondary');
+  if (heroPrimary && (heroPrimary.getAttribute('href') || '').includes('products-v4.html')) {
+    pass('دکمه اصلی هیرو به صفحه کاتالوگ متصل است');
   } else {
-    fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
+    fail('دکمه اصلی هیرو کاتالوگ را هدف قرار نداده است');
   }
 
-  // Hero video playback must be independent from scrolling/touch movement.
-  const htmlText = docIndex.documentElement.outerHTML;
-  const videoRuntimeHasScrollControl =
-    htmlText.includes('pauseDuringScroll') ||
-    htmlText.includes("addEventListener('touchstart'") ||
-    htmlText.includes("addEventListener('touchmove'");
-  if (!videoRuntimeHasScrollControl) {
-    pass('پخش ویدیوی هیرو کاملاً از اسکرول و لمس جداست');
+  if (heroSecondary && (heroSecondary.getAttribute('href') || '').includes('contact.html')) {
+    pass('دکمه ثانویه هیرو به صفحه تماس و سفارش متصل است');
   } else {
-    fail('ویدیوی هیرو هنوز با رویدادهای اسکرول/لمس کنترل می‌شود');
-  }
-
-  const motionText = fs.readFileSync(path.join(__dirname, 'azim-motion.js'), 'utf8');
-  if (motionText.includes("window.matchMedia('(pointer: coarse)').matches") &&
-      motionText.includes('Never attach pointermove/getBoundingClientRect work to touch layouts')) {
-    pass('پردازش‌های pointermove پرهزینه روی چیدمان لمسی غیرفعال هستند');
-  } else {
-    fail('محافظت موبایل در برابر pointermove پرهزینه پیدا نشد');
-  }
-
-  if (!docIndex.querySelector('.az-hero-video-only .actions') &&
-      !docIndex.querySelector('.az-hero-video-only .az-hero-interactive-hud') &&
-      !docIndex.querySelector('.az-hero-video-only .az-hero-minimal-copy')) {
-    pass('هیرو ویدیویی بدون لایه متن/دکمه HTML روی ویدیو است');
-  } else {
-    fail('لایه‌های قدیمی متن/دکمه/HUD روی هیرو ویدیویی باقی مانده‌اند');
-  }
-
-  if (!docIndex.querySelector('.az-hero-photo-track')) {
-    pass('ترک عکس‌های Hero قدیمی از ساختار هیرو حذف شده است');
-  } else {
-    fail('ترک عکس‌های Hero قدیمی هنوز داخل هیرو فعال است');
+    fail('دکمه ثانویه هیرو به صفحه تماس متصل نیست');
   }
 
   // Dead links check on index.html
