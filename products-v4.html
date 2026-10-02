@@ -2354,6 +2354,7 @@
         : [];
       return {
         id: x?.id || null,
+        product_id: x?.id || null,
         code: String(x?.code ?? '').trim().toUpperCase(),
         p: x?.price ?? null,
         v: vs,
@@ -2481,7 +2482,7 @@
               <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="toggleWishlist('\${esc(x.id)}', this)"><span>${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
               <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="shareProduct('\${esc(x.id)}')"><span>اشتراک‌گذاری</span></button>
             </div>
-<button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || '')}" data-ai-product-code="${esc(x.id)}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
+<button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || x.id || '')}" data-ai-product-code="${esc(x.code || '')}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
           </div>
         </article>
       `;
@@ -2532,12 +2533,12 @@
         return;
       }
 
-      // شناسه UUID را همیشه از داده زنده می‌گیریم؛ اگر لود زنده در لحظه
-      // در دسترس نباشد، با کد محصول از Supabase پیدا می‌کنیم.
+      // شناسه UUID باید از رکورد زنده گرفته شود. در کاتالوگ زنده، item.id شناسه UUID است
+      // و item.code کد تجاری محصول؛ هرگز UUID را به‌جای code در REST فیلتر نکن.
       let productId = item.product_id || null;
       if (!productId && window.AZIM_SUPABASE_URL && window.AZIM_SUPABASE_ANON_KEY) {
         try {
-          const code = encodeURIComponent(String(item.id || id).trim().toUpperCase());
+          const code = encodeURIComponent(String(item.code || '').trim().toUpperCase());
           const r = await fetch(
             window.AZIM_SUPABASE_URL + '/rest/v1/products?select=id&code=eq.' + code + '&limit=1',
             {
@@ -2562,7 +2563,7 @@
 
       const ok = window.AZIM_CART.add({
         product_id: productId,
-        code: item.id,
+        code: item.code || item.id,
         name: item.name,
         img: item.image,
         variant_label: v ? v[0] : '',
