@@ -2004,7 +2004,7 @@
         <!-- قاب بنر با حاشیه نورانی گرادیانی و درخشان -->
         <div class="heroWrapper">
           <div class="heroBox az-hero-video-hero az-hero-video-only">
-  <video class="az-hero-video" autoplay muted loop playsinline preload="metadata" poster="./assets/homepage/workshop_tools_hero_1789756528479.jpg">
+  <video class="az-hero-video" autoplay muted loop playsinline preload="auto" poster="./assets/homepage/workshop_tools_hero_1789756528479.jpg">
     <source src="./assets/homepage/azim-hero-preview.mp4" type="video/mp4">
   </video>
 </div>
@@ -2330,55 +2330,40 @@
   <script src="./azim-home-categories.js?v=1" defer></script>
   <script src="./azim-ai-widget.js?v=5" defer></script>
 
+
+
 <script>
-(function(){
-  const root = document.querySelector('.az-hero-video-hero');
-  const heroVideo = root ? root.querySelector('.az-hero-video') : null;
-  const fallback = root ? root.querySelector('.az-hero-fallback-track') : null;
-  if(heroVideo){
-    heroVideo.addEventListener('canplay', function(){
-      heroVideo.classList.add('is-ready');
-      if(fallback) fallback.style.opacity = '0';
-    }, {once:true});
-  }
-  if(!root) return;
-  const slot = root.querySelector('.az-hero-logo-slot');
-  const sourceLogo = document.querySelector('header .mark img');
-  if(slot && sourceLogo){
-    const clone = sourceLogo.cloneNode(true);
-    clone.removeAttribute('width');
-    clone.removeAttribute('height');
-    clone.alt = 'لوگوی عظیم ابزار';
-    slot.appendChild(clone);
-  }
+(() => {
+  const video = document.querySelector('.az-hero-video-only .az-hero-video');
+  if (!video) return;
 
-  const items = Array.from(root.querySelectorAll('.az-hero-story-item'));
-  if(items.length < 2) return;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.setAttribute('muted','');
+  video.setAttribute('playsinline','');
+  video.setAttribute('webkit-playsinline','');
 
-  function activate(index){
-    items.forEach((el,i)=>el.classList.toggle('is-active', i === index));
-  }
+  const tryPlay = () => {
+    const p = video.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  };
 
-  function updateByScroll(){
-    const r = root.getBoundingClientRect();
-    const viewport = window.innerHeight || document.documentElement.clientHeight;
-    const total = Math.max(1, r.height + viewport * 0.55);
-    const passed = Math.min(total, Math.max(0, viewport - r.top));
-    const p = passed / total;
-    const idx = Math.min(items.length - 1, Math.floor(p * items.length));
-    activate(idx);
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry && entry.isIntersecting) {
+        tryPlay();
+        io.disconnect();
+      }
+    }, {threshold: 0.05, rootMargin: '80px'});
+    io.observe(video);
+  } else {
+    tryPlay();
   }
 
-  let raf = 0;
-  window.addEventListener('scroll', function(){
-    if(raf) return;
-    raf = requestAnimationFrame(function(){
-      raf = 0;
-      updateByScroll();
-    });
-  }, {passive:true});
-  window.addEventListener('resize', updateByScroll, {passive:true});
-  updateByScroll();
+  window.addEventListener('touchstart', tryPlay, {passive:true, once:true});
+  window.addEventListener('scroll', tryPlay, {passive:true, once:true});
 })();
 </script>
 
