@@ -1,0 +1,22 @@
+name: Export optimized hero video
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/export-hero-video.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: azim-hero-optimized-current
+          path: assets/homepage/azim-hero-optimized.mp4
+          retention-days: 1
