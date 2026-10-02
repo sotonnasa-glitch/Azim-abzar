@@ -153,22 +153,6 @@
       transform: translateY(0);
     }
 
-    @media (max-width: 768px) {
-      /* Keep the native hero video playing, but freeze expensive decorative work while a finger is scrolling. */
-      html.az-user-scrolling * {
-        animation-play-state: paused !important;
-        transition: none !important;
-      }
-      html.az-user-scrolling .az-hero-video {
-        animation-play-state: running !important;
-        transition: none !important;
-      }
-      html.az-user-scrolling .az-scroll-fade {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-      .az-hero-video-only { contain: layout paint style; }
-    }
     @media (max-width: 1040px) {
       .az-cat-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -181,12 +165,6 @@
   // 1. Mount Canvas for Subtle Floating Metallic Particles & Ember Sparks
   function mountAmbientCanvas() {
     if (document.getElementById('az-ambient-canvas')) return;
-    if (
-      document.querySelector('.az-hero-video-only') ||
-      window.matchMedia('(max-width: 768px)').matches ||
-      window.matchMedia('(pointer: coarse)').matches ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) return;
     const canvas = document.createElement('canvas');
     canvas.id = 'az-ambient-canvas';
     canvas.setAttribute('aria-hidden', 'true');
@@ -304,7 +282,7 @@
   // 2. Mount Mechanical Stage in Hero
   function mountHeroStage() {
     const hero = document.querySelector('.heroBox');
-    if (!hero || hero.classList.contains('az-hero-video-only') || hero.querySelector('.az-motion-stage')) return;
+    if (!hero || hero.querySelector('.az-motion-stage')) return;
 
     const stage = document.createElement('div');
     stage.className = 'az-motion-stage';
@@ -322,9 +300,6 @@
     const heroBox = document.querySelector('.heroBox');
     const hud = document.querySelector('.az-hero-interactive-hud');
     if (!heroBox || !hud) return;
-    // Pointer-move parallax is useful on mouse/trackpad, but on touch devices it
-    // can force layout reads during a finger scroll. Keep mobile scrolling native.
-    if (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches) return;
 
     let ticking = false;
     let targetX = 0;
@@ -419,8 +394,6 @@
 
   // 5. Card Glow with Mouse Follow
   function setupCardGlow() {
-    // Never attach pointermove/getBoundingClientRect work to touch layouts.
-    if (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches) return;
     const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-photo-card, .az-cat-card-item');
     cards.forEach(card => {
       if (card.querySelector('.az-card-glow')) return;
@@ -526,19 +499,6 @@
     });
   }
 
-  function setupMobileScrollBudget(){
-    if (!window.matchMedia('(max-width: 768px)').matches) return;
-    let timer = 0;
-    const markScrolling = () => {
-      document.documentElement.classList.add('az-user-scrolling');
-      clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        document.documentElement.classList.remove('az-user-scrolling');
-      }, 160);
-    };
-    window.addEventListener('scroll', markScrolling, {passive:true});
-  }
-
   function init() {
     mountAmbientCanvas();
     mountHeroStage();
@@ -547,7 +507,6 @@
     setupCardGlow();
     setupScrollReveal();
     setupLightbox();
-    setupMobileScrollBudget();
   }
 
   if (document.readyState === 'loading') {
