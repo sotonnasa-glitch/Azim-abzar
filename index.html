@@ -1868,14 +1868,16 @@
     @media(max-width:760px){.az-hero-video-only{min-height:560px;border-radius:20px}}
 
 
-    /* Mobile scroll-performance pass: keep video decoding independent from decorative layers. */
+    /* Mobile scroll-performance pass: keep touch scrolling native and keep the hero video out of hit-testing. */
     @media (max-width: 768px){
+      html{scroll-behavior:auto!important;}
       body::before, body::after{display:none!important;}
       .top, header, nav, .header, .nav, .site-header, .glass, .glass-card, .az-glass, .az-hud-card{
         -webkit-backdrop-filter:none!important;
         backdrop-filter:none!important;
       }
-      .az-hero-video-only{contain:layout paint style;}
+      .az-hero-video-only{contain:layout paint style;touch-action:pan-y;}
+      .az-hero-video{pointer-events:none!important;}
     }
 </style>
   <link rel="stylesheet" href="./azim-home-categories.css?v=1">
@@ -2016,7 +2018,7 @@
         <div class="heroWrapper">
           <div class="heroBox az-hero-video-hero az-hero-video-only">
   <video class="az-hero-video" autoplay muted loop playsinline preload="auto" poster="./assets/homepage/workshop_tools_hero_1789756528479.jpg">
-    <source src="./assets/homepage/azim-hero-optimized.mp4?v=3" type="video/mp4">
+    <source src="./assets/homepage/azim-hero-optimized.mp4?v=4" type="video/mp4">
   </video>
 </div>
         </div>
