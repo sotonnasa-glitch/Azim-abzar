@@ -6,31 +6,7 @@ export default {
     // Live hotfix bridge: serve the two most recently corrected public files
     // from the canonical GitHub main branch while the full Worker asset bundle
     // remains unchanged. All other requests continue to use ASSETS.
-    // Serve the newest re-encoded hero video directly from the GitHub Pages build.
-    // This keeps the video independent of the older asset bundle while preserving Range requests.
-    if (requestPath === "/assets/homepage/azim-hero-optimized.mp4") {
-      try {
-        const target = new URL(request.url);
-        target.hostname = "sotonnasa-glitch.github.io";
-        target.pathname = "/Azim-abzar/assets/homepage/azim-hero-optimized.mp4";
-        const videoRequest = new Request(target.toString(), request);
-        const video = await fetch(videoRequest, { redirect: "follow" });
-        if (video.ok || video.status === 206) {
-          const headers = new Headers(video.headers);
-          headers.set("cache-control", "public, max-age=31536000, immutable");
-          headers.set("accept-ranges", headers.get("accept-ranges") || "bytes");
-          headers.set("x-content-type-options", "nosniff");
-          return new Response(video.body, { status: video.status, statusText: video.statusText, headers });
-        }
-      } catch (_) {
-        // Fall through to the local asset bundle if Pages is unavailable.
-      }
-    }
-
     const liveHotfixFiles = new Set([
-      "/",
-      "/index.html",
-      "/azim-motion.js",
       "/azim-product-ai.js",
       "/products-v4.html",
       "/supabase-config.js",
@@ -41,21 +17,12 @@ export default {
     ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-          const hotfixSourcePath = requestPath === "/" ? "/index.html" : requestPath;
-      const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@2974b5eacbb96d3ae846ead72271512034d16984" + hotfixSourcePath;
-      const hotfixTtl = /\.html?$/i.test(requestPath) ? 60 : /\.json$/i.test(requestPath) ? 3600 : 86400;
-      const hotfix = await fetch(rawUrl, {
+        const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@7ddbcef6ab595df7b880f7901897e2829a9d2288" + requestPath;
+        const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
               ? "application/javascript,text/javascript,*/*"
-              : requestPath.endsWith(".json")
-                ? "application/json,*/*"
-                : "text/html,application/xhtml+xml,*/*"
-          },
-          cf: {
-            cacheEverything: true,
-            cacheTtl: hotfixTtl,
-            cacheTtlByStatus: { "200-299": hotfixTtl, "404": 1, "500-599": 0 }
+              : "text/html,application/xhtml+xml,*/*"
           }
         });
         if (hotfix.ok) {
@@ -66,12 +33,9 @@ export default {
               ? "application/json; charset=utf-8"
               : "text/html; charset=utf-8";
           headers.set("content-type", hotfixType);
-          const browserTtl = /\.html?$/i.test(requestPath) ? 60 : /\.json$/i.test(requestPath) ? 300 : 86400;
-          headers.set("cache-control", requestPath.endsWith(".html") || requestPath === "/index.html" || requestPath === "/"
-            ? "public, max-age=60, stale-while-revalidate=300"
-            : "public, max-age=" + browserTtl + ", stale-while-revalidate=604800");
-          headers.delete("pragma");
-          headers.delete("expires");
+          headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+          headers.set("pragma", "no-cache");
+          headers.set("expires", "0");
           headers.set("x-content-type-options", "nosniff");
           return new Response(hotfix.body, {
             status: hotfix.status,
@@ -104,50 +68,12 @@ export default {
       });
     }
 
-    const headers = new Headers();
-    const method = request.method.toUpperCase();
-    const isHtml = requestPath === "/" || /\.html?$/i.test(requestPath);
-    const isJson = /\.json$/i.test(requestPath);
-    const isVideo = /\.(?:mp4|webm|m4v)$/i.test(requestPath);
-    const isStaticAsset = /\.(?:js|css|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|json)$/i.test(requestPath);
+    const response = await env.ASSETS.fetch(request);
+    const headers = new Headers(response.headers);
 
-    let response;
-    if ((method === "GET" || method === "HEAD") && isStaticAsset && !request.headers.has("authorization")) {
-      const ttl = isJson ? 3600 : 86400;
-      response = await env.ASSETS.fetch(request, {
-        cf: {
-          cacheEverything: true,
-          cacheTtl: ttl,
-          cacheTtlByStatus: { "200-299": ttl, "404": 1, "500-599": 0 }
-        }
-      });
-    } else if ((method === "GET" || method === "HEAD") && isHtml && !request.headers.has("authorization")) {
-      response = await env.ASSETS.fetch(request, {
-        cf: {
-          cacheEverything: true,
-          cacheTtl: 60,
-          cacheTtlByStatus: { "200-299": 60, "404": 1, "500-599": 0 }
-        }
-      });
-    } else {
-      response = await env.ASSETS.fetch(request);
-    }
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.forEach((value, key) => headers.set(key, value));
-
-    if (isVideo) {
-      headers.set("cache-control", "public, max-age=31536000, immutable");
-      headers.delete("pragma");
-      headers.delete("expires");
-    } else if (isHtml) {
-      headers.set("cache-control", "public, max-age=60, stale-while-revalidate=300");
-      headers.delete("pragma");
-      headers.delete("expires");
-    } else if (isJson) {
-      headers.set("cache-control", "public, max-age=300, stale-while-revalidate=3600");
-      headers.delete("pragma");
-      headers.delete("expires");
-    }
+    headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    headers.set("pragma", "no-cache");
+    headers.set("expires", "0");
 
     headers.set("x-content-type-options", "nosniff");
     headers.set("referrer-policy", "strict-origin-when-cross-origin");
