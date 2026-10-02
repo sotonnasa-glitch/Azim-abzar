@@ -6,6 +6,27 @@ export default {
     // Live hotfix bridge: serve the two most recently corrected public files
     // from the canonical GitHub main branch while the full Worker asset bundle
     // remains unchanged. All other requests continue to use ASSETS.
+    // Serve the newest re-encoded hero video directly from the GitHub Pages build.
+    // This keeps the video independent of the older asset bundle while preserving Range requests.
+    if (/^\\/assets\\/homepage\\/azim-hero-optimized\\.mp4$/i.test(requestPath)) {
+      try {
+        const target = new URL(request.url);
+        target.hostname = "sotonnasa-glitch.github.io";
+        target.pathname = "/Azim-abzar/assets/homepage/azim-hero-optimized.mp4";
+        const videoRequest = new Request(target.toString(), request);
+        const video = await fetch(videoRequest, { redirect: "follow" });
+        if (video.ok || video.status === 206) {
+          const headers = new Headers(video.headers);
+          headers.set("cache-control", "public, max-age=31536000, immutable");
+          headers.set("accept-ranges", headers.get("accept-ranges") || "bytes");
+          headers.set("x-content-type-options", "nosniff");
+          return new Response(video.body, { status: video.status, statusText: video.statusText, headers });
+        }
+      } catch (_) {
+        // Fall through to the local asset bundle if Pages is unavailable.
+      }
+    }
+
     const liveHotfixFiles = new Set([
       "/azim-product-ai.js",
       "/products-v4.html",
