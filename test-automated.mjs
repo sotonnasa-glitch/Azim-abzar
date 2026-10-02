@@ -101,8 +101,8 @@ function testNavigation() {
   // HTML CTA overlay; the video's own artwork/text is preserved inside the MP4.
   const heroVideo = docIndex.querySelector('.az-hero-video-only .az-hero-video');
   const heroSource = heroVideo?.querySelector('source');
-  if (heroVideo && heroSource && (heroSource.getAttribute('src') || '').includes('assets/homepage/azim-hero-preview.mp4')) {
-    pass('هیرو سینمایی به ویدیوی اصلی assets/homepage/azim-hero-preview.mp4 متصل است');
+  if (heroVideo && heroSource && (heroSource.getAttribute('src') || '').includes('assets/homepage/azim-hero-optimized.mp4')) {
+    pass('هیرو سینمایی به ویدیوی اصلی assets/homepage/azim-hero-optimized.mp4 متصل است');
   } else {
     fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
   }
