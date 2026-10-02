@@ -500,20 +500,6 @@
     });
   }
 
-  function setupMobileScrollBudget(){
-    if (!window.matchMedia('(max-width: 768px)').matches) return;
-    let timer = 0;
-    let ticking = false;
-    const markScrolling = () => {
-      document.documentElement.classList.add('az-user-scrolling');
-      clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        document.documentElement.classList.remove('az-user-scrolling');
-      }, 140);
-    };
-    window.addEventListener('scroll', markScrolling, {passive:true});
-  }
-
   function init() {
     mountAmbientCanvas();
     mountHeroStage();
@@ -522,7 +508,6 @@
     setupCardGlow();
     setupScrollReveal();
     setupLightbox();
-    setupMobileScrollBudget();
   }
 
   if (document.readyState === 'loading') {
