@@ -154,10 +154,20 @@
     }
 
     @media (max-width: 768px) {
-      /* During touch scroll, pause only decorative CSS animations; native video decoding/playback remains untouched. */
-      html.az-user-scrolling .az-hero-video { animation-play-state: running !important; }
-      html.az-user-scrolling .az-hero-video-only * { animation-play-state: paused !important; }
-      html.az-user-scrolling .az-hero-video-only { contain: layout paint; }
+      /* Keep the native hero video playing, but freeze expensive decorative work while a finger is scrolling. */
+      html.az-user-scrolling * {
+        animation-play-state: paused !important;
+        transition: none !important;
+      }
+      html.az-user-scrolling .az-hero-video {
+        animation-play-state: running !important;
+        transition: none !important;
+      }
+      html.az-user-scrolling .az-scroll-fade {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .az-hero-video-only { contain: layout paint style; }
     }
     @media (max-width: 1040px) {
       .az-cat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -307,6 +317,9 @@
     const heroBox = document.querySelector('.heroBox');
     const hud = document.querySelector('.az-hero-interactive-hud');
     if (!heroBox || !hud) return;
+    // Pointer-move parallax is useful on mouse/trackpad, but on touch devices it
+    // can force layout reads during a finger scroll. Keep mobile scrolling native.
+    if (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches) return;
 
     let ticking = false;
     let targetX = 0;
@@ -401,6 +414,8 @@
 
   // 5. Card Glow with Mouse Follow
   function setupCardGlow() {
+    // Never attach pointermove/getBoundingClientRect work to touch layouts.
+    if (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches) return;
     const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-photo-card, .az-cat-card-item');
     cards.forEach(card => {
       if (card.querySelector('.az-card-glow')) return;
