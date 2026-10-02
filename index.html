@@ -1868,6 +1868,20 @@
     @media(max-width:760px){.az-hero-video-only{min-height:560px;border-radius:20px}}
 
     .az-hero-video-only .az-hero-video{backface-visibility:hidden;contain:paint}
+
+    /* Mobile scroll-performance pass: keep video decoding independent from decorative layers. */
+    @media (max-width: 768px){
+      body::before, body::after{display:none!important;}
+      .top, header, nav, .header, .nav, .site-header, .glass, .glass-card, .az-glass, .az-hud-card{
+        -webkit-backdrop-filter:none!important;
+        backdrop-filter:none!important;
+      }
+      .az-hero-video-only{contain:layout paint style;}
+    }
+    @media (max-width: 768px){
+      html.az-user-scrolling *{animation-play-state:paused!important;}
+      html.az-user-scrolling .az-hero-video-only .az-hero-video{animation:none!important;}
+    }
 </style>
   <link rel="stylesheet" href="./azim-home-categories.css?v=1">
 </head>
