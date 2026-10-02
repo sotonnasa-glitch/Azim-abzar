@@ -103,6 +103,28 @@ function testNavigation() {
   const heroSource = heroVideo?.querySelector('source');
   if (heroVideo && heroSource && (heroSource.getAttribute('src') || '').includes('assets/homepage/azim-hero-optimized.mp4')) {
     pass('هیرو سینمایی به ویدیوی اصلی assets/homepage/azim-hero-optimized.mp4 متصل است');
+    const src = heroSource.getAttribute('src') || '';
+    if (src.includes('?v=4')) pass('نسخه جدید ویدیوی هیرو با cache-bust v=4 فعال است');
+  }
+
+  // Mobile scroll regression checks: the inline hero runtime must pause video
+  // while touch scrolling, then resume after scrolling settles.
+  const htmlText = docIndex.documentElement.outerHTML;
+  if (htmlText.includes('const pauseDuringScroll') &&
+      htmlText.includes("window.addEventListener('touchstart', pauseDuringScroll") &&
+      htmlText.includes("window.addEventListener('touchmove', pauseDuringScroll") &&
+      htmlText.includes("window.addEventListener('scroll', pauseDuringScroll")) {
+    pass('ویدیوی هیرو هنگام touch/scroll موبایل موقتاً متوقف می‌شود تا اسکرول روان بماند');
+  } else {
+    fail('منطق توقف ویدیو هنگام اسکرول موبایل ناقص است');
+  }
+
+  const motionText = readFile('azim-motion.js');
+  if (motionText.includes("window.matchMedia('(pointer: coarse)').matches") &&
+      motionText.includes('Never attach pointermove/getBoundingClientRect work to touch layouts')) {
+    pass('پردازش‌های pointermove پرهزینه روی چیدمان لمسی غیرفعال هستند');
+  } else {
+    fail('محافظت موبایل در برابر pointermove پرهزینه پیدا نشد');
   } else {
     fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
   }
