@@ -97,19 +97,28 @@ function testNavigation() {
     else fail('هوک پیگیری سفارش در صفحه اصلی پیدا نشد', needle);
   });
 
-  // Hero CTA buttons
-  const heroPrimary = docIndex.querySelector('.actions a.primary');
-  const heroSecondary = docIndex.querySelector('.actions a.secondary');
-  if (heroPrimary && (heroPrimary.getAttribute('href') || '').includes('products-v4.html')) {
-    pass('دکمه اصلی هیرو به صفحه کاتالوگ متصل است');
+  // Cinematic hero regression checks: the new Hero is video-led and intentionally has no
+  // HTML CTA overlay; the video's own artwork/text is preserved inside the MP4.
+  const heroVideo = docIndex.querySelector('.az-hero-video-only .az-hero-video');
+  const heroSource = heroVideo?.querySelector('source');
+  if (heroVideo && heroSource && (heroSource.getAttribute('src') || '').includes('assets/homepage/azim-hero-preview.mp4')) {
+    pass('هیرو سینمایی به ویدیوی اصلی assets/homepage/azim-hero-preview.mp4 متصل است');
   } else {
-    fail('دکمه اصلی هیرو کاتالوگ را هدف قرار نداده است');
+    fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
   }
 
-  if (heroSecondary && (heroSecondary.getAttribute('href') || '').includes('contact.html')) {
-    pass('دکمه ثانویه هیرو به صفحه تماس و سفارش متصل است');
+  if (!docIndex.querySelector('.az-hero-video-only .actions') &&
+      !docIndex.querySelector('.az-hero-video-only .az-hero-interactive-hud') &&
+      !docIndex.querySelector('.az-hero-video-only .az-hero-minimal-copy')) {
+    pass('هیرو ویدیویی بدون لایه متن/دکمه HTML روی ویدیو است');
   } else {
-    fail('دکمه ثانویه هیرو به صفحه تماس متصل نیست');
+    fail('لایه‌های قدیمی متن/دکمه/HUD روی هیرو ویدیویی باقی مانده‌اند');
+  }
+
+  if (!docIndex.querySelector('.az-hero-photo-track')) {
+    pass('ترک عکس‌های Hero قدیمی از ساختار هیرو حذف شده است');
+  } else {
+    fail('ترک عکس‌های Hero قدیمی هنوز داخل هیرو فعال است');
   }
 
   // Dead links check on index.html
