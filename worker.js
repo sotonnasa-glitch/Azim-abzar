@@ -28,6 +28,9 @@ export default {
     }
 
     const liveHotfixFiles = new Set([
+      "/",
+      "/index.html",
+      "/azim-motion.js",
       "/azim-product-ai.js",
       "/products-v4.html",
       "/supabase-config.js",
@@ -38,8 +41,9 @@ export default {
     ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-        const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@7ddbcef6ab595df7b880f7901897e2829a9d2288" + requestPath;
-        const hotfix = await fetch(rawUrl, {
+          const hotfixSourcePath = requestPath === "/" ? "/index.html" : requestPath;
+      const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@299eac4e493c3d2d332e647b14f97acc86f01120" + hotfixSourcePath;
+      const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
               ? "application/javascript,text/javascript,*/*"
