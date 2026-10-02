@@ -8,7 +8,7 @@ export default {
     // remains unchanged. All other requests continue to use ASSETS.
     // Serve the newest re-encoded hero video directly from the GitHub Pages build.
     // This keeps the video independent of the older asset bundle while preserving Range requests.
-    if (/^\\/assets\\/homepage\\/azim-hero-optimized\\.mp4$/i.test(requestPath)) {
+    if (requestPath === "/assets/homepage/azim-hero-optimized.mp4") {
       try {
         const target = new URL(request.url);
         target.hostname = "sotonnasa-glitch.github.io";
