@@ -105,6 +105,8 @@ function testNavigation() {
     pass('هیرو سینمایی به ویدیوی اصلی assets/homepage/azim-hero-optimized.mp4 متصل است');
     const src = heroSource.getAttribute('src') || '';
     if (src.includes('?v=4')) pass('نسخه جدید ویدیوی هیرو با cache-bust v=4 فعال است');
+  } else {
+    fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
   }
 
   // Mobile scroll regression checks: the inline hero runtime must pause video
@@ -125,8 +127,6 @@ function testNavigation() {
     pass('پردازش‌های pointermove پرهزینه روی چیدمان لمسی غیرفعال هستند');
   } else {
     fail('محافظت موبایل در برابر pointermove پرهزینه پیدا نشد');
-  } else {
-    fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
   }
 
   if (!docIndex.querySelector('.az-hero-video-only .actions') &&
