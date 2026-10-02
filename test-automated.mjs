@@ -121,7 +121,7 @@ function testNavigation() {
     fail('منطق توقف ویدیو هنگام اسکرول موبایل ناقص است');
   }
 
-  const motionText = readFile('azim-motion.js');
+  const motionText = fs.readFileSync(path.join(__dirname, 'azim-motion.js'), 'utf8');
   if (motionText.includes("window.matchMedia('(pointer: coarse)').matches") &&
       motionText.includes('Never attach pointermove/getBoundingClientRect work to touch layouts')) {
     pass('پردازش‌های pointermove پرهزینه روی چیدمان لمسی غیرفعال هستند');
