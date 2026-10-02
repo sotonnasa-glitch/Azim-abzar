@@ -1812,6 +1812,13 @@
 
   
     /* === Cinematic video hero v1 — minimal copy, logo-led, scroll-aware === */
+    .az-hero-fallback-track{position:absolute;inset:0;display:flex;width:400%;height:100%;z-index:0;animation:azFallbackPan 24s linear infinite;opacity:1}
+    .az-hero-fallback-track img{width:25%;height:100%;object-fit:cover;display:block;filter:brightness(.84) contrast(1.06) saturate(.95)}
+    .az-hero-video{position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .55s ease}
+    .az-hero-video.is-ready{opacity:1}
+    @keyframes azFallbackPan{0%{transform:translateX(0)}100%{transform:translateX(-75%)}}
+    @media(max-width:760px){.az-hero-fallback-track{animation-duration:30s}}
+
     .az-hero-video-hero{position:relative;min-height:700px;border-radius:28px;overflow:hidden;background:#050706;border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(0,0,0,.55);isolation:isolate}
     .az-hero-video-layer{position:absolute;inset:0;z-index:0;overflow:hidden;background:#050706}
     .az-hero-video{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.82) contrast(1.08) saturate(.92);transform:scale(1.01)}
@@ -1994,6 +2001,12 @@
         <div class="heroWrapper">
           <div class="heroBox az-hero-video-hero">
   <div class="az-hero-video-layer" aria-hidden="true">
+    <div class="az-hero-fallback-track">
+      <img src="./assets/homepage/workshop_tools_hero_1789756528479.jpg" alt="" loading="eager" decoding="async">
+      <img src="./assets/homepage/industrial_garage_set_1789756545202.jpg" alt="" loading="eager" decoding="async">
+      <img src="./assets/homepage/cat_cabinet_trolley_1789756604644.jpg" alt="" loading="eager" decoding="async">
+      <img src="./assets/homepage/cat_wrenches_1789756566411.jpg" alt="" loading="eager" decoding="async">
+    </div>
     <video class="az-hero-video" autoplay muted loop playsinline preload="metadata" poster="./assets/homepage/workshop_tools_hero_1789756528479.jpg">
       <source src="./assets/homepage/azim-hero-preview.mp4" type="video/mp4">
     </video>
@@ -2356,6 +2369,14 @@
 <script>
 (function(){
   const root = document.querySelector('.az-hero-video-hero');
+  const heroVideo = root ? root.querySelector('.az-hero-video') : null;
+  const fallback = root ? root.querySelector('.az-hero-fallback-track') : null;
+  if(heroVideo){
+    heroVideo.addEventListener('canplay', function(){
+      heroVideo.classList.add('is-ready');
+      if(fallback) fallback.style.opacity = '0';
+    }, {once:true});
+  }
   if(!root) return;
   const slot = root.querySelector('.az-hero-logo-slot');
   const sourceLogo = document.querySelector('header .mark img');
