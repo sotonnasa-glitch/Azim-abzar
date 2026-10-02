@@ -181,7 +181,12 @@
   // 1. Mount Canvas for Subtle Floating Metallic Particles & Ember Sparks
   function mountAmbientCanvas() {
     if (document.getElementById('az-ambient-canvas')) return;
-    if (document.querySelector('.az-hero-video-only')) return;
+    if (
+      document.querySelector('.az-hero-video-only') ||
+      window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) return;
     const canvas = document.createElement('canvas');
     canvas.id = 'az-ambient-canvas';
     canvas.setAttribute('aria-hidden', 'true');
