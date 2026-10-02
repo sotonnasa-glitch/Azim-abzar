@@ -2361,9 +2361,7 @@
   video.setAttribute('disablePictureInPicture','');
   video.setAttribute('disableRemotePlayback','');
 
-  const touchLayout = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
   let started = false;
-  let resumeTimer = 0;
 
   const tryPlay = () => {
     if (document.visibilityState !== 'visible') return;
@@ -2373,27 +2371,12 @@
     }
   };
 
-  // Do not pause/play on every touchmove/scroll event.
-  // Repeated media-control calls during momentum scrolling can cause visible hitching.
-  const pauseDuringScroll = () => {
-    if (!touchLayout) return;
-    if (!video.paused) video.pause();
-    clearTimeout(resumeTimer);
-    resumeTimer = window.setTimeout(() => {
-      if (document.visibilityState === 'visible') tryPlay();
-    }, 420);
-  };
-
+  // Video playback is completely independent from page scrolling/touch movement.
+  // Never pause/restart media because the user is scrolling.
   if (video.readyState >= 2) tryPlay();
   video.addEventListener('loadeddata', tryPlay, {once:true, passive:true});
   video.addEventListener('canplay', tryPlay, {once:true, passive:true});
   window.addEventListener('pointerdown', tryPlay, {passive:true, once:true});
-
-  if (touchLayout) {
-    // One lightweight scroll listener is enough; touchstart/touchmove are removed
-    // so scrolling stays on the browser's native compositor path.
-    window.addEventListener('scroll', pauseDuringScroll, {passive:true});
-  }
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') tryPlay();
