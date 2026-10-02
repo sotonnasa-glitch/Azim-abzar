@@ -43,11 +43,19 @@ export default {
       try {
           const hotfixSourcePath = requestPath === "/" ? "/index.html" : requestPath;
       const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@83501f40cfa5acdcc837f5df1a52d10737a83348" + hotfixSourcePath;
+      const hotfixTtl = /\.html?$/i.test(requestPath) ? 60 : /\.json$/i.test(requestPath) ? 3600 : 86400;
       const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
               ? "application/javascript,text/javascript,*/*"
-              : "text/html,application/xhtml+xml,*/*"
+              : requestPath.endsWith(".json")
+                ? "application/json,*/*"
+                : "text/html,application/xhtml+xml,*/*"
+          },
+          cf: {
+            cacheEverything: true,
+            cacheTtl: hotfixTtl,
+            cacheTtlByStatus: { "200-299": hotfixTtl, "404": 1, "500-599": 0 }
           }
         });
         if (hotfix.ok) {
@@ -58,9 +66,12 @@ export default {
               ? "application/json; charset=utf-8"
               : "text/html; charset=utf-8";
           headers.set("content-type", hotfixType);
-          headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-          headers.set("pragma", "no-cache");
-          headers.set("expires", "0");
+          const browserTtl = /\.html?$/i.test(requestPath) ? 60 : /\.json$/i.test(requestPath) ? 300 : 86400;
+          headers.set("cache-control", requestPath.endsWith(".html") || requestPath === "/index.html" || requestPath === "/"
+            ? "public, max-age=60, stale-while-revalidate=300"
+            : "public, max-age=" + browserTtl + ", stale-while-revalidate=604800");
+          headers.delete("pragma");
+          headers.delete("expires");
           headers.set("x-content-type-options", "nosniff");
           return new Response(hotfix.body, {
             status: hotfix.status,
@@ -93,24 +104,48 @@ export default {
       });
     }
 
-    const response = await env.ASSETS.fetch(request);
-    const headers = new Headers(response.headers);
-
-    // Keep HTML/catalog JSON immediately fresh, but let Cloudflare/browser use
-    // the static-asset validation/cache path for JS, CSS, images, and fonts.
+    const headers = new Headers();
+    const method = request.method.toUpperCase();
     const isHtml = requestPath === "/" || /\.html?$/i.test(requestPath);
     const isJson = /\.json$/i.test(requestPath);
     const isVideo = /\.(?:mp4|webm|m4v)$/i.test(requestPath);
+    const isStaticAsset = /\.(?:js|css|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|json)$/i.test(requestPath);
+
+    let response;
+    if ((method === "GET" || method === "HEAD") && isStaticAsset && !request.headers.has("authorization")) {
+      const ttl = isJson ? 3600 : 86400;
+      response = await env.ASSETS.fetch(request, {
+        cf: {
+          cacheEverything: true,
+          cacheTtl: ttl,
+          cacheTtlByStatus: { "200-299": ttl, "404": 1, "500-599": 0 }
+        }
+      });
+    } else if ((method === "GET" || method === "HEAD") && isHtml && !request.headers.has("authorization")) {
+      response = await env.ASSETS.fetch(request, {
+        cf: {
+          cacheEverything: true,
+          cacheTtl: 60,
+          cacheTtlByStatus: { "200-299": 60, "404": 1, "500-599": 0 }
+        }
+      });
+    } else {
+      response = await env.ASSETS.fetch(request);
+    }
+    Object.assign(headers, Object.fromEntries(response.headers.entries()));
 
     if (isVideo) {
-      // The homepage adds ?v=2, so this immutable cache is safely versioned.
       headers.set("cache-control", "public, max-age=31536000, immutable");
       headers.delete("pragma");
       headers.delete("expires");
-    } else if (isHtml || isJson) {
-      headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-      headers.set("pragma", "no-cache");
-      headers.set("expires", "0");
+    } else if (isHtml) {
+      headers.set("cache-control", "public, max-age=60, stale-while-revalidate=300");
+      headers.delete("pragma");
+      headers.delete("expires");
+    } else if (isJson) {
+      headers.set("cache-control", "public, max-age=300, stale-while-revalidate=3600");
+      headers.delete("pragma");
+      headers.delete("expires");
     }
 
     headers.set("x-content-type-options", "nosniff");
