@@ -165,6 +165,7 @@
   // 1. Mount Canvas for Subtle Floating Metallic Particles & Ember Sparks
   function mountAmbientCanvas() {
     if (document.getElementById('az-ambient-canvas')) return;
+    if (document.querySelector('.az-hero-video-only')) return;
     const canvas = document.createElement('canvas');
     canvas.id = 'az-ambient-canvas';
     canvas.setAttribute('aria-hidden', 'true');
@@ -282,7 +283,7 @@
   // 2. Mount Mechanical Stage in Hero
   function mountHeroStage() {
     const hero = document.querySelector('.heroBox');
-    if (!hero || hero.querySelector('.az-motion-stage')) return;
+    if (!hero || hero.classList.contains('az-hero-video-only') || hero.querySelector('.az-motion-stage')) return;
 
     const stage = document.createElement('div');
     stage.className = 'az-motion-stage';
