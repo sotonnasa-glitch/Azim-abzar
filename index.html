@@ -2361,7 +2361,10 @@
   video.setAttribute('disablePictureInPicture','');
   video.setAttribute('disableRemotePlayback','');
 
+  const touchLayout = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
   let started = false;
+  let resumeTimer = 0;
+
   const tryPlay = () => {
     if (document.visibilityState !== 'visible') return;
     const p = video.play();
@@ -2370,12 +2373,26 @@
     }
   };
 
+  const pauseDuringScroll = () => {
+    if (!touchLayout) return;
+    clearTimeout(resumeTimer);
+    if (!video.paused) video.pause();
+    resumeTimer = window.setTimeout(() => {
+      if (document.visibilityState === 'visible') tryPlay();
+    }, 180);
+  };
+
   if (video.readyState >= 2) tryPlay();
   video.addEventListener('loadeddata', tryPlay, {once:true, passive:true});
   video.addEventListener('canplay', tryPlay, {once:true, passive:true});
-
-  // Mobile browsers can defer autoplay until the first user gesture.
   window.addEventListener('pointerdown', tryPlay, {passive:true, once:true});
+
+  if (touchLayout) {
+    window.addEventListener('touchstart', pauseDuringScroll, {passive:true});
+    window.addEventListener('touchmove', pauseDuringScroll, {passive:true});
+    window.addEventListener('scroll', pauseDuringScroll, {passive:true});
+  }
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') tryPlay();
     else if (started) video.pause();
