@@ -2356,35 +2356,34 @@
   video.muted = true;
   video.defaultMuted = true;
   video.playsInline = true;
+  video.autoplay = true;
+  video.loop = true;
   video.setAttribute('muted','');
   video.setAttribute('playsinline','');
   video.setAttribute('webkit-playsinline','');
   video.setAttribute('disablePictureInPicture','');
+  video.setAttribute('disableRemotePlayback','');
   video.style.transform = 'translate3d(0,0,0)';
 
+  let started = false;
   const tryPlay = () => {
     if (document.visibilityState !== 'visible') return;
     const p = video.play();
-    if (p && typeof p.catch === 'function') p.catch(() => {});
+    if (p && typeof p.then === 'function') {
+      p.then(() => { started = true; }).catch(() => {});
+    }
   };
-  const pause = () => video.pause();
 
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      if (entry.isIntersecting) tryPlay();
-      else pause();
-    }, {threshold: 0.15, rootMargin: '120px 0px'});
-    io.observe(video);
-  } else {
-    tryPlay();
-  }
+  if (video.readyState >= 2) tryPlay();
+  video.addEventListener('loadeddata', tryPlay, {once:true, passive:true});
+  video.addEventListener('canplay', tryPlay, {once:true, passive:true});
 
+  // Mobile browsers can defer autoplay until the first user gesture.
+  window.addEventListener('pointerdown', tryPlay, {passive:true, once:true});
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') tryPlay();
-    else pause();
-  }, {passive:true});
+    else if (started) video.pause();
+  });
 })();
 </script>
 
