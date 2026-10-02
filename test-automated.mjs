@@ -109,16 +109,16 @@ function testNavigation() {
     fail('ویدیوی هیرو سینمایی به فایل اصلی متصل نیست');
   }
 
-  // Mobile scroll regression checks: the inline hero runtime must pause video
-  // while touch scrolling, then resume after scrolling settles.
+  // Hero video playback must be independent from scrolling/touch movement.
   const htmlText = docIndex.documentElement.outerHTML;
-  if (htmlText.includes('const pauseDuringScroll') &&
-      htmlText.includes("window.addEventListener('touchstart', pauseDuringScroll") &&
-      htmlText.includes("window.addEventListener('touchmove', pauseDuringScroll") &&
-      htmlText.includes("window.addEventListener('scroll', pauseDuringScroll")) {
-    pass('ویدیوی هیرو هنگام touch/scroll موبایل موقتاً متوقف می‌شود تا اسکرول روان بماند');
+  const videoRuntimeHasScrollControl =
+    htmlText.includes('pauseDuringScroll') ||
+    htmlText.includes("addEventListener('touchstart'") ||
+    htmlText.includes("addEventListener('touchmove'");
+  if (!videoRuntimeHasScrollControl) {
+    pass('پخش ویدیوی هیرو کاملاً از اسکرول و لمس جداست');
   } else {
-    fail('منطق توقف ویدیو هنگام اسکرول موبایل ناقص است');
+    fail('ویدیوی هیرو هنوز با رویدادهای اسکرول/لمس کنترل می‌شود');
   }
 
   const motionText = fs.readFileSync(path.join(__dirname, 'azim-motion.js'), 'utf8');
