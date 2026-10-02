@@ -2373,13 +2373,15 @@
     }
   };
 
+  // Do not pause/play on every touchmove/scroll event.
+  // Repeated media-control calls during momentum scrolling can cause visible hitching.
   const pauseDuringScroll = () => {
     if (!touchLayout) return;
-    clearTimeout(resumeTimer);
     if (!video.paused) video.pause();
+    clearTimeout(resumeTimer);
     resumeTimer = window.setTimeout(() => {
       if (document.visibilityState === 'visible') tryPlay();
-    }, 180);
+    }, 420);
   };
 
   if (video.readyState >= 2) tryPlay();
@@ -2388,8 +2390,8 @@
   window.addEventListener('pointerdown', tryPlay, {passive:true, once:true});
 
   if (touchLayout) {
-    window.addEventListener('touchstart', pauseDuringScroll, {passive:true});
-    window.addEventListener('touchmove', pauseDuringScroll, {passive:true});
+    // One lightweight scroll listener is enough; touchstart/touchmove are removed
+    // so scrolling stays on the browser's native compositor path.
     window.addEventListener('scroll', pauseDuringScroll, {passive:true});
   }
 
