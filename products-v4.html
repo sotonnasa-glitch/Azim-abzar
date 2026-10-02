@@ -1447,6 +1447,36 @@
     @keyframes azCartTrail { 0%,100% { stroke-dashoffset: 0; opacity: .9; } 45% { stroke-dashoffset: -28; opacity: 1; } 70% { stroke-dashoffset: -8; opacity: .9; } }
     @keyframes azCartHover { 0% { transform: rotate(0) scale(1); } 35% { transform: rotate(-9deg) scale(1.08); } 70% { transform: rotate(7deg) scale(1.08); } 100% { transform: rotate(0) scale(1); } }
 
+    @media (max-width: 768px), (prefers-reduced-motion: reduce) {
+      header {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(8, 11, 9, 0.98);
+      }
+      .card,
+      .card:hover {
+        transition: none !important;
+        transform: none !important;
+      }
+      .photo-wrap img,
+      .photo-overlay-btn {
+        transition: none !important;
+      }
+      .photo-overlay-btn,
+      .badge-code,
+      .badge-variant {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+      .az-cart-svg,
+      .az-cart-svg .az-cart-track,
+      .pages button.active,
+      .pages button.active::after,
+      .pages .page-dots span {
+        animation: none !important;
+      }
+    }
+
     /* Responsive Breakpoints */
     @media (max-width: 1180px) {
       .grid { grid-template-columns: repeat(3, 1fr); }
@@ -2027,8 +2057,8 @@
   <script src="./supabase-config.js"></script>
   <script src="./azim-cart.js?v=5"></script>
   <script>
-    const PER = 36;
-    const VERSION = '20260919-v5-pro-ux2';
+    const PER = window.matchMedia('(max-width: 760px)').matches ? 24 : 36;
+    const VERSION = '20261002-perf-v6';
     const P0008 = [
       ['E6 × E8', 5040000],
       ['E7 × E11', 5040000],
@@ -2058,6 +2088,8 @@
     let basePrices = {};
     let livePriceData = {};
     let liveCategories = [];
+    let staticFallbackReady = false;
+    let staticFallbackPromise = null;
 
     // Current Modal State
     let activeModalItem = null;
@@ -2712,6 +2744,29 @@
     let catalogTotal = 0;
     let renderRequestId = 0;
 
+    async function ensureStaticFallbackData() {
+      if (staticFallbackReady) return;
+      if (!staticFallbackPromise) {
+        staticFallbackPromise = Promise.all([
+          fetchJSON('./catalog_site_mapping_908/price-size-data.json', 'فایل سایز و قیمت'),
+          fetchJSON('./catalog_site_mapping_908/prices.json', 'فایل قیمت محصولات')
+        ]).then(([variants, prices]) => {
+          if (!variants || typeof variants !== 'object' || Object.keys(variants).length !== 908) {
+            throw Error('داده سایز و قیمت باید ۹۰۸ شناسه داشته باشد');
+          }
+          if (!prices || typeof prices !== 'object' || Object.keys(prices).length !== 908) {
+            throw Error('داده قیمت باید ۹۰۸ شناسه داشته باشد');
+          }
+          priceData = variants;
+          basePrices = prices;
+          staticFallbackReady = true;
+        }).finally(() => {
+          if (!staticFallbackReady) staticFallbackPromise = null;
+        });
+      }
+      await staticFallbackPromise;
+    }
+
     function staticFallbackPage() {
       const normalizeFa = v => String(v ?? '').normalize('NFKC')
         .replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ۀة]/g,'ه')
@@ -2869,6 +2924,12 @@
         catalogTotal = result.total;
         rows = all;
       } else {
+        try {
+          await ensureStaticFallbackData();
+        } catch (_) {
+          priceData = {};
+          basePrices = {};
+        }
         rows = staticFallbackPage();
         all = rows;
         livePriceData = {};
@@ -3077,22 +3138,16 @@
 
     // Main Init
     async function init() {
-      const [products, variants, prices, catMap, categoryRows] = await Promise.all([
+      // Only load the lightweight catalog index before the first render.
+      // Live Supabase rows already contain prices/variants, so fallback JSON
+      // is fetched lazily only when the live catalog is unavailable.
+      const [products, catMap] = await Promise.all([
         fetchJSON('./catalog_site_mapping_908/products.json', 'کاتالوگ'),
-        fetchJSON('./catalog_site_mapping_908/price-size-data.json', 'فایل سایز و قیمت'),
-        fetchJSON('./catalog_site_mapping_908/prices.json', 'فایل قیمت محصولات'),
-        fetchJSON('./catalog_site_mapping_908/category-map.json', 'نقشه دسته‌بندی').catch(() => ({})),
-        loadLiveCategories()
+        fetchJSON('./catalog_site_mapping_908/category-map.json', 'نقشه دسته‌بندی').catch(() => ({}))
       ]);
 
       if (!Array.isArray(products) || products.length !== 908) {
         throw Error('کاتالوگ پایه باید دقیقاً ۹۰۸ محصول داشته باشد');
-      }
-      if (!variants || typeof variants !== 'object' || Object.keys(variants).length !== 908) {
-        throw Error('داده سایز و قیمت باید ۹۰۸ شناسه داشته باشد');
-      }
-      if (!prices || typeof prices !== 'object' || Object.keys(prices).length !== 908) {
-        throw Error('داده قیمت باید ۹۰۸ شناسه داشته باشد');
       }
 
       catalogIndex = products.map(x => ({
@@ -3105,13 +3160,10 @@
         throw Error('شناسه‌های کاتالوگ تکراری است');
       }
 
-      priceData = variants;
-      basePrices = prices;
+      priceData = {};
+      basePrices = {};
       categoriesMap = { ...(catMap || {}) };
-      liveCategories = Array.isArray(categoryRows) ? categoryRows
-        .filter(x => x && x.is_active !== false)
-        .sort((a,b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
-        : [];
+      liveCategories = [];
 
       renderCategoryChips();
 
@@ -3124,6 +3176,16 @@
       if (sortSelect) sortSelect.value = currentSort;
 
       await render();
+
+      // Category metadata is useful but not required for first paint.
+      // Fetch it after the first catalog page is visible.
+      loadLiveCategories().then(rows => {
+        liveCategories = Array.isArray(rows) ? rows
+          .filter(x => x && x.is_active !== false)
+          .sort((a,b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
+          : [];
+        renderCategoryChips();
+      }).catch(() => {});
     }
 
     init().catch(e => {
