@@ -42,7 +42,7 @@ export default {
     if (liveHotfixFiles.has(requestPath)) {
       try {
           const hotfixSourcePath = requestPath === "/" ? "/index.html" : requestPath;
-      const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@299eac4e493c3d2d332e647b14f97acc86f01120" + hotfixSourcePath;
+      const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@83501f40cfa5acdcc837f5df1a52d10737a83348" + hotfixSourcePath;
       const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
