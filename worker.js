@@ -132,7 +132,8 @@ export default {
     } else {
       response = await env.ASSETS.fetch(request);
     }
-    Object.assign(headers, Object.fromEntries(response.headers.entries()));
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.forEach((value, key) => headers.set(key, value));
 
     if (isVideo) {
       headers.set("cache-control", "public, max-age=31536000, immutable");
