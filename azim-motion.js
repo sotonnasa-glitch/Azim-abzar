@@ -153,6 +153,12 @@
       transform: translateY(0);
     }
 
+    @media (max-width: 768px) {
+      /* During touch scroll, pause only decorative CSS animations; native video decoding/playback remains untouched. */
+      html.az-user-scrolling .az-hero-video { animation-play-state: running !important; }
+      html.az-user-scrolling .az-hero-video-only * { animation-play-state: paused !important; }
+      html.az-user-scrolling .az-hero-video-only { contain: layout paint; }
+    }
     @media (max-width: 1040px) {
       .az-cat-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -500,6 +506,19 @@
     });
   }
 
+  function setupMobileScrollBudget(){
+    if (!window.matchMedia('(max-width: 768px)').matches) return;
+    let timer = 0;
+    const markScrolling = () => {
+      document.documentElement.classList.add('az-user-scrolling');
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        document.documentElement.classList.remove('az-user-scrolling');
+      }, 160);
+    };
+    window.addEventListener('scroll', markScrolling, {passive:true});
+  }
+
   function init() {
     mountAmbientCanvas();
     mountHeroStage();
@@ -508,6 +527,7 @@
     setupCardGlow();
     setupScrollReveal();
     setupLightbox();
+    setupMobileScrollBudget();
   }
 
   if (document.readyState === 'loading') {
