@@ -71,9 +71,22 @@ export default {
     const response = await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
 
-    headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-    headers.set("pragma", "no-cache");
-    headers.set("expires", "0");
+    // Keep HTML/catalog JSON immediately fresh, but let Cloudflare/browser use
+    // the static-asset validation/cache path for JS, CSS, images, and fonts.
+    const isHtml = requestPath === "/" || /\.html?$/i.test(requestPath);
+    const isJson = /\.json$/i.test(requestPath);
+    const isVideo = /\.(?:mp4|webm|m4v)$/i.test(requestPath);
+
+    if (isVideo) {
+      // The homepage adds ?v=2, so this immutable cache is safely versioned.
+      headers.set("cache-control", "public, max-age=31536000, immutable");
+      headers.delete("pragma");
+      headers.delete("expires");
+    } else if (isHtml || isJson) {
+      headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+      headers.set("pragma", "no-cache");
+      headers.set("expires", "0");
+    }
 
     headers.set("x-content-type-options", "nosniff");
     headers.set("referrer-policy", "strict-origin-when-cross-origin");
