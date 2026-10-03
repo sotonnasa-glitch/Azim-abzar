@@ -1696,6 +1696,29 @@
       html {
         scroll-behavior: auto !important;
       }
+
+      /* Mobile scroll hot path: reduce large background repaints and image filters. */
+      body {
+        background-image: linear-gradient(180deg, #060807 0%, #0a0d0b 48%, #060807 100%) !important;
+      }
+      .az-photo-panel img {
+        filter: none !important;
+      }
+
+      /* While the finger is moving, pause decorative motion only.
+         The hero photo itself is explicitly kept running below. */
+      html.az-user-scrolling .az-motion-stage,
+      html.az-user-scrolling .az-motion-stage *,
+      html.az-user-scrolling .az-anim-icon-wrap svg,
+      html.az-user-scrolling .az-hud-card *,
+      html.az-user-scrolling .az-floating-chip *,
+      html.az-user-scrolling .az-ai-fab::before,
+      html.az-user-scrolling .az-ai-fab::after {
+        animation-play-state: paused !important;
+      }
+      html.az-user-scrolling .az-hero-photo-track {
+        animation-play-state: running !important;
+      }
       @keyframes azSlidePhotoRightMobile {
         0% { transform: translate3d(-35%, 0, 0); }
         100% { transform: translate3d(0%, 0, 0); }
@@ -2396,7 +2419,7 @@
     </div>
   </footer>
 
-  <script src="./azim-motion.js?v=10" defer></script>
+  <script src="./azim-motion.js?v=11" defer></script>
   <script src="./azim-home-copy.js?v=9" defer></script>
   <script src="./supabase-config.js"></script>
   <script src="./azim-order-tracking-inline.js?v=1" defer></script>
