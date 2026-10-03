@@ -71,6 +71,9 @@ async function runHost(host) {
   const consoleErrors = [];
   page.on('pageerror', err => consoleErrors.push(String(err)));
   page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+  const relevantConsoleErrors = () => consoleErrors.filter(message =>
+    !/static\.cloudflareinsights\.com\/beacon\.min\.js/i.test(message)
+  );
 
   await addProduct(page, host, P1, '46');
   await assertCart(page, 1);
@@ -86,7 +89,7 @@ async function runHost(host) {
   assert.ok(crossHost.items.some(x => x.code === P1 && x.variant_label === '46'), 'cross-host cart lost P0001 size 46');
 
   await browser.close();
-  assert.equal(consoleErrors.length, 0, host + ': browser console/page errors: ' + consoleErrors.join(' | '));
+  assert.equal(relevantConsoleErrors().length, 0, host + ': browser console/page errors: ' + relevantConsoleErrors().join(' | '));
   return { host, items: 2, crossHost: true };
 }
 
