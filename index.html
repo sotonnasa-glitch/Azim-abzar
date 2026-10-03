@@ -1682,16 +1682,23 @@
       .nav {
         background: rgba(14,19,16,.96);
       }
-      /* Mobile: keep the hero imagery moving, but slow it down for a smooth low-cost loop. */
+      /* Mobile: the hero is paused while the finger is scrolling so the main thread/GPU
+         stays focused on the user's scroll gesture. It resumes immediately after scrolling. */
       .az-hero-photo-track {
         animation: azSlidePhotoRightMobile 52s linear infinite !important;
         will-change: transform;
+      }
+      html.az-scroll-active .az-hero-photo-track {
+        animation-play-state: paused !important;
+      }
+      html {
+        scroll-behavior: auto !important;
       }
       @keyframes azSlidePhotoRightMobile {
         0% { transform: translate3d(-35%, 0, 0); }
         100% { transform: translate3d(0%, 0, 0); }
       }
-      .az-ambient-canvas {
+      #az-ambient-canvas {
         display: none !important;
       }
       /* Remove all backdrop sampling on touch screens. */
@@ -2387,7 +2394,7 @@
     </div>
   </footer>
 
-  <script src="./azim-motion.js?v=8" defer></script>
+  <script src="./azim-motion.js?v=9" defer></script>
   <script src="./azim-home-copy.js?v=9" defer></script>
   <script src="./supabase-config.js"></script>
   <script src="./azim-order-tracking-inline.js?v=1" defer></script>
