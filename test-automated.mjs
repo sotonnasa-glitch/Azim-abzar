@@ -809,7 +809,7 @@ function testAuditAddendumGuards() {
   }
 
   const versions = cartPages.map(([name, html]) => [name, (html.match(/azim-cart\.js\?v=\d+/g) || [])]);
-  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=5');
+  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=10');
   if (!mismatched.length) {
     pass('نسخه cache-busting azim-cart.js در هر ۴ صفحه یکسان و روی v5 است');
   } else {
