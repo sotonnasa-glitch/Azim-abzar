@@ -1278,8 +1278,8 @@ main{position:relative;padding:20px 0 64px}
             '</div>'+
           '</div>';
         
-        const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
-        const paymentLabel={phone:'تماس تلفنی',message:'پیام',online:'پرداخت آنلاین'}[selectedPayment]||selectedPayment;
+        const selectedPaymentLabel=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
+        const paymentLabel={phone:'تماس تلفنی',message:'پیام',online:'پرداخت آنلاین'}[selectedPaymentLabel]||selectedPaymentLabel;
         const paymentInfo=document.createElement('div');
         paymentInfo.style.cssText='margin-top:8px;color:#8f9a92;font-size:10px;';
         paymentInfo.textContent='روش پرداخت انتخابی: '+paymentLabel;
