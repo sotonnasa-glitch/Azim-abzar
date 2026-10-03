@@ -2685,6 +2685,11 @@
         }
         event.preventDefault();
 
+        if (!window.AZIM_CART || typeof window.AZIM_CART.add !== 'function') {
+          showCatalogCartError('سبد سفارش بارگذاری نشد؛ صفحه را یک‌بار تازه‌سازی کن و دوباره تلاش کن.');
+          return;
+        }
+
         const id = String(link.getAttribute('data-cart-add-link') || '');
         if (!id) return;
 
