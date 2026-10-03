@@ -48,6 +48,14 @@
     updateBadges();
   }
 
+  // Always reconcile in-memory state with localStorage before a read operation.
+  // This prevents stale state when another page/script has just changed the cart.
+  function refresh(){
+    read();
+    updateBadges();
+    return state.items;
+  }
+
   function find(key){ return state.items.find(x => x.key === key); }
 
   function add(item){
@@ -92,10 +100,12 @@
   }
 
   function count(){
+    refresh();
     return state.items.reduce((s,x)=>s + Number(x.qty || 0),0);
   }
 
   function subtotal(){
+    refresh();
     return state.items.reduce((s,x)=>s + Number(x.unit_price||0)*Number(x.qty||0),0);
   }
 
@@ -291,6 +301,8 @@
     if(shouldShowFloatingCart()) injectFloatingCart();
     updateBadges();
     window.addEventListener('storage',()=>{read();updateBadges();});
+    window.addEventListener('pageshow',()=>{refresh();});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden) refresh();});
   }
 
   // Read the cart immediately so pages that render inline before DOMContentLoaded
@@ -298,7 +310,7 @@
   read();
 
   window.AZIM_CART = {
-    add:addButton, remove, update, clear, count, items:()=>state.items.slice(), subtotal,
+    add:addButton, remove, update, clear, count, items:()=>refresh().slice(), refresh, subtotal,
     syncPrices, previewCoupon, showToast, format:money, raw:state, cartNavHtml
   };
 
