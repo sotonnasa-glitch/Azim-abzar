@@ -100,12 +100,12 @@
   }
 
   function count(){
-    refresh();
+    read();
     return state.items.reduce((s,x)=>s + Number(x.qty || 0),0);
   }
 
   function subtotal(){
-    refresh();
+    read();
     return state.items.reduce((s,x)=>s + Number(x.unit_price||0)*Number(x.qty||0),0);
   }
 
