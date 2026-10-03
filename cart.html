@@ -1011,17 +1011,27 @@ main{position:relative;padding:20px 0 64px}
       const unitPrice = chosen?.price != null ? Number(chosen.price) : Number(product.price || 0);
       if (!(unitPrice > 0)) throw new Error('قیمت فعلی این محصول برای افزودن به سبد ثبت نشده است.');
 
-      const ok = C.add({
-        product_id:String(product.id),
-        code:String(product.code || code),
-        name:String(product.name || 'محصول'),
-        img:String(product.img || ''),
-        variant_label:chosen ? String(chosen.size ?? chosen.label ?? chosen.name ?? '') : '',
-        unit_price:unitPrice,
-        base_price:unitPrice,
-        qty:1
-      });
-      if (!ok) throw new Error('افزودن محصول به سبد انجام نشد.');
+      const selectedVariantLabel = chosen ? String(chosen.size ?? chosen.label ?? chosen.name ?? '') : '';
+      const existing = C.items().some(x =>
+        String(x.product_id || '') === String(product.id || '') &&
+        String(x.variant_label || '').trim() === selectedVariantLabel.trim()
+      );
+
+      // If the product was already persisted before navigation, do not add it
+      // a second time. This keeps URL hand-off idempotent.
+      if (!existing) {
+        const ok = C.add({
+          product_id:String(product.id),
+          code:String(product.code || code),
+          name:String(product.name || 'محصول'),
+          img:String(product.img || ''),
+          variant_label:selectedVariantLabel,
+          unit_price:unitPrice,
+          base_price:unitPrice,
+          qty:1
+        });
+        if (!ok) throw new Error('افزودن محصول به سبد انجام نشد.');
+      }
 
       // Remove the transient add parameters so refresh does not add the same item again.
       const cleanUrl = window.location.pathname + (window.location.hash || '');
