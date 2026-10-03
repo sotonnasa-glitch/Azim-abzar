@@ -1684,6 +1684,7 @@
     }
   </style>
 <style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style><script type="application/ld+json" id="productSchema">{}</script>
+  <script src="./azim-cart.js?v=7"></script>
 </head>
 <body>
 
@@ -2544,7 +2545,40 @@
 
     async function addCatalogItemToCart(id, sourceButton = null, variantIndex = null) {
       const item = all.find(x => x.id === id);
-      if (!item || !window.AZIM_CART) return;
+      if (!item) return false;
+
+      const persistCartFallback = (payload) => {
+        try {
+          const KEY = 'azim_abzar_cart_v2';
+          const raw = localStorage.getItem(KEY);
+          const list = Array.isArray(JSON.parse(raw || '[]')) ? JSON.parse(raw || '[]') : [];
+          const key = String(payload.product_id) + '|' + String(payload.variant_label || '');
+          const existing = list.find(x => String(x.key || '') === key);
+          if (existing) {
+            existing.qty = Math.min(99, Math.max(1, Number(existing.qty || 1) + 1));
+            existing.unit_price = payload.unit_price;
+            existing.base_price = payload.base_price;
+            existing.name = payload.name;
+            existing.img = payload.img;
+          } else {
+            list.push({
+              key,
+              product_id: String(payload.product_id),
+              code: String(payload.code || payload.product_id),
+              name: String(payload.name || 'محصول'),
+              img: String(payload.img || ''),
+              variant_label: String(payload.variant_label || ''),
+              unit_price: Number(payload.unit_price || 0),
+              base_price: Number(payload.base_price || payload.unit_price || 0),
+              qty: 1
+            });
+          }
+          localStorage.setItem(KEY, JSON.stringify(list));
+          return true;
+        } catch (_) {
+          return false;
+        }
+      };
 
       const d = getData(id);
       let idx = Number(variantIndex);
@@ -2593,7 +2627,7 @@
         return;
       }
 
-      const ok = window.AZIM_CART.add({
+      const payload = {
         product_id: productId,
         code: item.code || item.id,
         name: item.name,
@@ -2602,11 +2636,15 @@
         unit_price: net,
         base_price: base,
         qty: 1
-      });
+      };
+
+      const ok = window.AZIM_CART
+        ? window.AZIM_CART.add(payload)
+        : persistCartFallback(payload);
 
       if (!ok) {
-        window.AZIM_CART.showToast('برای این کالا قیمت قابل افزودن به سبد مشخص نیست.');
-        return;
+        window.AZIM_CART?.showToast('افزودن به سبد انجام نشد؛ دوباره تلاش کن.');
+        return false;
       }
 
       if (sourceButton) {
@@ -2658,6 +2696,13 @@
       const orderBtn = document.getElementById('modalOrderBtn');
       const cartBtn = document.getElementById('modalCartBtn');
       if (cartBtn) cartBtn.onclick = () => addCatalogItemToCart(item.id, cartBtn, activeModalVariantIndex);
+      if (orderBtn) {
+        orderBtn.onclick = async (event) => {
+          event.preventDefault();
+          const ok = await addCatalogItemToCart(item.id, orderBtn, activeModalVariantIndex);
+          if (ok) window.location.href = 'cart.html';
+        };
+      }
 
       if (vs && vs.length > 0) {
         varWrap.style.display = 'block';
@@ -3192,7 +3237,6 @@
       document.getElementById('status').innerHTML = `<span style="color:#ff6b6b">خطا در بارگذاری کاتالوگ: ${esc(e.message)}</span>`;
     });
   </script>
-  <script src="./azim-cart.js?v=6"></script>
   <script src="./azim-product-ai.js?v=10" defer></script>
   <script src="./azim-live-content.js?v=4" defer></script>
   <script src="./azim-ai-widget.js?v=5" defer></script>
