@@ -24,11 +24,10 @@
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  function read(){
+  function parseCartList(raw){
     try{
-      const raw = localStorage.getItem(KEY);
       const data = raw ? JSON.parse(raw) : [];
-      state.items = Array.isArray(data) ? data.filter(Boolean).map(x => ({
+      return Array.isArray(data) ? data.filter(Boolean).map(x => ({
         key: String(x.key || ((x.product_id || '')+'|'+(x.variant_label || ''))),
         product_id: String(x.product_id || ''),
         code: String(x.code || ''),
@@ -39,12 +38,63 @@
         base_price: Number(x.base_price || x.unit_price || 0),
         qty: Math.min(99, Math.max(1, Number(x.qty || 1)))
       })).filter(x => x.product_id) : [];
-    }catch(_){ state.items = []; }
+    }catch(_){ return []; }
+  }
+
+  // www.azimabzar.com and azimabzar.com are separate browser origins, so
+  // localStorage is not shared between them. Keep a compact cookie mirror as
+  // a cross-host backup and merge it on every read.
+  function readCookieShadow(){
+    try{
+      const m = document.cookie.match(/(?:^|;\\s*)azim_cart_shadow=([^;]*)/);
+      return m ? parseCartList(decodeURIComponent(m[1])) : [];
+    }catch(_){ return []; }
+  }
+
+  function writeCookieShadow(items){
+    try{
+      const compact = items.slice(0,25).map(x => ({
+        key:String(x.key || ''),
+        product_id:String(x.product_id || ''),
+        code:String(x.code || ''),
+        variant_label:String(x.variant_label || ''),
+        qty:Math.min(99,Math.max(1,Number(x.qty || 1))),
+        unit_price:Number(x.unit_price || 0),
+        base_price:Number(x.base_price || x.unit_price || 0)
+      }));
+      const value = encodeURIComponent(JSON.stringify(compact));
+      // Use the parent domain only on the production domain. On other hosts
+      // (e.g. localhost/GitHub Pages) fall back to a host-only cookie.
+      const domain = /(^|\.)azimabzar\\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
+      document.cookie = 'azim_cart_shadow=' + value + domain + '; Path=/; Max-Age=2592000; Secure; SameSite=Lax';
+    }catch(_){}
+  }
+
+  function clearCookieShadow(){
+    try{
+      const domain = /(^|\.)azimabzar\\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
+      document.cookie = 'azim_cart_shadow=; Path=/; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT' + domain + '; Secure; SameSite=Lax';
+    }catch(_){}
+  }
+
+  function read(){
+    let localItems = [];
+    try{ localItems = parseCartList(localStorage.getItem(KEY)); }catch(_){}
+    const shadowItems = readCookieShadow();
+
+    // Merge both stores by stable product+variant key. This makes a cart
+    // survive switching between www and apex hosts without losing either side.
+    const merged = new Map();
+    for(const item of shadowItems) merged.set(item.key,item);
+    for(const item of localItems) merged.set(item.key,item);
+
+    state.items = [...merged.values()];
     return state.items;
   }
 
   function write(){
     try{ localStorage.setItem(KEY, JSON.stringify(state.items)); }catch(_){}
+    writeCookieShadow(state.items);
     updateBadges();
   }
 
@@ -96,7 +146,9 @@
     state.items = [];
     state.couponCode = '';
     state.coupon = null;
-    write();
+    try{ localStorage.removeItem(KEY); }catch(_){}
+    clearCookieShadow();
+    updateBadges();
   }
 
   function count(){
