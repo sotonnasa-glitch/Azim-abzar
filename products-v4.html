@@ -2013,8 +2013,8 @@
 
           <!-- Actions -->
           <div class="modal-actions">
-            <button type="button" class="modal-order-btn" id="modalCartBtn" style="background:rgba(46,213,115,.08);color:#7ce7a2;border-color:rgba(46,213,115,.3)"><span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>افزودن به سبد</button>
-            <a href="contact.html" class="modal-order-btn" id="modalOrderBtn">
+            <a href="cart.html" class="modal-order-btn" id="modalCartBtn" style="background:rgba(46,213,115,.08);color:#7ce7a2;border-color:rgba(46,213,115,.3)"><span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>افزودن به سبد</a>
+            <a href="cart.html" class="modal-order-btn" id="modalOrderBtn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="8.5" cy="7" r="4"></circle>
@@ -2056,7 +2056,6 @@
 
   <!-- Scripts -->
   <script src="./supabase-config.js"></script>
-  <script src="./azim-cart.js?v=5"></script>
   <script>
     const PER = window.matchMedia('(max-width: 760px)').matches ? 24 : 36;
     const VERSION = '20261002-perf-v6';
@@ -2451,6 +2450,14 @@
 
 
 
+    function cartHref(item, variantLabel = '') {
+      const code = String(item?.code || item?.id || '').trim().toUpperCase();
+      const params = new URLSearchParams();
+      if (code) params.set('add_code', code);
+      if (variantLabel) params.set('variant', String(variantLabel));
+      return 'cart.html' + (params.toString() ? '?' + params.toString() : '');
+    }
+
     function optionLabel(v, d) {
       const raw = Number(v?.[1] || 0);
       const fallback = Number(d?.base || 0);
@@ -2508,9 +2515,9 @@
               <span>مشاهده کامل جزئیات و سایزبندی</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
-            <button type="button" class="card-btn-view" style="margin-top:7px;background:rgba(46,213,115,.08);border-color:rgba(46,213,115,.28);color:#7ce7a2" onclick="addCatalogItemToCart('${esc(x.id)}', this)" ${x.stock_tracking_enabled === true && x.stock_quantity != null && x.stock_quantity <= 0 ? 'disabled aria-disabled="true"' : ''}>
+            <a class="card-btn-view az-cart-add-link" data-cart-add-link="${esc(x.id)}" href="${esc(cartHref(x, selectedVariantLabel))}" ${x.stock_tracking_enabled === true && x.stock_quantity != null && x.stock_quantity <= 0 ? 'disabled aria-disabled="true"' : ''}>
               <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>${x.stock_tracking_enabled === true && x.stock_quantity != null && x.stock_quantity <= 0 ? '<span>ناموجود</span>' : '<span>افزودن به سبد سفارش</span>'}
-            </button>
+            </a>
                         <div style="display:flex;gap:7px;margin-top:7px">
               <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="toggleWishlist('\${esc(x.id)}', this)"><span>${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
               <button type="button" class="card-btn-view" style="flex:1;padding:8px 10px" onclick="shareProduct('\${esc(x.id)}')"><span>اشتراک‌گذاری</span></button>
@@ -2539,6 +2546,9 @@
 
           const badgeEl = cardEl.querySelector('[data-variant-badge]');
           if (badgeEl) badgeEl.textContent = 'سایز ' + String(v[0] || '').trim();
+
+          const cartLink = cardEl.querySelector('[data-cart-add-link]');
+          if (cartLink) cartLink.href = cartHref({ id, code: id }, String(v[0] || '').trim());
         });
       });
     }
@@ -2695,14 +2705,8 @@
       const varList = document.getElementById('modalVariantsList');      const priceEl = document.getElementById('modalPrice');
       const orderBtn = document.getElementById('modalOrderBtn');
       const cartBtn = document.getElementById('modalCartBtn');
-      if (cartBtn) cartBtn.onclick = () => addCatalogItemToCart(item.id, cartBtn, activeModalVariantIndex);
-      if (orderBtn) {
-        orderBtn.onclick = async (event) => {
-          event.preventDefault();
-          const ok = await addCatalogItemToCart(item.id, orderBtn, activeModalVariantIndex);
-          if (ok) window.location.href = 'cart.html';
-        };
-      }
+      if (cartBtn) cartBtn.href = cartHref(item, vs?.[0]?.[0] || '');
+      if (orderBtn) orderBtn.href = cartHref(item, vs?.[0]?.[0] || '');
 
       if (vs && vs.length > 0) {
         varWrap.style.display = 'block';
@@ -2759,9 +2763,9 @@
       const net = discountedPrice(v[1], d.discount);
       document.getElementById('modalPrice').innerHTML = priceHtml(net, v[1]);
       const orderBtn = document.getElementById('modalOrderBtn');
-      if (orderBtn) {
-        orderBtn.href = `contact.html?product=${encodeURIComponent(activeModalItem.name)}&code=${encodeURIComponent(activeModalItem.id)}&size=${encodeURIComponent(v[0])}`;
-      }
+      const cartBtn = document.getElementById('modalCartBtn');
+      if (orderBtn) orderBtn.href = cartHref(activeModalItem, v[0]);
+      if (cartBtn) cartBtn.href = cartHref(activeModalItem, v[0]);
       const modalAiBtn = document.getElementById('modalProductAiBtn');
       if (modalAiBtn && activeModalItem) {
         modalAiBtn.dataset.aiVariant = v[0] || '';
