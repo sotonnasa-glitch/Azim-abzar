@@ -1712,7 +1712,7 @@
           <span class="btn-text">صفحه اصلی</span>
         </a>
 
-        <a class="az-nav-btn az-nav-btn-cart" href="cart" data-cart-link aria-label="سبد سفارش" title="سبد سفارش" id="nav-btn-cart">
+        <a class="az-nav-btn az-nav-btn-cart" href="cart.html" data-cart-link aria-label="سبد سفارش" title="سبد سفارش" id="nav-btn-cart">
           <span class="az-cart-icon" aria-hidden="true">
             <svg class="az-cart-svg" viewBox="0 0 32 32" fill="none">
               <path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2455,7 +2455,7 @@
       const params = new URLSearchParams();
       if (code) params.set('add_code', code);
       if (variantLabel) params.set('variant', String(variantLabel));
-      return 'cart' + (params.toString() ? '?' + params.toString() : '');
+      return 'cart.html' + (params.toString() ? '?' + params.toString() : '');
     }
 
     function optionLabel(v, d) {
