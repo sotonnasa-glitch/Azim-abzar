@@ -2553,6 +2553,57 @@
       });
     }
 
+    function persistCartItemDirect(payload) {
+      try {
+        const KEY = 'azim_abzar_cart_v2';
+        const raw = localStorage.getItem(KEY);
+        let list = [];
+        try { list = raw ? JSON.parse(raw) : []; } catch (_) { list = []; }
+        if (!Array.isArray(list)) list = [];
+
+        const key = String(payload.product_id) + '|' + String(payload.variant_label || '');
+        const existing = list.find(x => String(x.key || '') === key);
+
+        if (existing) {
+          existing.qty = Math.min(99, Math.max(1, Number(existing.qty || 1) + Number(payload.qty || 1)));
+          existing.unit_price = Number(payload.unit_price || 0);
+          existing.base_price = Number(payload.base_price || payload.unit_price || 0);
+          existing.name = String(payload.name || existing.name || 'محصول');
+          existing.code = String(payload.code || existing.code || payload.product_id);
+          existing.img = String(payload.img || existing.img || '');
+          existing.variant_label = String(payload.variant_label || existing.variant_label || '');
+        } else {
+          list.push({
+            key,
+            product_id: String(payload.product_id),
+            code: String(payload.code || payload.product_id),
+            name: String(payload.name || 'محصول'),
+            img: String(payload.img || ''),
+            variant_label: String(payload.variant_label || ''),
+            unit_price: Number(payload.unit_price || 0),
+            base_price: Number(payload.base_price || payload.unit_price || 0),
+            qty: Math.min(99, Math.max(1, Number(payload.qty || 1)))
+          });
+        }
+
+        localStorage.setItem(KEY, JSON.stringify(list));
+
+        if (window.AZIM_CART?.items) {
+          window.AZIM_CART.raw.items = list;
+          document.querySelectorAll('[data-cart-count]').forEach(el => {
+            const n = list.reduce((sum, x) => sum + Number(x.qty || 0), 0);
+            el.textContent = n.toLocaleString('fa-IR');
+            el.hidden = n < 1;
+            if (n < 1) el.style.display = 'none';
+            else el.style.removeProperty('display');
+          });
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
     async function addCatalogItemToCart(id, sourceButton = null, variantIndex = null) {
       const item = all.find(x => x.id === id);
       if (!item) return false;
@@ -2648,9 +2699,8 @@
         qty: 1
       };
 
-      const ok = window.AZIM_CART
-        ? window.AZIM_CART.add(payload)
-        : persistCartFallback(payload);
+      const directOk = persistCartItemDirect(payload);
+      const ok = directOk || (window.AZIM_CART ? window.AZIM_CART.add(payload) : persistCartFallback(payload));
 
       if (!ok) {
         window.AZIM_CART?.showToast('افزودن به سبد انجام نشد؛ دوباره تلاش کن.');
@@ -2663,6 +2713,48 @@
         sourceButton.disabled = true;
         setTimeout(() => { sourceButton.disabled = false; sourceButton.innerHTML = old; }, 1100);
       }
+    }
+
+    function bindDirectCartLinks() {
+      document.addEventListener('click', async (event) => {
+        const link = event.target.closest?.('[data-cart-add-link]');
+        if (!link) return;
+        if (link.getAttribute('aria-disabled') === 'true') {
+          event.preventDefault();
+          return;
+        }
+        event.preventDefault();
+
+        const id = String(link.getAttribute('data-cart-add-link') || '');
+        if (!id) return;
+
+        const select = document.querySelector('select[data-id="' + CSS.escape(id) + '"]');
+        const variantIndex = Number(select?.value || 0);
+
+        link.setAttribute('aria-busy','true');
+        const old = link.innerHTML;
+        const ok = await addCatalogItemToCart(id, link, variantIndex);
+        if (ok) {
+          link.innerHTML = '<span>✓ به سبد اضافه شد</span>';
+          setTimeout(() => { window.location.href = 'cart.html'; }, 90);
+        } else {
+          link.innerHTML = old;
+          link.removeAttribute('aria-busy');
+        }
+      });
+
+      const modalCart = document.getElementById('modalCartBtn');
+      const modalOrder = document.getElementById('modalOrderBtn');
+
+      const openModalToCart = async (event) => {
+        event.preventDefault();
+        if (!activeModalItem) return;
+        const ok = await addCatalogItemToCart(activeModalItem.id, event.currentTarget, activeModalVariantIndex);
+        if (ok) window.location.href = 'cart.html';
+      };
+
+      modalCart?.addEventListener('click', openModalToCart);
+      modalOrder?.addEventListener('click', openModalToCart);
     }
 
     // Modal Operations (صفحه بزرگ‌تر جزئیات)
@@ -3186,6 +3278,8 @@
     }
 
     // Main Init
+    bindDirectCartLinks();
+
     async function init() {
       // Only load the lightweight catalog index before the first render.
       // Live Supabase rows already contain prices/variants, so fallback JSON
