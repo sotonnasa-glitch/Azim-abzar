@@ -1,0 +1,118 @@
+import assert from 'node:assert/strict';
+import { chromium } from 'playwright';
+
+const HOSTS = ['https://azimabzar.com', 'https://www.azimabzar.com'];
+const P1 = 'P0001';
+const P2 = 'P0002';
+const P1_PRICE = 63600000;
+const CART_KEY = 'azim_abzar_cart_v2';
+
+async function waitForProduct(page, code) {
+  await page.waitForFunction(
+    (productCode) => !!document.querySelector('select[data-id="' + productCode + '"]')
+      || !!document.querySelector('[data-cart-add-link="' + productCode + '"]'),
+    code,
+    { timeout: 60000 }
+  );
+}
+
+async function addProduct(page, host, code, variantLabel = '') {
+  await page.goto(host + '/products-v4.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForProduct(page, code);
+
+  const card = page.locator('#card-' + code).first();
+  await card.waitFor({ state: 'visible', timeout: 60000 });
+
+  if (variantLabel) {
+    const select = card.locator('select[data-id="' + code + '"]').first();
+    await select.waitFor({ state: 'visible', timeout: 30000 });
+    const options = await select.locator('option').evaluateAll(nodes =>
+      nodes.map((n, i) => ({ i, text: (n.textContent || '').trim() }))
+    );
+    const option = options.find(x => x.text === variantLabel || x.text.startsWith(variantLabel + ' '));
+    assert.ok(option, code + ': variant ' + variantLabel + ' not found');
+    await select.selectOption({ index: option.i });
+  }
+
+  const link = card.locator('[data-cart-add-link="' + code + '"]').first();
+  await link.waitFor({ state: 'visible', timeout: 30000 });
+  await link.click();
+  await page.waitForURL(/\/cart(?:\.html)?(?:\?|$)/, { timeout: 60000 });
+}
+
+async function readCart(page) {
+  return page.evaluate((cartKey) => ({
+    localStorage: localStorage.getItem(cartKey),
+    items: window.AZIM_CART?.items?.().map(x => ({
+      product_id: String(x.product_id || ''),
+      code: String(x.code || ''),
+      variant_label: String(x.variant_label || ''),
+      qty: Number(x.qty || 0),
+      unit_price: Number(x.unit_price || 0)
+    })) || null,
+    moduleLoaded: !!window.AZIM_CART
+  }), CART_KEY);
+}
+
+async function assertCart(page, expectedCount, p1Variant = '46') {
+  const cart = await readCart(page);
+  assert.equal(cart.moduleLoaded, true, 'AZIM_CART module is not loaded on cart page');
+  assert.equal(cart.items.length, expectedCount, 'unexpected cart item count');
+  const p1 = cart.items.find(x => x.code === P1 && x.variant_label === p1Variant);
+  assert.ok(p1, 'P0001 size 46 is missing from cart');
+  assert.equal(p1.unit_price, P1_PRICE, 'P0001 size 46 price changed unexpectedly');
+  assert.ok(cart.localStorage, 'cart localStorage key is missing');
+}
+
+async function runHost(host) {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const consoleErrors = [];
+  page.on('pageerror', err => consoleErrors.push(String(err)));
+  page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+
+  await addProduct(page, host, P1, '46');
+  await assertCart(page, 1);
+
+  await addProduct(page, host, P2);
+  await assertCart(page, 2);
+
+  const otherHost = host.includes('://www.') ? 'https://azimabzar.com' : 'https://www.azimabzar.com';
+  await page.goto(otherHost + '/cart.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, { timeout: 30000 });
+  const crossHost = await readCart(page);
+  assert.equal(crossHost.items.length, 2, 'cross-host cart lost items');
+  assert.ok(crossHost.items.some(x => x.code === P1 && x.variant_label === '46'), 'cross-host cart lost P0001 size 46');
+
+  await browser.close();
+  assert.equal(consoleErrors.length, 0, host + ': browser console/page errors: ' + consoleErrors.join(' | '));
+  return { host, items: 2, crossHost: true };
+}
+
+async function runMissingModule(host) {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  await context.route('**/azim-cart.js?v=12', route => route.abort());
+  const page = await context.newPage();
+  await page.goto(host + '/products-v4.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForProduct(page, P1);
+  const card = page.locator('#card-' + P1).first();
+  const link = card.locator('[data-cart-add-link="' + P1 + '"]').first();
+  await link.click();
+  await page.waitForTimeout(300);
+  const result = await page.evaluate(() => ({
+    url: location.href,
+    visibleText: document.body.innerText.includes('سبد سفارش بارگذاری نشد')
+  }));
+  assert.equal(result.visibleText, true, 'missing-cart-module did not show a visible error');
+  assert.ok(result.url.includes('/products-v4.html'), 'missing-cart-module unexpectedly navigated away');
+  await browser.close();
+  return { host, missingModuleGuard: true };
+}
+
+const results = [];
+for (const host of HOSTS) results.push(await runHost(host));
+results.push(await runMissingModule(HOSTS[0]));
+
+console.log(JSON.stringify({ ok: true, results }, null, 2));
