@@ -1688,8 +1688,10 @@
         animation: azSlidePhotoRightMobile 52s linear infinite !important;
         will-change: transform;
       }
-      html.az-scroll-active .az-hero-photo-track {
-        animation-play-state: paused !important;
+      /* Touch devices must never inherit the desktop hover-pause behavior. */
+      .az-hero-photo-track:hover,
+      .az-hero-photo-track:active {
+        animation-play-state: running !important;
       }
       html {
         scroll-behavior: auto !important;
@@ -2394,7 +2396,7 @@
     </div>
   </footer>
 
-  <script src="./azim-motion.js?v=9" defer></script>
+  <script src="./azim-motion.js?v=10" defer></script>
   <script src="./azim-home-copy.js?v=9" defer></script>
   <script src="./supabase-config.js"></script>
   <script src="./azim-order-tracking-inline.js?v=1" defer></script>
