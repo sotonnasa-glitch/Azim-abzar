@@ -67,7 +67,8 @@
       // (e.g. localhost/GitHub Pages) fall back to a host-only cookie.
       const domain = /(^|\.)azimabzar\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
       document.cookie = 'azim_cart_shadow=' + value + domain + '; Path=/; Max-Age=2592000; Secure; SameSite=Lax';
-    }catch(_){}
+      return readCookieShadow().length > 0;
+    }catch(_){ return false; }
   }
 
   function clearCookieShadow(){
@@ -93,9 +94,16 @@
   }
 
   function write(){
-    try{ localStorage.setItem(KEY, JSON.stringify(state.items)); }catch(_){}
-    writeCookieShadow(state.items);
+    const serialized = JSON.stringify(state.items);
+    let localOk = false;
+    let cookieOk = false;
+    try{
+      localStorage.setItem(KEY, serialized);
+      localOk = parseCartList(localStorage.getItem(KEY)).length === state.items.length;
+    }catch(_){}
+    if(state.items.length) cookieOk = writeCookieShadow(state.items);
     updateBadges();
+    return localOk || cookieOk;
   }
 
   // Always reconcile in-memory state with localStorage before a read operation.
@@ -109,6 +117,7 @@
   function find(key){ return state.items.find(x => x.key === key); }
 
   function add(item){
+    read();
     const productId = String(item?.product_id || item?.id || '');
     if(!productId) return false;
     const variant = String(item?.variant_label || item?.variant || '');
@@ -126,8 +135,7 @@
         qty:Math.min(99, Math.max(1, Number(item.qty || 1)))
       });
     }
-    write();
-    return true;
+    return write();
   }
 
   function update(key, qty){
