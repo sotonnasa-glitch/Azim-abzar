@@ -7,6 +7,7 @@ on:
 jobs:
   browser-cart:
     runs-on: ubuntu-latest
+    # Re-run against the currently deployed Cloudflare production Worker.
     timeout-minutes: 12
     steps:
       - name: Checkout
