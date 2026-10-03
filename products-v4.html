@@ -1684,7 +1684,7 @@
     }
   </style>
 <style id="az-direct-product-discount-style">.price-old{font-size:.72em;color:#7f8782;text-decoration:line-through;margin-left:5px;font-weight:700}.badge-discount{position:absolute;top:12px;left:12px;z-index:3;background:#b93232;color:#fff;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.25)}</style><script type="application/ld+json" id="productSchema">{}</script>
-  <script src="./azim-cart.js?v=11"></script>
+  <script src="./azim-cart.js?v=12"></script>
 <script id="azim-cart-boot-fix">
 (function(){
   try{
@@ -2567,93 +2567,9 @@
       });
     }
 
-    function persistCartItemDirect(payload) {
-      try {
-        const KEY = 'azim_abzar_cart_v2';
-        const raw = localStorage.getItem(KEY);
-        let list = [];
-        try { list = raw ? JSON.parse(raw) : []; } catch (_) { list = []; }
-        if (!Array.isArray(list)) list = [];
-
-        const key = String(payload.product_id) + '|' + String(payload.variant_label || '');
-        const existing = list.find(x => String(x.key || '') === key);
-
-        if (existing) {
-          existing.qty = Math.min(99, Math.max(1, Number(existing.qty || 1) + Number(payload.qty || 1)));
-          existing.unit_price = Number(payload.unit_price || 0);
-          existing.base_price = Number(payload.base_price || payload.unit_price || 0);
-          existing.name = String(payload.name || existing.name || 'محصول');
-          existing.code = String(payload.code || existing.code || payload.product_id);
-          existing.img = String(payload.img || existing.img || '');
-          existing.variant_label = String(payload.variant_label || existing.variant_label || '');
-        } else {
-          list.push({
-            key,
-            product_id: String(payload.product_id),
-            code: String(payload.code || payload.product_id),
-            name: String(payload.name || 'محصول'),
-            img: String(payload.img || ''),
-            variant_label: String(payload.variant_label || ''),
-            unit_price: Number(payload.unit_price || 0),
-            base_price: Number(payload.base_price || payload.unit_price || 0),
-            qty: Math.min(99, Math.max(1, Number(payload.qty || 1)))
-          });
-        }
-
-        localStorage.setItem(KEY, JSON.stringify(list));
-
-        if (window.AZIM_CART?.items) {
-          window.AZIM_CART.raw.items = list;
-          document.querySelectorAll('[data-cart-count]').forEach(el => {
-            const n = list.reduce((sum, x) => sum + Number(x.qty || 0), 0);
-            el.textContent = n.toLocaleString('fa-IR');
-            el.hidden = n < 1;
-            if (n < 1) el.style.display = 'none';
-            else el.style.removeProperty('display');
-          });
-        }
-        return true;
-      } catch (_) {
-        return false;
-      }
-    }
-
     async function addCatalogItemToCart(id, sourceButton = null, variantIndex = null) {
       const item = all.find(x => x.id === id);
       if (!item) return false;
-
-      const persistCartFallback = (payload) => {
-        try {
-          const KEY = 'azim_abzar_cart_v2';
-          const raw = localStorage.getItem(KEY);
-          const list = Array.isArray(JSON.parse(raw || '[]')) ? JSON.parse(raw || '[]') : [];
-          const key = String(payload.product_id) + '|' + String(payload.variant_label || '');
-          const existing = list.find(x => String(x.key || '') === key);
-          if (existing) {
-            existing.qty = Math.min(99, Math.max(1, Number(existing.qty || 1) + 1));
-            existing.unit_price = payload.unit_price;
-            existing.base_price = payload.base_price;
-            existing.name = payload.name;
-            existing.img = payload.img;
-          } else {
-            list.push({
-              key,
-              product_id: String(payload.product_id),
-              code: String(payload.code || payload.product_id),
-              name: String(payload.name || 'محصول'),
-              img: String(payload.img || ''),
-              variant_label: String(payload.variant_label || ''),
-              unit_price: Number(payload.unit_price || 0),
-              base_price: Number(payload.base_price || payload.unit_price || 0),
-              qty: 1
-            });
-          }
-          localStorage.setItem(KEY, JSON.stringify(list));
-          return true;
-        } catch (_) {
-          return false;
-        }
-      };
 
       const d = getData(id);
       let idx = Number(variantIndex);
@@ -2713,10 +2629,13 @@
         qty: 1
       };
 
-      const directOk = persistCartItemDirect(payload);
-      const ok = directOk || (window.AZIM_CART ? window.AZIM_CART.add(payload) : persistCartFallback(payload));
+      const ok = window.AZIM_CART ? window.AZIM_CART.add(payload) : false;
+      const persisted = ok && window.AZIM_CART?.items?.().some(x =>
+        String(x.product_id || '') === String(payload.product_id) &&
+        String(x.variant_label || '').trim() === String(payload.variant_label || '').trim()
+      );
 
-      if (!ok) {
+      if (!persisted) {
         window.AZIM_CART?.showToast('افزودن به سبد انجام نشد؛ دوباره تلاش کن.');
         return false;
       }
