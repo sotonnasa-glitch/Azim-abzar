@@ -1,9 +1,9 @@
 (() => {
-  if (window.__azimIndustrialMotionV9) return;
+  if (window.__azimIndustrialMotionV10) return;
   window.__azimIndustrialMotionV8 = true;
 
   const style = document.createElement('style');
-  style.id = 'azim-enhanced-motion-styles-v9';
+  style.id = 'azim-enhanced-motion-styles-v10';
   style.textContent = `
     /* === Floating Ambient Canvas === */
     #az-ambient-canvas {
@@ -508,37 +508,12 @@
     });
   }
 
-  function setupScrollPerformance() {
-    const isMobile = window.matchMedia('(max-width: 768px)').matches ||
-      window.matchMedia('(pointer: coarse)').matches;
-    if (!isMobile) return;
-
-    const root = document.documentElement;
-    const track = document.querySelector('.az-hero-photo-track');
-    let timer = 0;
-
-    const markScrolling = () => {
-      root.classList.add('az-scroll-active');
-      if (timer) clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        root.classList.remove('az-scroll-active');
-      }, 110);
-    };
-
-    window.addEventListener('scroll', markScrolling, { passive: true });
-    window.addEventListener('touchmove', markScrolling, { passive: true });
-    if (track) {
-      track.style.animationPlayState = 'running';
-    }
-  }
-
   function init() {
     mountAmbientCanvas();
     if (!window.matchMedia('(pointer: coarse)').matches) {
       mountHeroStage();
       setupHeroParallax();
     }
-    setupScrollPerformance();
     setupGaugeInteractivity();
     setupCardGlow();
     setupScrollReveal();
