@@ -46,7 +46,7 @@
   // a cross-host backup and merge it on every read.
   function readCookieShadow(){
     try{
-      const m = document.cookie.match(/(?:^|;\\s*)azim_cart_shadow=([^;]*)/);
+      const m = document.cookie.match(/(?:^|;\s*)azim_cart_shadow=([^;]*)/);
       return m ? parseCartList(decodeURIComponent(m[1])) : [];
     }catch(_){ return []; }
   }
@@ -65,14 +65,14 @@
       const value = encodeURIComponent(JSON.stringify(compact));
       // Use the parent domain only on the production domain. On other hosts
       // (e.g. localhost/GitHub Pages) fall back to a host-only cookie.
-      const domain = /(^|\.)azimabzar\\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
+      const domain = /(^|\.)azimabzar\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
       document.cookie = 'azim_cart_shadow=' + value + domain + '; Path=/; Max-Age=2592000; Secure; SameSite=Lax';
     }catch(_){}
   }
 
   function clearCookieShadow(){
     try{
-      const domain = /(^|\.)azimabzar\\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
+      const domain = /(^|\.)azimabzar\.com$/i.test(location.hostname) ? '; Domain=.azimabzar.com' : '';
       document.cookie = 'azim_cart_shadow=; Path=/; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT' + domain + '; Secure; SameSite=Lax';
     }catch(_){}
   }
