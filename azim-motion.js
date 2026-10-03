@@ -1,9 +1,9 @@
 (() => {
-  if (window.__azimIndustrialMotionV8) return;
+  if (window.__azimIndustrialMotionV9) return;
   window.__azimIndustrialMotionV8 = true;
 
   const style = document.createElement('style');
-  style.id = 'azim-enhanced-motion-styles-v8';
+  style.id = 'azim-enhanced-motion-styles-v9';
   style.textContent = `
     /* === Floating Ambient Canvas === */
     #az-ambient-canvas {
@@ -164,6 +164,10 @@
 
   // 1. Mount Canvas for Subtle Floating Metallic Particles & Ember Sparks
   function mountAmbientCanvas() {
+    const lowPowerDevice =
+      window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
+    if (lowPowerDevice) return;
     if (document.getElementById('az-ambient-canvas')) return;
     const canvas = document.createElement('canvas');
     canvas.id = 'az-ambient-canvas';
@@ -297,6 +301,7 @@
 
   // 3. Interactive Smooth Parallax on Hero HUD
   function setupHeroParallax() {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
     const heroBox = document.querySelector('.heroBox');
     const hud = document.querySelector('.az-hero-interactive-hud');
     if (!heroBox || !hud) return;
@@ -394,6 +399,7 @@
 
   // 5. Card Glow with Mouse Follow
   function setupCardGlow() {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
     const cards = document.querySelectorAll('.card, .az-choice, .az-feat-card, .az-showcase-card, .az-cat-bento, .az-photo-card, .az-cat-card-item');
     cards.forEach(card => {
       if (card.querySelector('.az-card-glow')) return;
@@ -420,7 +426,10 @@
 
   // 6. Scroll Reveal for Sections and Cards
   function setupScrollReveal() {
-    const targets = document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card, .az-cat-showcase-grid > *, .az-cat-card-item');
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const targets = isTouch
+      ? document.querySelectorAll('#home > .section h2, #home > .section h3, #home > .section p, #home > .section .eyebrow')
+      : document.querySelectorAll('.section, .az-choice-grid > *, .az-features-grid > *, .az-category-card, .az-feat-card, .az-photo-card, .az-cat-showcase-grid > *, .az-cat-card-item');
     if (!targets.length || !('IntersectionObserver' in window)) return;
 
     const observer = new IntersectionObserver((entries, obs) => {
@@ -499,10 +508,37 @@
     });
   }
 
+  function setupScrollPerformance() {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
+    if (!isMobile) return;
+
+    const root = document.documentElement;
+    const track = document.querySelector('.az-hero-photo-track');
+    let timer = 0;
+
+    const markScrolling = () => {
+      root.classList.add('az-scroll-active');
+      if (timer) clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        root.classList.remove('az-scroll-active');
+      }, 110);
+    };
+
+    window.addEventListener('scroll', markScrolling, { passive: true });
+    window.addEventListener('touchmove', markScrolling, { passive: true });
+    if (track) {
+      track.style.animationPlayState = 'running';
+    }
+  }
+
   function init() {
     mountAmbientCanvas();
-    mountHeroStage();
-    setupHeroParallax();
+    if (!window.matchMedia('(pointer: coarse)').matches) {
+      mountHeroStage();
+      setupHeroParallax();
+    }
+    setupScrollPerformance();
     setupGaugeInteractivity();
     setupCardGlow();
     setupScrollReveal();
