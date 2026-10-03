@@ -1,9 +1,9 @@
 (() => {
-  if (window.__azimIndustrialMotionV10) return;
+  if (window.__azimIndustrialMotionV11) return;
   window.__azimIndustrialMotionV8 = true;
 
   const style = document.createElement('style');
-  style.id = 'azim-enhanced-motion-styles-v10';
+  style.id = 'azim-enhanced-motion-styles-v11';
   style.textContent = `
     /* === Floating Ambient Canvas === */
     #az-ambient-canvas {
@@ -508,6 +508,26 @@
     });
   }
 
+  function setupScrollState() {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
+    if (!isMobile) return;
+
+    const root = document.documentElement;
+    let timer = 0;
+
+    const mark = () => {
+      root.classList.add('az-user-scrolling');
+      if (timer) clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        root.classList.remove('az-user-scrolling');
+      }, 90);
+    };
+
+    window.addEventListener('scroll', mark, { passive: true });
+    window.addEventListener('touchmove', mark, { passive: true });
+  }
+
   function init() {
     mountAmbientCanvas();
     if (!window.matchMedia('(pointer: coarse)').matches) {
@@ -517,6 +537,7 @@
     setupGaugeInteractivity();
     setupCardGlow();
     setupScrollReveal();
+    setupScrollState();
     setupLightbox();
   }
 
