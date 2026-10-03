@@ -1,0 +1,23 @@
+name: Browser cart smoke
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  browser-cart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run live browser cart smoke test
+        run: node scripts/cart-browser-smoke.mjs
