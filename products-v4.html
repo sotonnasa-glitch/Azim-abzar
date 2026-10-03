@@ -2567,6 +2567,30 @@
       });
     }
 
+    function showCatalogCartError(message){
+      const cart = window.AZIM_CART;
+      if (cart && typeof cart.showToast === 'function') {
+        cart.showToast(message);
+        return;
+      }
+      try{
+        let t = document.getElementById('azCatalogCartError');
+        if(!t){
+          t = document.createElement('div');
+          t.id = 'azCatalogCartError';
+          t.setAttribute('role','alert');
+          t.style.cssText = 'position:fixed;right:16px;left:16px;bottom:18px;z-index:99999;padding:12px 14px;border:1px solid rgba(245,185,0,.45);border-radius:12px;background:#121712;color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.45);font:700 13px/1.8 Vazirmatn,system-ui,sans-serif;text-align:center;';
+          document.body.appendChild(t);
+        }
+        t.textContent = message;
+        t.hidden = false;
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => { t.hidden = true; }, 3200);
+      }catch(_){
+        try{ window.alert(message); }catch(__){}
+      }
+    }
+
     async function addCatalogItemToCart(id, sourceButton = null, variantIndex = null) {
       const item = all.find(x => x.id === id);
       if (!item) return false;
