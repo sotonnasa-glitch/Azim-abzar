@@ -2722,11 +2722,24 @@
       }
 
       if (sourceButton) {
-        const old = sourceButton.innerHTML;
         sourceButton.innerHTML = '✓ به سبد اضافه شد';
         sourceButton.disabled = true;
-        setTimeout(() => { sourceButton.disabled = false; sourceButton.innerHTML = old; }, 1100);
       }
+
+      // Always hand off the selected product to the canonical cart page.
+      // The cart page also receives the product identity in the URL, so the
+      // flow still works if browser localStorage is isolated/cleared between
+      // www and apex hostnames or if a previous cart script was stale.
+      try {
+        const params = new URLSearchParams();
+        params.set('add_code', String(item.code || item.id || '').trim().toUpperCase());
+        const selectedLabel = v ? String(v[0] || '').trim() : '';
+        if (selectedLabel) params.set('variant', selectedLabel);
+        window.location.href = 'https://azimabzar.com/cart.html?' + params.toString();
+      } catch (_) {
+        window.location.href = 'cart.html';
+      }
+      return true;
     }
 
     function bindDirectCartLinks() {
