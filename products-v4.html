@@ -2753,7 +2753,8 @@
         const ok = await addCatalogItemToCart(id, link, variantIndex);
         if (ok) {
           link.innerHTML = '<span>✓ به سبد اضافه شد</span>';
-          setTimeout(() => { window.location.href = 'cart.html'; }, 90);
+          // Preserve the selected product code/variant already encoded in href.
+          setTimeout(() => { window.location.href = link.href; }, 90);
         } else {
           link.innerHTML = old;
           link.removeAttribute('aria-busy');
@@ -2766,8 +2767,12 @@
       const openModalToCart = async (event) => {
         event.preventDefault();
         if (!activeModalItem) return;
+        const targetHref = event.currentTarget?.href || cartHref(
+          activeModalItem,
+          getData(activeModalItem.id).vs?.[activeModalVariantIndex]?.[0] || ''
+        );
         const ok = await addCatalogItemToCart(activeModalItem.id, event.currentTarget, activeModalVariantIndex);
-        if (ok) window.location.href = 'cart.html';
+        if (ok) window.location.href = targetHref;
       };
 
       modalCart?.addEventListener('click', openModalToCart);
