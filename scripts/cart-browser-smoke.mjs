@@ -81,6 +81,33 @@ async function runHost(host) {
   await addProduct(page, host, P2);
   await assertCart(page, 2);
 
+  await page.goto(host + '/cart.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, { timeout: 30000 });
+  const checkoutBefore = await readCart(page);
+  assert.equal(checkoutBefore.items.length, 2, host + ': cart changed before checkout-method test');
+
+  const startCheckout = page.locator('#startCheckoutBtn').first();
+  await startCheckout.click();
+  await page.locator('#checkoutBox').waitFor({ state: 'visible', timeout: 15000 });
+
+  const paymentState = await page.evaluate(() => {
+    const message = document.querySelector('input[name="paymentMethod"][value="message"]');
+    const phone = document.querySelector('input[name="paymentMethod"][value="phone"]');
+    if (!message || !phone) return { ok: false, reason: 'payment radios missing' };
+    message.click();
+    return {
+      ok: true,
+      messageChecked: message.checked,
+      phoneChecked: phone.checked,
+      onlinePresent: !!document.querySelector('input[name="paymentMethod"][value="online"]'),
+      onlineVisible: !document.querySelector('#onlinePaymentOption')?.hidden
+    };
+  });
+  assert.equal(paymentState.ok, true, host + ': payment method controls missing');
+  assert.equal(paymentState.messageChecked, true, host + ': message payment method did not become selected');
+  assert.equal(paymentState.phoneChecked, false, host + ': phone payment method remained selected');
+  assert.equal(paymentState.onlineVisible, false, host + ': online payment should not be visible while disabled');
+
   const otherHost = host.includes('://www.') ? 'https://azimabzar.com' : 'https://www.azimabzar.com';
   await page.goto(otherHost + '/cart.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, { timeout: 30000 });
