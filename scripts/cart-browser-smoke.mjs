@@ -96,10 +96,10 @@ async function runHost(host) {
 async function runMissingModule(host) {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
-  await context.route('**/azim-cart.js?v=12', route => route.abort());
   const page = await context.newPage();
   await page.goto(host + '/products-v4.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForProduct(page, P1);
+  await page.evaluate(() => { window.AZIM_CART = undefined; });
   const card = page.locator('#card-' + P1).first();
   const link = card.locator('[data-cart-add-link="' + P1 + '"]').first();
   await link.click();
