@@ -973,6 +973,63 @@ main{position:relative;padding:20px 0 64px}
         '</div>';
     }
 
+    async function importIncomingCartItem(){
+      const params = new URLSearchParams(window.location.search);
+      const code = String(params.get('add_code') || '').trim().toUpperCase();
+      const variant = String(params.get('variant') || '').trim();
+      if (!code) return false;
+
+      if (!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) {
+        throw new Error('اتصال فروشگاه برای افزودن محصول در دسترس نیست.');
+      }
+
+      const url = window.AZIM_SUPABASE_URL + '/rest/v1/products?select=id,code,name,img,price,variants,is_active&code=eq.' + encodeURIComponent(code) + '&limit=1';
+      const res = await fetch(url,{
+        headers:{
+          apikey:window.AZIM_SUPABASE_ANON_KEY,
+          Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY
+        },
+        cache:'no-store'
+      });
+      const rows = await res.json().catch(()=>[]);
+      if (!res.ok || !Array.isArray(rows) || !rows[0]) {
+        throw new Error('محصول موردنظر در فروشگاه پیدا نشد.');
+      }
+
+      const product = rows[0];
+      if (product.is_active === false) {
+        throw new Error('این محصول در حال حاضر قابل سفارش نیست.');
+      }
+
+      const variants = Array.isArray(product.variants) ? product.variants : [];
+      let chosen = null;
+      if (variant) {
+        chosen = variants.find(v => String(v?.size ?? v?.label ?? v?.name ?? '').trim() === variant);
+        if (!chosen) throw new Error('سایز انتخاب‌شده برای این محصول پیدا نشد.');
+      }
+
+      const unitPrice = chosen?.price != null ? Number(chosen.price) : Number(product.price || 0);
+      if (!(unitPrice > 0)) throw new Error('قیمت فعلی این محصول برای افزودن به سبد ثبت نشده است.');
+
+      const ok = C.add({
+        product_id:String(product.id),
+        code:String(product.code || code),
+        name:String(product.name || 'محصول'),
+        img:String(product.img || ''),
+        variant_label:chosen ? String(chosen.size ?? chosen.label ?? chosen.name ?? '') : '',
+        unit_price:unitPrice,
+        base_price:unitPrice,
+        qty:1
+      });
+      if (!ok) throw new Error('افزودن محصول به سبد انجام نشد.');
+
+      // Remove the transient add parameters so refresh does not add the same item again.
+      const cleanUrl = window.location.pathname + (window.location.hash || '');
+      window.history.replaceState(null,'',cleanUrl);
+
+      return true;
+    }
+
     function render(){
       const items=C.items();
       const box=$('cartItems');
@@ -1272,9 +1329,19 @@ main{position:relative;padding:20px 0 64px}
       }
     }
 
-    C.syncPrices().finally(render);
-    loadPaymentOptions().catch(err=>console.warn('payment options:',err?.message||err)).finally(render);
-    render();
+    importIncomingCartItem()
+      .catch(err=>{
+        const status=$('checkoutStatus');
+        if(status){
+          status.textContent=err?.message||'افزودن محصول به سبد انجام نشد.';
+          status.className='coupon-status err';
+        }
+      })
+      .finally(()=>{
+        C.syncPrices().finally(render);
+        loadPaymentOptions().catch(err=>console.warn('payment options:',err?.message||err)).finally(render);
+        render();
+      });
   })();
 
   function handleSmartBack(e) {
