@@ -690,6 +690,19 @@
       transition: transform .3s ease;
     }
     
+    .az-hero-video {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      z-index:0;
+      opacity:.62;
+      filter:brightness(.62) contrast(1.04) saturate(1.02);
+      pointer-events:none;
+    }
+    .az-hero-video + .az-hero-photo-canvas { display:none !important; }
     /* بوم متحرک عکس هیرو: حرکت آرام، پیوسته و یکدست به سمت راست */
     .az-hero-photo-canvas {
       position: absolute;
@@ -747,6 +760,7 @@
     }
     
     @media (max-width: 768px) {
+      .az-hero-video { opacity:.54; filter:brightness(.56) contrast(1.03) saturate(1); }
       .az-photo-panel {
         flex: 0 0 460px;
       }
@@ -1807,6 +1821,8 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .az-hero-video { display:none !important; }
+
       .az-ambient-canvas {
         display: none;
       }
@@ -1980,6 +1996,11 @@
         <!-- قاب بنر با حاشیه نورانی گرادیانی و درخشان -->
         <div class="heroWrapper">
           <div class="heroBox">
+            <video class="az-hero-video" autoplay muted loop playsinline preload="metadata"
+              poster="./assets/homepage/workshop_tools_hero_1789756528479.jpg"
+              aria-hidden="true">
+              <source src="./assets/homepage/azim-hero-optimized.mp4" type="video/mp4">
+            </video>
             <!-- بوم متحرک عکس هیرو: حرکت آرام، پیوسته و بدون پرش به سمت راست -->
             <div class="az-hero-photo-canvas" aria-hidden="true">
                             <div class="az-hero-photo-track">
