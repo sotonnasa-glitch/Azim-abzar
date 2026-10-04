@@ -37,7 +37,13 @@ async function addProduct(page, host, code, variantLabel = '') {
   const link = card.locator('[data-cart-add-link="' + code + '"]').first();
   await link.waitFor({ state: 'visible', timeout: 30000 });
   await link.click();
-  await page.waitForURL(/\/cart(?:\.html)?(?:\?|$)/, { timeout: 60000 });
+  await page.waitForTimeout(250);
+  assert.ok((await page.url()).includes('/products-v4.html'), host + ': adding a product unexpectedly navigated away from catalog');
+  await page.waitForFunction(
+    (productCode) => document.querySelector('[data-cart-count]')?.textContent !== '۰',
+    code,
+    { timeout: 10000 }
+  );
 }
 
 async function readCart(page) {
