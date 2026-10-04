@@ -228,7 +228,14 @@
     else showToast('افزودن به سبد انجام نشد.');
   }
   async function removeOne(id){
-    const set=getWishlist();set.delete(String(id));
+    const key=String(id);
+    const set=getWishlist();
+    set.delete(key);
+    // A wishlist may have been created with a product code (P0001) while the
+    // live catalog now uses the product UUID as its row id. Remove both keys
+    // when the matching product is known.
+    const item=window.__wishProducts?.get(key);
+    if(item?.code) set.delete(String(item.code).toUpperCase());
     if(!saveWishlist(set)){showToast('حذف علاقه‌مندی انجام نشد.');return false;}
     updateCount();
     await load();
