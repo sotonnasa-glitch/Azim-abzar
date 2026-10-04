@@ -46,6 +46,8 @@ async function readCart(page) {
     items: window.AZIM_CART?.items?.().map(x => ({
       product_id: String(x.product_id || ''),
       code: String(x.code || ''),
+      name: String(x.name || ''),
+      img: String(x.img || ''),
       variant_label: String(x.variant_label || ''),
       qty: Number(x.qty || 0),
       unit_price: Number(x.unit_price || 0)
