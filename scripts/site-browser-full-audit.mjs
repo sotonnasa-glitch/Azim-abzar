@@ -113,6 +113,11 @@ async function testHomepage(browser){
   const home=await page.evaluate(()=>({
     nav:[...document.querySelectorAll('header a[href]')].map(a=>({id:a.id,href:a.getAttribute('href'),text:(a.innerText||'').trim()})),
     heroVideo:[...document.querySelectorAll('video')].map(v=>({src:v.currentSrc||v.src,readyState:v.readyState,muted:v.muted,loop:v.loop})),
+    heroVisual: {
+      canvas:!!document.querySelector('.az-hero-photo-canvas'),
+      panels:[...document.querySelectorAll('.az-photo-panel img')].length,
+      loaded:[...document.querySelectorAll('.az-photo-panel img')].filter(img=>img.complete&&img.naturalWidth>0).length
+    },
     tracking:!!document.querySelector('#orderTrackingSection'),
     ai:!!document.querySelector('#nav-btn-ai'),
     productCTA:!!document.querySelector('a[href*="products-v4.html"]'),
@@ -134,7 +139,7 @@ async function testHomepage(browser){
   await page.locator('a[href*="products-v4.html"]').first().click();
   await page.waitForURL(/\/products-v4\.html/,{timeout:30000});
   await context.close();
-  return {homepage:true,heroVideo:true,nav:true,tracking:true,ai:true};
+  return {homepage:true,heroVisual:true,nav:true,tracking:true,ai:true};
 }
 
 async function testCatalog(browser){
