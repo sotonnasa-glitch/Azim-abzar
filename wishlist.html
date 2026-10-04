@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co;">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="description" content="لیست علاقه‌مندی‌های شما در عظیم ابزار. محصولات منتخب را نگه دارید و هر زمان به سبد سفارش اضافه کنید.">
+  <title>علاقه‌مندی‌های من | عظیم ابزار</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="./supabase-config.js"></script>
+  <script src="./azim-cart.js?v=13"></script>
+  <style>
+    :root{
+      --bg:#080a09;--panel:#111713;--panel2:#0d110f;--line:rgba(255,255,255,.09);
+      --text:#f5f6f4;--muted:#9aa39c;--gold:#f5b900;--gold2:#ffd84f;--green:#2ed573;--danger:#ff6b6b
+    }
+    *{box-sizing:border-box}
+    html{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+    body{
+      margin:0;min-height:100vh;overflow-x:hidden;background:
+      radial-gradient(ellipse 70% 360px at 50% -80px,rgba(245,185,0,.09),transparent 70%),
+      radial-gradient(ellipse 50% 300px at 90% 50%,rgba(20,65,35,.07),transparent 70%),
+      linear-gradient(180deg,#080a09 0%,#0c100e 50%,#080a09 100%);
+      color:var(--text);font-family:Vazirmatn,system-ui,-apple-system,sans-serif
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{width:min(1180px,calc(100% - 24px));margin:auto}
+    header{
+      position:sticky;top:0;z-index:30;background:rgba(8,11,9,.94);backdrop-filter:blur(18px);
+      border-bottom:1px solid rgba(245,185,0,.16);box-shadow:0 8px 28px rgba(0,0,0,.46)
+    }
+    .head{min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:9px;min-width:0;flex-shrink:1}
+    .mark{width:39px;height:39px;border-radius:11px;display:grid;place-items:center;flex:0 0 39px;
+      background:linear-gradient(135deg,rgba(245,185,0,.2),rgba(245,185,0,.05));border:1px solid rgba(245,185,0,.34);color:var(--gold2)}
+    .brand strong{display:block;font-size:15px;font-weight:900;line-height:1.2;white-space:nowrap}
+    .brand small{display:block;color:#8c948e;font-size:10px;margin-top:2px;white-space:nowrap}
+    .nav{display:flex;align-items:center;gap:7px;flex-shrink:0}
+    .nav a{
+      min-height:35px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 11px;
+      border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:11.5px;font-weight:800;color:#d9e0db;white-space:nowrap
+    }
+    .nav a:hover{border-color:rgba(245,185,0,.44);background:rgba(245,185,0,.1);color:#fff}
+    .nav .active{border-color:rgba(245,185,0,.48);background:rgba(245,185,0,.13);color:#ffe17a}
+    .cart-badge,.wish-badge{min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--gold);color:#111;
+      display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:900}
+    [hidden]{display:none!important}
+    main{padding:30px 0 54px}
+    .hero{
+      border:1px solid rgba(245,185,0,.18);border-radius:20px;background:linear-gradient(145deg,rgba(19,24,21,.95),rgba(11,15,12,.96));
+      padding:22px 20px;box-shadow:0 18px 46px rgba(0,0,0,.38);position:relative;overflow:hidden
+    }
+    .hero:after{content:"";position:absolute;inset:auto -70px -90px auto;width:230px;height:230px;border-radius:50%;
+      background:rgba(245,185,0,.06);filter:blur(5px);pointer-events:none}
+    .kicker{font-size:10px;font-weight:900;color:#d9a900;letter-spacing:.4px}
+    h1{font-size:clamp(24px,5vw,34px);line-height:1.25;margin:7px 0 5px;font-weight:900}
+    .sub{margin:0;color:var(--muted);font-size:12.5px;line-height:2}
+    .hero-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;position:relative;z-index:1}
+    .stat{font-size:12px;color:#bbc4bd}.stat strong{color:var(--gold2);font-size:17px}
+    .clear{
+      border:1px solid rgba(255,107,107,.26);background:rgba(255,107,107,.06);color:#ffc5c5;padding:8px 12px;border-radius:10px;
+      font:800 11px Vazirmatn,system-ui,sans-serif;cursor:pointer
+    }
+    .clear:hover{border-color:rgba(255,107,107,.52);background:rgba(255,107,107,.11)}
+    #status{min-height:54px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12.5px;padding:14px}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+    .card{
+      min-width:0;background:linear-gradient(160deg,#141a16 0%,#0d120f 100%);border:1px solid rgba(245,185,0,.13);
+      border-radius:17px;padding:13px;display:flex;flex-direction:column;box-shadow:0 12px 28px rgba(0,0,0,.4)
+    }
+    .photo{width:100%;aspect-ratio:4/3;border-radius:12px;background:#fff;overflow:hidden;display:grid;place-items:center}
+    .photo img{width:100%;height:100%;object-fit:contain;padding:7px}
+    .code{margin-top:11px;font-size:10px;color:#e5b500;font-weight:900}
+    .name{margin-top:5px;font-size:14px;font-weight:900;line-height:1.65;color:#fff;min-height:46px}
+    .price{margin-top:8px;padding-top:9px;border-top:1px dashed rgba(255,255,255,.08);font-size:14px;font-weight:900;color:var(--gold)}
+    .price small{color:#aaa;font-size:10px;margin-right:3px}
+    .variant{margin-top:9px}
+    .variant label{display:block;color:#aeb8b1;font-size:10.5px;font-weight:700;margin-bottom:4px}
+    .variant select{
+      width:100%;height:36px;border-radius:9px;border:1px solid #323d35;background:#090c0a;color:#fff;padding:0 9px;font:700 11px Vazirmatn,system-ui,sans-serif
+    }
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+    .btn{
+      min-height:36px;border-radius:10px;border:1px solid rgba(245,185,0,.26);background:rgba(245,185,0,.07);color:#ffe58a;
+      font:800 10.8px Vazirmatn,system-ui,sans-serif;cursor:pointer;padding:7px 9px
+    }
+    .btn:hover{background:rgba(245,185,0,.14);border-color:rgba(245,185,0,.52);color:#fff}
+    .btn.primary{background:linear-gradient(145deg,rgba(245,185,0,.2),rgba(245,185,0,.08));color:#ffe27b}
+    .btn.remove{border-color:rgba(255,107,107,.25);background:rgba(255,107,107,.05);color:#ffbdbd}
+    .empty{
+      display:none;padding:40px 20px;border:1px dashed rgba(245,185,0,.2);border-radius:18px;text-align:center;background:rgba(255,255,255,.02)
+    }
+    .empty.show{display:block}
+    .empty-icon{font-size:38px;line-height:1;margin-bottom:10px}
+    .empty strong{display:block;font-size:16px;font-weight:900}
+    .empty p{margin:7px auto 14px;max-width:520px;color:var(--muted);font-size:12px;line-height:2}
+    .back-btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:10px;background:var(--gold);color:#111;font:900 11px Vazirmatn,system-ui,sans-serif}
+    footer{padding:22px 0 34px;text-align:center;color:#727b74;font-size:10.5px}
+    .toast{
+      position:fixed;right:50%;bottom:22px;transform:translate(50%,110px);opacity:0;z-index:100;
+      padding:10px 14px;border:1px solid rgba(245,185,0,.4);border-radius:11px;background:#121713;color:#fff;
+      font:800 11.5px Vazirmatn,system-ui,sans-serif;box-shadow:0 15px 36px rgba(0,0,0,.48);transition:.24s ease
+    }
+    .toast.show{transform:translate(50%,0);opacity:1}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:620px){
+      .wrap{width:calc(100% - 18px)}
+      .head{min-height:60px}.brand small{display:none}.mark{width:34px;height:34px;flex-basis:34px;border-radius:9px}
+      .brand strong{font-size:13px}.nav{gap:5px}.nav a{width:34px;min-height:34px;padding:0;font-size:0}.nav a svg{width:15px;height:15px}
+      .nav a.active{font-size:0}.nav .btn-text{display:none}
+      .nav a.wish{width:auto;min-width:34px;padding:0 6px;font-size:0}.nav a.wish .wish-badge{font-size:9px}
+      .nav a.cart{width:auto;min-width:34px;padding:0 6px;font-size:0}.nav a.cart .cart-badge{font-size:9px}
+      .hero{padding:18px 14px;border-radius:16px}.hero-row{align-items:flex-start}
+      .grid{grid-template-columns:1fr;gap:12px}.card{padding:11px}.photo{aspect-ratio:16/10}
+      .actions{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap head">
+    <a class="brand" href="index.html" aria-label="عظیم ابزار">
+      <span class="mark" aria-hidden="true">⚙</span>
+      <span><strong>عظیم ابزار</strong><small>ابزار تخصصی و صنعتی</small></span>
+    </a>
+    <nav class="nav" aria-label="ناوبری">
+      <a href="index.html" title="صفحه اصلی" aria-label="صفحه اصلی">⌂</a>
+      <a href="products-v4.html" title="کاتالوگ محصولات" aria-label="کاتالوگ محصولات">▦</a>
+      <a href="wishlist.html" class="active wish" title="علاقه‌مندی‌ها" aria-label="علاقه‌مندی‌ها">♡ <b data-wishlist-count class="wish-badge" hidden>۰</b></a>
+      <a href="cart.html" class="cart" title="سبد سفارش" aria-label="سبد سفارش">🛒 <b data-cart-count class="cart-badge" hidden>۰</b></a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="kicker">MY WISHLIST</div>
+    <h1>علاقه‌مندی‌های من ❤️</h1>
+    <p class="sub">محصولاتی که انتخاب کرده‌اید اینجا می‌مانند تا بعداً راحت‌تر بررسی و به سبد سفارش اضافه شوند.</p>
+    <div class="hero-row">
+      <div class="stat">تعداد انتخاب‌ها: <strong data-wishlist-total>۰</strong></div>
+      <button type="button" class="clear" id="clearAllBtn" hidden>حذف همه علاقه‌مندی‌ها</button>
+    </div>
+  </section>
+
+  <div id="status">در حال بارگذاری علاقه‌مندی‌ها…</div>
+  <section id="grid" class="grid" aria-live="polite"></section>
+  <section id="empty" class="empty">
+    <div class="empty-icon">♡</div>
+    <strong>هنوز محصولی به علاقه‌مندی‌ها اضافه نشده</strong>
+    <p>در صفحه محصولات روی دکمه «♡ علاقه‌مندی» بزنید تا محصول اینجا ذخیره شود.</p>
+    <a class="back-btn" href="products-v4.html">رفتن به کاتالوگ محصولات</a>
+  </section>
+</main>
+
+<footer>عظیم ابزار · علاقه‌مندی‌ها در همین مرورگر ذخیره می‌شوند.</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+  const WKEY='azim_wishlist';
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]||m));
+  const fmt=n=>new Intl.NumberFormat('fa-IR').format(Number(n)||0);
+
+  function getWishlist(){
+    try{
+      const a=JSON.parse(localStorage.getItem(WKEY)||'[]');
+      return new Set(Array.isArray(a)?a.map(String).filter(Boolean):[]);
+    }catch(_){return new Set();}
+  }
+  function saveWishlist(set){
+    try{
+      localStorage.setItem(WKEY,JSON.stringify([...set]));
+      return true;
+    }catch(_){return false;}
+  }
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2200);
+  }
+  function updateCount(){
+    const n=getWishlist().size;
+    document.querySelectorAll('[data-wishlist-count]').forEach(el=>{
+      el.textContent=n.toLocaleString('fa-IR');el.hidden=n<1;
+    });
+    document.querySelectorAll('[data-wishlist-total]').forEach(el=>el.textContent=n.toLocaleString('fa-IR'));
+    document.getElementById('clearAllBtn').hidden=n<1;
+  }
+  function imageUrl(raw,code){
+    const v=String(raw||'').trim();
+    if(v) return v;
+    return './catalog_site_mapping_908/images/'+encodeURIComponent(code)+'.jpg';
+  }
+  function imageFallback(img,code){
+    if(img.dataset.fallback==='1'){img.onerror=null;img.src='./catalog_site_mapping_908/images/placeholder.svg';return;}
+    img.dataset.fallback='1';img.src='./catalog_site_mapping_908/images/'+encodeURIComponent(code)+'.jpg';
+    img.onerror=()=>{img.onerror=null;img.src='./catalog_site_mapping_908/images/placeholder.svg';};
+  }
+  function variants(item){
+    return Array.isArray(item?.variants) ? item.variants.map(v=>({
+      label:String(v?.size??v?.label??v?.name??'').trim(),
+      price:Number(v?.price??0)
+    })).filter(v=>v.label) : [];
+  }
+  function basePrice(item){return Number(item?.price||0)}
+  function getSelected(card,item){
+    const vs=variants(item);const sel=card.querySelector('select[data-variant]');
+    const idx=sel?Math.max(0,Number(sel.value)||0):0;
+    if(vs.length) return {label:vs[idx]?.label||'',price:vs[idx]?.price>0?vs[idx].price:basePrice(item)};
+    return {label:'',price:basePrice(item)};
+  }
+  function addToCart(id){
+    const item=window.__wishProducts?.get(String(id));
+    if(!item) return;
+    const card=document.querySelector('[data-card-id="'+CSS.escape(String(id))+'"]');
+    const picked=getSelected(card,item);
+    if(!(picked.price>0)){showToast('قیمت این محصول برای افزودن به سبد مشخص نیست.');return;}
+    const ok=window.AZIM_CART?.add({
+      product_id:item.id,code:item.code,name:item.name,img:imageUrl(item.img,item.code),
+      variant_label:picked.label,unit_price:picked.price,base_price:basePrice(item),qty:1
+    });
+    if(ok){window.AZIM_CART?.refresh?.();showToast('✓ محصول به سبد سفارش اضافه شد.');}
+    else showToast('افزودن به سبد انجام نشد.');
+  }
+  function removeOne(id){
+    const set=getWishlist();set.delete(String(id));
+    if(!saveWishlist(set)){showToast('حذف علاقه‌مندی انجام نشد.');return;}
+    updateCount();renderCards();
+    showToast('از علاقه‌مندی‌ها حذف شد.');
+  }
+  function productCard(item){
+    const code=String(item.code||'').toUpperCase();
+    const vs=variants(item);
+    const firstPrice=vs.length&&vs[0].price>0?vs[0].price:basePrice(item);
+    const variantHtml=vs.length?'<div class="variant"><label>انتخاب سایز / مدل</label><select data-variant>'+vs.map((v,i)=>'<option value="'+i+'">'+esc(v.label)+' — '+(v.price>0?fmt(v.price)+' تومان':'قیمت ثبت نشده')+'</option>').join('')+'</select></div>':'';
+    return '<article class="card" data-card-id="'+esc(item.id)+'">'+
+      '<a class="photo" href="products-v4.html?q='+encodeURIComponent(code)+'" aria-label="مشاهده '+esc(item.name)+'">'+
+        '<img src="'+esc(imageUrl(item.img,code))+'" alt="'+esc(item.name)+'" loading="lazy" onerror="imageFallback(this,\''+esc(code)+'\')">'+
+      '</a>'+
+      '<div class="code">'+esc(code)+'</div>'+
+      '<div class="name">'+esc(item.name)+'</div>'+
+      '<div class="price">'+(firstPrice>0?fmt(firstPrice)+' <small>تومان</small>':'قیمت ثبت نشده')+'</div>'+
+      variantHtml+
+      '<div class="actions">'+
+        '<button type="button" class="btn primary" data-add-cart="'+esc(item.id)+'">🛒 افزودن به سبد</button>'+
+        '<button type="button" class="btn remove" data-remove="'+esc(item.id)+'">♥ حذف</button>'+
+      '</div>'+
+    '</article>';
+  }
+
+  async function fetchByIds(keys){
+    const base=String(window.AZIM_SUPABASE_URL||'').replace(/\/+$/,'');
+    const apiKey=window.AZIM_SUPABASE_ANON_KEY||'';
+    if(!base||!apiKey) throw new Error('اتصال فروشگاه در دسترس نیست.');
+    const ids=[...keys].filter(x=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x));
+    const codes=[...keys].filter(x=>/^P\d{4}$/i.test(x));
+    const fields='id,code,name,img,price,variants,is_active,stock_quantity,stock_tracking_enabled';
+    const headers={apikey:apiKey,Authorization:'Bearer '+apiKey};
+    const rows=[];
+    if(ids.length){
+      const p=new URLSearchParams({select:fields,id:'in.('+ids.join(',')+')',limit:'2000'});
+      const r=await fetch(base+'/rest/v1/products?'+p.toString(),{headers,cache:'no-store'});
+      if(!r.ok) throw new Error('catalog '+r.status);
+      const a=await r.json(); if(Array.isArray(a)) rows.push(...a);
+    }
+    if(codes.length){
+      const list=codes.map(x=>x.toUpperCase());
+      const p=new URLSearchParams({select:fields,code:'in.('+list.join(',')+')',limit:'2000'});
+      const r=await fetch(base+'/rest/v1/products?'+p.toString(),{headers,cache:'no-store'});
+      if(!r.ok) throw new Error('catalog '+r.status);
+      const a=await r.json(); if(Array.isArray(a)) rows.push(...a);
+    }
+    return rows.filter(x=>x&&x.is_active!==false);
+  }
+
+  async function load(){
+    const set=getWishlist();updateCount();
+    const status=document.getElementById('status');
+    const grid=document.getElementById('grid');const empty=document.getElementById('empty');
+    if(!set.size){
+      status.textContent='';grid.innerHTML='';empty.classList.add('show');return;
+    }
+    try{
+      const rows=await fetchByIds(set);
+      const map=new Map(rows.map(x=>[String(x.id),x]));
+      rows.forEach(x=>{if(x.code)map.set(String(x.code).toUpperCase(),x);});
+      window.__wishProducts=new Map();
+      const ordered=[];
+      for(const key of set){const item=map.get(String(key))||map.get(String(key).toUpperCase());if(item){ordered.push(item);window.__wishProducts.set(String(item.id),item);}}
+      status.textContent=ordered.length===set.size?'':'بعضی از محصولات دیگر در کاتالوگ فعال نیستند و نمایش داده نشدند.';
+      if(!ordered.length){empty.classList.add('show');grid.innerHTML='';return;}
+      empty.classList.remove('show');grid.innerHTML=ordered.map(productCard).join('');
+      bind();
+    }catch(error){
+      console.error(error);
+      status.textContent='بارگذاری علاقه‌مندی‌ها انجام نشد. دوباره تلاش کنید.';
+      empty.classList.remove('show');
+    }
+  }
+
+  function bind(){
+    document.querySelectorAll('[data-add-cart]').forEach(btn=>btn.addEventListener('click',()=>addToCart(btn.dataset.addCart)));
+    document.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',()=>removeOne(btn.dataset.remove)));
+  }
+  function renderCards(){load().catch(()=>{});}
+
+  document.getElementById('clearAllBtn').addEventListener('click',()=>{
+    if(!getWishlist().size)return;
+    if(!saveWishlist(new Set())){showToast('پاک‌سازی انجام نشد.');return;}
+    updateCount();renderCards();showToast('همه علاقه‌مندی‌ها حذف شدند.');
+  });
+  window.addEventListener('storage',e=>{if(e.key===WKEY){updateCount();renderCards();}});
+  window.addEventListener('pageshow',updateCount);
+  load();
+})();
+</script>
+</body>
+</html>
