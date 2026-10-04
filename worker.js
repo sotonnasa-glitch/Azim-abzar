@@ -35,6 +35,7 @@ export default {
       "/azim-home-gallery.js",
       "/azim-motion.js",
       "/azim-footer.css",
+      "/assets/homepage/azim-hero-optimized.mp4",
       "/catalog_site_mapping_908/products.json",
       "/catalog_site_mapping_908/price-size-data.json",
       "/catalog_site_mapping_908/prices.json",
