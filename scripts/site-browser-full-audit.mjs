@@ -149,7 +149,10 @@ async function testHomepage(browser){
 async function testCatalog(browser){
   const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
   const page=await context.newPage();
-  const errors=[]; page.on('console',m=>{if(m.type()==='error'&&!IGNORE_CONSOLE.test(m.text()))errors.push(m.text())}); page.on('pageerror',e=>errors.push(String(e)));
+  const errors=[]; const failedResponses=[];
+  page.on('console',m=>{if(m.type()==='error'&&!IGNORE_CONSOLE.test(m.text()))errors.push(m.text())});
+  page.on('pageerror',e=>errors.push(String(e)));
+  page.on('response',r=>{if(r.status()>=400 && (r.status()!==404 || /(?:js|css|json|svg|png|jpe?g|webp|woff2?|html)$/i.test(new URL(r.url()).pathname))) failedResponses.push(r.url()+' => '+r.status());});
   await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>document.querySelector('#grid .card')||document.querySelector('[data-cart-add-link]'),null,{timeout:60000});
 
