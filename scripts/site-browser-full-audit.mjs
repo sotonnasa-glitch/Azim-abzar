@@ -26,7 +26,7 @@ const LEGACY_REDIRECTS = [
   '/products-v3.html',
   '/products-v5.html',
 ];
-const IGNORE_CONSOLE = /cloudflareinsights|beacon\.min\.js|insights/i;
+const IGNORE_CONSOLE = /cloudflareinsights|beacon\.min\.js|insights|frame-ancestors.*ignored.*meta/i;
 
 function cleanPath(url){
   try{return new URL(url).pathname || '/';}catch{return '';}
