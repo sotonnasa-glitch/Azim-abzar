@@ -2737,7 +2737,7 @@
       }
 
       if (sourceButton) {
-        sourceButton.innerHTML = '✓ به سبد اضافه شد';
+        sourceButton.innerHTML = 'به سبد اضافه شد';
         sourceButton.disabled = true;
       }
 
@@ -2772,7 +2772,7 @@
         const old = link.innerHTML;
         const ok = await addCatalogItemToCart(id, link, variantIndex);
         if (ok) {
-          link.innerHTML = '<span>✓ به سبد اضافه شد</span>';
+          link.innerHTML = '<span>به سبد اضافه شد</span>';
           // Stay on the catalog so the customer can keep selecting additional
           // products. The cart badge updates through AZIM_CART immediately.
           link.removeAttribute('aria-busy');
