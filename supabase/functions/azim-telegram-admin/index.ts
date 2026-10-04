@@ -1384,7 +1384,8 @@ async function handleCallbackQuery(query: any) {
   }
 
   if (data === "reviews:pending" || data === "reviews:approved" || data === "reviews:all") {
-    const filter = data.slice("reviews:".length) as "pending" | "approved" | "all";
+    const rawFilter = data.slice("reviews:".length);
+    const filter = rawFilter === "approved" ? "approved" : rawFilter === "all" ? "all" : "pending";
     await showReviews(chatId, filter);
     return;
   }
