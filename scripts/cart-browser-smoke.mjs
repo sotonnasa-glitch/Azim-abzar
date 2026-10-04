@@ -167,8 +167,47 @@ async function runMissingModule(host) {
   return { host, missingModuleGuard: true };
 }
 
+async function runMobileResponsive(host) {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  await page.goto(host + '/products-v4.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForProduct(page, P1);
+  await page.waitForTimeout(500);
+
+  const base = await page.evaluate(() => ({
+    innerWidth: window.innerWidth,
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    scale: window.visualViewport?.scale || 1
+  }));
+  assert.ok(base.scrollWidth <= base.clientWidth + 1, host + ': catalog has horizontal overflow at mobile width (' + base.scrollWidth + ' > ' + base.clientWidth + ')');
+  assert.equal(base.scale, 1, host + ': unexpected browser visual scale ' + base.scale);
+
+  const card = page.locator('#card-' + P1).first();
+  await card.locator('.photo-wrap').click();
+  await page.waitForSelector('#quickModal.show', { timeout: 10000 });
+  const quick = await page.locator('#quickModal .modal-box').boundingBox();
+  assert.ok(quick, host + ': product detail modal did not render');
+  assert.ok(quick.x >= -1 && quick.x + quick.width <= base.clientWidth + 1, host + ': product modal is wider than mobile viewport');
+  assert.ok(quick.width <= base.clientWidth, host + ': product modal width exceeds viewport');
+
+  await page.locator('#closeModalBtn').click();
+  const aiBtn = card.locator('.az-product-ai-btn').first();
+  await aiBtn.click();
+  await page.waitForSelector('#azProductAiModal.show', { timeout: 10000 });
+  const ai = await page.locator('#azProductAiModal .az-ai-modal').boundingBox();
+  assert.ok(ai, host + ': product assistant modal did not render');
+  assert.ok(ai.x >= -1 && ai.x + ai.width <= base.clientWidth + 1, host + ': assistant modal is wider than mobile viewport');
+  assert.ok(ai.width <= base.clientWidth, host + ': assistant modal width exceeds viewport');
+
+  await browser.close();
+  return { host, mobileViewport: '390x844', noHorizontalOverflow: true, quickModalResponsive: true, assistantModalResponsive: true };
+}
+
 const results = [];
 for (const host of HOSTS) results.push(await runHost(host));
 results.push(await runMissingModule(HOSTS[0]));
+results.push(await runMobileResponsive(HOSTS[0]));
 
 console.log(JSON.stringify({ ok: true, results }, null, 2));
