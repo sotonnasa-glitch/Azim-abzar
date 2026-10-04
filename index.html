@@ -706,7 +706,10 @@
       top: 0;
       left: 0;
       will-change: transform;
-      animation: azSlidePhotoRight 32s linear infinite;
+      transform: translate3d(-50%, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      animation: azSlidePhotoRight 64s linear infinite;
     }
     .az-hero-photo-track:hover {
       animation-play-state: paused;
@@ -722,7 +725,9 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      filter: brightness(0.92) contrast(1.05) saturate(1.02);
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     .az-hero-photo-overlay {
       position: absolute;
@@ -1682,10 +1687,12 @@
       .nav {
         background: rgba(14,19,16,.96);
       }
-      /* Mobile: the hero is paused while the finger is scrolling so the main thread/GPU
-         stays focused on the user's scroll gesture. It resumes immediately after scrolling. */
+      /* Mobile: keep the hero on the compositor with the exact half-track loop.
+         The old mobile -35% endpoint did not land on the duplicated image boundary,
+         which caused a visible jump at the loop and made the motion feel jerky. */
       .az-hero-photo-track {
-        animation: azSlidePhotoRightMobile 52s linear infinite !important;
+        animation: azSlidePhotoRight 78s linear infinite !important;
+        transform: translate3d(-50%, 0, 0);
         will-change: transform;
       }
       /* Touch devices must never inherit the desktop hover-pause behavior. */
@@ -1719,10 +1726,7 @@
       html.az-user-scrolling .az-hero-photo-track {
         animation-play-state: running !important;
       }
-      @keyframes azSlidePhotoRightMobile {
-        0% { transform: translate3d(-35%, 0, 0); }
-        100% { transform: translate3d(0%, 0, 0); }
-      }
+
       #az-ambient-canvas {
         display: none !important;
       }
