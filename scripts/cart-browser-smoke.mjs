@@ -212,13 +212,22 @@ async function runContactResponsive(host) {
   await page.goto(host + '/contact.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(700);
 
-  const base = await page.evaluate(() => ({
-    innerWidth: window.innerWidth,
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-    scale: window.visualViewport?.scale || 1
-  }));
-  assert.ok(base.scrollWidth <= base.clientWidth + 1, host + ': contact page has horizontal overflow (' + base.scrollWidth + ' > ' + base.clientWidth + ')');
+  const base = await page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const offenders = [...document.querySelectorAll('body *')].map(el => {
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      return { tag:el.tagName, id:el.id, cls:el.className?.toString?.().slice(0,100)||'', left:Math.round(r.left), right:Math.round(r.right), width:Math.round(r.width), pos:cs.position, overflowX:cs.overflowX };
+    }).filter(x => x.left < -1 || x.right > vw + 1).sort((a,b) => (b.right-vw) - (a.right-vw)).slice(0,12);
+    return {
+      innerWidth: window.innerWidth,
+      clientWidth: vw,
+      scrollWidth: document.documentElement.scrollWidth,
+      scale: window.visualViewport?.scale || 1,
+      offenders
+    };
+  });
+  assert.ok(base.scrollWidth <= base.clientWidth + 1, host + ': contact page has horizontal overflow (' + base.scrollWidth + ' > ' + base.clientWidth + '): ' + JSON.stringify(base.offenders));
   assert.equal(base.scale, 1, host + ': contact page visual scale is ' + base.scale);
 
   const header = await page.locator('.header .head-inner').boundingBox();
