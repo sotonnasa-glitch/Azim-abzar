@@ -166,8 +166,10 @@ async function testCatalog(browser){
   await page.waitForSelector('#quickModal.show',{timeout:10000});
   assert.ok(await page.locator('#quickModal .modal-box').count(),'catalog product modal missing');
   await page.locator('#closeModalBtn').click();
+  await search.fill('P0001');
+  await page.waitForFunction(() => !!document.querySelector('#card-P0001 .az-product-ai-btn'), null, {timeout:15000});
 
-  await card.locator('.az-product-ai-btn').first().click();
+  await page.locator('#card-P0001 .az-product-ai-btn').first().click();
   await page.waitForSelector('#azProductAiModal.show',{timeout:10000});
   assert.ok(await page.locator('#azProductAiModal').isVisible(),'product AI assistant did not open');
   await page.locator('#azAiModalClose').click();
