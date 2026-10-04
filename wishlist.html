@@ -227,11 +227,13 @@
     if(ok){window.AZIM_CART?.refresh?.();showToast('✓ محصول به سبد سفارش اضافه شد.');}
     else showToast('افزودن به سبد انجام نشد.');
   }
-  function removeOne(id){
+  async function removeOne(id){
     const set=getWishlist();set.delete(String(id));
-    if(!saveWishlist(set)){showToast('حذف علاقه‌مندی انجام نشد.');return;}
-    updateCount();renderCards();
+    if(!saveWishlist(set)){showToast('حذف علاقه‌مندی انجام نشد.');return false;}
+    updateCount();
+    await load();
     showToast('از علاقه‌مندی‌ها حذف شد.');
+    return true;
   }
   function productCard(item){
     const code=String(item.code||'').toUpperCase();
@@ -283,40 +285,50 @@
     const status=document.getElementById('status');
     const grid=document.getElementById('grid');const empty=document.getElementById('empty');
     if(!set.size){
-      status.textContent='';grid.innerHTML='';empty.classList.add('show');return;
+      window.__wishProducts=new Map();
+      status.textContent='';grid.innerHTML='';empty.classList.add('show');return true;
     }
     try{
       const rows=await fetchByIds(set);
+      // The wishlist can change while the Supabase request is in flight.
+      // Re-read it before painting so a stale request can never resurrect a removed item.
+      const currentSet=getWishlist();
+      if(currentSet.size!==set.size || [...currentSet].some(x=>!set.has(x))) return load();
       const map=new Map(rows.map(x=>[String(x.id),x]));
       rows.forEach(x=>{if(x.code)map.set(String(x.code).toUpperCase(),x);});
       window.__wishProducts=new Map();
       const ordered=[];
       for(const key of set){const item=map.get(String(key))||map.get(String(key).toUpperCase());if(item){ordered.push(item);window.__wishProducts.set(String(item.id),item);}}
       status.textContent=ordered.length===set.size?'':'بعضی از محصولات دیگر در کاتالوگ فعال نیستند و نمایش داده نشدند.';
-      if(!ordered.length){empty.classList.add('show');grid.innerHTML='';return;}
+      if(!ordered.length){empty.classList.add('show');grid.innerHTML='';return true;}
       empty.classList.remove('show');grid.innerHTML=ordered.map(productCard).join('');
       bind();
+      return true;
     }catch(error){
       console.error(error);
       status.textContent='بارگذاری علاقه‌مندی‌ها انجام نشد. دوباره تلاش کنید.';
       empty.classList.remove('show');
+      return false;
     }
   }
 
   function bind(){
     document.querySelectorAll('[data-add-cart]').forEach(btn=>btn.addEventListener('click',()=>addToCart(btn.dataset.addCart)));
-    document.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',()=>removeOne(btn.dataset.remove)));
+    document.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',async()=>{
+    btn.disabled=true;
+    try{await removeOne(btn.dataset.remove);}finally{btn.disabled=false;}
+  }));
   }
-  function renderCards(){load().catch(()=>{});}
+  function renderCards(){return load().catch(()=>false);}
 
   document.getElementById('clearAllBtn').addEventListener('click',()=>{
     if(!getWishlist().size)return;
     if(!saveWishlist(new Set())){showToast('پاک‌سازی انجام نشد.');return;}
-    updateCount();renderCards();showToast('همه علاقه‌مندی‌ها حذف شدند.');
+    updateCount();renderCards().then(()=>showToast('همه علاقه‌مندی‌ها حذف شدند.'));
   });
   window.addEventListener('storage',e=>{if(e.key===WKEY){updateCount();renderCards();}});
   window.addEventListener('pageshow',updateCount);
-  load();
+  load().catch(()=>{});
 })();
 </script>
 </body>
