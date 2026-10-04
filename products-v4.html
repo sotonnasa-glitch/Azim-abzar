@@ -2633,12 +2633,24 @@
         });
       });
 
-      document.querySelectorAll('[data-wishlist-id]').forEach(btn => {
-        btn.addEventListener('click', () => toggleWishlist(btn.dataset.wishlistId, btn));
-      });
+      // Wishlist/share use delegated click handling below, so rerendering the
+      // paginated/search result cannot leave a newly-created button unbound.
+    }
 
-      document.querySelectorAll('[data-share-id]').forEach(btn => {
-        btn.addEventListener('click', () => shareProduct(btn.dataset.shareId));
+    if (!window.__azimProductActionDelegation) {
+      window.__azimProductActionDelegation = true;
+      document.addEventListener('click', function(ev) {
+        const wish = ev.target && ev.target.closest ? ev.target.closest('[data-wishlist-id]') : null;
+        if (wish) {
+          ev.preventDefault();
+          toggleWishlist(wish.dataset.wishlistId, wish);
+          return;
+        }
+        const share = ev.target && ev.target.closest ? ev.target.closest('[data-share-id]') : null;
+        if (share) {
+          ev.preventDefault();
+          shareProduct(share.dataset.shareId);
+        }
       });
     }
 
