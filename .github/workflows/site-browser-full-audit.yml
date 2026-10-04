@@ -1,0 +1,23 @@
+name: Full site browser audit
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  full-site-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run full production browser audit
+        run: node scripts/site-browser-full-audit.mjs
