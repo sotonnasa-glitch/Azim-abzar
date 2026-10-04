@@ -79,7 +79,7 @@ async function auditPage(browser, path){
       offenders,
       links:[...document.querySelectorAll('a[href]')].map(a=>a.href),
       buttons:[...document.querySelectorAll('button')].map(b=>({text:(b.innerText||'').trim(),id:b.id,disabled:b.disabled})).filter(x=>x.text||x.id),
-      videos:[...document.querySelectorAll('video')].map(v=>({src:v.currentSrc||v.src,readyState:v.readyState,paused:v.paused})),
+      videos:[...document.querySelectorAll('video')].map(v=>({src:v.currentSrc||v.src,readyState:v.readyState,paused:v.paused,networkState:v.networkState,error:v.error?{code:v.error.code,message:v.error.message}:null})),
       forms:[...document.querySelectorAll('form')].map(f=>f.id||f.className||'form'),
     };
   });
@@ -125,7 +125,7 @@ async function testHomepage(browser){
   assert.ok(home.tracking,'homepage order tracking section missing');
   assert.ok(home.ai,'homepage AI button missing');
   assert.ok(home.heroVideo.length>0,'homepage hero video missing');
-  assert.ok(home.heroVideo.some(v=>v.readyState>=1),'homepage hero video metadata did not load');
+  assert.ok(home.heroVideo.some(v=>v.readyState>=1),'homepage hero video metadata did not load: '+JSON.stringify(home.heroVideo));
 
   await page.locator('#nav-btn-ai').click();
   await page.waitForURL(/\/ai\.html/,{timeout:30000});
