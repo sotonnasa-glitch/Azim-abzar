@@ -2845,6 +2845,24 @@
     // Product action handlers are attached directly to each rendered button.
     // This remains reliable after search/sort/pagination rerenders and on touch devices.
 
+    function bindShareButtons() {
+      if (window.__AZIM_CATALOG_SHARE_BOUND__) return;
+      window.__AZIM_CATALOG_SHARE_BOUND__ = true;
+      document.addEventListener('click', async (event) => {
+        const btn = event.target.closest?.('.az-share-action[data-share-id]');
+        if (!btn) return;
+        event.preventDefault();
+        const id = String(btn.getAttribute('data-share-id') || '').trim();
+        if (!id) return;
+        btn.setAttribute('aria-busy', 'true');
+        try {
+          await shareProduct(id);
+        } finally {
+          btn.removeAttribute('aria-busy');
+        }
+      });
+    }
+
     function showCatalogCartError(message){
       const cart = window.AZIM_CART;
       if (cart && typeof cart.showToast === 'function') {
@@ -3529,6 +3547,7 @@
 
     // Main Init
     bindDirectCartLinks();
+    bindShareButtons();
 
     async function init() {
       // Only load the lightweight catalog index before the first render.
