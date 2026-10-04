@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'fs';
 import { chromium } from 'playwright';
 
-const BASE = 'https://azimabzar.com';
+const BASE = 'https://azimabzar.com'; // production proxy now tracks main source
 const MOBILE = { width: 390, height: 844 };
 const DESKTOP = { width: 1366, height: 900 };
 const PUBLIC_PAGES = [
