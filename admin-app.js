@@ -1367,10 +1367,12 @@
         '<td>' + esc(p.name) + '</td><td>' + esc(p.code || '—') + '</td><td>' + esc(p.brand || '—') + '</td>' +
         '<td>' + (isDirectProductDiscountLive(p) && Number(p.price) > 0
         ? '<del style="opacity:.5;margin-left:5px;">' + money(p.price) + '</del> ' + money(directProductDiscountPrice(p.price, p)) + ' <small style="color:#e7d78d;">تخفیف مستقیم</small>'
-        : money(p.price)) + '</td><td><span class="badge ' + (p.is_active ? 'ok' : 'red') + '">' +
+        : money(p.price)) + '</td>' +
+        '<td>' + (p.stock_tracking_enabled ? '<span class="badge ok">' + Number(p.stock_quantity || 0).toLocaleString('fa-IR') + ' عدد</span>' : '<span class="muted">پیش‌فرض ۱</span>') + '</td>' +
+        '<td><span class="badge ' + (p.is_active ? 'ok' : 'red') + '">' +
         (p.is_active ? 'فعال' : 'غیرفعال') + '</span></td>' + actions + '</tr>';
     }).join('');
-    return '<table class="table"><thead><tr><th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>وضعیت</th>' +
+    return '<table class="table"><thead><tr><th>تصویر</th><th>محصول</th><th>کد</th><th>برند</th><th>قیمت</th><th>موجودی</th><th>وضعیت</th>' +
       (compact ? '' : '<th>عملیات</th>') + '</tr></thead><tbody>' + body.replace(/<tr>/g, '<tr>') + '</tbody></table>';
   }
 
