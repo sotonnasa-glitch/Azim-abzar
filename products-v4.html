@@ -843,6 +843,22 @@
       50% { opacity: 1; transform: scale(1.3); background: #f5b900; }
     }
 
+    .modal-box{overflow-x:hidden}
+    .modal-close-btn{left:auto;right:14px;top:14px;z-index:20;margin:0}
+    .modal-info-col{min-width:0;overflow:visible}
+    .stock-mini{margin-top:5px;font-size:10px;font-weight:800}
+    .stock-mini.in-stock{color:#6de6a1}.stock-mini.out-stock{color:#ff8b8b}
+    #relatedProductsList{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .related-product-card{min-width:0;display:grid;grid-template-columns:70px minmax(0,1fr);gap:9px;align-items:center;text-align:right;padding:8px;border:1px solid rgba(245,185,0,.16);border-radius:12px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.018));color:#fff;cursor:pointer;font:inherit;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+    .related-product-card:hover{transform:translateY(-2px);border-color:rgba(245,185,0,.46);box-shadow:0 10px 22px rgba(0,0,0,.35),0 0 16px rgba(245,185,0,.08)}
+    .related-product-photo{width:70px;height:58px;border-radius:9px;background:#fff;display:grid;place-items:center;overflow:hidden}
+    .related-product-photo img{width:100%;height:100%;object-fit:contain;padding:4px}
+    .related-product-info{min-width:0;display:grid;gap:2px}
+    .related-product-info strong{font-size:10.5px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .related-product-info small{color:#7f8a82;font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .related-product-info b{color:#ffd84f;font-size:9.5px}
+    .related-empty{grid-column:1/-1;padding:12px;color:#818d85;font-size:10px;border:1px dashed rgba(255,255,255,.08);border-radius:10px;text-align:center}
+
     /* Enlarged High-End Detail Modal */
     .modal-backdrop {
       position: fixed;
@@ -2230,14 +2246,14 @@
               <span class="modal-spec-val" id="modalSpecVariants">بدون سایزبندی</span>
             </div>
             <div class="modal-spec-item">
-              <span class="modal-spec-label">وضعیت کاتالوگ:</span>
-              <span class="modal-spec-val" id="modalSpecStatus" style="color:#2ed573;">قابل نمایش</span>
+              <span class="modal-spec-label">موجودی:</span>
+              <span class="modal-spec-val" id="modalSpecStock" style="color:#2ed573;">۱ عدد</span>
             </div>
           </div>
 
           <!-- Price Block -->
           <div class="modal-price-block">
-            <span class="modal-price-label">قیمت فعلی نمایش‌داده‌شده:</span>
+            <span class="modal-price-label">قیمت:</span>
             <span class="modal-price-val" id="modalPrice">--</span>
           </div>
 
@@ -2276,7 +2292,7 @@
                 <select id="reviewRating" aria-label="امتیاز" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
                   <option value="5">۵ ★</option><option value="4">۴ ★</option><option value="3">۳ ★</option><option value="2">۲ ★</option><option value="1">۱ ★</option>
                 </select>
-                <input id="reviewMobile" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="شماره موبایل" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
+                <input id="reviewAuthorName" autocomplete="name" maxlength="80" placeholder="نام شما" required style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit">
               </div>
               <textarea id="reviewComment" maxlength="1000" rows="3" placeholder="تجربه یا نظر شما درباره این محصول…" style="background:#0c100e;color:#fff;border:1px solid #333d36;border-radius:9px;padding:8px;font:inherit;resize:vertical"></textarea>
               <button id="reviewSubmitBtn" type="submit" class="card-btn-view" style="cursor:pointer">ثبت نظر برای بررسی</button>
@@ -2384,22 +2400,28 @@
     }
 
     function renderRelatedProducts(item) {
-      const list=document.getElementById('relatedProductsList');
-      if(!list || !item) return;
-      const cat=categoriesMap[item.id]||'';
-      const candidates=all.filter(x=>x.id!==item.id && ((cat && categoriesMap[x.id]===cat)));
-      const fallback=candidates.length?candidates:all.filter(x=>x.id!==item.id);
-      const rows=fallback.slice(0,4);
-      list.innerHTML='';
-      rows.forEach(x=>{
-        const b=document.createElement('button');
-        b.type='button';
-        b.className='card-btn-view';
-        b.style.cssText='padding:8px;text-align:right;font-size:10.5px;line-height:1.7';
-        b.textContent=x.name;
-        b.onclick=()=>openQuickView(x.id);
-        list.appendChild(b);
-      });
+      const list = document.getElementById('relatedProductsList');
+      if (!list || !item) return;
+      const cat = categoriesMap[item.id] || '';
+      const sameCategory = all.filter(x => x.id !== item.id && cat && categoriesMap[x.id] === cat);
+      const fallback = all.filter(x => x.id !== item.id);
+      const rows = (sameCategory.length ? sameCategory : fallback).slice(0, 4);
+      list.innerHTML = rows.length ? rows.map(x => {
+        const d = getData(x.id);
+        const prices = d.vs.map(v => Number(v[1] || 0)).filter(n => n > 0);
+        const base = prices.length ? Math.min(...prices) : Number(d.base || 0);
+        const image = x.image || './catalog_site_mapping_908/images/placeholder.svg';
+        return `
+          <button type="button" class="related-product-card" data-related-product="${esc(x.id)}">
+            <span class="related-product-photo"><img src="${esc(image)}" alt="${esc(x.name)}" loading="lazy" onerror="catalogImageFallback(this,'${esc(x.id)}')"></span>
+            <span class="related-product-info">
+              <strong>${esc(x.name)}</strong>
+              <small>${esc(categoriesMap[x.id] || 'ابزار تخصصی')}</small>
+              <b>${base > 0 ? fmt(discountedPrice(base, d.discount)) + ' تومان' : 'استعلام قیمت'}</b>
+            </span>
+          </button>`;
+      }).join('') : '<div class="related-empty">محصول مشابهی پیدا نشد.</div>';
+      list.querySelectorAll('[data-related-product]').forEach(btn => btn.addEventListener('click', () => openQuickView(btn.dataset.relatedProduct)));
     }
 
     async function loadProductReviews(productId, productName) {
@@ -2412,7 +2434,7 @@
       summary.textContent = 'در حال بارگذاری…';
       list.innerHTML = '';
       try {
-        const url = window.AZIM_SUPABASE_URL + '/rest/v1/product_reviews?select=rating,comment,created_at&product_id=eq.' +
+        const url = window.AZIM_SUPABASE_URL + '/rest/v1/product_reviews?select=rating,comment,author_name,created_at&product_id=eq.' +
           encodeURIComponent(productId) + '&approved=eq.true&order=created_at.desc&limit=10';
         const res = await fetch(url,{headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY},cache:'no-store'});
         if (!res.ok) throw new Error('review fetch failed');
@@ -2424,7 +2446,7 @@
           box.style.cssText='background:#101411;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:9px 10px';
           const head=document.createElement('div');
           head.style.cssText='display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#f3c34a';
-          head.textContent='★'.repeat(Math.max(1,Math.min(5,Number(r.rating)||1)))+'  ·  '+new Date(r.created_at).toLocaleDateString('fa-IR');
+          head.innerHTML='<span>'+esc(String(r.author_name||'مشتری'))+'</span><span>'+('★'.repeat(Math.max(1,Math.min(5,Number(r.rating)||1))))+' · '+new Date(r.created_at).toLocaleDateString('fa-IR')+'</span>';
           const body=document.createElement('div');
           body.style.cssText='margin-top:5px;font-size:11px;line-height:1.9;color:#c7cec9;white-space:pre-wrap';
           body.textContent=String(r.comment||'');
@@ -2444,20 +2466,17 @@
       form.onsubmit=async (ev)=>{
         ev.preventDefault();
         if(!window.AZIM_SUPABASE_URL || !window.AZIM_SUPABASE_ANON_KEY) return;
-        const mobile=String(document.getElementById('reviewMobile')?.value||'')
-          .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
-          .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
-          .replace(/[\s-]/g,'');
+        const authorName=String(document.getElementById('reviewAuthorName')?.value||'').trim();
+        if(authorName.length<2 || authorName.length>80){showToast('نام باید بین ۲ تا ۸۰ کاراکتر باشد.');return;}
         const rating=Math.max(1,Math.min(5,Number(document.getElementById('reviewRating')?.value||5)));
         const comment=String(document.getElementById('reviewComment')?.value||'').trim();
-        if(!/^09\d{9}$/.test(mobile)){showToast('شماره موبایل معتبر نیست.');return;}
         if(comment.length<3){showToast('متن نظر کوتاه است.');return;}
         if(btn) btn.disabled=true;
         try{
           const res=await fetch(window.AZIM_SUPABASE_URL+'/rest/v1/product_reviews',{
             method:'POST',
             headers:{apikey:window.AZIM_SUPABASE_ANON_KEY,Authorization:'Bearer '+window.AZIM_SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-            body:JSON.stringify({product_id:productId,rating,comment,mobile,approved:false})
+            body:JSON.stringify({product_id:productId,rating,comment,author_name:authorName,approved:false})
           });
           if(res.status===409){showToast('قبلاً برای این محصول با این شماره نظر ثبت شده است.');return;}
           if(!res.ok) throw new Error('submit failed');
@@ -2705,6 +2724,14 @@
 
 
 
+    function displayStock(item) {
+      if (item?.stock_tracking_enabled === true) {
+        const n = Number(item.stock_quantity);
+        return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+      }
+      return 1;
+    }
+
     function cartHref(item, variantLabel = '') {
       const code = String(item?.code || item?.id || '').trim().toUpperCase();
       const params = new URLSearchParams();
@@ -2761,6 +2788,9 @@
           
           <div class="price-wrap">
             <div class="price" data-price="${esc(x.id)}">${shown}</div>
+            <div class="stock-mini ${displayStock(x) > 0 ? 'in-stock' : 'out-stock'}" data-stock="${esc(x.id)}">
+              ${displayStock(x) > 0 ? 'موجود · ' + fmt(displayStock(x)) + ' عدد' : 'ناموجود'}
+            </div>
           </div>
 
           ${select}
@@ -3003,12 +3033,13 @@
       modalImg.alt = item.name;
       const modalSpecCategory = document.getElementById('modalSpecCategory');
       const modalSpecVariants = document.getElementById('modalSpecVariants');
-      const modalSpecStatus = document.getElementById('modalSpecStatus');
+      const modalSpecStock = document.getElementById('modalSpecStock');
       if (modalSpecCategory) modalSpecCategory.textContent = cat;
-      if (modalSpecVariants) modalSpecVariants.textContent = vs.length ? fmt(vs.length) + ' گزینه' : 'بدون سایزبندی';      if (modalSpecStatus) {
-        const live = livePriceData[id];
-        modalSpecStatus.textContent = live ? (live.is_active ? 'فعال در فروشگاه' : 'غیرفعال') : 'اطلاعات کاتالوگ';
-        modalSpecStatus.style.color = live?.is_active === false ? '#ff8b8b' : '#2ed573';
+      if (modalSpecVariants) modalSpecVariants.textContent = vs.length ? fmt(vs.length) + ' گزینه' : 'بدون سایزبندی';
+      if (modalSpecStock) {
+        const stock = displayStock(item);
+        modalSpecStock.textContent = stock > 0 ? fmt(stock) + ' عدد' : 'ناموجود';
+        modalSpecStock.style.color = stock > 0 ? '#2ed573' : '#ff8b8b';
       }
 
       const varWrap = document.getElementById('modalVariantsContainer');
