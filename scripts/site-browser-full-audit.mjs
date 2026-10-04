@@ -246,8 +246,20 @@ async function testWishlist(browser){
   assert.equal(wishDiag.cards,1,'wishlist did not render: '+JSON.stringify({wishDiag,wishlistResponses}));
   assert.ok(await page.locator('#grid .card img').first().evaluate(img=>img.complete&&img.naturalWidth>0),'wishlist product image did not load');
   assert.ok(await page.locator('[data-add-cart]').count()===1,'wishlist add-to-cart action missing');
+  const addState=await page.locator('[data-add-cart]').first().evaluate(btn=>{
+    const item=window.__wishProducts?.get(String(btn.dataset.addCart));
+    return {
+      dataAdd:btn.dataset.addCart,
+      item:item?{id:item.id,code:item.code,name:item.name,price:item.price,variants:item.variants}:null,
+      cartReady:!!window.AZIM_CART,
+      before:window.AZIM_CART?.items?.().length||0
+    };
+  });
   await page.locator('[data-add-cart]').first().click();
-  await page.waitForFunction(()=>window.AZIM_CART?.items?.().length===1,null,{timeout:10000});
+  await page.waitForTimeout(300);
+  const afterAdd=await page.evaluate(()=>({count:window.AZIM_CART?.items?.().length||0,items:window.AZIM_CART?.items?.()||[]}));
+  assert.equal(afterAdd.count,1,'wishlist add-to-cart failed: '+JSON.stringify({addState,afterAdd}));
+
 
   await page.locator('[data-remove]').first().click();
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('azim_wishlist')||'[]').length===0,null,{timeout:5000});
