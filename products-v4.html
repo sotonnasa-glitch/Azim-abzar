@@ -1734,6 +1734,12 @@
   }catch(e){}
 })();
 </script>
+<style id="az-header-mobile-overflow-fix">
+.az-nav-btn.az-nav-btn-wishlist .btn-text,.az-nav-btn.az-nav-btn-cart .btn-text,.az-nav-btn.az-nav-btn-tracking .btn-text,.az-nav-btn.az-nav-btn-contact .btn-text{min-width:0}
+.az-nav-btn.az-nav-btn-wishlist svg{width:16px;height:16px;flex:0 0 16px}
+.az-wishlist-action svg{width:15px;height:15px;flex:0 0 15px;transition:transform .22s ease,filter .22s ease}.az-wishlist-action.is-saved svg{filter:drop-shadow(0 0 5px rgba(245,185,0,.45))}.az-wishlist-action:hover svg{transform:scale(1.08)}
+@media(max-width:580px){.head-inner{min-width:0}.nav-actions{gap:4px;min-width:0;flex-wrap:nowrap}.az-nav-btn{width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border-radius:9px}.az-nav-btn .btn-text{display:none!important}.az-nav-btn svg{width:15px;height:15px}.az-nav-btn.az-nav-btn-tracking{width:34px;min-width:34px;padding:0;gap:0}.az-nav-btn.az-nav-btn-cart{width:34px;min-width:34px;padding:0;gap:0}.az-nav-btn.az-nav-btn-wishlist{width:34px;min-width:34px;padding:0;gap:0}.az-nav-btn.az-nav-btn-contact{width:34px;min-width:34px;padding:0}.az-nav-btn.az-nav-btn-cart .az-cart-badge{position:absolute;top:-5px;left:-5px}.az-nav-btn.az-nav-btn-wishlist .az-wishlist-badge{position:absolute;top:-5px;left:-5px}}
+</style>
 </head>
 <body>
 
@@ -1762,7 +1768,7 @@
         </a>
 
         <a class="az-nav-btn az-nav-btn-wishlist" href="wishlist.html" aria-label="علاقه‌مندی‌ها" title="علاقه‌مندی‌ها" id="nav-btn-wishlist">
-          <span aria-hidden="true" style="font-size:16px;line-height:1">♡</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.5 4.5 0 0 1 12 6.4a4.5 4.5 0 0 1 8.8 2.4z"/></svg>
           <span class="btn-text">علاقه‌مندی‌ها</span>
           <b data-wishlist-count class="az-wishlist-badge" hidden>۰</b>
         </a>
@@ -2320,8 +2326,10 @@
       } catch(_){}
       if(!saved) { showToast('ذخیره علاقه‌مندی انجام نشد؛ حافظه مرورگر در دسترس نیست.'); return false; }
       if(button) {
-        const label=set.has(key) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی';
-        button.innerHTML='<span>'+label+'</span>';
+        const icon='<svg aria-hidden="true" viewBox="0 0 24 24" fill="'+(set.has(key)?'currentColor':'none')+'" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.5 4.5 0 0 1 12 6.4a4.5 4.5 0 0 1 8.8 2.4z"/></svg>';
+        const label=set.has(key) ? 'حذف از علاقه‌مندی' : 'علاقه‌مندی';
+        button.innerHTML=icon+'<span>'+label+'</span>';
+        button.classList.toggle('is-saved',set.has(key));
       }
       updateWishlistBadges();
       showToast(set.has(key) ? 'به علاقه‌مندی‌ها اضافه شد.' : 'از علاقه‌مندی‌ها حذف شد.');
@@ -2591,7 +2599,7 @@
               <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>${x.stock_tracking_enabled === true && x.stock_quantity != null && x.stock_quantity <= 0 ? '<span>ناموجود</span>' : '<span>افزودن به سبد سفارش</span>'}
             </a>
                         <div style="display:flex;gap:7px;margin-top:7px">
-              <button type="button" class="card-btn-view az-wishlist-action" style="flex:1;padding:8px 10px" data-wishlist-id="${esc(x.id)}" onclick="return toggleWishlist('${esc(x.id)}', this);"><span>${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
+              <button type="button" class="card-btn-view az-wishlist-action" style="flex:1;padding:8px 10px;display:inline-flex;align-items:center;justify-content:center;gap:7px" data-wishlist-id="${esc(x.id)}" onclick="return toggleWishlist('${esc(x.id)}', this);"><svg aria-hidden="true" viewBox="0 0 24 24" fill="${isWishlisted(x.id)?'currentColor':'none'}" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.5 4.5 0 0 1 12 6.4a4.5 4.5 0 0 1 8.8 2.4z"/></svg><span>${isWishlisted(x.id) ? 'حذف از علاقه‌مندی' : 'علاقه‌مندی'}</span></button>
               <button type="button" class="card-btn-view az-share-action" style="flex:1;padding:8px 10px" data-share-id="${esc(x.id)}"><span>اشتراک‌گذاری</span></button>
             </div>
 <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || x.id || '')}" data-ai-product-code="${esc(x.code || '')}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
