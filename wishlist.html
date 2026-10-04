@@ -241,6 +241,89 @@
     @media(prefers-reduced-motion:reduce){
       *,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}
     }
+  <style id="az-wishlist-page-animation">
+    /* Premium motion language for the wishlist page */
+    .nav a[href="wishlist.html"]{
+      animation:azWishNavGlow 3.6s ease-in-out infinite;
+    }
+    .nav a[href="wishlist.html"] svg{
+      transform-origin:center;
+      animation:azWishNavHeart 3.1s ease-in-out infinite;
+    }
+    .nav a[href="wishlist.html"]:hover svg{
+      animation:azWishNavHeartHover .55s ease-in-out both;
+      filter:drop-shadow(0 0 7px rgba(245,185,0,.6));
+    }
+    .nav a[href="wishlist.html"] .badge:not([hidden]){
+      animation:azWishBadgePop .55s cubic-bezier(.2,.9,.25,1.35) both;
+    }
+    @keyframes azWishNavGlow{
+      0%,76%,100%{box-shadow:0 0 0 0 rgba(245,185,0,0),0 0 18px rgba(245,185,0,.03)}
+      84%{box-shadow:0 0 0 4px rgba(245,185,0,0),0 0 24px rgba(245,185,0,.15)}
+    }
+    @keyframes azWishNavHeart{
+      0%,72%,100%{transform:scale(1)}
+      77%{transform:scale(1.13)}
+      81%{transform:scale(1.2)}
+      85%{transform:scale(1.05)}
+    }
+    @keyframes azWishNavHeartHover{
+      0%{transform:scale(1) rotate(0)}
+      35%{transform:scale(1.2) rotate(-8deg)}
+      70%{transform:scale(1.15) rotate(8deg)}
+      100%{transform:scale(1) rotate(0)}
+    }
+    @keyframes azWishBadgePop{
+      0%{transform:scale(.55);opacity:.35}
+      65%{transform:scale(1.18);opacity:1}
+      100%{transform:scale(1);opacity:1}
+    }
+
+    .card{
+      opacity:0;
+      animation:azWishCardIn .5s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .card:nth-child(2){animation-delay:.05s}
+    .card:nth-child(3){animation-delay:.1s}
+    .card:nth-child(4){animation-delay:.15s}
+    .card:nth-child(5){animation-delay:.2s}
+    .card:nth-child(6){animation-delay:.25s}
+    @keyframes azWishCardIn{
+      from{opacity:0;transform:translateY(14px) scale(.985)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+    .card:hover{
+      box-shadow:0 20px 42px rgba(0,0,0,.56),0 0 26px rgba(245,185,0,.09);
+    }
+    .card .photo img{
+      transition:transform .35s cubic-bezier(.2,.8,.2,1);
+    }
+    .card:hover .photo img{
+      transform:scale(1.045);
+    }
+
+    .empty-art{
+      animation:azWishEmptyFloat 4s ease-in-out infinite, azWishEmptyGlow 3.5s ease-in-out infinite;
+    }
+    @keyframes azWishEmptyFloat{
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-7px) rotate(1deg)}
+    }
+    @keyframes azWishEmptyGlow{
+      0%,100%{box-shadow:0 0 32px rgba(245,185,0,.08)}
+      50%{box-shadow:0 0 48px rgba(245,185,0,.18)}
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .nav a[href="wishlist.html"],
+      .nav a[href="wishlist.html"] svg,
+      .nav a[href="wishlist.html"] .badge:not([hidden]),
+      .card,
+      .empty-art,
+      .card .photo img{animation:none!important;transition:none!important}
+      .card{opacity:1!important;transform:none!important}
+    }
+  </style>
   </style>
 </head>
 <body>
