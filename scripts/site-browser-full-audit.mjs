@@ -232,7 +232,18 @@ async function testWishlist(browser){
 
   await page.locator('#nav-btn-wishlist').click();
   await page.waitForURL(/\/wishlist\.html/, {timeout:30000});
-  await page.waitForFunction(()=>document.querySelectorAll('#grid .card').length===1,null,{timeout:20000});
+  const wishlistResponses=[];
+  page.on('response',r=>{if(r.url().includes('wishlist')||r.url().includes('catalog_site_mapping_908')) wishlistResponses.push(r.url()+' => '+r.status())});
+  await page.waitForTimeout(2500);
+  const wishDiag=await page.evaluate(()=>({
+    cards:document.querySelectorAll('#grid .card').length,
+    status:document.querySelector('#status')?.textContent||'',
+    empty:!!document.querySelector('#empty.show'),
+    raw:localStorage.getItem('azim_wishlist')||'',
+    supabase:!!window.AZIM_SUPABASE_URL,
+    cart:!!window.AZIM_CART
+  }));
+  assert.equal(wishDiag.cards,1,'wishlist did not render: '+JSON.stringify({wishDiag,wishlistResponses}));
   assert.ok(await page.locator('#grid .card img').first().evaluate(img=>img.complete&&img.naturalWidth>0),'wishlist product image did not load');
   assert.ok(await page.locator('[data-add-cart]').count()===1,'wishlist add-to-cart action missing');
   await page.locator('[data-add-cart]').first().click();
