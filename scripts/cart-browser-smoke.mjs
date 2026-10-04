@@ -61,6 +61,9 @@ async function assertCart(page, expectedCount, p1Variant = '46') {
   const p1 = cart.items.find(x => x.code === P1 && x.variant_label === p1Variant);
   assert.ok(p1, 'P0001 size 46 is missing from cart');
   assert.equal(p1.unit_price, P1_PRICE, 'P0001 size 46 price changed unexpectedly');
+  assert.notEqual(p1.name, 'محصول', 'cart product name fell back to generic label');
+  assert.ok(p1.name.length >= 2, 'cart product name is empty');
+  assert.ok(p1.img, 'cart product image URL is missing');
   assert.ok(cart.localStorage, 'cart localStorage key is missing');
 }
 
@@ -85,6 +88,12 @@ async function runHost(host) {
   await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, { timeout: 30000 });
   const checkoutBefore = await readCart(page);
   assert.equal(checkoutBefore.items.length, 2, host + ': cart changed before checkout-method test');
+  assert.notEqual(checkoutBefore.items.find(x=>x.code===P2)?.name, 'محصول', host + ': P0002 name is generic');
+  assert.ok(checkoutBefore.items.find(x=>x.code===P2)?.img, host + ': P0002 image URL is missing');
+  await page.waitForFunction(() => {
+    const imgs=[...document.querySelectorAll('#cartItems .cart-img img')];
+    return imgs.length >= 2 && imgs.every(img => img.complete && img.naturalWidth > 0);
+  }, null, {timeout:30000});
 
   const startCheckout = page.locator('#startCheckoutBtn').first();
   await startCheckout.click();
@@ -114,6 +123,16 @@ async function runHost(host) {
   const crossHost = await readCart(page);
   assert.equal(crossHost.items.length, 2, 'cross-host cart lost items');
   assert.ok(crossHost.items.some(x => x.code === P1 && x.variant_label === '46'), 'cross-host cart lost P0001 size 46');
+  assert.notEqual(crossHost.items.find(x=>x.code===P1)?.name, 'محصول', 'cross-host cart lost P0001 name');
+  assert.ok(crossHost.items.every(x=>x.img), 'cross-host cart lost a product image URL');
+
+  // Verify delegated remove works and, critically, that removing the final
+  // item clears the cross-host cookie shadow instead of resurrecting the item.
+  const removeButtons=page.locator('#cartItems [data-remove]');
+  await removeButtons.first().click();
+  await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 1, null, {timeout:10000});
+  await page.locator('#cartItems [data-remove]').first().click();
+  await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 0, null, {timeout:10000});
 
   await browser.close();
   assert.equal(relevantConsoleErrors().length, 0, host + ': browser console/page errors: ' + relevantConsoleErrors().join(' | '));
