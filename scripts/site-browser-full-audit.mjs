@@ -50,6 +50,17 @@ async function auditPage(browser, path){
 
   const response = await page.goto(BASE + path, {waitUntil:'domcontentloaded', timeout:60000});
   await page.waitForTimeout(900);
+  if(path === '/' && response){
+    console.log('ROOT_RESPONSE_HEADERS '+JSON.stringify({
+      status:response.status(),
+      contentType:response.headers()['content-type'],
+      csp:response.headers()['content-security-policy']||'',
+      cspReportOnly:response.headers()['content-security-policy-report-only']||'',
+      xFrame:response.headers()['x-frame-options']||'',
+      server:response.headers()['server']||'',
+      location:response.headers()['location']||''
+    }));
+  }
   assert.ok(response, path+': no response');
   assert.ok(response.status() < 400 || path === '/404.html', path+': HTTP '+response.status());
 
