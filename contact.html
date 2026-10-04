@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co;">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="ارتباط مستقیم با عظیم ابزار؛ مشاوره فنی و ثبت سفارش ابزارهای مکانیکی و گاراژی">
   <title>ارتباط و سفارش مستقیم | عظیم ابزار</title>
   <link rel="canonical" href="https://azimabzar.com/contact.html">
@@ -1257,6 +1257,29 @@
         font-size: 11px;
       }
     }
+      @media (max-width: 680px) {
+      html { width:100%; max-width:100%; overflow-x:hidden; -webkit-text-size-adjust:100%; }
+      body { width:100%; max-width:100%; overflow-x:hidden; }
+      .header { width:100%; max-width:100%; overflow:hidden; }
+      .head-inner { width:100%; max-width:100%; margin:0; padding:0 10px; gap:8px; }
+      .brand { flex:1 1 auto; min-width:0; }
+      .brand strong { font-size:14px; overflow:hidden; text-overflow:ellipsis; }
+      .brand small { display:none; }
+      .az-back-btn { width:40px; height:40px; padding:0; justify-content:center; gap:0; flex:0 0 40px; }
+      .az-back-btn > span:not(.az-back-icon) { display:none; }
+      .az-back-icon { width:30px; height:30px; }
+      .az-cart-link { width:40px !important; height:40px !important; padding:0 !important; justify-content:center !important; gap:0 !important; flex:0 0 40px !important; position:relative; box-sizing:border-box; color:#ffd84f !important; border-color:rgba(245,185,0,.35) !important; }
+      .az-cart-link > span:not(.az-cart-icon) { display:none !important; }
+      .az-cart-link .az-cart-icon { width:20px; height:20px; }
+      .az-cart-link .az-cart-svg { width:20px; height:20px; }
+      .az-cart-link [data-cart-count] { position:absolute; top:-4px; left:-4px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:#f5b900; color:#111; font-size:9px; font-weight:900; line-height:17px; }
+      .az-cart-link [data-cart-count][hidden] { display:none !important; }
+      input, select, textarea, button { max-width:100%; }
+      .input-field input, .input-field select, .input-field textarea { font-size:16px; }
+      .hero-card, .panel, .channel-card, .store-address-banner { max-width:100%; min-width:0; }
+      .hero-title { overflow-wrap:anywhere; }
+      .hero-desc, .channel-sub, .channel-title, .panel-head-title { overflow-wrap:anywhere; }
+    }
   </style>
 <script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script></head>
 <body>
@@ -2082,7 +2105,7 @@
   }
 })();
 </script>
-<script src="./azim-cart.js?v=11"></script>
+<script src="./azim-cart.js?v=13"></script>
 <script src="./azim-live-content.js?v=4" defer></script>
 <script src="./azim-ai-widget.js?v=5" defer></script>
 </body>
