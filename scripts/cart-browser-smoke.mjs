@@ -205,9 +205,43 @@ async function runMobileResponsive(host) {
   return { host, mobileViewport: '390x844', noHorizontalOverflow: true, quickModalResponsive: true, assistantModalResponsive: true };
 }
 
+async function runContactResponsive(host) {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  await page.goto(host + '/contact.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForTimeout(700);
+
+  const base = await page.evaluate(() => ({
+    innerWidth: window.innerWidth,
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    scale: window.visualViewport?.scale || 1
+  }));
+  assert.ok(base.scrollWidth <= base.clientWidth + 1, host + ': contact page has horizontal overflow (' + base.scrollWidth + ' > ' + base.clientWidth + ')');
+  assert.equal(base.scale, 1, host + ': contact page visual scale is ' + base.scale);
+
+  const header = await page.locator('.header .head-inner').boundingBox();
+  const brand = await page.locator('#header-brand').boundingBox();
+  const back = await page.locator('#btn-back-prev').boundingBox();
+  const cart = await page.locator('.header .az-cart-link').boundingBox();
+  for (const [name, box] of [['header',header],['brand',brand],['back',back],['cart',cart]]) {
+    assert.ok(box, host + ': missing mobile header element ' + name);
+    assert.ok(box.x >= -1 && box.x + box.width <= base.clientWidth + 1, host + ': header element ' + name + ' is outside viewport');
+  }
+
+  // Focus a form control: font-size >=16px prevents mobile browser focus zoom.
+  const controlFont = await page.locator('#contactForm input, #contactForm select, #contactForm textarea').first().evaluate(el => getComputedStyle(el).fontSize);
+  assert.ok(parseFloat(controlFont) >= 16, host + ': contact form control is below 16px and may trigger mobile focus zoom');
+
+  await browser.close();
+  return { host, contactMobile: '390x844', noHorizontalOverflow: true, headerResponsive: true, noFocusZoomSizing: true };
+}
+
 const results = [];
 for (const host of HOSTS) results.push(await runHost(host));
 results.push(await runMissingModule(HOSTS[0]));
 results.push(await runMobileResponsive(HOSTS[0]));
+results.push(await runContactResponsive(HOSTS[0]));
 
 console.log(JSON.stringify({ ok: true, results }, null, 2));
