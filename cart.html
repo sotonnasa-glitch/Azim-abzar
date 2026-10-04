@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co;">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="سبد سفارش و صدور پیش‌فاکتور رسمی عظیم ابزار؛ استعلام و بررسی ابزارآلات تراشکاری و صنعتی.">
   <title>سبد سفارش و پیش‌فاکتور | عظیم ابزار</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,15 +19,15 @@
   --green:#3fe084;--red:#ff656b;--shadow:0 30px 90px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden;-webkit-text-size-adjust:100%}
 body{
-  margin:0;min-height:100vh;color:var(--text);font-family:Vazirmatn,system-ui,sans-serif;
+  margin:0;min-height:100vh;width:100%;max-width:100%;color:var(--text);font-family:Vazirmatn,system-ui,sans-serif;
   background:
     radial-gradient(75% 55% at 85% -5%,rgba(245,185,0,.16),transparent 70%),
     radial-gradient(55% 45% at 5% 45%,rgba(255,106,0,.1),transparent 70%),
     radial-gradient(60% 45% at 50% 100%,rgba(63,224,132,.07),transparent 75%),
     linear-gradient(180deg,#030604 0%,#08100c 45%,#030604 100%);
-  position:relative;overflow-x:hidden;
+  position:relative;overflow-x:hidden;overflow-x:clip;
 }
 
 /* Ambient Floating Live Light Particles */
@@ -35,9 +35,9 @@ body{
   position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px);opacity:0.26;
   animation:azFloatOrb 18s ease-in-out infinite alternate;
 }
-.az-ambient-orb.orb-1{top:-90px;right:8%;width:360px;height:360px;background:rgba(245,185,0,0.5);animation-duration:14s;}
-.az-ambient-orb.orb-2{bottom:25%;left:-90px;width:400px;height:400px;background:rgba(255,106,0,0.38);animation-duration:20s;animation-delay:-5s;}
-.az-ambient-orb.orb-3{top:50%;right:-110px;width:320px;height:320px;background:rgba(63,224,132,0.28);animation-duration:16s;animation-delay:-10s;}
+.az-ambient-orb.orb-1{top:-90px;right:4%;width:280px;height:280px;background:rgba(245,185,0,0.5);animation-duration:14s;}
+.az-ambient-orb.orb-2{bottom:25%;left:0;width:300px;height:300px;background:rgba(255,106,0,0.38);animation-duration:20s;animation-delay:-5s;}
+.az-ambient-orb.orb-3{top:50%;right:0;width:260px;height:260px;background:rgba(63,224,132,0.28);animation-duration:16s;animation-delay:-10s;}
 
 @keyframes azFloatOrb{
   0%{transform:translate(0,0) scale(1);}
