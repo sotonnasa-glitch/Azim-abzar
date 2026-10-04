@@ -206,8 +206,8 @@ async function testWishlist(browser){
 
   const search=page.locator('#q');
   await search.fill('P0001');
-  await page.waitForFunction(()=>document.querySelector('#card-P0001 button[onclick*="toggleWishlist"]'),null,{timeout:15000});
-  const wishButton=page.locator('#card-P0001 button[onclick*="toggleWishlist"]').first();
+  await page.waitForFunction(()=>document.querySelector('#card-P0001 [data-wishlist-id]'),null,{timeout:15000});
+  const wishButton=page.locator('#card-P0001 [data-wishlist-id]').first();
   await wishButton.click();
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('azim_wishlist')||'[]').length===1,null,{timeout:5000});
   assert.match(await wishButton.innerText(),/حذف از علاقه‌مندی/,'wishlist button did not switch to remove state');
