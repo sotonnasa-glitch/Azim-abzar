@@ -157,9 +157,12 @@ async function testCatalog(browser){
   assert.ok(await page.locator('#card-P0001').count(),'catalog search failed for P0001');
   await page.locator('#clearSearch').click(); await page.waitForTimeout(200);
 
-  await page.locator('#sortSelect').selectOption({index:1}); await page.waitForTimeout(300);
+  await page.locator('#sortSelect').selectOption({index:1}); 
+  await page.waitForFunction(() => !!document.querySelector('#card-P0001 .photo-wrap'), null, {timeout:15000});
+  await page.waitForTimeout(150);
 
-  const card=page.locator('#card-P0001').first(); await card.locator('.photo-wrap').click();
+  const card=page.locator('#card-P0001').first(); 
+  await card.locator('.photo-wrap').click({timeout:15000});
   await page.waitForSelector('#quickModal.show',{timeout:10000});
   assert.ok(await page.locator('#quickModal .modal-box').count(),'catalog product modal missing');
   await page.locator('#closeModalBtn').click();
