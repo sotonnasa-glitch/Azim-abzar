@@ -7,9 +7,34 @@ export default {
     // from the canonical GitHub main branch while the full Worker asset bundle
     // remains unchanged. All other requests continue to use ASSETS.
     const liveHotfixFiles = new Set([
-      "/azim-product-ai.js",
+      "/index.html",
       "/products-v4.html",
-      "/supabase-config.js",
+      "/products.html",
+      "/products2.html",
+      "/products-v2.html",
+      "/products-v3.html",
+      "/products-v5.html",
+      "/cart.html",
+      "/contact.html",
+      "/order-status.html",
+      "/ai.html",
+      "/admin.html",
+      "/privacy.html",
+      "/terms.html",
+      "/payment-callback.html",
+      "/404.html",
+      "/azim-cart.js",
+      "/azim-product-ai.js",
+      "/azim-product-ai.css",
+      "/azim-ai-widget.js",
+      "/azim-live-content.js",
+      "/azim-order-tracking-inline.js",
+      "/azim-home-categories.css",
+      "/azim-home-categories.js",
+      "/azim-home-copy.js",
+      "/azim-home-gallery.js",
+      "/azim-motion.js",
+      "/azim-footer.css",
       "/catalog_site_mapping_908/products.json",
       "/catalog_site_mapping_908/price-size-data.json",
       "/catalog_site_mapping_908/prices.json",
@@ -17,7 +42,7 @@ export default {
     ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-        const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@7ddbcef6ab595df7b880f7901897e2829a9d2288" + requestPath;
+        const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@7f35b530d7e5b5c1979a6c8a72faa8200df3b1d5" + requestPath;
         const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
