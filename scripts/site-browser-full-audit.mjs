@@ -198,8 +198,10 @@ async function testCart(browser){
   await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>document.querySelector('[data-cart-add-link="P0001"]'),null,{timeout:60000});
   await page.evaluate(()=>window.AZIM_CART?.clear?.());
-  await page.locator('#card-P0001 [data-cart-add-link="P0001"]').click(); await page.waitForTimeout(250);
-  await page.locator('#card-P0002 [data-cart-add-link="P0002"]').click(); await page.waitForTimeout(250);
+  await page.locator('#card-P0001 [data-cart-add-link="P0001"]').click();
+  await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 1, null, {timeout:10000});
+  await page.locator('#card-P0002 [data-cart-add-link="P0002"]').click();
+  await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 2, null, {timeout:10000});
   await page.goto(BASE+'/cart.html',{waitUntil:'domcontentloaded',timeout:60000}); await page.waitForTimeout(800);
   assert.equal(await page.locator('#cartItems .cart-item').count(),2,'cart did not render two items');
   assert.ok(await page.locator('#cartItems .cart-img img').evaluateAll(imgs=>imgs.length===2 && imgs.every(i=>i.complete&&i.naturalWidth>0)),'cart product images did not load');
