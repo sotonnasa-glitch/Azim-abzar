@@ -930,7 +930,7 @@ main{position:relative;padding:20px 0 64px}
   </footer>
 
   <script src="./supabase-config.js"></script>
-  <script src="./azim-cart.js?v=12"></script>
+  <script src="./azim-cart.js?v=13"></script>
   <script>
   (function(){
     const C=window.AZIM_CART;
@@ -1040,6 +1040,42 @@ main{position:relative;padding:20px 0 64px}
       return true;
     }
 
+    let staticCatalogPromise=null;
+    async function hydrateCartDisplayMetadata(){
+      const items=C.items();
+      if(!items.length) return;
+      if(!items.some(x=>!x.name || x.name==='محصول' || !x.img)) return;
+      try{
+        if(!staticCatalogPromise){
+          staticCatalogPromise=fetch('./catalog_site_mapping_908/products.json?v=20261004-cart',{
+            cache:'no-store'
+          }).then(r=>{
+            if(!r.ok) throw new Error('catalog fallback '+r.status);
+            return r.json();
+          });
+        }
+        const rows=await staticCatalogPromise;
+        if(!Array.isArray(rows)) return;
+        const byCode=new Map(rows.map(x=>[String(x?.id||'').trim().toUpperCase(),x]));
+        for(const item of items){
+          const p=byCode.get(String(item.code||'').trim().toUpperCase());
+          if(!p) continue;
+          if(!item.name || item.name==='محصول') item.name=String(p.name||item.name);
+          if(!item.img) item.img=String(p.image||'');
+        }
+        C.refresh();
+        try{ localStorage.setItem('azim_abzar_cart_v2',JSON.stringify(C.raw.items)); }catch(_){}
+      }catch(_){}
+    }
+
+    function cartImageSrc(item){
+      const src=String(item?.img||'').trim();
+      if(src) return src;
+      const code=String(item?.code||'').trim().toUpperCase();
+      return code ? './catalog_site_mapping_908/images/'+encodeURIComponent(code)+'.jpg'
+                  : './catalog_site_mapping_908/images/placeholder.svg';
+    }
+
     function render(){
       const items=C.items();
       const box=$('cartItems');
@@ -1070,7 +1106,7 @@ main{position:relative;padding:20px 0 64px}
       }else{
         box.innerHTML=items.map(x=>{
           const total=x.unit_price*x.qty;
-          const image=x.img?'<img src="'+escapeHtml(x.img)+'" alt="'+escapeHtml(x.name)+'">':'<span style="font-size:30px">⚙️</span>';
+          const image='<img loading="lazy" src="'+escapeHtml(cartImageSrc(x))+'" alt="'+escapeHtml(x.name)+'" onerror="this.onerror=null;this.src=\'./catalog_site_mapping_908/images/placeholder.svg\';">';
           return '<article class="cart-row">'+
             '<div class="cart-img">'+image+'</div>'+
             '<div class="cart-info">'+
@@ -1128,15 +1164,27 @@ main{position:relative;padding:20px 0 64px}
     }
 
     $('cartItems').addEventListener('click',e=>{
-      const q=e.target.closest('[data-qty]');
-      const rm=e.target.closest('[data-remove]');
+      const q=e.target.closest?.('[data-qty]');
+      const rm=e.target.closest?.('[data-remove]');
       if(q){
+        e.preventDefault();
+        e.stopPropagation();
         const x=C.items().find(v=>v.key===q.dataset.key);
         if(x) C.update(q.dataset.key,x.qty+Number(q.dataset.qty||0));
         coupon=null;
         render();
       }
-      if(rm){ C.remove(rm.dataset.remove); coupon=null; render(); }
+      if(rm){
+        e.preventDefault();
+        e.stopPropagation();
+        const key=rm.dataset.remove;
+        if(key){
+          C.remove(key);
+          coupon=null;
+          render();
+        }
+        return;
+      }
     });
 
     $('clearCartBtn').onclick=()=>{ if(confirm('کل سبد سفارش پاک شود؟')){C.clear();coupon=null;saveOnlineRecovery(null);render();} };
@@ -1348,9 +1396,12 @@ main{position:relative;padding:20px 0 64px}
         }
       })
       .finally(()=>{
-        C.syncPrices().finally(render);
+        (async()=>{
+          try{ await C.syncPrices(); }catch(_){}
+          try{ await hydrateCartDisplayMetadata(); }catch(_){}
+          render();
+        })();
         loadPaymentOptions().catch(err=>console.warn('payment options:',err?.message||err)).finally(render);
-        render();
       });
   })();
 
