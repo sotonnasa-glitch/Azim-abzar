@@ -9,6 +9,7 @@ const DESKTOP = { width: 1366, height: 900 };
 const PUBLIC_PAGES = [
   '/',
   '/products-v4.html',
+  '/wishlist.html',
   '/cart.html',
   '/contact.html',
   '/order-status.html',
@@ -192,6 +193,43 @@ async function testCatalog(browser){
   return {catalog:true,search:true,sort:true,detailModal:true,productAssistant:true,multiProductAdd:true};
 }
 
+async function testWishlist(browser){
+  const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
+  const page=await context.newPage();
+  const errors=[];
+  page.on('console',m=>{if(m.type()==='error'&&!IGNORE_CONSOLE.test(m.text()))errors.push(m.text())});
+  page.on('pageerror',e=>errors.push(String(e)));
+
+  await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
+  await page.waitForFunction(()=>document.querySelector('[data-wishlist-count]') && document.querySelector('#grid .card'),null,{timeout:60000});
+  await page.evaluate(()=>localStorage.removeItem('azim_wishlist'));
+
+  const search=page.locator('#q');
+  await search.fill('P0001');
+  await page.waitForFunction(()=>document.querySelector('#card-P0001 button[onclick*="toggleWishlist"]'),null,{timeout:15000});
+  const wishButton=page.locator('#card-P0001 button[onclick*="toggleWishlist"]').first();
+  await wishButton.click();
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('azim_wishlist')||'[]').length===1,null,{timeout:5000});
+  assert.match(await wishButton.innerText(),/حذف از علاقه‌مندی/,'wishlist button did not switch to remove state');
+  assert.equal(await page.locator('[data-wishlist-count]').first().innerText(),'۱','wishlist badge count did not update');
+
+  await page.locator('#nav-btn-wishlist').click();
+  await page.waitForURL(/\/wishlist\.html/, {timeout:30000});
+  await page.waitForFunction(()=>document.querySelectorAll('#grid .card').length===1,null,{timeout:20000});
+  assert.ok(await page.locator('#grid .card img').first().evaluate(img=>img.complete&&img.naturalWidth>0),'wishlist product image did not load');
+  assert.ok(await page.locator('[data-add-cart]').count()===1,'wishlist add-to-cart action missing');
+  await page.locator('[data-add-cart]').first().click();
+  await page.waitForFunction(()=>window.AZIM_CART?.items?.().length===1,null,{timeout:10000});
+
+  await page.locator('[data-remove]').first().click();
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('azim_wishlist')||'[]').length===0,null,{timeout:5000});
+  await page.waitForFunction(()=>document.querySelectorAll('#grid .card').length===0,null,{timeout:10000});
+
+  assert.equal(errors.length,0,'wishlist JS errors: '+errors.join(' | '));
+  await context.close();
+  return {wishlist:true,toggle:true,badge:true,render:true,image:true,addToCart:true,remove:true};
+}
+
 async function testCart(browser){
   const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
   const page=await context.newPage();
@@ -353,6 +391,7 @@ async function main(){
   for(const p of PUBLIC_PAGES) results.push(await auditPage(browser,p));
   results.push(await testHomepage(browser));
   results.push(await testCatalog(browser));
+  results.push(await testWishlist(browser));
   results.push(await testCart(browser));
   results.push(await testContact(browser));
   results.push(await testOrderStatus(browser));
