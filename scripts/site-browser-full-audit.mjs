@@ -180,8 +180,9 @@ async function testCatalog(browser){
   assert.ok((await page.url()).includes('/products-v4.html'),'adding first product navigated away from catalog');
   assert.ok(await page.locator('[data-cart-count]').first().evaluate(el=>!el.hidden),'cart badge did not update after first add');
 
+  await search.fill('P0002');
+  await page.waitForFunction(() => !!document.querySelector('#card-P0002 [data-cart-add-link="P0002"]'), null, {timeout:15000});
   const card2=page.locator('#card-P0002').first();
-  await card2.waitFor({state:'visible',timeout:30000});
   await card2.locator('[data-cart-add-link="P0002"]').first().click(); await page.waitForTimeout(300);
   assert.ok((await page.url()).includes('/products-v4.html'),'adding second product navigated away from catalog');
   const count=await page.evaluate(()=>window.AZIM_CART?.items?.().length||0);
