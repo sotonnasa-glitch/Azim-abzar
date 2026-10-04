@@ -250,7 +250,7 @@
       variantHtml+
       '<div class="actions">'+
         '<button type="button" class="btn primary" data-add-cart="'+esc(item.id)+'">🛒 افزودن به سبد</button>'+
-        '<button type="button" class="btn remove" data-remove="'+esc(item.id)+'">♥ حذف</button>'+
+        '<button type="button" class="btn remove" data-remove="'+esc(item.id)+'" onclick="return removeOne(\''+esc(item.id)+'\');">♥ حذف</button>'+
       '</div>'+
     '</article>';
   }
@@ -358,10 +358,6 @@
 
   function bind(){
     document.querySelectorAll('[data-add-cart]').forEach(btn=>btn.addEventListener('click',()=>addToCart(btn.dataset.addCart)));
-    document.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',async()=>{
-    btn.disabled=true;
-    try{await removeOne(btn.dataset.remove);}finally{btn.disabled=false;}
-  }));
   }
   function renderCards(){return load().catch(()=>false);}
 
