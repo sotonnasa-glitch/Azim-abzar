@@ -108,23 +108,22 @@ async function runHost(host) {
   await page.locator('#checkoutBox').waitFor({ state: 'visible', timeout: 15000 });
 
   const paymentState = await page.evaluate(() => {
-    const message = document.querySelector('input[name="paymentMethod"][value="message"]');
     const phone = document.querySelector('input[name="paymentMethod"][value="phone"]');
-    if (!message || !phone) return { ok: false, reason: 'payment radios missing' };
-    message.click();
+    const message = document.querySelector('input[name="paymentMethod"][value="message"]');
+    const online = document.querySelector('input[name="paymentMethod"][value="online"]');
+    const option = document.querySelector('#onlinePaymentOption');
     return {
-      ok: true,
-      messageChecked: message.checked,
-      phoneChecked: phone.checked,
-      onlinePresent: !!document.querySelector('input[name="paymentMethod"][value="online"]'),
-      onlineVisible: !document.querySelector('#onlinePaymentOption')?.hidden
+      phonePresent: !!phone,
+      messagePresent: !!message,
+      onlinePresent: !!online,
+      onlineVisible: !!option && !option.hidden,
+      onlineDisabled: !!online && online.disabled
     };
   });
-  assert.equal(paymentState.ok, true, host + ': payment method controls missing');
-  assert.equal(paymentState.messageChecked, true, host + ': message payment method did not become selected');
-  assert.equal(paymentState.phoneChecked, false, host + ': phone payment method remained selected');
-  assert.equal(paymentState.onlineVisible, false, host + ': online payment should not be visible while disabled');
-
+  assert.equal(paymentState.phonePresent, false, host + ': phone payment option still exists');
+  assert.equal(paymentState.messagePresent, false, host + ': message payment option still exists');
+  assert.equal(paymentState.onlinePresent, true, host + ': online payment option is missing');
+  assert.equal(paymentState.onlineVisible, true, host + ': online payment option is not visible');
   const otherHost = host.includes('://www.') ? 'https://azimabzar.com' : 'https://www.azimabzar.com';
   await page.goto(otherHost + '/cart.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, { timeout: 30000 });
