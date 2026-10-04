@@ -21,7 +21,11 @@
     <a class="btn" id="homeLink" href="/">بازگشت به صفحه اصلی</a>
   </main>
   <script>
-    (function(){\n      var link = document.getElementById("homeLink");\n      if (!link) return;\n      if (/\\.github\\.io$/i.test(location.hostname)) link.href = "/Azim-abzar/";\n      else link.href = "/";\n    })();
+    (function(){
+      var link = document.getElementById("homeLink");
+      if (!link) return;
+      link.href = /github\.io$/i.test(location.hostname) ? "/Azim-abzar/" : "/";
+    })();
   </script>
 </body>
 </html>
