@@ -23,6 +23,7 @@ export default {
       "/terms.html",
       "/payment-callback.html",
       "/404.html",
+      "/wishlist.html",
       "/azim-cart.js",
       "/azim-product-ai.js",
       "/azim-product-ai.css",
@@ -43,7 +44,7 @@ export default {
     ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/2e68fca28e7003c717a224654b4744cd44e6f47e" + requestPath;
+        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/e52e7fd3ef68ba0a82932ce55de35a99845f9214" + requestPath;
         const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
