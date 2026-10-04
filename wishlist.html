@@ -285,30 +285,74 @@
     const status=document.getElementById('status');
     const grid=document.getElementById('grid');const empty=document.getElementById('empty');
     if(!set.size){
-      window.__wishProducts=new Map();
-      status.textContent='';grid.innerHTML='';empty.classList.add('show');return true;
+      status.textContent='';grid.innerHTML='';empty.classList.add('show');return;
     }
+
     try{
-      const rows=await fetchByIds(set);
-      // The wishlist can change while the Supabase request is in flight.
-      // Re-read it before painting so a stale request can never resurrect a removed item.
-      const currentSet=getWishlist();
-      if(currentSet.size!==set.size || [...currentSet].some(x=>!set.has(x))) return load();
-      const map=new Map(rows.map(x=>[String(x.id),x]));
-      rows.forEach(x=>{if(x.code)map.set(String(x.code).toUpperCase(),x);});
+      // Always build a local/static fallback first so a temporary Supabase
+      // failure can never turn an existing wishlist into a blank page.
+      const [catalogRes,priceRes,variantRes]=await Promise.all([
+        fetch('./catalog_site_mapping_908/products.json',{cache:'no-store'}),
+        fetch('./catalog_site_mapping_908/prices.json',{cache:'no-store'}),
+        fetch('./catalog_site_mapping_908/price-size-data.json',{cache:'no-store'})
+      ]);
+      if(!catalogRes.ok||!priceRes.ok||!variantRes.ok) throw new Error('wishlist static catalog unavailable');
+      const catalog=await catalogRes.json();
+      const prices=await priceRes.json();
+      const variantsMap=await variantRes.json();
+      const staticMap=new Map((Array.isArray(catalog)?catalog:[]).map(x=>[String(x.id).toUpperCase(),{
+        id:String(x.id||'').toUpperCase(),
+        code:String(x.id||'').toUpperCase(),
+        name:String(x.name||'محصول'),
+        img:String(x.image||''),
+        price:Number(prices?.[String(x.id||'').toUpperCase()]?.p||0),
+        variants:Array.isArray(variantsMap?.[String(x.id||'').toUpperCase()]?.v)
+          ? variantsMap[String(x.id||'').toUpperCase()].v.map(v=>({size:v?.[0],price:v?.[1]}))
+          : []
+      }]).filter(x=>x.id));
+
+      let liveRows=[];
+      try { liveRows=await fetchByIds(set); } catch (_) { liveRows=[]; }
+      const liveMap=new Map();
+      liveRows.forEach(x=>{
+        if(!x)return;
+        if(x.id)liveMap.set(String(x.id),x);
+        if(x.code)liveMap.set(String(x.code).toUpperCase(),x);
+      });
+
       window.__wishProducts=new Map();
       const ordered=[];
-      for(const key of set){const item=map.get(String(key))||map.get(String(key).toUpperCase());if(item){ordered.push(item);window.__wishProducts.set(String(item.id),item);}}
+      for(const key of set){
+        const normalized=String(key).toUpperCase();
+        const live=liveMap.get(String(key))||liveMap.get(normalized);
+        const fallback=staticMap.get(normalized);
+        if(!live&&!fallback) continue;
+        const item=live?{
+          ...fallback,
+          ...live,
+          code:String(live.code||fallback?.code||normalized).toUpperCase(),
+          name:String(live.name||fallback?.name||'محصول'),
+          img:String(live.img||fallback?.img||''),
+          variants:Array.isArray(live.variants)&&live.variants.length ? live.variants : (fallback?.variants||[]),
+          price:Number(live.price||fallback?.price||0)
+        }:fallback;
+        ordered.push(item);
+        window.__wishProducts.set(String(item.id),item);
+      }
+
       status.textContent=ordered.length===set.size?'':'بعضی از محصولات دیگر در کاتالوگ فعال نیستند و نمایش داده نشدند.';
-      if(!ordered.length){empty.classList.add('show');grid.innerHTML='';return true;}
-      empty.classList.remove('show');grid.innerHTML=ordered.map(productCard).join('');
+      if(!ordered.length){
+        empty.classList.add('show');grid.innerHTML='';
+        return;
+      }
+      empty.classList.remove('show');
+      grid.innerHTML=ordered.map(productCard).join('');
       bind();
-      return true;
     }catch(error){
-      console.error(error);
+      console.error('Wishlist load failed:',error);
       status.textContent='بارگذاری علاقه‌مندی‌ها انجام نشد. دوباره تلاش کنید.';
       empty.classList.remove('show');
-      return false;
+      grid.innerHTML='';
     }
   }
 
