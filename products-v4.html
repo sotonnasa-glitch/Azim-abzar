@@ -2193,22 +2193,13 @@
 
     function catalogImageFallback(img, id) {
       if (!img) return;
-      if (img.dataset.fallbackTried === '1') {
-        img.onerror = null;
-        img.src = './catalog_site_mapping_908/images/placeholder.svg';
-        img.alt = 'تصویر ' + id + ' در دسترس نیست';
-        img.style.display = '';
-        return;
-      }
-      img.dataset.fallbackTried = '1';
-      img.src = './catalog_site_mapping_908/images/' + encodeURIComponent(String(id)) + '.jpg';
+      // The production catalog is sourced from Supabase storage. Do not make
+      // a second network request to optional legacy local images after a
+      // failed primary image; missing legacy files create noisy 404s.
+      img.onerror = null;
+      img.src = './catalog_site_mapping_908/images/placeholder.svg';
+      img.alt = 'تصویر ' + id + ' در دسترس نیست';
       img.style.display = '';
-      img.onerror = () => {
-        img.onerror = null;
-        img.src = './catalog_site_mapping_908/images/placeholder.svg';
-        img.alt = 'تصویر ' + id + ' در دسترس نیست';
-        img.style.display = '';
-      };
     }
 
     function renderRelatedProducts(item) {
