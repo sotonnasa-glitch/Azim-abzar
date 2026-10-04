@@ -1464,20 +1464,13 @@
     @keyframes azCartTrail { 0%,100% { stroke-dashoffset: 0; opacity: .9; } 45% { stroke-dashoffset: -28; opacity: 1; } 70% { stroke-dashoffset: -8; opacity: .9; } }
     @keyframes azCartHover { 0% { transform: rotate(0) scale(1); } 35% { transform: rotate(-9deg) scale(1.08); } 70% { transform: rotate(7deg) scale(1.08); } 100% { transform: rotate(0) scale(1); } }
 
-    @media (max-width: 768px), (prefers-reduced-motion: reduce) {
+    /* Mobile performance: keep the visual effects and animations alive.
+       Only remove expensive blur layers on small screens. */
+    @media (max-width: 768px) {
       header {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         background: rgba(8, 11, 9, 0.98);
-      }
-      .card,
-      .card:hover {
-        transition: none !important;
-        transform: none !important;
-      }
-      .photo-wrap img,
-      .photo-overlay-btn {
-        transition: none !important;
       }
       .photo-overlay-btn,
       .badge-code,
@@ -1485,12 +1478,14 @@
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
       }
-      .az-cart-svg,
-      .az-cart-svg .az-cart-track,
-      .pages button.active,
-      .pages button.active::after,
-      .pages .page-dots span {
+    }
+
+    /* Respect an explicit accessibility request for reduced motion. */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
         animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
       }
     }
 
