@@ -109,7 +109,10 @@ async function auditPage(browser, path){
 async function testHomepage(browser){
   const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
   const page=await context.newPage();
-  const errors=[]; page.on('console',m=>{if(m.type()==='error'&&!IGNORE_CONSOLE.test(m.text()))errors.push(m.text())}); page.on('pageerror',e=>errors.push(String(e)));
+  const errors=[]; const failedResponses=[];
+  page.on('console',m=>{if(m.type()==='error'&&!IGNORE_CONSOLE.test(m.text()))errors.push(m.text())});
+  page.on('pageerror',e=>errors.push(String(e)));
+  page.on('response',r=>{if(r.status()>=400 && r.status()!==404 || (r.status()===404 && /(?:js|css|json|svg|png|jpe?g|webp|woff2?|html)$/i.test(new URL(r.url()).pathname))) failedResponses.push(r.url()+' => '+r.status());});
   await page.goto(BASE+'/',{waitUntil:'domcontentloaded',timeout:60000}); await page.waitForTimeout(1000);
   const home=await page.evaluate(()=>({
     nav:[...document.querySelectorAll('header a[href]')].map(a=>({id:a.id,href:a.getAttribute('href'),text:(a.innerText||'').trim()})),
@@ -188,7 +191,7 @@ async function testCatalog(browser){
   assert.ok((await page.url()).includes('/products-v4.html'),'adding second product navigated away from catalog');
   const count=await page.evaluate(()=>window.AZIM_CART?.items?.().length||0);
   assert.equal(count,2,'multi-product catalog selection failed');
-  assert.equal(errors.length,0,'catalog JS errors: '+errors.join(' | '));
+  assert.equal(errors.length,0,'catalog JS errors: '+errors.join(' | ')+'; failed responses: '+failedResponses.join(' | '));
   await context.close();
   return {catalog:true,search:true,sort:true,detailModal:true,productAssistant:true,multiProductAdd:true};
 }
