@@ -110,6 +110,9 @@ function mainMenuMarkup() {
         { text: "🔄 لغو / مرجوعی", callback_data: "service_requests" },
       ],
       [
+        { text: "⭐ نظرات محصولات", callback_data: "reviews" },
+      ],
+      [
         { text: "🔎 محصولات", callback_data: "products_menu" },
         { text: "🗂 دسته‌بندی‌ها", callback_data: "categories" },
       ],
@@ -620,6 +623,164 @@ async function showInactiveProducts(chatId: number | string) {
 
 function forceReplyMarkup() {
   return { force_reply: true, input_field_placeholder: "اینجا وارد کنید" };
+}
+
+function reviewActionsMarkup(review: any, backFilter = "pending") {
+  const rows: any[] = [];
+
+  if (review.approved) {
+    rows.push([{ text: "⛔ برداشتن تأیید", callback_data: "review_unapprove:" + review.id }]);
+  } else {
+    rows.push([{ text: "✅ تأیید انتشار", callback_data: "review_approve:" + review.id }]);
+  }
+
+  rows.push([{ text: "🗑 رد / حذف نظر", callback_data: "review_delete:" + review.id }]);
+  rows.push([{ text: "⬅️ نظرات", callback_data: "reviews:" + backFilter }]);
+
+  return { inline_keyboard: rows };
+}
+
+function reviewFilterMarkup(active = "pending") {
+  return {
+    inline_keyboard: [
+      [
+        { text: active === "pending" ? "🕐 در انتظار ✅" : "🕐 در انتظار", callback_data: "reviews:pending" },
+        { text: active === "approved" ? "✅ تأییدشده ✅" : "✅ تأییدشده", callback_data: "reviews:approved" },
+      ],
+      [
+        { text: active === "all" ? "📋 همه ✅" : "📋 همه", callback_data: "reviews:all" },
+      ],
+      [{ text: "🔄 تازه‌سازی", callback_data: "reviews:" + active }],
+      [{ text: "⬅️ منوی اصلی", callback_data: "menu" }],
+    ],
+  };
+}
+
+async function showReviews(chatId: number | string, filter: "pending" | "approved" | "all" = "pending") {
+  const supabase = await getSupabase();
+
+  const counts = await Promise.all([
+    supabase.from("product_reviews").select("id", { count: "exact", head: true }),
+    supabase.from("product_reviews").select("id", { count: "exact", head: true }).eq("approved", false),
+    supabase.from("product_reviews").select("id", { count: "exact", head: true }).eq("approved", true),
+  ]);
+  for (const result of counts) {
+    if (result.error) throw result.error;
+  }
+
+  let query = supabase
+    .from("product_reviews")
+    .select("id,product_id,author_name,rating,comment,approved,created_at,updated_at")
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (filter === "pending") query = query.eq("approved", false);
+  if (filter === "approved") query = query.eq("approved", true);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const reviews = data ?? [];
+  const productIds = Array.from(new Set(reviews.map((r: any) => r.product_id).filter(Boolean)));
+  const productMap = new Map<string, any>();
+
+  if (productIds.length) {
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("id,code,name")
+      .in("id", productIds);
+    if (productsError) throw productsError;
+    for (const p of products ?? []) productMap.set(String(p.id), p);
+  }
+
+  const title =
+    filter === "pending" ? "🕐 نظرات در انتظار تأیید" :
+    filter === "approved" ? "✅ نظرات تأییدشده" :
+    "📋 همه نظرات";
+
+  if (!reviews.length) {
+    await sendText(
+      chatId,
+      "⭐ مدیریت نظرات محصولات\n\n" +
+      "کل: " + String(counts[0].count ?? 0) + "\n" +
+      "در انتظار: " + String(counts[1].count ?? 0) + "\n" +
+      "تأییدشده: " + String(counts[2].count ?? 0) + "\n\n" +
+      title + "\nموردی برای نمایش نیست.",
+      { reply_markup: reviewFilterMarkup(filter) }
+    );
+    return;
+  }
+
+  const rows = reviews.map((r: any) => {
+    const p = productMap.get(String(r.product_id));
+    const mark = r.approved ? "✅" : "🕐";
+    const productLabel = p
+      ? String(p.code) + " — " + String(p.name).slice(0, 28)
+      : "محصول حذف‌شده";
+    const author = String(r.author_name ?? "مشتری").slice(0, 20);
+    return [{
+      text: mark + " " + productLabel + " • " + author,
+      callback_data: "review:" + r.id + ":" + filter,
+    }];
+  });
+
+  await sendText(
+    chatId,
+    "⭐ مدیریت نظرات محصولات\n\n" +
+    "کل: " + String(counts[0].count ?? 0) + "\n" +
+    "در انتظار: " + String(counts[1].count ?? 0) + "\n" +
+    "تأییدشده: " + String(counts[2].count ?? 0) + "\n\n" +
+    title + "\n" +
+    "۳۰ مورد آخر نمایش داده می‌شود. برای باز کردن نظر روی آن بزن.",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          ...rows,
+          ...reviewFilterMarkup(filter).inline_keyboard,
+        ],
+      },
+    }
+  );
+}
+
+async function showReview(chatId: number | string, reviewId: string, backFilter = "pending") {
+  const supabase = await getSupabase();
+
+  const { data: review, error } = await supabase
+    .from("product_reviews")
+    .select("id,product_id,author_name,rating,comment,approved,created_at,updated_at")
+    .eq("id", reviewId)
+    .maybeSingle();
+  if (error) throw error;
+
+  if (!review) {
+    await sendText(chatId, "این نظر دیگر وجود ندارد.", {
+      reply_markup: { inline_keyboard: [[{ text: "⬅️ نظرات", callback_data: "reviews:" + backFilter }]] }
+    });
+    return;
+  }
+
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select("code,name")
+    .eq("id", review.product_id)
+    .maybeSingle();
+  if (productError) throw productError;
+
+  const rating = Math.max(0, Math.min(5, Number(review.rating)));
+  const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+
+  await sendText(
+    chatId,
+    "⭐ جزئیات نظر\n\n" +
+    "محصول: " + (product?.code ?? "—") + " — " + (product?.name ?? "محصول حذف‌شده") + "\n" +
+    "نام: " + (review.author_name ?? "مشتری") + "\n" +
+    "امتیاز: " + stars + " (" + String(review.rating) + "/5)\n" +
+    "وضعیت: " + (review.approved ? "تأییدشده ✅" : "در انتظار تأیید 🕐") + "\n" +
+    "تاریخ: " + orderDate(review.created_at) + "\n\n" +
+    "متن نظر:\n" + String(review.comment ?? "—").slice(0, 3500),
+    { reply_markup: reviewActionsMarkup(review, backFilter) }
+  );
 }
 
 function productActionsMarkup(code: string, isActive: boolean) {
@@ -1217,6 +1378,100 @@ async function handleCallbackQuery(query: any) {
     return;
   }
 
+  if (data === "reviews") {
+    await showReviews(chatId, "pending");
+    return;
+  }
+
+  if (data === "reviews:pending" || data === "reviews:approved" || data === "reviews:all") {
+    const filter = data.slice("reviews:".length) as "pending" | "approved" | "all";
+    await showReviews(chatId, filter);
+    return;
+  }
+
+  if (data.startsWith("review:")) {
+    const parts = data.split(":");
+    const reviewId = parts[1];
+    const backFilter = parts[2] === "approved" || parts[2] === "all" ? parts[2] : "pending";
+    await showReview(chatId, reviewId, backFilter);
+    return;
+  }
+
+  if (data.startsWith("review_approve:") || data.startsWith("review_unapprove:")) {
+    const approve = data.startsWith("review_approve:");
+    const prefix = approve ? "review_approve:" : "review_unapprove:";
+    const reviewId = data.slice(prefix.length);
+    const supabase = await getSupabase();
+
+    const { data: saved, error } = await supabase
+      .from("product_reviews")
+      .update({ approved: approve, updated_at: new Date().toISOString() })
+      .eq("id", reviewId)
+      .select("id,product_id,author_name,rating,comment,approved,created_at,updated_at")
+      .maybeSingle();
+    if (error) throw error;
+    if (!saved) {
+      await sendText(chatId, "نظر پیدا نشد.", { reply_markup: { inline_keyboard: [[{ text: "⭐ نظرات", callback_data: "reviews" }]] } });
+      return;
+    }
+
+    await recordTelegramAudit(
+      approve ? "telegram_product_review_approve" : "telegram_product_review_unapprove",
+      "product_reviews",
+      String(saved.id),
+      {
+        product_id: saved.product_id,
+        author_name: saved.author_name,
+        rating: saved.rating,
+        approved: saved.approved,
+        actor_ref: String(chatId),
+      }
+    );
+
+    await sendText(
+      chatId,
+      approve
+        ? "✅ نظر «" + (saved.author_name ?? "مشتری") + "» تأیید شد و روی صفحه همان محصول قابل نمایش است."
+        : "⛔ تأیید نظر برداشته شد و دیگر روی سایت نمایش داده نمی‌شود.",
+      { reply_markup: reviewActionsMarkup(saved, approve ? "approved" : "pending") }
+    );
+    return;
+  }
+
+  if (data.startsWith("review_delete:")) {
+    const reviewId = data.slice("review_delete:".length);
+    const supabase = await getSupabase();
+
+    const { data: review, error: loadError } = await supabase
+      .from("product_reviews")
+      .select("id,product_id,author_name,rating,comment")
+      .eq("id", reviewId)
+      .maybeSingle();
+    if (loadError) throw loadError;
+    if (!review) {
+      await sendText(chatId, "این نظر قبلاً حذف شده است.", { reply_markup: { inline_keyboard: [[{ text: "⭐ نظرات", callback_data: "reviews" }]] } });
+      return;
+    }
+
+    const { error: deleteError } = await supabase.from("product_reviews").delete().eq("id", reviewId);
+    if (deleteError) throw deleteError;
+
+    await recordTelegramAudit("telegram_product_review_delete", "product_reviews", String(review.id), {
+      product_id: review.product_id,
+      author_name: review.author_name,
+      rating: review.rating,
+      actor_ref: String(chatId),
+    });
+
+    await sendText(chatId, "🗑 نظر «" + (review.author_name ?? "مشتری") + "» حذف شد.", {
+      reply_markup: { inline_keyboard: [
+        [{ text: "⭐ نظرات در انتظار", callback_data: "reviews:pending" }],
+        [{ text: "⬅️ منوی اصلی", callback_data: "menu" }],
+      ] }
+    });
+    return;
+  }
+
   if (data === "orders") {
     const result = await getOrdersMessage();
     await sendText(chatId, result.text, { reply_markup: result.markup });
@@ -1705,6 +1960,16 @@ async function handleMessage(msg: any) {
     } catch (error) {
       console.error("orders command error:", error);
       await send(chatId, "خطا در دریافت سفارش‌ها:\n" + String(error?.message ?? error), { reply_markup: mainMenuMarkup() });
+    }
+    return;
+  }
+
+  if (command === "/reviews") {
+    try {
+      await showReviews(chatId, "pending");
+    } catch (error) {
+      console.error("reviews command error:", error);
+      await send(chatId, "خطا در دریافت نظرات:\n" + String(error?.message ?? error), { reply_markup: mainMenuMarkup() });
     }
     return;
   }
