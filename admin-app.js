@@ -23,7 +23,8 @@
   const viewInfo = {
     dashboard: ['داشبورد', 'نمای کلی فروشگاه، سفارش‌ها، مشتریان و سلامت سیستم'],
     reports: ['گزارش فروش', 'درآمد ثبت‌شده، روند فروش و محصولات پرفروش'],
-    products: ['محصولات', 'افزودن، ویرایش، قیمت، تصویر، دسته و وضعیت نمایش'],
+    products: ['محصولات', 'افزودن، ویرایش، قیمت، تصویر، دسته، موجودی و وضعیت نمایش'],
+    reviews: ['نظرات محصولات', 'بررسی، تأیید و مدیریت نظرات ثبت‌شده کاربران'],
     categories: ['دسته‌بندی‌ها', 'ساختار دسته‌بندی و تعداد محصولات هر دسته'],
     brands: ['برندها', 'مدیریت برند و اتصال آن به محصولات'],
     inquiries: ['درخواست‌ها', 'استعلام قیمت و ارتباط با مشتری'],
@@ -75,6 +76,7 @@
     security: ['owner','admin'],
     ai: ['owner','admin','editor'],
     'ai-products': ['owner','admin','editor'],
+    reviews: ['owner','admin','editor'],
     payment: ['owner','admin']
   };
   const canView = (name) => !viewRoles[name] || viewRoles[name].includes(state.me?.role);
@@ -902,10 +904,11 @@
       if (name === 'discount-codes') return await loadDiscountCodes();
       if (name === 'ai-products') return await loadAIProducts();
       if (name === 'reports') return await loadReports();
+      if (name === 'reviews') return await loadReviews();
     if (name === 'payment') return await loadPaymentAdmin();
 
       const skeletons = {
-        products: 'productsTable', categories: 'categoriesTable', brands: 'brandsTable',
+        products: 'productsTable', reviews: 'reviewsTable', categories: 'categoriesTable', brands: 'brandsTable',
         inquiries: 'inquiriesTable', orders: 'ordersTable', customers: 'customersTable',
         media: 'mediaTable', content: 'contentTable', admins: 'adminsTable', audit: 'auditTable',
         security: 'securityPanel', payment: 'paymentAdminPanel', reports: 'salesReport'
@@ -914,6 +917,7 @@
 
       if (name === 'dashboard') await loadDashboard();
       else if (name === 'products') await loadProducts();
+      else if (name === 'reviews') await loadReviews();
       else if (name === 'categories') await loadCategories();
       else if (name === 'brands') await loadBrands();
       else if (name === 'inquiries') await loadInquiries();
@@ -1383,6 +1387,86 @@
 
   let productSearchTimer = null;
 
+  function ensureReviewsStyles() {
+    if ($('az-reviews-admin-style')) return;
+    const style = document.createElement('style');
+    style.id = 'az-reviews-admin-style';
+    style.textContent = '.az-reviews-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}.az-reviews-summary>div{padding:11px 12px;border:1px solid rgba(245,185,0,.12);border-radius:11px;background:rgba(255,255,255,.025);display:flex;justify-content:space-between;gap:8px}.az-reviews-summary span{color:#8b958e;font-size:10px}.az-reviews-summary b{color:#ffd84f;font-size:15px}.az-review-pending{border-color:rgba(245,185,0,.25)!important}.az-review-actions{display:flex;gap:5px;flex-wrap:wrap}@media(max-width:700px){.az-reviews-summary{grid-template-columns:1fr}}';
+    document.head.appendChild(style);
+  }
+
+  async function loadReviews() {
+    ensureReviewsStyles();
+    const box = $('reviewsTable');
+    if (!box) return;
+    const r = await state.db.from('product_reviews')
+      .select('id,product_id,author_name,rating,comment,approved,created_at,updated_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (r.error) return showSectionError('reviewsTable', r.error);
+
+    const rows = r.data || [];
+    const productIds = [...new Set(rows.map(x => x.product_id).filter(Boolean))];
+    let products = [];
+    if (productIds.length) {
+      const p = await state.db.from('products').select('id,code,name,img').in('id', productIds);
+      if (!p.error) products = p.data || [];
+    }
+    const productMap = new Map(products.map(p => [String(p.id), p]));
+    const pending = rows.filter(x => !x.approved).length;
+    const approved = rows.filter(x => x.approved).length;
+
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">هنوز نظری ثبت نشده است.</div>';
+      return;
+    }
+
+    box.innerHTML =
+      '<div class="az-reviews-summary">' +
+        '<div class="az-review-pending"><span>در انتظار تأیید</span><b>' + pending.toLocaleString('fa-IR') + '</b></div>' +
+        '<div><span>تأییدشده</span><b>' + approved.toLocaleString('fa-IR') + '</b></div>' +
+        '<div><span>کل نظرات</span><b>' + rows.length.toLocaleString('fa-IR') + '</b></div>' +
+      '</div>' +
+      '<div class="table-wrap"><table class="table"><thead><tr><th>محصول</th><th>نام</th><th>امتیاز</th><th>نظر</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>' +
+      rows.map(rv => {
+        const p = productMap.get(String(rv.product_id));
+        const status = rv.approved ? '<span class="badge ok">تأییدشده</span>' : '<span class="badge warn">در انتظار</span>';
+        const action = rv.approved
+          ? '<button class="btn ghost" data-review-unapprove="' + esc(rv.id) + '">برگرداندن</button>'
+          : '<button class="btn" data-review-approve="' + esc(rv.id) + '">تأیید</button>';
+        return '<tr>' +
+          '<td><strong>' + esc(p?.name || 'محصول') + '</strong><div class="muted">' + esc(p?.code || '') + '</div></td>' +
+          '<td><strong>' + esc(rv.author_name || 'مشتری') + '</strong><div class="muted">' + dateFa(rv.created_at,false) + '</div></td>' +
+          '<td style="white-space:nowrap;color:#f5c24b">' + '★'.repeat(Math.max(1,Math.min(5,Number(rv.rating)||1))) + '</td>' +
+          '<td style="min-width:240px;max-width:420px;white-space:pre-wrap;line-height:1.9">' + esc(rv.comment || '') + '</td>' +
+          '<td>' + status + '</td>' +
+          '<td><div class="az-review-actions">' + action + '<button class="btn ghost" data-review-delete="' + esc(rv.id) + '">حذف</button></div></td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  async function moderateReview(id, approved) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک یا مدیر می‌تواند نظر را تأیید یا برگرداند.');
+    const r = await state.db.from('product_reviews')
+      .update({ approved: Boolean(approved), updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    await audit(approved ? 'approve' : 'unapprove', 'product_reviews', id, { approved: Boolean(approved) });
+    await loadReviews();
+    toast(approved ? '__AZICON_SUCCESS__ نظر تأیید شد و روی همان محصول نمایش داده می‌شود.' : 'نظر دوباره در انتظار تأیید قرار گرفت.');
+  }
+
+  async function deleteReview(id) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ فقط مالک یا مدیر می‌تواند نظر را حذف کند.');
+    if (!confirm('این نظر حذف شود؟')) return;
+    const r = await state.db.from('product_reviews').delete().eq('id', id);
+    if (r.error) return toast('__AZICON_ERROR__ ' + errorText(r.error));
+    await audit('delete', 'product_reviews', id);
+    await loadReviews();
+    toast('__AZICON_SUCCESS__ نظر حذف شد');
+  }
+
   async function loadProducts() {
     await ensureCaches();
     let q = state.db.from('products')
@@ -1628,8 +1712,8 @@
             '<label class="az-simple-field"><span>قیمت فعلی</span><div class="az-simple-price primary"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
           '</div>' + +
           '<div class="az-simple-fields" style="margin-top:10px">' +
-            '<label class="az-simple-field"><span>موجودی</span><input class="input" name="stock_quantity" type="number" min="0" step="1" value="' + esc(p?.stock_quantity ?? 0) + '" placeholder="0"></label>' +
-            '<label class="az-simple-active" style="align-self:end"><input name="stock_tracking_enabled" type="checkbox" ' + (p?.stock_tracking_enabled ? 'checked' : '') + '><span>کنترل موجودی فعال باشد</span></label>' +
+            '<label class="az-simple-field"><span>موجودی</span><input class="input" name="stock_quantity" type="number" min="0" step="1" value="' + esc(p?.stock_quantity ?? (p ? 0 : 1)) + '" placeholder="0"></label>' +
+            '<label class="az-simple-active" style="align-self:end"><input name="stock_tracking_enabled" type="checkbox" ' + (p ? (p.stock_tracking_enabled ? 'checked' : '') : 'checked') + '><span>کنترل موجودی فعال باشد</span></label>' +
           '</div>' +
         '</div>' +
         '<div class="az-simple-section az-product-direct-discount">' +
@@ -4488,6 +4572,9 @@
   }
 
   document.addEventListener('click', (e) => {
+    const rvA = e.target.closest('[data-review-approve]'); if (rvA) { e.preventDefault(); moderateReview(rvA.dataset.reviewApprove, true); return; }
+    const rvU = e.target.closest('[data-review-unapprove]'); if (rvU) { e.preventDefault(); moderateReview(rvU.dataset.reviewUnapprove, false); return; }
+    const rvD = e.target.closest('[data-review-delete]'); if (rvD) { e.preventDefault(); deleteReview(rvD.dataset.reviewDelete); return; }
     const p = e.target.closest('[data-edit-product]'); if (p) editProduct(p.dataset.editProduct);
     const t = e.target.closest('[data-toggle-product]'); if (t) toggleProduct(t.dataset.toggleProduct);
     const c = e.target.closest('[data-edit-category]'); if (c) editCategory(c.dataset.editCategory);
