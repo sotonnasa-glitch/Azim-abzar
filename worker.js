@@ -42,7 +42,7 @@ export default {
     ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-        const rawUrl = "https://cdn.jsdelivr.net/gh/sotonnasa-glitch/Azim-abzar@7f35b530d7e5b5c1979a6c8a72faa8200df3b1d5" + requestPath;
+        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/2e68fca28e7003c717a224654b4744cd44e6f47e" + requestPath;
         const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
