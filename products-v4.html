@@ -2600,7 +2600,7 @@
               <span class="az-cart-icon" aria-hidden="true"><svg class="az-cart-svg" viewBox="0 0 32 32" fill="none"><path class="az-cart-track" d="M5 7h3l2.6 13.1a2.4 2.4 0 0 0 2.35 1.95h10.2a2.4 2.4 0 0 0 2.3-1.7L28 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 25.5h.01M24 25.5h.01" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg></span>${x.stock_tracking_enabled === true && x.stock_quantity != null && x.stock_quantity <= 0 ? '<span>ناموجود</span>' : '<span>افزودن به سبد سفارش</span>'}
             </a>
                         <div style="display:flex;gap:7px;margin-top:7px">
-              <button type="button" class="card-btn-view az-wishlist-action" style="flex:1;padding:8px 10px" data-wishlist-id="${esc(x.id)}"><span>${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
+              <button type="button" class="card-btn-view az-wishlist-action" style="flex:1;padding:8px 10px" data-wishlist-id="${esc(x.id)}" onclick="return toggleWishlist('${esc(x.id)}', this);"><span>${isWishlisted(x.id) ? '♥ حذف از علاقه‌مندی' : '♡ علاقه‌مندی'}</span></button>
               <button type="button" class="card-btn-view az-share-action" style="flex:1;padding:8px 10px" data-share-id="${esc(x.id)}"><span>اشتراک‌گذاری</span></button>
             </div>
 <button type="button" class="az-product-ai-btn" data-ai-product-id="${esc(x.product_id || x.id || '')}" data-ai-product-code="${esc(x.code || '')}" data-ai-base-name="${esc(x.name)}" data-ai-variant=""><span class="az-ai-robot-icon"></span><span class="az-ai-label">${esc(x.name)}؟ من راهنماییت می‌کنم</span></button>
@@ -2637,22 +2637,8 @@
       // paginated/search result cannot leave a newly-created button unbound.
     }
 
-    if (!window.__azimProductActionDelegation) {
-      window.__azimProductActionDelegation = true;
-      document.addEventListener('click', function(ev) {
-        const wish = ev.target && ev.target.closest ? ev.target.closest('[data-wishlist-id]') : null;
-        if (wish) {
-          ev.preventDefault();
-          toggleWishlist(wish.dataset.wishlistId, wish);
-          return;
-        }
-        const share = ev.target && ev.target.closest ? ev.target.closest('[data-share-id]') : null;
-        if (share) {
-          ev.preventDefault();
-          shareProduct(share.dataset.shareId);
-        }
-      });
-    }
+    // Product action handlers are attached directly to each rendered button.
+    // This remains reliable after search/sort/pagination rerenders and on touch devices.
 
     function showCatalogCartError(message){
       const cart = window.AZIM_CART;
