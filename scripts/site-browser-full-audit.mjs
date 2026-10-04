@@ -214,8 +214,19 @@ async function testWishlist(browser){
   await search.fill('P0001');
   await page.waitForFunction(()=>document.querySelector('#card-P0001 [data-wishlist-id]'),null,{timeout:15000});
   const wishButton=page.locator('#card-P0001 [data-wishlist-id]').first();
+  const beforeWish=await wishButton.evaluate(btn=>({
+    onclick:btn.getAttribute('onclick')||'',
+    dataId:btn.getAttribute('data-wishlist-id')||'',
+    disabled:!!btn.disabled,
+    typeofToggle:typeof window.toggleWishlist
+  }));
   await wishButton.click();
-  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('azim_wishlist')||'[]').length===1,null,{timeout:5000});
+  const afterWish=await page.evaluate(()=>({
+    raw:localStorage.getItem('azim_wishlist')||'',
+    typeofToggle:typeof window.toggleWishlist,
+    buttons:[...document.querySelectorAll('[data-wishlist-id]')].filter(b=>b.dataset.wishlistId==='P0001').map(b=>b.getAttribute('onclick')||'')
+  }));
+  assert.equal(JSON.parse(afterWish.raw||'[]').length,1,'wishlist click did not persist: '+JSON.stringify({beforeWish,afterWish}));
   assert.match(await wishButton.innerText(),/حذف از علاقه‌مندی/,'wishlist button did not switch to remove state');
   assert.equal(await page.locator('[data-wishlist-count]').first().innerText(),'۱','wishlist badge count did not update');
 
