@@ -47,16 +47,27 @@ export default {
           headers: {
             "accept": requestPath.endsWith(".js")
               ? "application/javascript,text/javascript,*/*"
-              : "text/html,application/xhtml+xml,*/*"
+              : requestPath.endsWith(".css")
+                ? "text/css,*/*"
+                : "text/html,application/xhtml+xml,*/*"
           }
         });
         if (hotfix.ok) {
           const headers = new Headers(hotfix.headers);
+          headers.delete("content-security-policy");
+          headers.delete("content-security-policy-report-only");
+          headers.delete("content-disposition");
+          headers.set("content-security-policy", "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co;");
+          headers.set("content-security-policy-report-only", "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co; script-src-attr 'none';");
+          headers.set("x-frame-options", "DENY");
+          headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()");
           const hotfixType = requestPath.endsWith(".js")
             ? "application/javascript; charset=utf-8"
-            : requestPath.endsWith(".json")
-              ? "application/json; charset=utf-8"
-              : "text/html; charset=utf-8";
+            : requestPath.endsWith(".css")
+              ? "text/css; charset=utf-8"
+              : requestPath.endsWith(".json")
+                ? "application/json; charset=utf-8"
+                : "text/html; charset=utf-8";
           headers.set("content-type", hotfixType);
           headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
           headers.set("pragma", "no-cache");
