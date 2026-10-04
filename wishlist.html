@@ -242,6 +242,10 @@
     showToast('از علاقه‌مندی‌ها حذف شد.');
     return true;
   }
+  window.removeOne=removeOne;
+
+  // The remove button uses an inline handler for reliable mobile taps.
+  // Expose the local function explicitly so the handler can call it.
   function productCard(item){
     const code=String(item.code||'').toUpperCase();
     const vs=variants(item);
