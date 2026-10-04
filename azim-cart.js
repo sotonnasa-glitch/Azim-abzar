@@ -2,6 +2,7 @@
   'use strict';
 
   const KEY = 'azim_abzar_cart_v2';
+  const CART_SCHEMA_VERSION = 'v13';
   const SUPABASE_URL = window.AZIM_SUPABASE_URL || '';
   const ANON_KEY = window.AZIM_SUPABASE_ANON_KEY || '';
 
@@ -57,6 +58,8 @@
         key:String(x.key || ''),
         product_id:String(x.product_id || ''),
         code:String(x.code || ''),
+        name:String(x.name || ''),
+        img:String(x.img || ''),
         variant_label:String(x.variant_label || ''),
         qty:Math.min(99,Math.max(1,Number(x.qty || 1))),
         unit_price:Number(x.unit_price || 0),
@@ -86,8 +89,18 @@
     // Merge both stores by stable product+variant key. This makes a cart
     // survive switching between www and apex hosts without losing either side.
     const merged = new Map();
-    for(const item of shadowItems) merged.set(item.key,item);
-    for(const item of localItems) merged.set(item.key,item);
+    for(const item of shadowItems) merged.set(item.key,{...item});
+    for(const item of localItems){
+      const prev = merged.get(item.key);
+      // Prefer local values, but preserve richer display metadata from the
+      // cookie shadow when an older local cart is missing it.
+      merged.set(item.key, prev ? {
+        ...prev,
+        ...item,
+        name: item.name && item.name !== 'محصول' ? item.name : (prev.name || item.name),
+        img: item.img || prev.img || ''
+      } : {...item});
+    }
 
     state.items = [...merged.values()];
     return state.items;
@@ -102,6 +115,10 @@
       localOk = parseCartList(localStorage.getItem(KEY)).length === state.items.length;
     }catch(_){}
     if(state.items.length) cookieOk = writeCookieShadow(state.items);
+    else {
+      clearCookieShadow();
+      cookieOk = readCookieShadow().length === 0;
+    }
     updateBadges();
     return localOk || cookieOk;
   }
@@ -146,8 +163,10 @@
   }
 
   function remove(key){
-    state.items = state.items.filter(x => x.key !== key);
+    read();
+    state.items = state.items.filter(x => String(x.key) !== String(key));
     write();
+    return true;
   }
 
   function clear(){
