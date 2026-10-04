@@ -832,6 +832,7 @@
     $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
     $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
     $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
+    $('refreshReviewsBtn')?.addEventListener('click', () => loadReviews());
   }
 
   function applyRoleUI() {
@@ -851,7 +852,8 @@
       admins: ['owner', 'admin'],
       audit: ['owner', 'admin'],
       ai: ['owner', 'admin', 'editor'],
-      'ai-products': ['owner', 'admin', 'editor']
+      'ai-products': ['owner', 'admin', 'editor'],
+      reviews: ['owner', 'admin', 'editor']
     };
     document.querySelectorAll('.nav button[data-view]').forEach((b) => {
       const v = b.dataset.view;
@@ -1710,7 +1712,7 @@
           '<div class="az-simple-price-row">' +
             '<label class="az-simple-field"><span>قیمت اصلی</span><div class="az-simple-price"><input class="input" name="original_price" inputmode="numeric" value="' + esc(p?.original_price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
             '<label class="az-simple-field"><span>قیمت فعلی</span><div class="az-simple-price primary"><input class="input" name="price" inputmode="numeric" value="' + esc(p?.price ?? '') + '" placeholder="0"><b>تومان</b></div></label>' +
-          '</div>' + +
+          '</div>' +
           '<div class="az-simple-fields" style="margin-top:10px">' +
             '<label class="az-simple-field"><span>موجودی</span><input class="input" name="stock_quantity" type="number" min="0" step="1" value="' + esc(p?.stock_quantity ?? (p ? 0 : 1)) + '" placeholder="0"></label>' +
             '<label class="az-simple-active" style="align-self:end"><input name="stock_tracking_enabled" type="checkbox" ' + (p ? (p.stock_tracking_enabled ? 'checked' : '') : 'checked') + '><span>کنترل موجودی فعال باشد</span></label>' +
