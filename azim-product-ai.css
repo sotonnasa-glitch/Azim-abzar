@@ -3,6 +3,10 @@
    طراحی لوکس صنعتی، فوق‌العاده زیبا، ترکیب طلایی متالیک و مشکی تیتانیوم
    ======================================================== */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .az-product-ai-btn {
   width: 100%;
   margin-top: 7px;
@@ -345,6 +349,11 @@
    ======================================================== */
 .az-ai-modal-backdrop {
   position: fixed;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
   inset: 0;
   z-index: 150;
   display: none;
@@ -361,8 +370,11 @@
 }
 
 .az-ai-modal {
-  width: min(560px, 100%);
-  max-height: min(720px, calc(100vh - 28px));
+  width: min(560px, calc(100vw - 28px));
+  max-width: 100%;
+  min-width: 0;
+  max-height: calc(100vh - 28px);
+  box-sizing: border-box;
   overflow-y: auto;
   border-radius: 18px;
   border: 1px solid rgba(245, 185, 0, 0.4);
@@ -373,6 +385,7 @@
 
 .az-ai-modal-head {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
@@ -399,6 +412,7 @@
 
 .az-ai-modal-title {
   min-width: 0;
+  max-width: 100%;
   flex: 1;
 }
 
@@ -542,6 +556,54 @@
 }
 
 @media (max-width: 700px) {
+  .az-ai-modal-backdrop {
+    padding: 8px;
+  }
+  .az-ai-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 16px);
+    border-radius: 12px;
+    overflow-x: hidden;
+  }
+  .az-ai-modal-head {
+    padding: 12px;
+    gap: 8px;
+  }
+  .az-ai-modal-robot {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+  .az-ai-modal-robot .az-ai-robot-svg {
+    width: 37px;
+    height: 37px;
+  }
+  .az-ai-modal-title strong {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .az-ai-modal-product,
+  .az-ai-reply {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+  .az-ai-quick {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .az-ai-chat-form {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .az-ai-chat-form input {
+    font-size: 16px;
+  }
+  .az-ai-status {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
   .az-product-ai-btn {
     min-height: 36px;
     height: 36px;
