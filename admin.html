@@ -281,7 +281,20 @@
 <section id="view-categories" class="view"><div class="panel az-categories-panel"><div class="az-section-head"><div><span class="az-section-kicker">CATALOG STRUCTURE</span><h2>دسته‌بندی محصولات</h2><p>تمام دسته‌های واقعی فعلی کاتالوگ به تفکیک تعداد محصول</p></div><button id="newCategoryBtn" class="btn az-primary-action">＋ افزودن دسته</button></div><div id="categoriesTable" class="table-wrap"></div></div></section>
 <section id="view-brands" class="view"><div class="panel"><div class="panel-head"><h2>برندها</h2><button id="newBrandBtn" class="btn">＋ برند جدید</button></div><div id="brandsTable" class="table-wrap"></div></div></section>
 <section id="view-inquiries" class="view"><div class="panel"><div class="panel-head"><h2>درخواست‌های ارتباط و استعلام</h2><select id="inquiryFilter" class="select"><option value="">همه وضعیت‌ها</option><option value="new">جدید</option><option value="in_progress">در حال بررسی</option><option value="quoted">پیش‌فاکتور</option><option value="answered">پاسخ داده شد</option><option value="closed">بسته</option><option value="spam">اسپم</option></select></div><div id="inquiriesTable" class="table-wrap"></div></div></section>
-<section id="view-orders" class="view"><div class="panel"><div class="panel-head"><div><h2>سفارش‌ها</h2><div class="muted">جستجو با شماره موبایل، نام مشتری یا کد سفارش</div></div><div class="tools" style="display:flex;gap:8px;flex-wrap:wrap"><input id="ordersSearch" class="input" type="search" placeholder="مثلاً 0912 یا نام یا AZ-2026..." autocomplete="off" style="min-width:240px"><button id="clearOrdersSearch" class="btn ghost" type="button">پاک کردن</button></div></div><div id="ordersTable" class="table-wrap"></div></div></section><section id="adminServiceRequestsPanel" class="panel" hidden>
+<section id="view-orders" class="view"><div class="panel">
+  <div class="panel-head">
+    <div><h2>سفارش‌ها</h2><div class="muted">جستجو، فیلتر و پیگیری چرخه سفارش از ثبت تا تحویل</div></div>
+    <div class="tools az-orders-tools">
+      <input id="ordersSearch" class="input" type="search" placeholder="شماره موبایل، نام یا کد سفارش…" autocomplete="off">
+      <select id="ordersStatusFilter" class="select"><option value="">وضعیت سفارش</option><option value="pending">در انتظار</option><option value="confirmed">تایید شده</option><option value="processing">در حال پردازش</option><option value="shipped">ارسال شده</option><option value="delivered">تحویل شده</option><option value="cancelled">لغو شده</option></select>
+      <select id="ordersPaymentFilter" class="select"><option value="">وضعیت پرداخت</option><option value="unpaid">پرداخت نشده</option><option value="pending">در انتظار</option><option value="paid">پرداخت شده</option><option value="partially_refunded">بخشی مرجوع شده</option><option value="refunded">مرجوع شده</option></select>
+      <select id="ordersShippingFilter" class="select"><option value="">ارسال</option><option value="pending">در انتظار</option><option value="packed">بسته‌بندی شده</option><option value="shipped">ارسال شده</option><option value="delivered">تحویل شده</option></select>
+      <select id="ordersPeriodFilter" class="select"><option value="0">بازه زمانی</option><option value="1">امروز</option><option value="7">۷ روز اخیر</option><option value="30">۳۰ روز اخیر</option><option value="90">۹۰ روز اخیر</option></select>
+      <button id="clearOrdersSearch" class="btn ghost" type="button">پاک کردن فیلتر</button>
+    </div>
+  </div>
+  <div id="ordersTable" class="table-wrap"></div>
+</div></section><section id="adminServiceRequestsPanel" class="panel" hidden>
   <div class="panel-head">
     <div>
       <h2>درخواست‌های لغو و مرجوعی</h2>

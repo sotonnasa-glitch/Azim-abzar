@@ -1435,3 +1435,20 @@ body{min-height:100vh;overflow-x:hidden;background:
 @media(max-width:460px){
   .az-dashboard-inquiry-grid{grid-template-columns:1fr}
 }
+
+/* Orders control center 2026-10-06 */
+.az-orders-tools{display:flex;gap:7px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.az-orders-tools .input{min-width:220px}
+.az-orders-tools .select{min-width:130px}
+.az-order-next-action{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:10px;padding:9px 11px;border-radius:11px;
+  border:1px solid rgba(245,185,0,.12);background:rgba(245,185,0,.035)
+}
+.az-order-next-action span{font-size:8px;color:#758179}
+.az-order-next-action b{font-size:9px}
+.az-order-next-action b.warn{color:#ffd65d}
+.az-order-next-action b.ok{color:#68e6a1}
+.az-order-next-action b.red{color:#ff9898}
+@media(max-width:900px){.az-orders-tools{justify-content:stretch}.az-orders-tools .input{flex:1 1 100%;min-width:0}.az-orders-tools .select{flex:1 1 calc(50% - 7px);min-width:0}}
+@media(max-width:560px){.az-orders-tools .select,.az-orders-tools .input,.az-orders-tools .btn{width:100%;flex:1 1 100%;min-height:42px}.az-order-next-action{margin-top:8px}}
