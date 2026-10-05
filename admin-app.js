@@ -2852,7 +2852,7 @@
       '</div>'
     ) : '';
     return '<div class="az-order-modal-head">' + customerHtml + '</div>' +
-      '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending', x?.shipping_status || 'pending') + '</div><form id="orderForm" class="grid2">'
+      '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending', x?.shipping_status || 'pending') + '</div><form id="orderForm" class="grid2">' +
       '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
       '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
       '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
