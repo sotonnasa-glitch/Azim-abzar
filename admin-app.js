@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  if (window.__AZIM_ADMIN_V35) return;
+  if (window.__AZIM_ADMIN_V36) return;
   window.__AZIM_ADMIN_V35 = true;
   window.__AZIM_ADMIN_V34 = true;
 
@@ -17,7 +17,8 @@
     orderItems: [],
     orderProducts: [],
     productCacheLoaded: false,
-    contentRows: []
+    contentRows: [],
+    viewHistory: []
   };
 
   const viewInfo = {
@@ -765,6 +766,8 @@
     });
 
     $('refreshBtn').onclick = () => loadSection(activeView());
+    $('adminBackBtn')?.addEventListener('click', () => goBackAdminView());
+    updateAdminBackButton();
     const topbar = document.querySelector('.topbar');
     if (topbar && !$('azOpenSiteBtn')) {
       const siteBtn = document.createElement('button');
@@ -875,8 +878,22 @@
     return document.querySelector('.view.active')?.id?.replace('view-', '') || 'dashboard';
   }
 
-  async function setView(name) {
+  function updateAdminBackButton() {
+    const btn = $('adminBackBtn');
+    if (!btn) return;
+    const available = state.viewHistory.length > 0;
+    btn.disabled = !available;
+    btn.setAttribute('aria-disabled', available ? 'false' : 'true');
+    btn.classList.toggle('disabled', !available);
+  }
+
+  async function setView(name, options = {}) {
     if (!canView(name)) return toast('__AZICON_BLOCK__ دسترسی این بخش برای نقش فعلی وجود ندارد.');
+    const current = activeView();
+    if (current !== name && !options.fromBack) {
+      state.viewHistory.push(current);
+      if (state.viewHistory.length > 40) state.viewHistory.shift();
+    }
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
     const target = $('view-' + name);
     if (!target) return;
@@ -891,7 +908,15 @@
       $('pageSub').textContent = viewInfo[name][1];
     }
     markAdminMenu();
+    updateAdminBackButton();
     await loadSection(name);
+  }
+
+  async function goBackAdminView() {
+    const previous = state.viewHistory.pop();
+    updateAdminBackButton();
+    if (!previous || previous === activeView()) return;
+    await setView(previous, { fromBack: true });
   }
 
   function showSkeleton(id, rows = 5) {
@@ -977,14 +1002,6 @@
         ? active.toLocaleString('fa-IR') + ' محصول فعال · داده‌ها متصل'
         : 'محصولی برای نمایش پیدا نشد';
     }
-    if (!$('dashboardQuickActions')) {
-      const quickPanel = document.createElement('section');
-      quickPanel.id = 'dashboardQuickActions';
-      quickPanel.className = 'az-dashboard-quick-grid';
-      const statsRow = $('statOrders')?.closest('.cards');
-      if (statsRow?.parentNode) statsRow.parentNode.insertBefore(quickPanel, statsRow.nextSibling);
-    }
-
     const salesSince = new Date(Date.now() - 29 * 86400000).toISOString();
     const salesResult = await state.db.from('orders')
       .select('total,created_at,status')
@@ -993,26 +1010,13 @@
       .limit(5000);
     renderDashboardSalesChart(salesResult.data || [], salesResult.error);
 
-    const quick = $('dashboardQuickActions');
-    if (quick && quick.dataset.ready !== '1') {
-      quick.dataset.ready = '1';
-      quick.innerHTML = [
-        ['orders','سفارش‌ها','مدیریت و پیگیری سفارش‌های ثبت‌شده','__AZICON_INVOICE__'],
-        ['inquiries','درخواست‌ها','استعلام‌ها و پیام‌های جدید','__AZICON_NOTE__'],
-        ['products','کاتالوگ محصولات','ویرایش سریع محصولات و قیمت‌ها','__AZICON_TOOLS__'],
-        ['reports','گزارش فروش','روند درآمد و پرفروش‌ها','__AZICON_TARGET__']
-      ].map(([view,title,sub,icon]) => '<button type="button" class="az-dashboard-quick-card" data-go="'+view+'"><span class="az-dashboard-quick-icon">'+icon+'</span><span><b>'+title+'</b><small>'+sub+'</small></span><i>↗</i></button>').join('');
-    }
-
-    const [a, p] = await Promise.all([
-      state.db.from('inquiries').select('id,full_name,mobile,subject,status,created_at').order('created_at', { ascending: false }).limit(6),
-      state.db.from('products').select('id,name,brand,code,price,is_active,img,updated_at').order('updated_at', { ascending: false }).limit(6)
-    ]);
+    const a = await state.db.from('inquiries')
+      .select('id,full_name,mobile,subject,status,created_at')
+      .order('created_at', { ascending: false })
+      .limit(6);
 
     if (a.error) showSectionError('dashboardInquiries', a.error);
     else $('dashboardInquiries').innerHTML = renderInquiryTable(a.data || [], true);
-    if (p.error) showSectionError('dashboardProducts', p.error);
-    else $('dashboardProducts').innerHTML = renderProductTable(p.data || [], true);
 
     const health = $('dashboardHealth');
     if (health) {
@@ -1472,15 +1476,28 @@
 
   function renderInquiryTable(rows, compact) {
     if (!rows.length) return '<div class="empty">درخواستی ثبت نشده است.</div>';
+    if (compact) {
+      return '<div class="az-dashboard-inquiry-list">' + rows.map((x) =>
+        '<article class="az-dashboard-inquiry-card">' +
+          '<div class="az-dashboard-inquiry-head">' +
+            '<div><strong>' + esc(x.full_name || 'بدون نام') + '</strong><small>' + dateFa(x.created_at) + '</small></div>' +
+            '<span class="badge warn">' + esc(labels[x.status] || x.status || '—') + '</span>' +
+          '</div>' +
+          '<div class="az-dashboard-inquiry-grid">' +
+            '<div><span>موبایل</span><b dir="ltr">' + esc(x.mobile || '—') + '</b></div>' +
+            '<div><span>موضوع</span><b>' + esc(x.subject || '—') + '</b></div>' +
+          '</div>' +
+        '</article>'
+      ).join('') + '</div>';
+    }
     const body = rows.map((x) =>
       '<tr><td>' + esc(x.full_name) + '</td><td dir="ltr">' + esc(x.mobile) + '</td><td>' +
       esc(x.subject || '—') + '</td><td><span class="badge warn">' + esc(labels[x.status] || x.status) +
       '</span></td><td>' + dateFa(x.created_at) + '</td>' +
-      (compact ? '' : '<td><button class="btn secondary" data-edit-inquiry="' + x.id + '">مدیریت</button></td>') +
+      '<td><button class="btn secondary" data-edit-inquiry="' + x.id + '">مدیریت</button></td>' +
       '</tr>'
     ).join('');
-    return '<table class="table"><thead><tr><th>نام</th><th>موبایل</th><th>موضوع</th><th>وضعیت</th><th>زمان</th>' +
-      (compact ? '' : '<th>عملیات</th>') + '</tr></thead><tbody>' + body + '</tbody></table>';
+    return '<table class="table"><thead><tr><th>نام</th><th>موبایل</th><th>موضوع</th><th>وضعیت</th><th>زمان</th><th>عملیات</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
   let productSearchTimer = null;
