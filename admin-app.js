@@ -852,6 +852,22 @@
       $(id)?.addEventListener('change', () => { ordersPage = 1; loadOrders(); });
     });
     $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
+    $('serviceRequestsLauncher')?.addEventListener('click', () => {
+      const panel = $('adminServiceRequestsPanel');
+      if (!panel) return;
+      panel.hidden = false;
+      panel.setAttribute('aria-hidden', 'false');
+      $('serviceRequestsLauncher')?.setAttribute('aria-expanded','true');
+      document.body.classList.add('az-service-open');
+    });
+    $('closeServiceRequestsBtn')?.addEventListener('click', () => {
+      const panel = $('adminServiceRequestsPanel');
+      if (!panel) return;
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+      $('serviceRequestsLauncher')?.setAttribute('aria-expanded','false');
+      document.body.classList.remove('az-service-open');
+    });
     $('refreshReviewsBtn')?.addEventListener('click', () => loadReviews());
   }
 
@@ -2730,7 +2746,15 @@
       panel.hidden = true;
       return;
     }
-    panel.hidden = false;
+    // The request center is an on-demand overlay; never push it below a long order list.
+    panel.hidden = true;
+    panel.setAttribute('aria-hidden', 'true');
+    const launcher = $('serviceRequestsLauncher');
+    if (launcher) launcher.hidden = false;
+    const launcherCount = $('serviceRequestsCount');
+    const launcherText = $('serviceRequestsLauncherText');
+    if (launcherCount) launcherCount.textContent = '…';
+    if (launcherText) launcherText.textContent = 'در حال بررسی درخواست‌های باز…';
     box.innerHTML = '<div class="empty">در حال دریافت درخواست‌ها…</div>';
 
     try {
@@ -2778,16 +2802,29 @@
         not_required:'نیاز نیست', pending:'در انتظار عودت', refunded:'عودت شد'
       }[s] || s || '—');
 
+      const launcher = $('serviceRequestsLauncher');
+      const launcherCount = $('serviceRequestsCount');
+      const launcherText = $('serviceRequestsLauncherText');
+      if (launcher) launcher.hidden = false;
+      if (launcherCount) launcherCount.textContent = countOpen.toLocaleString('fa-IR');
+      if (launcherText) launcherText.textContent = countOpen
+        ? (cancels.length ? cancels.length.toLocaleString('fa-IR') + ' لغو' + (returns.length ? ' · ' : '') : '') + (returns.length ? returns.length.toLocaleString('fa-IR') + ' مرجوعی' : '') + ' نیازمند بررسی'
+        : 'درخواستی برای بررسی نیست';
+      if (launcher) {
+        launcher.classList.toggle('has-open', countOpen > 0);
+        launcher.setAttribute('aria-label', countOpen ? ('مشاهده ' + countOpen.toLocaleString('fa-IR') + ' درخواست باز') : 'درخواست باز وجود ندارد');
+      }
+
       if (!countOpen) {
         box.innerHTML = '<div class="empty">درخواست باز لغو یا مرجوعی وجود ندارد.</div>';
         return;
       }
 
       const stats =
-        '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px">' +
-          '<div class="card"><div class="k">درخواست‌های لغو</div><div class="v">' + cancels.length.toLocaleString('fa-IR') + '</div></div>' +
-          '<div class="card"><div class="k">مرجوعی‌های باز</div><div class="v">' + returns.length.toLocaleString('fa-IR') + '</div></div>' +
-          '<div class="card"><div class="k">مجموع</div><div class="v">' + countOpen.toLocaleString('fa-IR') + '</div></div>' +
+        '<div class="az-service-stats">' +
+          '<div><span>لغوهای باز</span><b>' + cancels.length.toLocaleString('fa-IR') + '</b></div>' +
+          '<div><span>مرجوعی‌های باز</span><b>' + returns.length.toLocaleString('fa-IR') + '</b></div>' +
+          '<div><span>مجموع</span><b>' + countOpen.toLocaleString('fa-IR') + '</b></div>' +
         '</div>';
 
       const cancelHtml = cancels.map(row => {
@@ -4852,6 +4889,11 @@
     const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
     const ro = e.target.closest('[data-restore-order]'); if (ro) { e.preventDefault(); e.stopPropagation(); openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder); return; }
+    if (e.target.matches('#adminServiceRequestsPanel')) {
+      e.preventDefault();
+      $('closeServiceRequestsBtn')?.click();
+      return;
+    }
     const op = e.target.closest('[data-order-page]');
     if (op) {
       e.preventDefault();
