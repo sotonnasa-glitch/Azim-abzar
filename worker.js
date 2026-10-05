@@ -19,6 +19,8 @@ export default {
       "/order-status.html",
       "/ai.html",
       "/admin.html",
+      "/admin-app.js",
+      "/admin-modern.css",
       "/privacy.html",
       "/terms.html",
       "/payment-callback.html",
