@@ -211,7 +211,13 @@
 <main class="main"><div class="topbar">
   <button id="azMenuTrigger" class="az-menu-trigger" type="button" aria-label="منوی مدیریت" aria-expanded="false">__AZICON_MENU__</button>
   <div><div id="pageTitle" class="page-title">داشبورد</div><div id="pageSub" class="page-sub">نمای کلی وضعیت فروشگاه و کاتالوگ</div></div>
-  <div class="az-top-actions"><span class="az-top-chip"><i></i> سیستم متصل</span><button class="btn secondary" id="refreshBtn">↻ بروزرسانی</button></div>
+  <div class="az-top-actions">
+    <button id="adminBackBtn" class="az-admin-back-btn" type="button" aria-label="بازگشت" disabled>
+      <span class="az-admin-back-icon" aria-hidden="true">←</span><span>بازگشت</span>
+    </button>
+    <span class="az-top-chip"><i></i> سیستم متصل</span>
+    <button class="btn secondary" id="refreshBtn">↻ بروزرسانی</button>
+  </div>
 </div>
 <section id="view-dashboard" class="view active">
 <div class="az-dashboard-hero">
@@ -269,10 +275,6 @@
   <div id="dashboardInquiries" class="table-wrap"></div>
 </div>
 
-<div class="panel">
-  <div class="panel-head"><h2>محصولات اخیر</h2><button class="btn ghost" data-go="products">مدیریت محصولات</button></div>
-  <div id="dashboardProducts" class="table-wrap"></div>
-</div>
 </section>
 <section id="view-products" class="view"><div class="panel az-products-panel"><div class="az-section-head"><div><span class="az-section-kicker">CATALOG CONTROL</span><h2>مدیریت محصولات</h2><p>جستجو، دسته‌بندی، وضعیت و سایزبندی ۹۰۸ محصول</p></div><button id="newProductBtn" class="btn az-primary-action">＋ افزودن محصول</button></div><div class="az-product-toolbar"><div class="az-search-wrap"><span>⌕</span><input id="productSearch" class="input" placeholder="نام محصول، شناسه، برند یا دسته را جستجو کن…" autocomplete="off"></div><div class="az-filter-group"><label>دسته‌بندی</label><select id="productCategoryFilter" class="select"><option value="">همه دسته‌ها</option></select></div><div class="az-filter-group"><label>وضعیت</label><select id="productStatus" class="select"><option value="">همه محصولات</option><option value="true">فعال</option><option value="false">غیرفعال</option></select></div><div class="az-filter-group"><label>سایزبندی</label><select id="productVariantFilter" class="select"><option value="">همه</option><option value="with">دارای سایز / مدل</option><option value="without">بدون سایز</option></select></div></div><div class="az-product-meta"><span id="productMetaCount">در حال بارگذاری…</span><span class="az-meta-dot"></span><span id="productMetaVariant">—</span></div><div id="productsTable" class="table-wrap"></div></div></section>
 <section id="view-reviews" class="view"><div class="panel"><div class="panel-head"><div><h2>نظرات محصولات</h2><div class="muted">نظرهای کاربران را بررسی کن؛ فقط نظرهای تأییدشده در صفحه همان محصول نمایش داده می‌شوند.</div></div><button class="btn ghost" id="refreshReviewsBtn" type="button">↻ بروزرسانی</button></div><div id="reviewsTable" class="table-wrap"></div></div></section>
