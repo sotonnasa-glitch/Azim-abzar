@@ -965,6 +965,18 @@
     $('statActive').textContent = active.toLocaleString('fa-IR');
     $('statInquiries').textContent = inq.toLocaleString('fa-IR');
     $('statOrders').textContent = orders.toLocaleString('fa-IR');
+    const ring = $('dashboardProductRing');
+    if (ring) ring.textContent = all.toLocaleString('fa-IR');
+    const systemStatus = $('dashboardSystemStatus');
+    const systemSub = $('dashboardSystemSub');
+    if (systemStatus) {
+      systemStatus.textContent = all > 0 ? 'سیستم فعال است' : 'بررسی کاتالوگ';
+    }
+    if (systemSub) {
+      systemSub.textContent = all > 0
+        ? active.toLocaleString('fa-IR') + ' محصول فعال · داده‌ها متصل'
+        : 'محصولی برای نمایش پیدا نشد';
+    }
 
     const [a, p] = await Promise.all([
       state.db.from('inquiries').select('id,full_name,mobile,subject,status,created_at').order('created_at', { ascending: false }).limit(6),
