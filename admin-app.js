@@ -2586,7 +2586,7 @@
           '</div>'
         : '<div class="az-order-products az-order-products-empty">محصولات این سفارش در دسترس نیست.</div>';
 
-      return '<article class="az-order-card">' +
+      return '<article class="az-order-card az-order-card-clickable" data-order-card="' + esc(x.id) + '" role="button" tabindex="0" aria-label="مدیریت سفارش ' + esc(x.order_code || '') + '">' +
         '<div class="az-order-card-head">' +
           '<div class="az-order-code"><span>سفارش</span><strong dir="ltr">' + esc(x.order_code || '—') + '</strong><small>' + dateFa(x.created_at) + '</small></div>' +
           '<div class="az-order-statuses">' +
@@ -3043,7 +3043,8 @@
     $('orderItemsBox').addEventListener('change', (e) => {
       if (e.target.classList.contains('item-product')) {
         const row = e.target.closest('.order-item-row');
-        const p = state.products.find((x) => x.id === e.target.value);
+        const sourceProducts = state.orderProducts.length ? state.orderProducts : state.products;
+        const p = sourceProducts.find((x) => x.id === e.target.value);
         const price = row.querySelector('.item-price');
         if (p && price && !Number(price.value)) price.value = directProductDiscountPrice(p.price || 0, p);
         updateOrderItemTotals();
@@ -4792,9 +4793,10 @@
     const bt = e.target.closest('[data-toggle-brand]'); if (bt) toggleBrand(bt.dataset.toggleBrand);
     const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
-    const o = e.target.closest('[data-edit-order]'); if (o) openOrder(o.dataset.editOrder);
-    const ro = e.target.closest('[data-restore-order]'); if (ro) openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder);
-    const sr = e.target.closest('[data-service-action]'); if (sr) handleAdminServiceRequest(sr.dataset.id, sr.dataset.kind, sr.dataset.action, sr);
+    const ro = e.target.closest('[data-restore-order]'); if (ro) { e.preventDefault(); e.stopPropagation(); openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder); return; }
+    const o = e.target.closest('[data-edit-order]'); if (o) { e.preventDefault(); openOrder(o.dataset.editOrder); return; }
+    const oc = e.target.closest('[data-order-card]'); if (oc) { e.preventDefault(); openOrder(oc.dataset.orderCard); return; }
+    const sr = e.target.closest('[data-service-action]'); if (sr) { e.preventDefault(); e.stopPropagation(); handleAdminServiceRequest(sr.dataset.id, sr.dataset.kind, sr.dataset.action, sr); return; }
     const m = e.target.closest('[data-delete-media]'); if (m) deleteMedia(m.dataset.deleteMedia);
     const co = e.target.closest('[data-edit-content]'); if (co) editContent(co.dataset.editContent);
     const fc = e.target.closest('[data-filter-category]'); if (fc) { $('productSearch').value=''; if ($('productCategoryFilter')) $('productCategoryFilter').value=fc.dataset.filterCategory; setView('products'); }
