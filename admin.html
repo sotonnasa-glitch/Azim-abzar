@@ -213,7 +213,67 @@
   <div><div id="pageTitle" class="page-title">داشبورد</div><div id="pageSub" class="page-sub">نمای کلی وضعیت فروشگاه و کاتالوگ</div></div>
   <div class="az-top-actions"><span class="az-top-chip"><i></i> سیستم متصل</span><button class="btn secondary" id="refreshBtn">↻ بروزرسانی</button></div>
 </div>
-<section id="view-dashboard" class="view active"><div class="az-dashboard-hero"><div class="az-hero-copy"><span class="az-hero-kicker">AZIM ABZAR · ADMIN</span><h2>مرکز فرمان فروشگاه</h2><p>همه‌چیز برای مدیریت سریع کاتالوگ، مشتری‌ها و محتوای سایت در یکجا.</p><div class="az-hero-actions"><button class="btn" data-go="products">▣ مدیریت محصولات</button><button class="btn secondary" data-go="content">__AZICON_EDIT__ محتوای سایت</button><button class="btn ghost" id="dashboardOpenSite">__AZICON_GLOBE__ مشاهده سایت</button></div></div><div class="az-hero-side"><div class="az-hero-ring"><span>908</span><small>محصول</small></div><div><b>سیستم آماده است</b><small>کاتالوگ و پنل متصل</small></div></div></div><div class="cards"><div class="card"><div class="k">همه محصولات</div><div id="statProducts" class="v">—</div><div class="s">رکوردهای دیتابیس</div></div><div class="card"><div class="k">محصولات فعال</div><div id="statActive" class="v">—</div><div class="s">قابل نمایش</div></div><div class="card"><div class="k">درخواست جدید</div><div id="statInquiries" class="v">—</div><div class="s">نیازمند پیگیری</div></div><div class="card"><div class="k">سفارش‌ها</div><div id="statOrders" class="v">—</div><div class="s">ثبت‌شده</div></div></div><div class="panel"><div class="panel-head"><h2>آخرین درخواست‌ها</h2><button class="btn ghost" data-go="inquiries">مشاهده همه</button></div><div id="dashboardInquiries" class="table-wrap"></div></div><div class="panel"><div class="panel-head"><h2>محصولات اخیر</h2><button class="btn ghost" data-go="products">مدیریت محصولات</button></div><div id="dashboardProducts" class="table-wrap"></div></div></section>
+<section id="view-dashboard" class="view active">
+<div class="az-dashboard-hero">
+  <div class="az-hero-copy">
+    <span class="az-hero-kicker">AZIM ABZAR · CONTROL CENTER</span>
+    <h2>مرکز فرمان فروشگاه</h2>
+    <p>وضعیت واقعی فروشگاه، کاتالوگ و کارهای مهم مدیریت را از همین صفحه کنترل کن.</p>
+    <div class="az-hero-actions">
+      <button class="btn" data-go="products">▣ مدیریت محصولات</button>
+      <button class="btn secondary" data-go="orders">◫ سفارش‌ها</button>
+      <button class="btn secondary" data-go="content">__AZICON_EDIT__ محتوای سایت</button>
+      <button class="btn ghost" id="dashboardOpenSite">__AZICON_GLOBE__ مشاهده سایت</button>
+    </div>
+  </div>
+  <div class="az-hero-side">
+    <div class="az-hero-ring">
+      <span id="dashboardProductRing">—</span>
+      <small>محصول</small>
+    </div>
+    <div class="az-hero-status">
+      <b id="dashboardSystemStatus">در حال بررسی</b>
+      <small id="dashboardSystemSub">اتصال داده‌های پنل</small>
+    </div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="k">همه محصولات</div><div id="statProducts" class="v">—</div><div class="s">رکوردهای دیتابیس</div></div>
+  <div class="card"><div class="k">محصولات فعال</div><div id="statActive" class="v">—</div><div class="s">قابل نمایش</div></div>
+  <div class="card"><div class="k">درخواست جدید</div><div id="statInquiries" class="v">—</div><div class="s">نیازمند پیگیری</div></div>
+  <div class="card"><div class="k">سفارش‌ها</div><div id="statOrders" class="v">—</div><div class="s">ثبت‌شده</div></div>
+</div>
+
+<div class="panel az-dashboard-quick-panel">
+  <div class="panel-head">
+    <div>
+      <h2>دسترسی سریع</h2>
+      <div class="muted">کارهای پرتکرار را بدون گشتن داخل منو باز کن.</div>
+    </div>
+  </div>
+  <div class="az-dashboard-quick-grid">
+    <button class="az-dashboard-quick-card" data-go="orders"><span class="az-quick-icon">◫</span><span><b>سفارش‌ها</b><small>بررسی و پیگیری سفارش‌های ثبت‌شده</small></span><em>←</em></button>
+    <button class="az-dashboard-quick-card" data-go="inquiries"><span class="az-quick-icon">__AZICON_MAIL__</span><span><b>درخواست‌ها</b><small>مشاهده استعلام‌ها و پیام‌های جدید</small></span><em>←</em></button>
+    <button class="az-dashboard-quick-card" data-go="products"><span class="az-quick-icon">▣</span><span><b>کاتالوگ</b><small>جستجو، ویرایش قیمت، وضعیت و سایزها</small></span><em>←</em></button>
+    <button class="az-dashboard-quick-card" data-go="reports"><span class="az-quick-icon">▥</span><span><b>گزارش فروش</b><small>روند فروش و گزارش‌های دوره‌ای</small></span><em>←</em></button>
+    <button class="az-dashboard-quick-card" data-go="media"><span class="az-quick-icon">▧</span><span><b>رسانه</b><small>مدیریت تصاویر و فایل‌های سایت</small></span><em>←</em></button>
+    <button class="az-dashboard-quick-card" data-go="content"><span class="az-quick-icon">⌘</span><span><b>محتوای سایت</b><small>صفحه اصلی، ارتباط با ما و فوتر</small></span><em>←</em></button>
+  </div>
+</div>
+
+<div id="dashboardHealth"></div>
+
+<div class="panel">
+  <div class="panel-head"><h2>آخرین درخواست‌ها</h2><button class="btn ghost" data-go="inquiries">مشاهده همه</button></div>
+  <div id="dashboardInquiries" class="table-wrap"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>محصولات اخیر</h2><button class="btn ghost" data-go="products">مدیریت محصولات</button></div>
+  <div id="dashboardProducts" class="table-wrap"></div>
+</div>
+</section>
 <section id="view-products" class="view"><div class="panel az-products-panel"><div class="az-section-head"><div><span class="az-section-kicker">CATALOG CONTROL</span><h2>مدیریت محصولات</h2><p>جستجو، دسته‌بندی، وضعیت و سایزبندی ۹۰۸ محصول</p></div><button id="newProductBtn" class="btn az-primary-action">＋ افزودن محصول</button></div><div class="az-product-toolbar"><div class="az-search-wrap"><span>⌕</span><input id="productSearch" class="input" placeholder="نام محصول، شناسه، برند یا دسته را جستجو کن…" autocomplete="off"></div><div class="az-filter-group"><label>دسته‌بندی</label><select id="productCategoryFilter" class="select"><option value="">همه دسته‌ها</option></select></div><div class="az-filter-group"><label>وضعیت</label><select id="productStatus" class="select"><option value="">همه محصولات</option><option value="true">فعال</option><option value="false">غیرفعال</option></select></div><div class="az-filter-group"><label>سایزبندی</label><select id="productVariantFilter" class="select"><option value="">همه</option><option value="with">دارای سایز / مدل</option><option value="without">بدون سایز</option></select></div></div><div class="az-product-meta"><span id="productMetaCount">در حال بارگذاری…</span><span class="az-meta-dot"></span><span id="productMetaVariant">—</span></div><div id="productsTable" class="table-wrap"></div></div></section>
 <section id="view-reviews" class="view"><div class="panel"><div class="panel-head"><div><h2>نظرات محصولات</h2><div class="muted">نظرهای کاربران را بررسی کن؛ فقط نظرهای تأییدشده در صفحه همان محصول نمایش داده می‌شوند.</div></div><button class="btn ghost" id="refreshReviewsBtn" type="button">↻ بروزرسانی</button></div><div id="reviewsTable" class="table-wrap"></div></div></section>
 <section id="view-categories" class="view"><div class="panel az-categories-panel"><div class="az-section-head"><div><span class="az-section-kicker">CATALOG STRUCTURE</span><h2>دسته‌بندی محصولات</h2><p>تمام دسته‌های واقعی فعلی کاتالوگ به تفکیک تعداد محصول</p></div><button id="newCategoryBtn" class="btn az-primary-action">＋ افزودن دسته</button></div><div id="categoriesTable" class="table-wrap"></div></div></section>
