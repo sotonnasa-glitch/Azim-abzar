@@ -834,6 +834,9 @@
     $('reportRefresh')?.addEventListener('click', () => loadReports());
     $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
     $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
+    ['ordersStatusFilter','ordersPaymentFilter','ordersShippingFilter','ordersPeriodFilter'].forEach((id) => {
+      $(id)?.addEventListener('change', () => loadOrders());
+    });
     $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
     $('refreshReviewsBtn')?.addEventListener('click', () => loadReviews());
   }
@@ -2455,13 +2458,21 @@
 
   async function loadOrders() {
     const search = String($('ordersSearch')?.value || '').trim();
+    const statusFilter = String($('ordersStatusFilter')?.value || '');
+    const paymentFilter = String($('ordersPaymentFilter')?.value || '');
+    const shippingFilter = String($('ordersShippingFilter')?.value || '');
+    const periodFilter = Number($('ordersPeriodFilter')?.value || 0);
     let q = state.db.from('orders')
       .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at')
-      .order('created_at', { ascending: false }).limit(search ? 2000 : 200);
+      .order('created_at', { ascending: false }).limit(search || statusFilter || paymentFilter || shippingFilter || periodFilter ? 2000 : 200);
     if (search) {
       const s = search.replace(/[%(),]/g, ' ');
       q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
     }
+    if (statusFilter) q = q.eq('status', statusFilter);
+    if (paymentFilter) q = q.eq('payment_status', paymentFilter);
+    if (shippingFilter) q = q.eq('shipping_status', shippingFilter);
+    if (periodFilter) q = q.gte('created_at', new Date(Date.now() - periodFilter * 86400000).toISOString());
     const r = await q;
     if (r.error) return showSectionError('ordersTable', r.error);
     const rows = r.data || [];
@@ -2502,10 +2513,24 @@
       return 'warn';
     };
 
+    const nextAction = (x) => {
+      if (x.status === 'cancelled') return ['لغوشده', 'red'];
+      if (x.payment_status === 'unpaid') return ['نیازمند پرداخت', 'warn'];
+      if (x.payment_status === 'pending') return ['در انتظار تأیید پرداخت', 'warn'];
+      if (x.status === 'pending') return ['نیازمند تأیید سفارش', 'warn'];
+      if (x.status === 'confirmed' && x.shipping_status === 'pending') return ['آماده پردازش', 'warn'];
+      if (x.status === 'processing' && x.shipping_status === 'pending') return ['آماده بسته‌بندی', 'warn'];
+      if (x.shipping_status === 'packed') return ['آماده ارسال · ثبت رهگیری', 'warn'];
+      if (x.shipping_status === 'shipped') return ['در مسیر تحویل', 'ok'];
+      if (x.status === 'delivered' || x.shipping_status === 'delivered') return ['تکمیل‌شده', 'ok'];
+      return ['نیازمند بررسی', 'warn'];
+    };
+
     const body = rows.map((x) => {
       const status = labels[x.status] || x.status || '—';
       const payment = labels[x.payment_status] || x.payment_status || '—';
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
+      const [actionText, actionTone] = nextAction(x);
       const discount = Number(x.discount || 0);
       const orderItems = itemsByOrder.get(String(x.id)) || [];
       const productsHtml = orderItems.length
@@ -2534,6 +2559,7 @@
         '</div>' +
         '<div class="az-order-card-body">' +
           '<div class="az-order-total"><span>مبلغ نهایی</span><strong>' + money(x.total) + '</strong>' + (discount ? '<small>پس از ' + money(discount) + ' تخفیف</small>' : '<small>بدون تخفیف</small>') + '</div>' +
+          '<div class="az-order-next-action"><span>اقدام بعدی</span><b class="' + actionTone + '">' + esc(actionText) + '</b></div>' +
           productsHtml +
           '<div class="az-order-meta">'
             '<div><span>قبل تخفیف</span><b>' + money(x.subtotal) + '</b></div>' +
@@ -2665,7 +2691,7 @@
         return '<article class="card" style="margin-bottom:10px">' +
           '<div class="panel-head"><div><strong>❌ درخواست لغو</strong><div class="muted">' + esc(o.order_code || 'سفارش نامشخص') + '</div></div><span class="badge warn">' + esc(statusText(row.status)) + '</span></div>' +
           '<div class="muted" style="line-height:1.9">مشتری: ' + esc(o.customer_name || '—') + ' · پرداخت: ' + esc(labels[o.payment_status] || o.payment_status || '—') + ' · روش پرداخت: ' + esc(o.payment_method || '—') + ' · ارسال: ' + esc(labels[o.shipping_status] || o.shipping_status || '—') + '<br>دلیل: ' + esc(row.reason || '—') + '<br>وضعیت عودت: ' + esc(refundText(row.refund_status)) + '</div>' +
-          '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('cancel',row) + '</div>' +
+          '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('cancel',{...row,payment_method:o.payment_method}) + '</div>' +
         '</article>';
       }).join('');
 
@@ -2676,7 +2702,7 @@
         return '<article class="card" style="margin-bottom:10px">' +
           '<div class="panel-head"><div><strong>↩️ درخواست مرجوعی</strong><div class="muted">' + esc(o.order_code || 'سفارش نامشخص') + '</div></div><span class="badge warn">' + esc(statusText(row.status)) + '</span></div>' +
           '<div class="muted" style="line-height:1.9">کالا: ' + esc(item.product_name || '—') + (variant ? ' · ' + esc(variant) : '') + '<br>تعداد: ' + esc(Number(row.quantity || 0).toLocaleString('fa-IR')) + ' · مبلغ قابل عودت: ' + money(row.refund_amount || 0) + '<br>دلیل: ' + esc(row.reason || '—') + (row.details ? '<br>توضیحات: ' + esc(row.details) : '') + '<br>وضعیت عودت: ' + esc(refundText(row.refund_status)) + '</div>' +
-          '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('return',row) + '</div>' +
+          '<div class="tools" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + serviceRequestButtons('return',{...row,payment_method:o.payment_method}) + '</div>' +
         '</article>';
       }).join('');
 
