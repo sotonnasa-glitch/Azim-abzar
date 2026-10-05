@@ -1671,3 +1671,142 @@ body{min-height:100vh;overflow-x:hidden;background:
   }
   .az-order-card-flow .az-order-step{flex:0 0 auto!important}
 }
+
+
+/* === Orders compact command header 2026-10-06 === */
+#view-orders .panel{
+  position:relative;
+  overflow:hidden;
+  padding:12px 14px 14px;
+  border-color:rgba(255,255,255,.07);
+}
+#view-orders .panel::before{
+  content:"";
+  position:absolute;
+  top:0;
+  right:-25%;
+  width:48%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(245,185,0,0),rgba(245,185,0,.85),rgba(255,216,79,.22),transparent);
+  filter:blur(.15px);
+  animation:azOrdersScan 4.8s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes azOrdersScan{
+  0%{transform:translateX(0);opacity:.15}
+  15%{opacity:.85}
+  50%{transform:translateX(-220%);opacity:.9}
+  78%{opacity:.45}
+  100%{transform:translateX(-310%);opacity:.12}
+}
+#view-orders .panel-head{
+  display:grid;
+  grid-template-columns:minmax(180px,.55fr) minmax(0,2.1fr);
+  align-items:center;
+  gap:12px;
+  margin:-2px -2px 9px;
+  padding:0 0 9px;
+  border-bottom:1px solid rgba(255,255,255,.045);
+  background:transparent;
+  position:relative;
+  z-index:2;
+}
+#view-orders .panel-head>div:first-child{min-width:0}
+#view-orders .panel-head h2{
+  font-size:13px;
+  line-height:1.2;
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+#view-orders .panel-head h2::before{
+  content:"";
+  width:7px;height:7px;border-radius:50%;
+  background:#ffd84f;
+  box-shadow:0 0 0 3px rgba(245,185,0,.06),0 0 11px rgba(245,185,0,.34);
+  animation:azOrdersDot 1.8s ease-in-out infinite;
+  flex:0 0 auto;
+}
+@keyframes azOrdersDot{0%,100%{transform:scale(.75);opacity:.58}50%{transform:scale(1.15);opacity:1}}
+#view-orders .panel-head .muted{font-size:7.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#view-orders .az-orders-tools{
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(200px,1.8fr) repeat(4,minmax(105px,1fr)) auto;
+  gap:6px;
+  align-items:center;
+  justify-content:stretch;
+}
+#view-orders .az-orders-tools .input,
+#view-orders .az-orders-tools .select,
+#view-orders .az-orders-tools .btn{
+  min-width:0;
+  width:100%;
+  height:35px;
+  min-height:35px;
+  padding:6px 9px;
+  border-radius:9px;
+  font-size:8.5px;
+}
+#view-orders .az-orders-tools .input::placeholder{font-size:8.5px}
+#view-orders #ordersPageSize{background:#141a16;border-color:rgba(245,185,0,.15)}
+#view-orders #clearOrdersSearch{white-space:nowrap;padding-inline:10px}
+#view-orders #ordersTable{overflow:visible;border:0}
+#view-orders .az-order-overview{margin-top:2px}
+#view-orders .az-orders-pagination{margin:7px 0}
+#view-orders .az-orders-list{gap:8px}
+#view-orders .az-order-card{border-radius:14px}
+#view-orders .az-order-card-head,
+#view-orders .az-order-card-body,
+#view-orders .az-order-card-foot{padding:10px 12px}
+
+/* Keep the global page heading quiet while Orders is active. */
+.main:has(#view-orders.active) .topbar{
+  margin-bottom:7px;
+  padding:0 0 4px;
+  min-height:34px;
+}
+.main:has(#view-orders.active) .page-title{font-size:18px;letter-spacing:-.25px}
+.main:has(#view-orders.active) .page-sub{font-size:8px;margin-top:1px}
+
+@media(max-width:1050px){
+  #view-orders .panel-head{grid-template-columns:1fr}
+  #view-orders .az-orders-tools{grid-template-columns:minmax(180px,1.5fr) repeat(4,minmax(95px,1fr)) auto}
+}
+@media(max-width:720px){
+  #view-orders .panel{padding:9px 10px 11px}
+  #view-orders .panel-head{
+    grid-template-columns:1fr;
+    gap:7px;
+    margin:-1px 0 7px;
+    padding-bottom:7px;
+  }
+  #view-orders .panel-head h2{font-size:12px}
+  #view-orders .panel-head .muted{font-size:7px}
+  #view-orders .az-orders-tools{
+    grid-template-columns:1fr 1fr;
+    gap:5px;
+  }
+  #view-orders .az-orders-tools .input{grid-column:1/-1}
+  #view-orders #clearOrdersSearch{grid-column:1/-1}
+  #view-orders .az-orders-tools .input,
+  #view-orders .az-orders-tools .select,
+  #view-orders .az-orders-tools .btn{
+    height:33px;
+    min-height:33px;
+    padding:5px 8px;
+    font-size:8px;
+  }
+  #view-orders .az-orders-pagination{margin:6px 0}
+}
+@media(max-width:420px){
+  #view-orders .az-orders-tools{grid-template-columns:1fr 1fr}
+  #view-orders #ordersPageSize{grid-column:1}
+  #view-orders #clearOrdersSearch{grid-column:1/-1}
+  .main:has(#view-orders.active) .topbar{min-height:30px}
+  .main:has(#view-orders.active) .page-title{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+  #view-orders .panel::before,#view-orders .panel-head h2::before{animation:none!important}
+}
