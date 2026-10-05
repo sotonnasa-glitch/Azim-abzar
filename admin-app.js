@@ -2514,25 +2514,63 @@
     };
 
     const nextAction = (x) => {
-      if (x.status === 'cancelled') return ['لغوشده', 'red'];
-      if (x.payment_status === 'unpaid') return ['نیازمند پرداخت', 'warn'];
-      if (x.payment_status === 'pending') return ['در انتظار تأیید پرداخت', 'warn'];
-      if (x.status === 'pending') return ['نیازمند تأیید سفارش', 'warn'];
-      if (x.status === 'confirmed' && x.shipping_status === 'pending') return ['آماده پردازش', 'warn'];
-      if (x.status === 'processing' && x.shipping_status === 'pending') return ['آماده بسته‌بندی', 'warn'];
-      if (x.shipping_status === 'packed') return ['آماده ارسال · ثبت رهگیری', 'warn'];
-      if (x.shipping_status === 'shipped') return ['در مسیر تحویل', 'ok'];
-      if (x.status === 'delivered' || x.shipping_status === 'delivered') return ['تکمیل‌شده', 'ok'];
-      return ['نیازمند بررسی', 'warn'];
+      if (x.status === 'cancelled') return ['لغو شده', 'red', 'بازگردانی سفارش'];
+      if (x.payment_status === 'unpaid') return ['نیازمند پرداخت', 'warn', 'بررسی پرداخت'];
+      if (x.payment_status === 'pending') return ['در انتظار تأیید پرداخت', 'warn', 'تأیید پرداخت'];
+      if (x.status === 'pending') return ['نیازمند تأیید سفارش', 'warn', 'تأیید سفارش'];
+      if (x.status === 'confirmed' && x.shipping_status === 'pending') return ['آماده پردازش', 'warn', 'شروع پردازش'];
+      if (x.status === 'processing' && x.shipping_status === 'pending') return ['آماده بسته‌بندی', 'warn', 'ثبت بسته‌بندی'];
+      if (x.shipping_status === 'packed') return ['آماده ارسال · ثبت رهگیری', 'warn', 'ثبت کد رهگیری'];
+      if (x.shipping_status === 'shipped') return ['در مسیر تحویل', 'ok', 'مشاهده رهگیری'];
+      if (x.status === 'delivered' || x.shipping_status === 'delivered') return ['تکمیل‌شده', 'ok', 'مشاهده جزئیات'];
+      return ['نیازمند بررسی', 'warn', 'مدیریت سفارش'];
     };
+    const requestByOrder = new Map();
+    if (can.all() && orderIds.length) {
+      const [cancelReq, returnReq] = await Promise.all([
+        state.db.from('order_action_requests')
+          .select('id,order_id,status')
+          .eq('request_type','cancel')
+          .in('status',['pending','approved'])
+          .in('order_id', orderIds)
+          .limit(200),
+        state.db.from('order_return_requests')
+          .select('id,order_id,status')
+          .in('status',['pending','approved','received'])
+          .in('order_id', orderIds)
+          .limit(200)
+      ]);
+      if (!cancelReq.error) (cancelReq.data || []).forEach(r => {
+        const key = String(r.order_id);
+        const entry = requestByOrder.get(key) || { cancel: 0, return: 0 };
+        entry.cancel += 1;
+        requestByOrder.set(key, entry);
+      });
+      if (!returnReq.error) (returnReq.data || []).forEach(r => {
+        const key = String(r.order_id);
+        const entry = requestByOrder.get(key) || { cancel: 0, return: 0 };
+        entry.return += 1;
+        requestByOrder.set(key, entry);
+      });
+    }
 
     const body = rows.map((x) => {
       const status = labels[x.status] || x.status || '—';
       const payment = labels[x.payment_status] || x.payment_status || '—';
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
-      const [actionText, actionTone] = nextAction(x);
+      const [actionText, actionTone, ctaText] = nextAction(x);
       const discount = Number(x.discount || 0);
       const orderItems = itemsByOrder.get(String(x.id)) || [];
+      const requestSummary = requestByOrder.get(String(x.id));
+      const requestHtml = requestSummary
+        ? '<div class="az-order-request-flags">' +
+            (requestSummary.cancel ? '<span class="az-order-request cancel">لغو در انتظار بررسی · ' + requestSummary.cancel.toLocaleString('fa-IR') + '</span>' : '') +
+            (requestSummary.return ? '<span class="az-order-request return">مرجوعی در انتظار بررسی · ' + requestSummary.return.toLocaleString('fa-IR') + '</span>' : '') +
+          '</div>'
+        : '';
+      const customerName = x.customer_name || 'مشتری ثبت‌نشده';
+      const customerMobile = x.customer_mobile || '—';
+      const customerEmail = x.customer_email || '—';
       const productsHtml = orderItems.length
         ? '<div class="az-order-products"><span class="az-order-products-title">محصولات سفارش</span>' +
             orderItems.map((it) => {
@@ -2558,10 +2596,17 @@
           '</div>' +
         '</div>' +
         '<div class="az-order-card-body">' +
+          '<div class="az-order-customer">' +
+            '<div><span>مشتری</span><b>' + esc(customerName) + '</b></div>' +
+            '<div><span>موبایل</span><b dir="ltr">' + esc(customerMobile) + '</b></div>' +
+            '<div><span>ایمیل</span><b dir="ltr">' + esc(customerEmail) + '</b></div>' +
+          '</div>' +
+          requestHtml +
+          '<div class="az-order-card-flow">' + orderTimeline(x.status, x.shipping_status) + '</div>' +
           '<div class="az-order-total"><span>مبلغ نهایی</span><strong>' + money(x.total) + '</strong>' + (discount ? '<small>پس از ' + money(discount) + ' تخفیف</small>' : '<small>بدون تخفیف</small>') + '</div>' +
           '<div class="az-order-next-action"><span>اقدام بعدی</span><b class="' + actionTone + '">' + esc(actionText) + '</b></div>' +
           productsHtml +
-          '<div class="az-order-meta">'
+          '<div class="az-order-meta">' +
             '<div><span>قبل تخفیف</span><b>' + money(x.subtotal) + '</b></div>' +
             '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'هماهنگی با واحد فروش') + '</b></div>' +
             '<div><span>کد تخفیف</span><b dir="ltr">' + esc(x.discount_code || '—') + '</b></div>' +
@@ -2569,10 +2614,11 @@
           '</div>' +
         '</div>' +
         '<div class="az-order-card-foot">' +
-          '<span class="az-order-foot-note">' + (x.customer_id ? 'مشتری ثبت‌شده' : 'بدون پرونده مشتری') + '</span>' +
+          '<span class="az-order-foot-note">' + (x.customer_id ? 'پرونده مشتری متصل است' : 'بدون پرونده مشتری') + '</span>' +
           '<div class="tools" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
           (can.sales() && x.status === 'cancelled' ? '<button class="btn ghost az-order-restore" data-restore-order="' + esc(x.order_code || '') + '">🔄 بازگردانی سفارش</button>' : '') +
-          (can.sales() ? '<button class="btn secondary az-order-manage" data-edit-order="' + x.id + '">مدیریت سفارش <span>←</span></button>' : '') +
+          (can.sales() ? '<button class="btn az-order-quick-action" data-edit-order="' + x.id + '">' + esc(ctaText || 'مدیریت سفارش') + ' <span>←</span></button>' : '') +
+          (can.sales() ? '<button class="btn secondary az-order-manage" data-edit-order="' + x.id + '">جزئیات کامل</button>' : '') +
           '</div>' +
         '</div>' +
       '</article>';
@@ -2769,12 +2815,24 @@
     return state.orderProducts;
   }
 
-  function orderTimeline(status) {
-    const steps = ['pending','confirmed','processing','shipped','delivered'];
-    const current = Math.max(0, steps.indexOf(status));
+  function orderTimeline(status, shippingStatus) {
+    const steps = ['pending','confirmed','processing','packed','shipped','delivered'];
+    let currentKey = status || 'pending';
+    if (shippingStatus === 'packed') currentKey = 'packed';
+    if (status === 'shipped' || shippingStatus === 'shipped') currentKey = 'shipped';
+    if (status === 'delivered' || shippingStatus === 'delivered') currentKey = 'delivered';
+
+    if (status === 'cancelled') {
+      return '<div class="az-order-timeline az-order-timeline-cancelled">' +
+        '<span class="az-order-step cancelled current"><i></i>لغو شده</span>' +
+        '<span class="az-order-flow-note">این سفارش از چرخه فعال خارج شده است.</span>' +
+      '</div>';
+    }
+
+    const current = Math.max(0, steps.indexOf(currentKey));
     return '<div class="az-order-timeline">' + steps.map((v,i) =>
       '<span class="az-order-step ' + (i < current ? 'done' : (i === current ? 'current' : '')) + '">' +
-      '<i></i>' + esc(labels[v] || v) + '</span>'
+      '<i></i>' + esc(v === 'packed' ? 'بسته‌بندی شده' : (labels[v] || v)) + '</span>'
     ).join('') + '</div>';
   }
 
@@ -2784,7 +2842,17 @@
       esc(c.full_name) + ' · ' + esc(c.mobile) + '</option>'
     ).join('');
     const itemRows = (items || []).map((it, idx) => orderItemRow(it, idx)).join('');
-    return '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending') + '</div><form id="orderForm" class="grid2">'
+    const customerHtml = x ? (
+      '<div class="az-order-context full">' +
+        '<div class="az-order-context-main">' +
+          '<span>مشتری سفارش</span><strong>' + esc(x.customer_name || 'بدون نام') + '</strong>' +
+          '<small dir="ltr">' + esc(x.customer_mobile || '—') + (x.customer_email ? ' · ' + esc(x.customer_email) : '') + '</small>' +
+        '</div>' +
+        '<div class="az-order-context-side"><span>وضعیت فعلی</span><b>' + esc(labels[x.status] || x.status || '—') + '</b></div>' +
+      '</div>'
+    ) : '';
+    return '<div class="az-order-modal-head">' + customerHtml + '</div>' +
+      '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending', x?.shipping_status || 'pending') + '</div><form id="orderForm" class="grid2">'
       '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
       '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
       '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
