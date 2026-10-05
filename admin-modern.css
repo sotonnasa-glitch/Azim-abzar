@@ -1452,3 +1452,152 @@ body{min-height:100vh;overflow-x:hidden;background:
 .az-order-next-action b.red{color:#ff9898}
 @media(max-width:900px){.az-orders-tools{justify-content:stretch}.az-orders-tools .input{flex:1 1 100%;min-width:0}.az-orders-tools .select{flex:1 1 calc(50% - 7px);min-width:0}}
 @media(max-width:560px){.az-orders-tools .select,.az-orders-tools .input,.az-orders-tools .btn{width:100%;flex:1 1 100%;min-height:42px}.az-order-next-action{margin-top:8px}}
+
+
+/* === AZIM ORDERS // COMMAND CENTER UPGRADE === */
+.az-order-customer{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1.2fr 1fr 1fr;
+  gap:8px;
+}
+.az-order-customer>div{
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:13px;
+  background:rgba(7,10,9,.48);
+}
+.az-order-customer span,
+.az-order-context span{
+  display:block;
+  color:#68746d;
+  font-size:8px;
+}
+.az-order-customer b{
+  display:block;
+  margin-top:5px;
+  color:#eef4ef;
+  font-size:10px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.az-order-request-flags{
+  grid-column:1/-1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.az-order-request{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:8px;
+  font-weight:900;
+}
+.az-order-request.cancel{
+  color:#ffaaa9;
+  background:rgba(255,112,112,.08);
+  border:1px solid rgba(255,112,112,.20);
+}
+.az-order-request.return{
+  color:#ffe19a;
+  background:rgba(245,185,0,.08);
+  border:1px solid rgba(245,185,0,.20);
+}
+.az-order-card-flow{
+  grid-column:1/-1;
+  padding:2px 0 0;
+}
+.az-order-card-flow .az-order-timeline{
+  margin:0;
+}
+.az-order-quick-action{
+  min-width:150px;
+  border-color:rgba(245,185,0,.34);
+  background:linear-gradient(180deg,rgba(245,185,0,.14),rgba(245,185,0,.07));
+  color:#ffe48a;
+}
+.az-order-quick-action:hover{
+  border-color:rgba(245,185,0,.55);
+  box-shadow:0 10px 24px rgba(245,185,0,.09);
+}
+.az-order-timeline-cancelled{
+  align-items:center;
+}
+.az-order-step.cancelled{
+  color:#ffaaa9;
+  border-color:rgba(255,112,112,.20);
+  background:rgba(255,112,112,.07);
+}
+.az-order-step.cancelled i{
+  background:#ff7070;
+  box-shadow:0 0 10px rgba(255,112,112,.35);
+}
+.az-order-flow-note{
+  color:#68746d;
+  font-size:8px;
+}
+.az-order-modal-head{
+  display:grid;
+  gap:10px;
+  margin-bottom:12px;
+}
+.az-order-context{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 14px;
+  border-radius:15px;
+  border:1px solid rgba(245,185,0,.13);
+  background:linear-gradient(145deg,rgba(245,185,0,.055),rgba(255,255,255,.018));
+}
+.az-order-context-main{
+  min-width:0;
+}
+.az-order-context-main strong{
+  display:block;
+  margin-top:4px;
+  color:#fff;
+  font-size:13px;
+}
+.az-order-context-main small{
+  display:block;
+  margin-top:4px;
+  color:#7a867f;
+  font-size:9px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.az-order-context-side{
+  flex:none;
+  min-width:115px;
+  text-align:left;
+}
+.az-order-context-side b{
+  display:block;
+  margin-top:4px;
+  color:#ffd84f;
+  font-size:10px;
+}
+@media(max-width:900px){
+  .az-order-customer{grid-template-columns:1fr 1fr}
+  .az-order-customer>div:first-child{grid-column:1/-1}
+}
+@media(max-width:560px){
+  .az-order-customer{grid-template-columns:1fr}
+  .az-order-customer>div:first-child{grid-column:auto}
+  .az-order-context{align-items:stretch;flex-direction:column}
+  .az-order-context-side{min-width:0;text-align:right}
+  .az-order-card-flow{overflow:hidden}
+  .az-order-card-flow .az-order-timeline{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}
+  .az-order-card-flow .az-order-step{flex:none}
+  .az-order-request-flags{display:grid}
+  .az-order-request{justify-content:center;text-align:center}
+  .az-order-quick-action,.az-order-manage{width:100%;min-height:44px}
+}
