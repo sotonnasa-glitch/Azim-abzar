@@ -1810,3 +1810,112 @@ body{min-height:100vh;overflow-x:hidden;background:
 @media(prefers-reduced-motion:reduce){
   #view-orders .panel::before,#view-orders .panel-head h2::before{animation:none!important}
 }
+
+
+/* === Order request alert center 2026-10-06 === */
+.az-service-launcher{
+  width:100%;
+  margin:8px 0 2px;
+  min-height:46px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:10px;
+  padding:8px 11px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(17,23,20,.94),rgba(9,13,11,.98));
+  color:#dce4de;
+  text-align:right;
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.az-service-launcher:hover{
+  transform:translateY(-1px);
+  border-color:rgba(245,185,0,.22);
+  background:linear-gradient(145deg,rgba(23,30,26,.98),rgba(10,14,12,.98));
+  box-shadow:0 12px 30px rgba(0,0,0,.16);
+}
+.az-service-launcher-dot{
+  width:9px;height:9px;border-radius:50%;
+  background:#5f6b64;
+  box-shadow:0 0 0 3px rgba(95,107,100,.06);
+  transition:.2s ease;
+}
+.az-service-launcher.has-open .az-service-launcher-dot{
+  background:#ffba45;
+  box-shadow:0 0 0 3px rgba(245,185,0,.08),0 0 13px rgba(245,185,0,.42);
+  animation:azServicePulse 1.5s ease-in-out infinite;
+}
+@keyframes azServicePulse{0%,100%{transform:scale(.78);opacity:.65}50%{transform:scale(1.18);opacity:1}}
+.az-service-launcher-copy{min-width:0}
+.az-service-launcher-copy b,.az-service-launcher-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.az-service-launcher-copy b{font-size:9px;font-weight:900}
+.az-service-launcher-copy small{margin-top:2px;color:#69766e;font-size:7.5px}
+.az-service-launcher>strong{
+  min-width:27px;height:27px;padding:0 7px;display:grid;place-items:center;
+  border-radius:999px;background:#151c18;border:1px solid #2e3a32;color:#a6b2aa;font-size:9px;
+}
+.az-service-launcher.has-open>strong{background:rgba(245,185,0,.10);border-color:rgba(245,185,0,.28);color:#ffd966}
+.az-service-launcher>i{font-style:normal;font-size:13px;color:#68746d;transition:.18s ease}
+.az-service-launcher:hover>i{transform:translateX(-3px);color:#ffd84f}
+.az-service-overlay{
+  position:fixed;
+  inset:0;
+  z-index:120;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:22px;
+  background:rgba(2,4,3,.72);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.az-service-overlay[hidden]{display:none!important}
+.az-service-dialog{
+  width:min(940px,100%);
+  max-height:min(88vh,850px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid rgba(245,185,0,.14);
+  border-radius:17px;
+  background:linear-gradient(180deg,#111713,#0b100d);
+  box-shadow:0 30px 90px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.02);
+  animation:azServiceIn .2s ease both;
+}
+@keyframes azServiceIn{from{opacity:0;transform:translateY(-8px) scale(.992)}to{opacity:1;transform:none}}
+.az-service-dialog-head{
+  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 15px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+  background:rgba(13,18,15,.94);
+}
+.az-service-dialog-head>div:first-child{min-width:0}
+.az-service-dialog-head span{display:block;color:#b9912f;font:900 6.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em}
+.az-service-dialog-head h2{margin:5px 0 0;font-size:13px}
+.az-service-dialog-head small{display:block;margin-top:3px;color:#66736a;font-size:7.5px}
+.az-service-dialog-head .tools{flex:none}
+.az-service-dialog-head .x{width:34px;height:34px}
+.az-service-dialog-body{overflow:auto;padding:12px 14px 18px}
+.az-service-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:9px}
+.az-service-stats>div{padding:9px 10px;border:1px solid rgba(255,255,255,.05);border-radius:11px;background:rgba(255,255,255,.02)}
+.az-service-stats span{display:block;color:#6c7871;font-size:7px}
+.az-service-stats b{display:block;margin-top:4px;color:#eef2ef;font-size:15px}
+@media(max-width:720px){
+  .az-service-overlay{padding:10px}
+  .az-service-dialog{max-height:92vh;border-radius:14px}
+  .az-service-dialog-head{align-items:flex-start;padding:11px 12px}
+  .az-service-dialog-head .btn{display:none}
+  .az-service-launcher{min-height:44px;margin-top:7px}
+}
+@media(max-width:460px){
+  .az-service-stats{grid-template-columns:1fr 1fr}
+  .az-service-stats>div:last-child{grid-column:1/-1}
+  .az-service-launcher-copy b{font-size:8.5px}
+  .az-service-launcher-copy small{font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .az-service-launcher.has-open .az-service-launcher-dot,.az-service-dialog{animation:none!important}
+}
