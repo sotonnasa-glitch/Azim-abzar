@@ -1393,3 +1393,45 @@ body{min-height:100vh;overflow-x:hidden;background:
     animation:none!important;
   }
 }
+
+/* === Dashboard cleanup 2026-10-06 === */
+.az-admin-back-btn{
+  display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:7px 11px;
+  border:1px solid rgba(255,106,0,.55);border-radius:12px;
+  background:rgba(255,106,0,.10);color:#ff9a55;font-size:9px;font-weight:900;
+  cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.16),0 0 16px rgba(255,106,0,.08);
+  transition:.2s ease;
+}
+.az-admin-back-btn:hover:not(:disabled){
+  background:#ff6a00;border-color:#ff7b22;color:#fff;transform:translateY(-1px);
+  box-shadow:0 12px 28px rgba(255,106,0,.24);
+}
+.az-admin-back-btn:disabled,.az-admin-back-btn.disabled{
+  opacity:.34;cursor:default;transform:none;box-shadow:none;
+}
+.az-admin-back-icon{
+  width:23px;height:23px;display:grid;place-items:center;border-radius:7px;
+  border:1px solid currentColor;font-size:15px;line-height:1;
+}
+.az-dashboard-inquiry-list{display:grid;gap:8px}
+.az-dashboard-inquiry-card{
+  padding:11px 12px;border:1px solid rgba(255,255,255,.065);border-radius:13px;
+  background:linear-gradient(145deg,rgba(20,27,23,.82),rgba(10,14,12,.88));
+}
+.az-dashboard-inquiry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.az-dashboard-inquiry-head strong{display:block;color:#f1f4f1;font-size:11px}
+.az-dashboard-inquiry-head small{display:block;color:#68746d;font-size:8px;margin-top:3px}
+.az-dashboard-inquiry-grid{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(0,1.3fr);gap:8px;margin-top:10px}
+.az-dashboard-inquiry-grid>div{
+  min-width:0;padding:8px 9px;border:1px solid rgba(255,255,255,.05);border-radius:10px;background:rgba(255,255,255,.018)
+}
+.az-dashboard-inquiry-grid span{display:block;color:#68746d;font-size:7px;margin-bottom:4px}
+.az-dashboard-inquiry-grid b{display:block;color:#dce3de;font-size:9px;white-space:normal;overflow-wrap:anywhere;line-height:1.7}
+@media(max-width:720px){
+  .az-top-actions{gap:6px}
+  .az-admin-back-btn{min-height:40px;width:40px;padding:0;justify-content:center;border-radius:12px}
+  .az-admin-back-btn>span:last-child{display:none}
+}
+@media(max-width:460px){
+  .az-dashboard-inquiry-grid{grid-template-columns:1fr}
+}
