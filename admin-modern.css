@@ -1246,3 +1246,149 @@ body{min-height:100vh;overflow-x:hidden;background:
 @media(prefers-reduced-motion:reduce){
   .az-chart-live i,.az-dashboard-quick-card{animation:none!important;transition:none!important}
 }
+
+/* === V30 — LIVE DASHBOARD NAV SIGNAL === */
+.nav button[data-view="dashboard"],
+.az-menu-item[data-menu-view="dashboard"]{
+  position:relative;
+  overflow:hidden;
+}
+.nav button[data-view="dashboard"]{
+  isolation:isolate;
+  padding-right:42px;
+  background:
+    radial-gradient(130px 55px at 100% 50%,rgba(245,185,0,.095),transparent 72%),
+    linear-gradient(180deg,rgba(20,27,23,.82),rgba(12,17,14,.82));
+  border-color:rgba(245,185,0,.10);
+}
+.nav button[data-view="dashboard"]::before{
+  content:"";
+  position:absolute;
+  right:15px;
+  top:50%;
+  width:15px;
+  height:15px;
+  transform:translateY(-50%);
+  border:1px solid rgba(245,185,0,.72);
+  border-radius:50%;
+  box-shadow:
+    0 0 0 3px rgba(245,185,0,.05),
+    0 0 13px rgba(245,185,0,.24),
+    inset 0 0 9px rgba(245,185,0,.12);
+  animation:azDashNavOrbit 2.2s linear infinite;
+  pointer-events:none;
+}
+.nav button[data-view="dashboard"]::after{
+  content:"";
+  position:absolute;
+  right:20px;
+  top:50%;
+  width:5px;
+  height:5px;
+  transform:translate(50%,-50%);
+  border-radius:50%;
+  background:#ffd84f;
+  box-shadow:0 0 10px rgba(245,185,0,.85);
+  animation:azDashNavPulse 1.25s ease-in-out infinite;
+  pointer-events:none;
+}
+.nav button[data-view="dashboard"] span{
+  position:relative;
+}
+.nav button[data-view="dashboard"].active{
+  border-color:rgba(245,185,0,.34)!important;
+  background:
+    radial-gradient(140px 60px at 100% 50%,rgba(245,185,0,.14),transparent 72%),
+    linear-gradient(180deg,#1b231d,#121814)!important;
+  box-shadow:
+    inset -3px 0 var(--az-gold),
+    0 0 0 1px rgba(245,185,0,.04),
+    0 12px 28px rgba(0,0,0,.18);
+}
+.nav button[data-view="dashboard"].active::before{
+  border-color:rgba(255,216,79,.94);
+  box-shadow:
+    0 0 0 4px rgba(245,185,0,.075),
+    0 0 18px rgba(245,185,0,.34),
+    inset 0 0 12px rgba(245,185,0,.15);
+}
+.az-menu-item[data-menu-view="dashboard"]{
+  isolation:isolate;
+  border-color:rgba(245,185,0,.12)!important;
+  background:
+    radial-gradient(180px 80px at 100% 0%,rgba(245,185,0,.10),transparent 70%),
+    linear-gradient(145deg,rgba(22,29,25,.98),rgba(9,13,11,.98))!important;
+}
+.az-menu-item[data-menu-view="dashboard"]::before{
+  content:"";
+  position:absolute;
+  inset:-30%;
+  background:conic-gradient(from 0deg,transparent 0 69%,rgba(245,185,0,.22) 76%,transparent 83% 100%);
+  animation:azDashMenuSweep 3.8s linear infinite;
+  pointer-events:none;
+}
+.az-menu-item[data-menu-view="dashboard"]::after{
+  content:"LIVE";
+  position:absolute;
+  top:8px;
+  left:9px;
+  padding:3px 5px;
+  border:1px solid rgba(57,217,138,.20);
+  border-radius:999px;
+  background:rgba(57,217,138,.045);
+  color:#8fdcaf;
+  font:900 6px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.12em;
+  opacity:.9;
+  pointer-events:none;
+}
+.az-menu-item[data-menu-view="dashboard"] .az-menu-icon{
+  position:relative;
+  border-color:rgba(245,185,0,.28);
+  color:#ffd84f;
+  box-shadow:inset 0 0 14px rgba(245,185,0,.06),0 0 16px rgba(245,185,0,.05);
+  animation:azDashMenuIcon 2.1s ease-in-out infinite;
+}
+.az-menu-item[data-menu-view="dashboard"] .az-menu-icon::after{
+  content:"";
+  position:absolute;
+  inset:-5px;
+  border:1px solid rgba(245,185,0,.24);
+  border-radius:14px;
+  animation:azDashMenuRing 2.1s ease-out infinite;
+  pointer-events:none;
+}
+.az-menu-item[data-menu-view="dashboard"] .az-menu-copy,
+.az-menu-item[data-menu-view="dashboard"] > i{
+  position:relative;
+  z-index:1;
+}
+@keyframes azDashNavOrbit{
+  from{transform:translateY(-50%) rotate(0deg)}
+  to{transform:translateY(-50%) rotate(360deg)}
+}
+@keyframes azDashNavPulse{
+  0%,100%{transform:translate(50%,-50%) scale(.72);opacity:.55}
+  50%{transform:translate(50%,-50%) scale(1.24);opacity:1}
+}
+@keyframes azDashMenuSweep{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes azDashMenuIcon{
+  0%,100%{transform:scale(1);filter:brightness(1)}
+  50%{transform:scale(1.06);filter:brightness(1.14)}
+}
+@keyframes azDashMenuRing{
+  0%{transform:scale(.78);opacity:.75}
+  100%{transform:scale(1.28);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav button[data-view="dashboard"]::before,
+  .nav button[data-view="dashboard"]::after,
+  .az-menu-item[data-menu-view="dashboard"]::before,
+  .az-menu-item[data-menu-view="dashboard"] .az-menu-icon,
+  .az-menu-item[data-menu-view="dashboard"] .az-menu-icon::after{
+    animation:none!important;
+  }
+}
