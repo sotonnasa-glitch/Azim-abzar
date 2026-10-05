@@ -977,6 +977,32 @@
         ? active.toLocaleString('fa-IR') + ' محصول فعال · داده‌ها متصل'
         : 'محصولی برای نمایش پیدا نشد';
     }
+    if (!$('dashboardQuickActions')) {
+      const quickPanel = document.createElement('section');
+      quickPanel.id = 'dashboardQuickActions';
+      quickPanel.className = 'az-dashboard-quick-grid';
+      const statsRow = $('statOrders')?.closest('.cards');
+      if (statsRow?.parentNode) statsRow.parentNode.insertBefore(quickPanel, statsRow.nextSibling);
+    }
+
+    const salesSince = new Date(Date.now() - 29 * 86400000).toISOString();
+    const salesResult = await state.db.from('orders')
+      .select('total,created_at,status')
+      .gte('created_at', salesSince)
+      .order('created_at', { ascending: true })
+      .limit(5000);
+    renderDashboardSalesChart(salesResult.data || [], salesResult.error);
+
+    const quick = $('dashboardQuickActions');
+    if (quick && quick.dataset.ready !== '1') {
+      quick.dataset.ready = '1';
+      quick.innerHTML = [
+        ['orders','سفارش‌ها','مدیریت و پیگیری سفارش‌های ثبت‌شده','__AZICON_INVOICE__'],
+        ['inquiries','درخواست‌ها','استعلام‌ها و پیام‌های جدید','__AZICON_NOTE__'],
+        ['products','کاتالوگ محصولات','ویرایش سریع محصولات و قیمت‌ها','__AZICON_TOOLS__'],
+        ['reports','گزارش فروش','روند درآمد و پرفروش‌ها','__AZICON_TARGET__']
+      ].map(([view,title,sub,icon]) => '<button type="button" class="az-dashboard-quick-card" data-go="'+view+'"><span class="az-dashboard-quick-icon">'+icon+'</span><span><b>'+title+'</b><small>'+sub+'</small></span><i>↗</i></button>').join('');
+    }
 
     const [a, p] = await Promise.all([
       state.db.from('inquiries').select('id,full_name,mobile,subject,status,created_at').order('created_at', { ascending: false }).limit(6),
@@ -1007,6 +1033,62 @@
         miniStat('مشتریان', customers) + miniStat('درخواست جدید', inq) + miniStat('سفارش‌ها', orders) +
         '</div></div>';
     }
+  }
+
+  function renderDashboardSalesChart(rows, error) {
+    let panel = $('dashboardSalesChart');
+    if (!panel) {
+      panel = document.createElement('section');
+      panel.id = 'dashboardSalesChart';
+      panel.className = 'panel az-dashboard-chart';
+      const anchor = $('dashboardInquiries')?.closest('.panel');
+      if (anchor?.parentNode) anchor.parentNode.insertBefore(panel, anchor);
+      else $('view-dashboard')?.appendChild(panel);
+    }
+    if (error) {
+      panel.innerHTML = '<div class="panel-head"><div><h2>روند فروش</h2><div class="muted">۳۰ روز اخیر</div></div></div><div class="empty">__AZICON_ERROR__ دریافت داده‌های نمودار فروش ناموفق بود.</div>';
+      return;
+    }
+    const valid = (rows || []).filter(x => String(x.status || '').toLowerCase() !== 'cancelled');
+    const byDay = new Map();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      const key = d.toISOString().slice(0,10);
+      byDay.set(key, 0);
+    }
+    valid.forEach(x => {
+      const key = new Date(x.created_at).toISOString().slice(0,10);
+      if (byDay.has(key)) byDay.set(key, (byDay.get(key) || 0) + Number(x.total || 0));
+    });
+    const pointsData = [...byDay.entries()].map(([key,value]) => ({ key, value }));
+    const values = pointsData.map(x => x.value);
+    const total = values.reduce((s,v) => s + v, 0);
+    const peak = Math.max(...values, 0);
+    const peakIndex = values.indexOf(peak);
+    const max = Math.max(1, peak);
+    const W = 1000, H = 330, left = 54, right = 18, top = 28, bottom = 42;
+    const plotW = W - left - right, plotH = H - top - bottom;
+    const pts = pointsData.map((x,i) => ({
+      x: left + (plotW * i / Math.max(1, pointsData.length - 1)),
+      y: top + plotH - (x.value / max) * plotH,
+      ...x
+    }));
+    const line = pts.map((p,i) => (i ? 'L' : 'M') + p.x.toFixed(2) + ' ' + p.y.toFixed(2)).join(' ');
+    const area = 'M ' + left + ' ' + (top + plotH) + ' ' + pts.map(p => 'L ' + p.x.toFixed(2) + ' ' + p.y.toFixed(2)).join(' ') + ' L ' + (left + plotW) + ' ' + (top + plotH) + ' Z';
+    const grid = [0,1,2,3,4].map(i => {
+      const y = top + plotH * i / 4;
+      const value = max * (1 - i / 4);
+      return '<g><line x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(left+plotW)+'" y2="'+y.toFixed(1)+'" class="az-chart-gridline"/><text x="'+(left-10)+'" y="'+(y+4).toFixed(1)+'" class="az-chart-y">'+Math.round(value).toLocaleString('fa-IR')+'</text></g>';
+    }).join('');
+    const dots = pts.map(p => '<circle cx="'+p.x.toFixed(2)+'" cy="'+p.y.toFixed(2)+'" r="3.2" class="az-chart-point"><title>'+new Date(p.key+'T12:00:00').toLocaleDateString('fa-IR',{month:'short',day:'numeric'})+' · '+Math.round(p.value).toLocaleString('fa-IR')+' تومان</title></circle>').join('');
+    const labels = [0, Math.floor((pointsData.length-1)/2), pointsData.length-1].map(i => {
+      const p = pts[i];
+      return '<text x="'+p.x.toFixed(2)+'" y="'+(H-12)+'" text-anchor="middle" class="az-chart-x">'+new Date(p.key+'T12:00:00').toLocaleDateString('fa-IR',{month:'short',day:'numeric'})+'</text>';
+    }).join('');
+    const peakText = peakIndex >= 0 ? new Date(pointsData[peakIndex].key+'T12:00:00').toLocaleDateString('fa-IR',{month:'short',day:'numeric'}) : '—';
+    panel.innerHTML = '<div class="panel-head"><div><h2>روند فروش</h2><div class="muted">۳۰ روز اخیر · سفارش‌های لغوشده از نمودار حذف شده‌اند</div></div><span class="az-chart-live"><i></i> LIVE DATA</span></div>' +
+      '<div class="az-dashboard-chart-grid"><div class="az-sales-chart"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="نمودار فروش سی روز اخیر"><defs><linearGradient id="azSaleFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5b900" stop-opacity=".22"/><stop offset="100%" stop-color="#f5b900" stop-opacity="0"/></linearGradient></defs>'+grid+'<path d="'+area+'" fill="url(#azSaleFill)"/><path d="'+line+'" class="az-chart-line"/>'+dots+labels+'</svg></div>' +
+      '<aside class="az-chart-summary"><div class="az-chart-summary-main"><span>فروش ۳۰ روزه</span><strong>'+money(Math.round(total))+'</strong></div><div class="az-chart-stat"><span>بیشترین روز</span><b>'+money(Math.round(peak))+'</b><small>'+esc(peakText)+'</small></div><div class="az-chart-stat"><span>تعداد سفارش‌های شامل‌شده</span><b>'+valid.length.toLocaleString('fa-IR')+'</b><small>لغوشده‌ها محاسبه نشده‌اند</small></div></aside></div>';
   }
 
   function healthItemModern(label, ok, value) {
