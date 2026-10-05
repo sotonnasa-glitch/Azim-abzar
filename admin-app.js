@@ -832,10 +832,24 @@
     $('inquiryFilter').onchange = () => loadInquiries();
     $('reportPeriod')?.addEventListener('change', () => loadReports());
     $('reportRefresh')?.addEventListener('click', () => loadReports());
-    $('ordersSearch')?.addEventListener('input', () => { clearTimeout(ordersSearchTimer); ordersSearchTimer = setTimeout(() => loadOrders(), 220); });
-    $('clearOrdersSearch')?.addEventListener('click', () => { if($('ordersSearch')) $('ordersSearch').value=''; loadOrders(); });
+    $('ordersSearch')?.addEventListener('input', () => {
+      clearTimeout(ordersSearchTimer);
+      ordersPage = 1;
+      ordersSearchTimer = setTimeout(() => loadOrders(), 220);
+    });
+    $('clearOrdersSearch')?.addEventListener('click', () => {
+      if($('ordersSearch')) $('ordersSearch').value='';
+      ['ordersStatusFilter','ordersPaymentFilter','ordersShippingFilter','ordersPeriodFilter'].forEach((id) => { if ($(id)) $(id).value = id === 'ordersPeriodFilter' ? '0' : ''; });
+      ordersPage = 1;
+      loadOrders();
+    });
+    $('ordersPageSize')?.addEventListener('change', () => {
+      ordersPageSize = Math.max(1, Number($('ordersPageSize').value || 25));
+      ordersPage = 1;
+      loadOrders();
+    });
     ['ordersStatusFilter','ordersPaymentFilter','ordersShippingFilter','ordersPeriodFilter'].forEach((id) => {
-      $(id)?.addEventListener('change', () => loadOrders());
+      $(id)?.addEventListener('change', () => { ordersPage = 1; loadOrders(); });
     });
     $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
     $('refreshReviewsBtn')?.addEventListener('click', () => loadReviews());
@@ -2455,6 +2469,35 @@
   }
 
   let ordersSearchTimer = null;
+  let ordersPage = 1;
+  let ordersPageSize = 25;
+  let ordersLoadSeq = 0;
+
+  function renderOrdersPagination(totalCount, page, pageCount, start, end) {
+    if (!totalCount) return '';
+    const pageItems = [];
+    if (pageCount <= 7) {
+      for (let i = 1; i <= pageCount; i++) pageItems.push(i);
+    } else if (page <= 4) {
+      pageItems.push(1, 2, 3, 4, 5, '…', pageCount);
+    } else if (page >= pageCount - 3) {
+      pageItems.push(1, '…', pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1, pageCount);
+    } else {
+      pageItems.push(1, '…', page - 1, page, page + 1, '…', pageCount);
+    }
+    const buttons = pageItems.map((item) => item === '…'
+      ? '<span class="az-orders-page-ellipsis" aria-hidden="true">…</span>'
+      : '<button type="button" class="az-orders-page-btn ' + (item === page ? 'active' : '') + '" data-order-page="' + item + '" aria-current="' + (item === page ? 'page' : 'false') + '">' + item.toLocaleString('fa-IR') + '</button>'
+    ).join('');
+    return '<div class="az-orders-pagination">' +
+      '<div class="az-orders-page-summary">نمایش <b>' + start.toLocaleString('fa-IR') + '–' + end.toLocaleString('fa-IR') + '</b> از <b>' + totalCount.toLocaleString('fa-IR') + '</b> سفارش</div>' +
+      '<div class="az-orders-page-buttons">' +
+        '<button type="button" class="az-orders-page-btn az-orders-page-nav" data-order-page="' + (page > 1 ? page - 1 : page) + '" ' + (page > 1 ? '' : 'disabled') + '>‹ قبلی</button>' +
+        buttons +
+        '<button type="button" class="az-orders-page-btn az-orders-page-nav" data-order-page="' + (page < pageCount ? page + 1 : page) + '" ' + (page < pageCount ? '' : 'disabled') + '>بعدی ›</button>' +
+      '</div>' +
+    '</div>';
+  }
 
   async function loadOrders() {
     const search = String($('ordersSearch')?.value || '').trim();
@@ -2462,9 +2505,10 @@
     const paymentFilter = String($('ordersPaymentFilter')?.value || '');
     const shippingFilter = String($('ordersShippingFilter')?.value || '');
     const periodFilter = Number($('ordersPeriodFilter')?.value || 0);
+    const loadSeq = ++ordersLoadSeq;
     let q = state.db.from('orders')
-      .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at')
-      .order('created_at', { ascending: false }).limit(search || statusFilter || paymentFilter || shippingFilter || periodFilter ? 2000 : 200);
+      .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at', { count: 'exact' })
+      .order('created_at', { ascending: false });
     if (search) {
       const s = search.replace(/[%(),]/g, ' ');
       q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
@@ -2473,9 +2517,16 @@
     if (paymentFilter) q = q.eq('payment_status', paymentFilter);
     if (shippingFilter) q = q.eq('shipping_status', shippingFilter);
     if (periodFilter) q = q.gte('created_at', new Date(Date.now() - periodFilter * 86400000).toISOString());
-    const r = await q;
+    const r = await q.range((ordersPage - 1) * ordersPageSize, (ordersPage * ordersPageSize) - 1);
+    if (loadSeq !== ordersLoadSeq) return;
     if (r.error) return showSectionError('ordersTable', r.error);
     const rows = r.data || [];
+    const totalCount = Number(r.count || 0);
+    const pageCount = Math.max(1, Math.ceil(totalCount / ordersPageSize));
+    if (ordersPage > pageCount) {
+      ordersPage = pageCount;
+      return loadOrders();
+    }
     if (!rows.length) {
       $('ordersTable').innerHTML = '<div class="empty">هنوز سفارشی ثبت نشده؛ از «＋ سفارش جدید» استفاده کن.</div>';
       return;
@@ -2490,6 +2541,7 @@
           .order('id')
       : { data: [], error: null };
 
+    if (loadSeq !== ordersLoadSeq) return;
     if (itemsRes.error) return showSectionError('ordersTable', itemsRes.error);
 
     const itemsByOrder = new Map();
@@ -2624,14 +2676,20 @@
       '</article>';
     }).join('');
 
+    const rangeStart = ((ordersPage - 1) * ordersPageSize) + 1;
+    const rangeEnd = Math.min(ordersPage * ordersPageSize, totalCount);
+    const paginationHtml = renderOrdersPagination(totalCount, ordersPage, pageCount, rangeStart, rangeEnd);
+
     $('ordersTable').innerHTML =
       '<div class="az-order-overview">' +
-        stat('کل سفارش‌ها', rows.length.toLocaleString('fa-IR'), 'ثبت‌شده در پنل') +
-        stat('در حال پیگیری', pendingCount.toLocaleString('fa-IR'), 'در چرخه پردازش') +
-        stat('نیازمند پرداخت', unpaidCount.toLocaleString('fa-IR'), 'پرداخت نهایی نشده') +
-        stat('ارزش سفارش‌ها', money(totalValue), 'جمع مبلغ نهایی') +
+        stat('کل سفارش‌ها', totalCount.toLocaleString('fa-IR'), 'مطابق فیلترهای فعلی') +
+        stat('در حال پیگیری', pendingCount.toLocaleString('fa-IR'), 'در همین صفحه') +
+        stat('نیازمند پرداخت', unpaidCount.toLocaleString('fa-IR'), 'در همین صفحه') +
+        stat('ارزش سفارش‌ها', money(totalValue), 'مجموع همین صفحه') +
       '</div>' +
-      '<div class="az-orders-list">' + body + '</div>';
+      paginationHtml +
+      '<div class="az-orders-list">' + body + '</div>' +
+      paginationHtml;
   }
 
 
@@ -4794,6 +4852,16 @@
     const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
     const ro = e.target.closest('[data-restore-order]'); if (ro) { e.preventDefault(); e.stopPropagation(); openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder); return; }
+    const op = e.target.closest('[data-order-page]');
+    if (op) {
+      e.preventDefault();
+      const targetPage = Number(op.dataset.orderPage || 1);
+      if (!op.disabled && Number.isFinite(targetPage) && targetPage >= 1) {
+        ordersPage = targetPage;
+        loadOrders();
+      }
+      return;
+    }
     const o = e.target.closest('[data-edit-order]'); if (o) { e.preventDefault(); openOrder(o.dataset.editOrder); return; }
     const oc = e.target.closest('[data-order-card]'); if (oc) { e.preventDefault(); openOrder(oc.dataset.orderCard); return; }
     const sr = e.target.closest('[data-service-action]'); if (sr) { e.preventDefault(); e.stopPropagation(); handleAdminServiceRequest(sr.dataset.id, sr.dataset.kind, sr.dataset.action, sr); return; }
