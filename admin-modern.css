@@ -1601,3 +1601,73 @@ body{min-height:100vh;overflow-x:hidden;background:
   .az-order-request{justify-content:center;text-align:center}
   .az-order-quick-action,.az-order-manage{width:100%;min-height:44px}
 }
+
+
+/* === Orders scalability 2026-10-06 === */
+.az-orders-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:10px 0;
+  padding:9px 10px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(17,23,20,.9),rgba(9,13,11,.94));
+}
+.az-orders-page-summary{
+  color:#718078;
+  font-size:9px;
+  white-space:nowrap;
+}
+.az-orders-page-summary b{color:#e6ece8}
+.az-orders-page-buttons{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  flex-wrap:wrap;
+}
+.az-orders-page-btn{
+  min-width:32px;
+  min-height:32px;
+  padding:5px 8px;
+  border:1px solid #2d3831;
+  border-radius:8px;
+  background:#121815;
+  color:#aeb8b1;
+  font-size:9px;
+  font-weight:900;
+}
+.az-orders-page-btn:hover:not(:disabled){border-color:rgba(245,185,0,.38);color:#fff;background:#181f1b}
+.az-orders-page-btn.active{border-color:rgba(245,185,0,.42);background:rgba(245,185,0,.13);color:#ffd84f;box-shadow:inset 0 0 0 1px rgba(245,185,0,.06)}
+.az-orders-page-btn:disabled{opacity:.3;cursor:default}
+.az-orders-page-nav{padding-inline:10px}
+.az-orders-page-ellipsis{min-width:20px;text-align:center;color:#637068;font-size:11px}
+#view-orders .panel-head{
+  position:sticky;
+  top:0;
+  z-index:4;
+  padding-top:10px;
+  padding-bottom:10px;
+  background:linear-gradient(180deg,rgba(16,21,19,.99),rgba(16,21,19,.95));
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+@media(max-width:720px){
+  .az-orders-pagination{align-items:stretch;flex-direction:column;gap:7px;padding:8px}
+  .az-orders-page-summary{text-align:center}
+  .az-orders-page-buttons{justify-content:center}
+  .az-orders-page-btn{min-width:31px}
+  #view-orders .panel-head{position:sticky;top:0}
+}
+@media(max-width:560px){
+  .az-order-card-flow .az-order-timeline{
+    overflow:visible!important;
+    flex-wrap:wrap!important;
+    white-space:normal;
+    gap:5px!important;
+  }
+  .az-order-card-flow .az-order-step{flex:0 0 auto!important}
+}
