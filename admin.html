@@ -4,7 +4,7 @@
   <meta name="description" content="پنل مدیریت داخلی عظیم ابزار برای مدیریت محصولات، سفارش‌ها، مشتریان و تنظیمات فروشگاه."><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>پنل مدیریت | عظیم ابزار</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="admin-modern.css?v=35">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="admin-modern.css?v=36">
 <script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <style>
 :root{--bg:#070908;--panel:#101513;--line:#29312d;--text:#f4f6f5;--muted:#8e9791;--gold:#f5b900;--ok:#39d98a;--red:#ff6b6b}
@@ -295,17 +295,20 @@
     </div>
   </div>
   <div id="ordersTable" class="table-wrap"></div>
-</div></section><section id="adminServiceRequestsPanel" class="panel" hidden>
-  <div class="panel-head">
-    <div>
-      <h2>درخواست‌های لغو و مرجوعی</h2>
-      <div class="muted">مدیریت درخواست‌های مشتری؛ عملیات حساس فقط با نشست MFA تأییدشده انجام می‌شود.</div>
+  <button id="serviceRequestsLauncher" class="az-service-launcher" type="button" hidden aria-expanded="false">
+    <span class="az-service-launcher-dot"></span>
+    <span class="az-service-launcher-copy"><b>درخواست‌های لغو و مرجوعی</b><small id="serviceRequestsLauncherText">درخواستی برای بررسی نیست</small></span>
+    <strong id="serviceRequestsCount">۰</strong>
+    <i>←</i>
+  </button>
+</div></section><section id="adminServiceRequestsPanel" class="az-service-overlay" hidden aria-hidden="true">
+  <div class="az-service-dialog" role="dialog" aria-modal="true" aria-labelledby="serviceRequestsTitle">
+    <div class="az-service-dialog-head">
+      <div><span>CONTROL ALERT</span><h2 id="serviceRequestsTitle">درخواست‌های لغو و مرجوعی</h2><small>فقط موارد باز و نیازمند بررسی مدیر</small></div>
+      <div class="tools"><button id="refreshServiceRequestsBtn" class="btn ghost" type="button">↻ بروزرسانی</button><button id="closeServiceRequestsBtn" class="x" type="button" aria-label="بستن">×</button></div>
     </div>
-    <div class="tools">
-      <button id="refreshServiceRequestsBtn" class="btn ghost" type="button">↻ بروزرسانی</button>
-    </div>
+    <div id="serviceRequestsTable" class="az-service-dialog-body"></div>
   </div>
-  <div id="serviceRequestsTable" class="table-wrap"></div>
 </section><section id="view-reports" class="view"><div class="panel"><div class="panel-head"><div><h2>گزارش فروش</h2><div class="muted">فقط سفارش‌های غیرلغوشده؛ مبالغ از داده ثبت‌شده سفارش خوانده می‌شوند.</div></div><div class="tools" style="display:flex;gap:8px;flex-wrap:wrap"><select id="reportPeriod" class="select"><option value="7">۷ روز</option><option value="30" selected>۳۰ روز</option><option value="90">۹۰ روز</option><option value="365">یک سال</option></select><button id="reportRefresh" class="btn ghost" type="button">بروزرسانی</button></div></div><div id="salesReport"></div></div></section><section id="view-customers" class="view"><div class="panel"><div class="panel-head"><h2>مشتریان</h2></div><div id="customersTable" class="table-wrap"></div></div></section>
 <section id="view-media" class="view"><div class="panel"><div class="panel-head"><h2>رسانه</h2><div class="tools"><select id="mediaFolder" class="select"><option value="general">عمومی</option><option value="products">محصولات</option><option value="home">صفحه اصلی</option><option value="brands">برندها</option><option value="categories">دسته‌بندی‌ها</option></select><input id="mediaFile" class="input" type="file" accept="image/*"><button id="uploadMediaBtn" class="btn">آپلود</button></div></div><div id="mediaTable" class="table-wrap"></div></div></section>
 <section id="view-content" class="view"><div class="panel"><div class="panel-head"><h2>محتوای سایت</h2><div class="tools"><button id="homeCopyBtn" class="btn secondary">__AZICON_HOME__ ویرایش صفحه اصلی</button><button id="contactCopyBtn" class="btn secondary">__AZICON_PHONE__ ارتباط با ما</button><button id="footerCopyBtn" class="btn secondary">__AZICON_PIN__ فوتر و اطلاعات فروشگاه</button><button id="newContentBtn" class="btn ghost">＋ بخش دیگر</button></div></div><div class="az-page-edit-cards"><button type="button" class="az-page-edit-card" id="homeCopyCard"><span class="az-page-edit-icon">__AZICON_HOME__</span><span><strong>صفحه اصلی</strong><small>هدر، SEO، هیرو، مسیرها، مزیت‌ها و فوتر</small></span><b>ویرایش ←</b></button><button type="button" class="az-page-edit-card" id="contactCopyCard"><span class="az-page-edit-icon">__AZICON_PHONE__</span><span><strong>صفحه ارتباط با ما</strong><small>تلفن، ایمیل، آدرس، ساعات، فرم، FAQ و فوتر</small></span><b>ویرایش ←</b></button><button type="button" class="az-page-edit-card" id="footerCopyCard"><span class="az-page-edit-icon">__AZICON_PIN__</span><span><strong>فوتر و اطلاعات فروشگاه</strong><small>نام، معرفی، دسته‌بندی‌ها، خدمات، آدرس، تلفن و ساعات کاری در همه صفحات</small></span><b>ویرایش ←</b></button></div><div id="contentTable" class="table-wrap"></div></div></section><section id="view-ai-products" class="view"><div id="aiProductsEditor" class="panel"></div></section><section id="view-ai" class="view"><div class="panel"><div class="panel-head"><div><h2>هوش مصنوعی</h2><div class="muted">چت عمومی بدون محصول و تنظیمات سرویس</div></div><div class="tools"><span id="aiHealth" class="badge ok">● فعال</span><button class="btn secondary" id="aiTestTop" type="button">تست API</button></div></div><div id="aiEditor"></div></div></section><section id="view-admins" class="view"><div class="panel"><div class="panel-head"><div><h2>کاربران مدیر</h2><span class="muted" style="font-size:9px">دعوت همکار از طریق Supabase Auth؛ عملیات فقط در نشست MFA انجام می‌شود.</span></div><button id="inviteAdminBtn" class="btn" type="button">＋ دعوت کاربر</button></div><div id="adminInviteBox" class="panel" hidden style="margin:12px 0;background:rgba(255,255,255,.02)"><form id="adminInviteForm" class="form-grid"><div class="field"><label>ایمیل همکار</label><input id="inviteEmail" class="input" type="email" autocomplete="email" required placeholder="name@example.com"></div><div class="field"><label>نام (اختیاری)</label><input id="inviteName" class="input" autocomplete="name" maxlength="120" placeholder="نام همکار"></div><div class="field"><label>نقش</label><select id="inviteRole" class="select"><option value="sales">فروش</option><option value="editor">ویرایشگر</option><option value="admin">ادمین</option></select></div><div class="field" style="display:flex;gap:8px;align-items:flex-end"><button class="btn" type="submit">ارسال دعوت</button><button id="cancelInviteBtn" class="btn ghost" type="button">انصراف</button></div><div id="inviteStatus" class="status field full"></div></form></div><div id="adminsTable" class="table-wrap"></div></div></section><section id="view-audit" class="view"><div class="panel"><div class="panel-head"><h2>گزارش فعالیت</h2></div><div id="auditTable" class="table-wrap"></div></div></section><section id="view-security" class="view"><div id="securityPanel" class="panel"></div></section>
@@ -351,7 +354,7 @@
     <div id="commandList" class="az-command-list"></div>
   </div>
 </div>
-<script src="admin-app.js?v=57"></script>
+<script src="admin-app.js?v=58"></script>
 <script src="azim-notification-admin.js?v=1" defer></script>
 <script>
 (function(){
