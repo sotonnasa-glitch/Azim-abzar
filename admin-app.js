@@ -2742,13 +2742,19 @@
     const panel = $('adminServiceRequestsPanel');
     const box = $('serviceRequestsTable');
     if (!panel || !box) return;
+    const wasOpen = !panel.hidden;
     if (!can.all()) {
       panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+      const launcher = $('serviceRequestsLauncher');
+      if (launcher) launcher.hidden = true;
       return;
     }
     // The request center is an on-demand overlay; never push it below a long order list.
-    panel.hidden = true;
-    panel.setAttribute('aria-hidden', 'true');
+    if (!wasOpen) {
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+    }
     const launcher = $('serviceRequestsLauncher');
     if (launcher) launcher.hidden = false;
     const launcherCount = $('serviceRequestsCount');
