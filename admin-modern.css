@@ -1011,3 +1011,110 @@ body{min-height:100vh;overflow-x:hidden;background:
 @media(max-width:430px){
   .az-payment-cards{grid-template-columns:1fr}
 }
+
+
+/* === AZIM ADMIN // V27 DASHBOARD COMMAND CENTER === */
+.az-dashboard-hero{
+  min-height:250px;
+  grid-template-columns:minmax(0,1.8fr) minmax(280px,.65fr);
+  padding:28px 30px;
+  border-radius:24px;
+  background:
+    radial-gradient(520px 240px at 92% 5%,rgba(245,185,0,.16),transparent 67%),
+    radial-gradient(420px 220px at 4% 100%,rgba(57,217,138,.065),transparent 70%),
+    linear-gradient(140deg,#111a15 0%,#080c0a 72%);
+}
+.az-dashboard-hero:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.018) 50%,transparent 65%);
+  transform:translateX(-100%);
+  animation:azDashSweep 7s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes azDashSweep{0%,72%{transform:translateX(-100%)}88%,100%{transform:translateX(100%)}}
+.az-hero-copy{position:relative;z-index:1}
+.az-hero-copy h2{font-size:30px!important}
+.az-hero-copy p{font-size:11px;max-width:680px}
+.az-hero-actions .btn{min-height:40px}
+.az-hero-side{padding-left:12px}
+.az-hero-status{min-width:145px}
+.az-hero-status b{display:block;font-size:13px}
+.az-hero-status small{display:block;margin-top:5px;color:#748078;font-size:9px;line-height:1.8}
+.az-hero-ring{
+  width:128px;height:128px;position:relative;
+  border-color:rgba(245,185,0,.48)!important;
+}
+.az-hero-ring:before{
+  content:"";position:absolute;inset:7px;border-radius:50%;
+  border:1px dashed rgba(245,185,0,.22);
+  animation:azDashSpin 18s linear infinite;
+}
+@keyframes azDashSpin{to{transform:rotate(360deg)}}
+.az-dashboard-quick-panel{padding:18px!important}
+.az-dashboard-quick-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.az-dashboard-quick-card{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:11px;
+  text-align:right;
+  direction:rtl;
+  min-height:78px;
+  padding:12px 13px;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:15px;
+  background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(255,255,255,.008));
+  color:var(--az-text);
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.az-dashboard-quick-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(245,185,0,.28);
+  background:linear-gradient(145deg,rgba(245,185,0,.075),rgba(255,255,255,.012));
+  box-shadow:0 14px 35px rgba(0,0,0,.20);
+}
+.az-dashboard-quick-card .az-quick-icon{
+  width:38px;height:38px;display:grid;place-items:center;flex:0 0 auto;
+  border-radius:12px;background:rgba(245,185,0,.10);
+  border:1px solid rgba(245,185,0,.18);
+  color:var(--az-gold2);font-size:16px;
+}
+.az-dashboard-quick-card span:not(.az-quick-icon){
+  min-width:0;display:block;
+}
+.az-dashboard-quick-card b,.az-dashboard-quick-card small{
+  display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.az-dashboard-quick-card b{font-size:11px}
+.az-dashboard-quick-card small{font-size:8px;color:#728078;margin-top:4px}
+.az-dashboard-quick-card em{font-style:normal;color:#8b9790;font-size:13px;transition:transform .18s ease,color .18s ease}
+.az-dashboard-quick-card:hover em{transform:translateX(-3px);color:var(--az-gold2)}
+#dashboardHealth>.panel{margin-top:14px}
+#dashboardHealth .az-health-card{
+  min-height:100px;
+  transition:transform .16s ease,border-color .16s ease;
+}
+#dashboardHealth .az-health-card:hover{transform:translateY(-1px);border-color:rgba(245,185,0,.16)}
+@media(max-width:1050px){
+  .az-dashboard-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .az-dashboard-hero{grid-template-columns:minmax(0,1fr) auto}
+}
+@media(max-width:720px){
+  .az-dashboard-hero{grid-template-columns:1fr;min-height:0;padding:21px 18px}
+  .az-hero-copy h2{font-size:24px!important}
+  .az-hero-side{justify-content:flex-start;padding:3px 0 0}
+  .az-hero-ring{width:94px;height:94px}
+  .az-hero-ring span{font-size:26px}
+  .az-dashboard-quick-grid{grid-template-columns:1fr}
+  .az-dashboard-quick-card{min-height:72px}
+}
+@media(prefers-reduced-motion:reduce){
+  .az-dashboard-hero:before,.az-hero-ring:before{animation:none}
+}
