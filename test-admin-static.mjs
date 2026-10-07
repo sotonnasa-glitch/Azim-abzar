@@ -227,3 +227,5 @@ if (!js.includes("سفارش جدید همیشه از مرحله «در انتظ
 if (!js.includes("سفارش جدید بدون ثبت پرداخت ایجاد می‌شود")) fail('new order payment state is not locked to unpaid');
 if (!js.includes("این سفارش فعلاً شرایط ثبت ارسال را ندارد")) fail('shipment action is missing client-side state guard');
 if (!orderStatus.includes("refund_summary") || !orderStatus.includes("وضعیت عودت وجه")) fail('customer order tracking refund hook is missing');
+
+// CI final refund regression marker
