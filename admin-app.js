@@ -2,6 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V37) return;
+  window.__AZIM_ADMIN_V38 = true;
   window.__AZIM_ADMIN_V37 = true;
   window.__AZIM_ADMIN_V36 = true;
   window.__AZIM_ADMIN_V35 = true;
@@ -2527,7 +2528,7 @@
     const periodFilter = Number($('ordersPeriodFilter')?.value || 0);
     const loadSeq = ++ordersLoadSeq;
     let q = state.db.from('orders')
-      .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at', { count: 'exact' })
+      .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,payment_method,payment_reference,paid_at,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at', { count: 'exact' })
       .order('created_at', { ascending: false });
     if (search) {
       const s = search.replace(/[%(),]/g, ' ');
@@ -2950,11 +2951,11 @@
 
     const statusField = x
       ? '<div class="field"><label>وضعیت سفارش</label><div class="az-readonly-field"><b>' + esc(labels[x.status] || x.status || '—') + '</b><small>برای تغییر مرحله از «اقدام بعدی» استفاده کنید.</small></div><input type="hidden" name="status" value="' + esc(x.status || 'pending') + '"></div>'
-      : '<div class="field"><label>وضعیت سفارش</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered'], 'pending', labels) + '</select></div>';
+      : '<div class="field"><label>وضعیت سفارش</label><div class="az-readonly-field"><b>در انتظار تأیید</b><small>سفارش جدید همیشه از مرحله «در انتظار» شروع می‌شود.</small></div><input type="hidden" name="status" value="pending"></div>';
 
     const shippingField = x
       ? '<div class="field"><label>وضعیت ارسال</label><div class="az-readonly-field"><b>' + esc(labels[x.shipping_status] || x.shipping_status || '—') + '</b><small>ثبت بسته‌بندی و ارسال از عملیات مرحله‌ای انجام می‌شود.</small></div><input type="hidden" name="shipping_status" value="' + esc(x.shipping_status || 'pending') + '"></div>'
-      : '<div class="field"><label>وضعیت ارسال</label><select class="select" name="shipping_status">' + selectOptions(['pending','packed','shipped','delivered'], 'pending', labels) + '</select></div>';
+      : '<div class="field"><label>وضعیت ارسال</label><div class="az-readonly-field"><b>در انتظار ارسال</b><small>بسته‌بندی، ارسال و تحویل فقط از عملیات مرحله‌ای ثبت می‌شوند.</small></div><input type="hidden" name="shipping_status" value="pending"></div>';
 
     return '<div class="az-order-editor">' +
       '<div class="az-order-modal-head">' + customerHtml + '</div>' +
@@ -2969,7 +2970,7 @@
             statusField +
             (x
               ? '<div class="field"><label>وضعیت پرداخت</label><div class="az-readonly-field"><b>' + esc(labels[x.payment_status] || x.payment_status || '—') + '</b><small>وضعیت مالی سفارش موجود از مسیر پرداخت/عودت تغییر می‌کند.</small></div><input type="hidden" name="payment_status" value="' + esc(x.payment_status || 'unpaid') + '"></div>'
-              : '<div class="field"><label>وضعیت پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], 'unpaid', labels) + '</select><small class="field-hint">برای سفارش موجود، تغییر وضعیت مالی از فرم عمومی انجام نمی‌شود.</small></div>') +
+              : '<div class="field"><label>وضعیت پرداخت</label><div class="az-readonly-field"><b>پرداخت نشده</b><small>سفارش جدید بدون ثبت پرداخت ایجاد می‌شود؛ سپس پرداخت دستی از عملیات امن ثبت می‌شود.</small></div><input type="hidden" name="payment_status" value="unpaid"></div>') +
           '</div>' +
         '</details>' +
 
@@ -3044,16 +3045,18 @@
   function orderActionPlan(x) {
     if (!x) return { key:'none', label:'مدیریت سفارش', tone:'warn', kind:'open' };
     if (x.status === 'cancelled') return { key:'restore', label:'بازگردانی سفارش', tone:'red', kind:'restore' };
-    if (['unpaid','pending'].includes(x.payment_status)) {
-      if (['phone','message'].includes(x.payment_method)) return { key:'record_manual_payment', label:'ثبت پرداخت دستی', tone:'warn', kind:'manual_payment' };
-      return { key:'review_payment', label:'بررسی پرداخت', tone:'warn', kind:'review' };
+    if (x.status === 'delivered' || x.shipping_status === 'delivered') return { key:'done', label:'سفارش تکمیل شده', tone:'ok', kind:'none' };
+    if (x.payment_status !== 'paid') {
+      if (['unpaid','pending'].includes(x.payment_status) && ['phone','message'].includes(x.payment_method)) {
+        return { key:'record_manual_payment', label:'ثبت پرداخت دستی', tone:'warn', kind:'manual_payment' };
+      }
+      return { key:'review_payment', label:'بررسی وضعیت پرداخت', tone:'warn', kind:'review' };
     }
-    if (x.status === 'pending') return { key:'confirm_order', label:'تأیید سفارش', tone:'warn', kind:'transition' };
-    if (x.status === 'confirmed') return { key:'start_processing', label:'شروع پردازش', tone:'warn', kind:'transition' };
+    if (x.status === 'pending' && x.shipping_status === 'pending') return { key:'confirm_order', label:'تأیید سفارش', tone:'warn', kind:'transition' };
+    if (x.status === 'confirmed' && x.shipping_status === 'pending') return { key:'start_processing', label:'شروع پردازش', tone:'warn', kind:'transition' };
     if (x.status === 'processing' && x.shipping_status === 'pending') return { key:'mark_packed', label:'ثبت بسته‌بندی', tone:'warn', kind:'transition' };
     if (x.status === 'processing' && x.shipping_status === 'packed') return { key:'mark_shipped', label:'ثبت ارسال و رهگیری', tone:'warn', kind:'shipping' };
     if (x.status === 'shipped' && x.shipping_status === 'shipped') return { key:'mark_delivered', label:'ثبت تحویل', tone:'ok', kind:'transition' };
-    if (x.status === 'delivered' || x.shipping_status === 'delivered') return { key:'done', label:'سفارش تکمیل شده', tone:'ok', kind:'none' };
     return { key:'open', label:'بررسی سفارش', tone:'warn', kind:'open' };
   }
 
@@ -3144,6 +3147,8 @@
           '<div><span>تخفیف</span><b>' + (Number(x.discount || 0) ? money(x.discount) : 'بدون تخفیف') + '</b></div>' +
           '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'هماهنگی با واحد فروش') + '</b></div>' +
           '<div><span>مبلغ نهایی</span><b class="gold">' + money(x.total) + '</b></div>' +
+          '<div><span>شناسه پرداخت</span><b dir="ltr">' + esc(x.payment_reference || '—') + '</b></div>' +
+          '<div><span>زمان پرداخت</span><b>' + dateFa(x.paid_at) + '</b></div>' +
         '</div></div>' +
       '</details>' +
 
@@ -3205,6 +3210,8 @@
         .eq('id',id).single();
       if(error) throw error;
       if(!['phone','message'].includes(data.payment_method)) return toast('__AZICON_BLOCK__ این سفارش از مسیر پرداخت دستی قابل تأیید نیست.');
+      if(data.status==='cancelled') return toast('__AZICON_BLOCK__ سفارش لغوشده قابل ثبت پرداخت دستی نیست.');
+      if(!['unpaid','pending'].includes(data.payment_status)) return toast('__AZICON_BLOCK__ این سفارش در وضعیت قابل ثبت پرداخت دستی نیست.');
       openModal('ثبت پرداخت دستی',
         '<form id="manualPaymentForm" class="az-shipping-action-form">' +
           '<div class="az-shipping-action-intro"><span>MANUAL PAYMENT CONTROL</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>مبلغ سفارش: ' + money(data.total) + ' · روش: ' + esc(orderMethodText(data.payment_method)) + '</small></div>' +
@@ -3244,6 +3251,9 @@
     try {
       const {data,error}=await state.db.from('orders').select('id,order_code,status,payment_status,shipping_status,tracking_code,tracking_url,shipping_carrier').eq('id',id).single();
       if(error) throw error;
+      if(data.status!=='processing' || data.shipping_status!=='packed' || data.payment_status!=='paid') {
+        return toast('__AZICON_BLOCK__ این سفارش فعلاً شرایط ثبت ارسال را ندارد.');
+      }
       openModal('ثبت ارسال سفارش',
         '<form id="shippingActionForm" class="az-shipping-action-form">' +
           '<div class="az-shipping-action-intro"><span>SHIPMENT CONTROL</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>با ثبت این اطلاعات، سفارش به «ارسال شده» منتقل می‌شود.</small></div>' +
