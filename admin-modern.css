@@ -819,6 +819,7 @@ body{min-height:100vh;overflow-x:hidden;background:
 .az-order-product-row b{display:block;color:#f1f4f1;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .az-order-product-row small{display:block;margin-top:3px;color:#758078;font-size:8px}
 .az-order-product-row>strong{flex:none;color:#f5d260;font-size:10px}
+.az-order-products-empty{color:#78827c;font-size:9px}
 .az-order-products-more{display:block;margin-top:7px;color:#747e78;font-size:7px;line-height:1.7}
 .az-order-meta{
   display:grid;
