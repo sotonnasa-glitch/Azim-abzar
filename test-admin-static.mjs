@@ -3,6 +3,9 @@ import { readFileSync } from 'node:fs';
 const html = readFileSync('admin.html', 'utf8');
 const js = readFileSync('admin-app.js', 'utf8');
 const paymentMigration = readFileSync('supabase/migrations/20260926211435_admin_payment_control_center.sql', 'utf8');
+const orderTransitionMigration = readFileSync('supabase/migrations/20261007090000_admin_order_control_center.sql', 'utf8');
+const paidOrderGuardMigration = readFileSync('supabase/migrations/20261007090300_guard_paid_order_amount_changes.sql', 'utf8');
+const manualPaymentMigration = readFileSync('supabase/migrations/20261007090400_admin_manual_payment_control.sql', 'utf8');
 
 const css = readFileSync('admin-modern.css', 'utf8');
 const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section');
@@ -173,6 +176,9 @@ if (!js.includes("window.__AZIM_ADMIN_V37 = true;")) fail('admin script version 
 if (!js.includes("sectionOpen('items')")) fail('order control items section is not compact by default');
 if (!js.includes("data-order-control-action") || !js.includes("data-order-edit-full")) fail('order control action hooks are missing');
 if (!js.includes("record_manual_payment") || !js.includes("openManualPaymentAction")) fail('manual payment action is missing');
+if (!orderTransitionMigration.includes("azim_admin_transition_order") || !orderTransitionMigration.includes("revoke execute on function public.azim_admin_transition_order")) fail('order transition migration is incomplete');
+if (!paidOrderGuardMigration.includes("orders_paid_amount_guard") || !paidOrderGuardMigration.includes("paid','partially_refunded','refunded")) fail('paid-order amount guard migration is incomplete');
+if (!manualPaymentMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'") || !manualPaymentMigration.includes("azim_admin_record_manual_payment") || !manualPaymentMigration.includes("revoke execute on function public.azim_admin_record_manual_payment")) fail('manual payment migration is incomplete');
 if (!js.includes("state.db.rpc('azim_admin_record_manual_payment'")) fail('manual payment RPC is not wired');
 if (!html.includes('admin-app.js?v=60')) fail('admin app cache version is stale');
 
