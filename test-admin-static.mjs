@@ -8,12 +8,13 @@ const orderTransitionMigration = readFileSync('supabase/migrations/2026100709000
 const paidOrderGuardMigration = readFileSync('supabase/migrations/20261007090300_guard_paid_order_amount_changes.sql', 'utf8');
 const manualPaymentMigration = readFileSync('supabase/migrations/20261007090400_admin_manual_payment_control.sql', 'utf8');
 const orderButtonHardeningMigration = readFileSync('supabase/migrations/20261007110000_admin_order_button_logic_hardening.sql', 'utf8');
+const stageCorrectionMigration = readFileSync('supabase/migrations/20261007150000_admin_order_stage_correction_and_direct_cancel.sql', 'utf8');
 const orderRefundMigration = readFileSync('supabase/migrations/20261007130000_admin_refund_status_unification.sql', 'utf8');
 const orderRefundBatchMigration = readFileSync('supabase/migrations/20261007131000_admin_order_refund_batch_summary.sql', 'utf8');
 const orderRefundFixMigration = readFileSync('supabase/migrations/20261007133000_fix_order_refund_summary.sql', 'utf8');
 
 const css = readFileSync('admin-modern.css', 'utf8');
-const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section');
+const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section') && css.includes('.az-order-control-secondary');
 
 const fail = (msg) => {
   console.error('ADMIN_STATIC_FAIL:', msg);
@@ -177,7 +178,11 @@ if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')"))
 if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=63')) fail('order control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
-if (!js.includes("window.__AZIM_ADMIN_V40 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("window.__AZIM_ADMIN_V41 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("async function openOrderStageCorrection")) fail('order stage correction workflow is missing');
+if (!js.includes("async function openAdminCancelOrder")) fail('direct admin cancel workflow is missing');
+if (!js.includes("data-order-control-action="correct_stage"")) fail('stage correction action hook is missing');
+if (!js.includes("data-order-control-action="cancel_order"")) fail('direct cancel action hook is missing');
 if (!js.includes("async function handleOrderControlAction")) fail('order control action handler must be async');
 if (!js.includes("if (action === 'open')")) fail('fallback order action has no safe open handler');
 if (!js.includes("!['done','open'].includes(actionPlan.kind)")) fail('fallback order state still renders a dead quick-action button');
