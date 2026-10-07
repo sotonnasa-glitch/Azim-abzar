@@ -139,7 +139,7 @@ begin
     'status',v_status,'label',v_label,'message',v_message,'source',v_source,
     'amount_total',v_amount_total,'amount_refunded',v_amount_refunded,
     'amount_pending',v_amount_pending,'updated_at',nullif(v_updated_at,'epoch'::timestamptz),
-    'terminal',v_status in ('none','refunded','partially_refunded','failed','review_required')
+    'terminal',v_status in ('none','refunded','partially_refunded','failed')
   );
 end;
 $function$;
