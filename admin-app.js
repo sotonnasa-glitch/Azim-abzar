@@ -3044,7 +3044,10 @@
   function orderActionPlan(x) {
     if (!x) return { key:'none', label:'مدیریت سفارش', tone:'warn', kind:'open' };
     if (x.status === 'cancelled') return { key:'restore', label:'بازگردانی سفارش', tone:'red', kind:'restore' };
-    if (['unpaid','pending'].includes(x.payment_status)) return { key:'review_payment', label:'بررسی پرداخت', tone:'warn', kind:'review' };
+    if (['unpaid','pending'].includes(x.payment_status)) {
+      if (['phone','message'].includes(x.payment_method)) return { key:'record_manual_payment', label:'ثبت پرداخت دستی', tone:'warn', kind:'manual_payment' };
+      return { key:'review_payment', label:'بررسی پرداخت', tone:'warn', kind:'review' };
+    }
     if (x.status === 'pending') return { key:'confirm_order', label:'تأیید سفارش', tone:'warn', kind:'transition' };
     if (x.status === 'confirmed') return { key:'start_processing', label:'شروع پردازش', tone:'warn', kind:'transition' };
     if (x.status === 'processing' && x.shipping_status === 'pending') return { key:'mark_packed', label:'ثبت بسته‌بندی', tone:'warn', kind:'transition' };
@@ -3083,12 +3086,16 @@
           ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="mark_shipped" data-order-id="' + esc(x.id) + '">ثبت ارسال و رهگیری <span>←</span></button>'
           : plan.kind === 'review'
             ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_payment" data-order-id="' + esc(x.id) + '">بررسی وضعیت پرداخت <span>←</span></button>'
+          : plan.kind === 'manual_payment'
+            ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="record_manual_payment" data-order-id="' + esc(x.id) + '">ثبت پرداخت دستی <span>←</span></button>'
             : '';
 
     const actionHint = plan.kind === 'restore'
       ? 'این عملیات حساس با نشست MFA تأییدشده انجام می‌شود.'
       : plan.kind === 'review'
-        ? (x.payment_method === 'online' ? 'پرداخت آنلاین از مسیر درگاه کنترل می‌شود؛ تغییر دستی وضعیت پرداخت مجاز نیست.' : 'برای ثبت یا اصلاح پرداخت دستی، بخش «ویرایش کامل» را باز کنید.')
+        ? 'پرداخت آنلاین از مسیر درگاه کنترل می‌شود و تأیید دستی برای آن انجام نمی‌شود.'
+        : plan.kind === 'manual_payment'
+          ? 'برای سفارش تلفنی/پیامی، ثبت پرداخت با نشست MFA انجام می‌شود و در گزارش فعالیت ثبت خواهد شد.'
         : plan.kind === 'none'
           ? 'این سفارش به مرحله نهایی رسیده است.'
           : 'اقدام بعدی بر اساس وضعیت واقعی سفارش و محدودیت‌های Supabase تعیین شده است.';
@@ -3190,6 +3197,48 @@
     }
   }
 
+  async function openManualPaymentAction(id) {
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
+    try {
+      const {data,error}=await state.db.from('orders')
+        .select('id,order_code,status,payment_status,payment_method,total')
+        .eq('id',id).single();
+      if(error) throw error;
+      if(!['phone','message'].includes(data.payment_method)) return toast('__AZICON_BLOCK__ این سفارش از مسیر پرداخت دستی قابل تأیید نیست.');
+      openModal('ثبت پرداخت دستی',
+        '<form id="manualPaymentForm" class="az-shipping-action-form">' +
+          '<div class="az-shipping-action-intro"><span>MANUAL PAYMENT CONTROL</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>مبلغ سفارش: ' + money(data.total) + ' · روش: ' + esc(orderMethodText(data.payment_method)) + '</small></div>' +
+          '<div class="field"><label>شناسه / توضیح تأیید پرداخت *</label><input class="input" name="reference" required minlength="3" maxlength="200" placeholder="مثلاً رسید کارتخوان ۱۲۳۴ یا تأیید تلفنی فروش"></div>' +
+          '<div class="status" id="manualPaymentStatus"></div>' +
+          '<div class="mfa-actions"><button class="btn" type="submit">ثبت پرداخت قطعی</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '</form>'
+      );
+      $('modal')?.classList.add('az-order-workspace');
+      $('manualPaymentForm').onsubmit=async(e)=>{
+        e.preventDefault();
+        const btn=e.target.querySelector('button[type="submit"]');
+        const st=$('manualPaymentStatus');
+        if(btn) btn.disabled=true;
+        if(!(await requireAdminMFA())){
+          if(st) st.textContent='__AZICON_LOCK__ برای ثبت پرداخت دستی، نشست MFA باید تأیید شده باشد.';
+          if(btn) btn.disabled=false;
+          return;
+        }
+        try{
+          const reference=String(new FormData(e.target).get('reference')||'').trim();
+          const r=await state.db.rpc('azim_admin_record_manual_payment',{p_order_id:id,p_reference:reference});
+          if(r.error) throw r.error;
+          closeModal();
+          toast('__AZICON_SUCCESS__ پرداخت دستی ثبت شد؛ سفارش آماده ادامه چرخه است.');
+          await Promise.all([loadOrders(),loadDashboard()]);
+        }catch(err){
+          if(st) st.textContent='__AZICON_ERROR__ '+errorText(err);
+          if(btn) btn.disabled=false;
+        }
+      };
+    }catch(err){toast('__AZICON_ERROR__ بارگذاری ثبت پرداخت دستی ناموفق بود: '+errorText(err));}
+  }
+
   async function openOrderShippingAction(id) {
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
     try {
@@ -3243,6 +3292,10 @@
     }
     if (action === 'review_payment') {
       await openOrder(id,'payment');
+      return;
+    }
+    if (action === 'record_manual_payment') {
+      await openManualPaymentAction(id);
       return;
     }
     if (action === 'mark_shipped') {
