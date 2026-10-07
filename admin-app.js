@@ -3079,7 +3079,7 @@
 
     const sectionOpen = (name, defaultOpen=false) => (focusSection === name || defaultOpen) ? ' open' : '';
     const actionHtml = plan.kind === 'restore'
-      ? '<button class="btn ghost az-order-control-primary danger" type="button" data-order-control-action="restore">🔄 بازگردانی سفارش</button>'
+      ? '<button class="btn ghost az-order-control-primary danger" type="button" data-order-control-action="restore" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '">🔄 بازگردانی سفارش</button>'
       : plan.kind === 'transition'
         ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="' + esc(plan.key) + '" data-order-id="' + esc(x.id) + '">' + esc(plan.label) + ' <span>←</span></button>'
         : plan.kind === 'shipping'
