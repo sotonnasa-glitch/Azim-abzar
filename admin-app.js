@@ -3112,7 +3112,7 @@
       '</div>' +
       '<div class="az-order-control-timeline">' + orderTimeline(x.status, x.shipping_status) + '</div>' +
 
-      '<details id="orderSection-items" class="az-order-control-section"' + sectionOpen('items', true) + '>' +
+      '<details id="orderSection-items" class="az-order-control-section"' + sectionOpen('items') + '>' +
         '<summary><span><b>اقلام سفارش</b><small>' + esc((items || []).length.toLocaleString('fa-IR')) + ' قلم</small></span><i>⌄</i></summary>' +
         '<div class="az-order-control-body">' + (itemRows || '<div class="empty">قلمی برای این سفارش ثبت نشده.</div>') + '</div>' +
       '</details>' +
