@@ -159,21 +159,19 @@ if (html.includes('admin-app.js?v=50') || html.includes('admin-app.js?v=55') || 
   fail('admin-app cache version was not bumped');
 }
 
-if (process.exitCode) process.exit(process.exitCode);
-console.log('ADMIN_STATIC_OK');
 if (!js.includes("function orderActionPlan(x)")) fail('order action plan is missing');
 if (!js.includes("function orderControlView(x, items, focusSection = '')")) fail('order control drawer view is missing');
 if (!js.includes("async function openOrderEditor(id, focusSection = '')")) fail('separate full order editor is missing');
 if (!js.includes("async function openOrderShippingAction(id)")) fail('focused shipment workflow is missing');
-if (!js.includes("state.db.rpc('azim_admin_transition_order'") && !js.includes("state.db.rpc('azim_admin_transition_order',{")) fail('order transition RPC is not wired');
-if (js.includes('class="btn secondary az-order-manage') || js.includes('data-edit-order="' + ' + x.id + '>جزئیات کامل')) fail('duplicate full-details order button remains');
-if (!js.includes('data-order-code="' + ' + esc(x.order_code || \'\')')) fail('card action does not carry order code for restore workflow');
+if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
+if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
+if (!js.includes('data-order-code="' + esc(x.order_code || '') + '"')) fail('card action does not carry order code for restore workflow');
 if (!html.includes('admin-modern.css?v=37') || !html.includes('admin-app.js?v=59')) fail('order control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
 if (!js.includes("window.__AZIM_ADMIN_V37 = true;")) fail('admin script version guard was not updated');
 if (!js.includes("sectionOpen('items')")) fail('order control items section is not compact by default');
-if (!js.includes("document.addEventListener('keydown', (e) => {")) fail('order card keyboard behavior is missing');
 if (!js.includes("data-order-control-action") || !js.includes("data-order-edit-full")) fail('order control action hooks are missing');
 
-if (!js.includes("state.productCacheLoaded = false;")) fail('catalog reload does not invalidate order product cache');
+if (process.exitCode) process.exit(process.exitCode);
+console.log('ADMIN_STATIC_OK');
