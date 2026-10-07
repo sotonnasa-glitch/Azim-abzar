@@ -1044,6 +1044,18 @@
         ? '<div class="action-box"><h3>↩️ مرجوعی</h3><p>مهلت ثبت درخواست مرجوعی این سفارش به پایان رسیده است.</p></div>'
         : '';
 
+      const refund = data.refund_summary || { status:'none', label:'عودت وجه ندارد', message:'برای این سفارش عودت وجهی ثبت نشده است.' };
+      const refundInfo = refund.status !== 'none'
+        ? '<div class="action-box refund-status-box" style="border-color:' +
+            (['refunded','partially_refunded'].includes(refund.status) ? 'rgba(46,213,115,.3)' : (['failed','review_required'].includes(refund.status) ? 'rgba(255,82,82,.3)' : 'rgba(245,185,0,.28)')) +
+            ';">' +
+            '<h3>💰 ' + esc(refund.label || 'وضعیت عودت وجه') + '</h3>' +
+            '<p>' + esc(refund.message || '') + '</p>' +
+            (Number(refund.amount_refunded || 0) ? '<div style="margin-top:7px;font-size:11px;color:#aeb7b1;">مبلغ عودت‌شده: <strong>' + money(refund.amount_refunded) + '</strong></div>' : '') +
+            (Number(refund.amount_pending || 0) ? '<div style="margin-top:4px;font-size:11px;color:#aeb7b1;">مبلغ در انتظار عودت: <strong>' + money(refund.amount_pending) + '</strong></div>' : '') +
+          '</div>'
+        : '';
+      
       const paymentInfo =
         data.payment_method === 'online' && (data.payment_status === 'pending' || data.payment_status === 'review_required')
           ? '<div class="action-box" style="border-color:rgba(245,185,0,.28);"><h3>⏳ پرداخت در حال بررسی</h3><p>نتیجه قطعی پرداخت هنوز ثبت نشده است. برای جلوگیری از پرداخت دوباره، فعلاً دوباره پرداخت نکنید. سامانه نتیجه درگاه را بررسی می‌کند.</p></div>'
@@ -1071,7 +1083,7 @@
 
         '<div class="timeline">' + stepsHtml + '</div>' +
 
-        paymentInfo + retryPayment + returnWindowInfo +
+        paymentInfo + refundInfo + retryPayment + returnWindowInfo +
         '<div class="details-table">' +
           '<div class="detail-row">' +
             '<span class="detail-lbl">مبلغ کل سفارش</span>' +
@@ -1080,6 +1092,10 @@
           '<div class="detail-row">' +
             '<span class="detail-lbl">وضعیت پرداخت</span>' +
             '<span class="detail-val">' + esc(paymentStatus[data.payment_status] || data.payment_status || '—') + '</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+            '<span class="detail-lbl">وضعیت عودت وجه</span>' +
+            '<span class="detail-val">' + esc(refund.label || 'عودت وجه ندارد') + '</span>' +
           '</div>' +
           '<div class="detail-row">' +
             '<span class="detail-lbl">مرحله ارسال</span>' +
