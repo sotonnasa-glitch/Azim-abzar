@@ -172,6 +172,9 @@ if (!cssLike()) fail('order control CSS hooks are missing');
 if (!js.includes("window.__AZIM_ADMIN_V37 = true;")) fail('admin script version guard was not updated');
 if (!js.includes("sectionOpen('items')")) fail('order control items section is not compact by default');
 if (!js.includes("data-order-control-action") || !js.includes("data-order-edit-full")) fail('order control action hooks are missing');
+if (!js.includes("record_manual_payment") || !js.includes("openManualPaymentAction")) fail('manual payment action is missing');
+if (!js.includes("state.db.rpc('azim_admin_record_manual_payment'")) fail('manual payment RPC is not wired');
+if (!html.includes('admin-app.js?v=60')) fail('admin app cache version is stale');
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log('ADMIN_STATIC_OK');
