@@ -2,6 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V40) return;
+  window.__AZIM_ADMIN_V41 = true;
   window.__AZIM_ADMIN_V40 = true;
   window.__AZIM_ADMIN_V39 = true;
   window.__AZIM_ADMIN_V38 = true;
@@ -3083,6 +3084,129 @@
     return ({ online:'پرداخت آنلاین', phone:'تلفنی', message:'پیام' }[method] || method || '—');
   }
 
+  function orderStageCorrectionTargets(x) {
+    if (!x || x.status === 'cancelled' || x.status === 'delivered' || x.shipping_status === 'delivered') return [];
+    if (x.status === 'confirmed' && x.shipping_status === 'pending') {
+      return [{ value:'pending', label:'در انتظار تأیید' }];
+    }
+    if (x.status === 'processing' && x.shipping_status === 'pending') {
+      return [{ value:'confirmed', label:'تأیید شده' }];
+    }
+    if (x.status === 'processing' && x.shipping_status === 'packed') {
+      return [{ value:'processing', label:'در حال پردازش' }];
+    }
+    if (x.status === 'shipped' && x.shipping_status === 'shipped') {
+      return [
+        { value:'packed', label:'بسته‌بندی شده' },
+        { value:'processing', label:'در حال پردازش' }
+      ];
+    }
+    return [];
+  }
+
+  async function openOrderStageCorrection(id) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ اصلاح مرحله فقط برای مالک یا مدیر اصلی مجاز است.');
+    if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
+    try {
+      const { data, error } = await state.db.from('orders')
+        .select('id,order_code,status,shipping_status,payment_status,tracking_code,tracking_url,shipping_carrier')
+        .eq('id',id).single();
+      if (error) throw error;
+      const targets = orderStageCorrectionTargets(data);
+      if (!targets.length) return toast('__AZICON_BLOCK__ برای این وضعیت مسیر اصلاح مرحله تعریف نشده است.');
+
+      openModal('اصلاح مرحله سفارش',
+        '<form id="orderStageCorrectionForm" class="az-shipping-action-form">' +
+          '<div class="az-shipping-action-intro"><span>STAGE CORRECTION</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>این عملیات وضعیت واقعی سفارش را اصلاح می‌کند؛ تاریخچه تغییر در Audit Log ثبت می‌شود.</small></div>' +
+          '<div class="grid2">' +
+            '<div class="field"><label>وضعیت فعلی</label><input class="input" value="' + esc(labels[data.status] || data.status || '—') + '" readonly></div>' +
+            '<div class="field"><label>مرحله مقصد *</label><select class="input" name="target_stage" required>' + targets.map(t => '<option value="' + esc(t.value) + '">' + esc(t.label) + '</option>').join('') + '</select></div>' +
+            '<div class="field full"><label>دلیل اصلاح *</label><textarea class="input" name="reason" minlength="5" maxlength="1000" rows="4" required placeholder="مثلاً: اشتباهاً ارسال ثبت شد؛ بسته هنوز تحویل شرکت ارسال نشده است."></textarea></div>' +
+          '</div>' +
+          '<div class="status" id="orderStageCorrectionStatus"></div>' +
+          '<div class="mfa-actions"><button class="btn" type="submit">ثبت اصلاح مرحله</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '</form>'
+      );
+      $('modal')?.classList.add('az-order-workspace');
+      $('orderStageCorrectionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const st = $('orderStageCorrectionStatus');
+        const fd = new FormData(e.target);
+        const targetStage = String(fd.get('target_stage') || '').trim();
+        const reason = String(fd.get('reason') || '').trim();
+        if (reason.length < 5) { if (st) st.textContent='__AZICON_ERROR__ دلیل اصلاح باید حداقل ۵ کاراکتر باشد.'; return; }
+        if (!(await requireAdminMFA())) {
+          if (st) st.textContent='__AZICON_LOCK__ برای اصلاح مرحله، نشست MFA باید تأیید شده باشد.';
+          return;
+        }
+        if (btn) btn.disabled = true;
+        try {
+          const r = await state.db.rpc('azim_admin_correct_order_stage',{p_order_id:id,p_target_stage:targetStage,p_reason:reason});
+          if (r.error) throw r.error;
+          closeModal();
+          toast('__AZICON_SUCCESS__ مرحله سفارش اصلاح شد.');
+          await Promise.all([loadOrders(),loadDashboard()]);
+        } catch (err) {
+          if (st) st.textContent='__AZICON_ERROR__ '+errorText(err);
+          if (btn) btn.disabled = false;
+        }
+      };
+    } catch (err) {
+      toast('__AZICON_ERROR__ بارگذاری اصلاح مرحله ناموفق بود: '+errorText(err));
+    }
+  }
+
+  async function openAdminCancelOrder(id) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ لغو مستقیم سفارش فقط برای مالک یا مدیر اصلی مجاز است.');
+    if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
+    try {
+      const { data, error } = await state.db.from('orders')
+        .select('id,order_code,status,shipping_status,payment_status,payment_method,total')
+        .eq('id',id).single();
+      if (error) throw error;
+      if (!['pending','confirmed','processing'].includes(data.status) || data.shipping_status !== 'pending') {
+        return toast('__AZICON_BLOCK__ این سفارش دیگر قبل از ارسال قابل لغو از پنل نیست.');
+      }
+
+      openModal('لغو سفارش از پنل',
+        '<form id="adminCancelOrderForm" class="az-shipping-action-form">' +
+          '<div class="az-shipping-action-intro"><span>ORDER CANCELLATION</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>مبلغ سفارش: ' + money(data.total) + ' · روش پرداخت: ' + esc(orderMethodText(data.payment_method)) + '</small></div>' +
+          '<div class="az-payment-confirm-danger"><strong>⚠️ لغو قطعی سفارش</strong><span>این کار سفارش را لغوشده می‌کند و اگر پرداخت قطعی باشد، مسیر عودت وجه مرتبط نیز فعال می‌شود.</span></div>' +
+          '<div class="field full"><label>دلیل لغو *</label><textarea class="input" name="reason" minlength="5" maxlength="1000" rows="4" required placeholder="مثلاً: درخواست مشتری قبل از ارسال"></textarea></div>' +
+          '<div class="status" id="adminCancelOrderStatus"></div>' +
+          '<div class="mfa-actions"><button class="btn danger" type="submit">لغو قطعی سفارش</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '</form>'
+      );
+      $('modal')?.classList.add('az-order-workspace');
+      $('adminCancelOrderForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const st = $('adminCancelOrderStatus');
+        const reason = String(new FormData(e.target).get('reason') || '').trim();
+        if (reason.length < 5) { if (st) st.textContent='__AZICON_ERROR__ دلیل لغو باید حداقل ۵ کاراکتر باشد.'; return; }
+        if (!(await requireAdminMFA())) {
+          if (st) st.textContent='__AZICON_LOCK__ برای لغو سفارش، نشست MFA باید تأیید شده باشد.';
+          return;
+        }
+        if (!window.confirm('این سفارش واقعاً لغو شود؟')) return;
+        if (btn) btn.disabled = true;
+        try {
+          const r = await state.db.rpc('azim_admin_cancel_order',{p_order_id:id,p_reason:reason});
+          if (r.error) throw r.error;
+          closeModal();
+          toast('__AZICON_SUCCESS__ سفارش لغو شد و وضعیت عودت وجه طبق روش پرداخت ثبت شد.');
+          await Promise.all([loadOrders(),loadDashboard()]);
+        } catch (err) {
+          if (st) st.textContent='__AZICON_ERROR__ '+errorText(err);
+          if (btn) btn.disabled = false;
+        }
+      };
+    } catch (err) {
+      toast('__AZICON_ERROR__ بارگذاری لغو سفارش ناموفق بود: '+errorText(err));
+    }
+  }
+
   function orderControlView(x, items, focusSection = '', refundSummary = null) {
     const plan = orderActionPlan(x, refundSummary);
     const status = labels[x.status] || x.status || '—';
@@ -3113,6 +3237,13 @@
           : plan.kind === 'manual_payment'
             ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="record_manual_payment" data-order-id="' + esc(x.id) + '">ثبت پرداخت دستی <span>←</span></button>'
             : '';
+    const stageCorrectionTargets = orderStageCorrectionTargets(x);
+    const correctionHtml = can.all() && stageCorrectionTargets.length
+      ? '<button class="btn ghost" type="button" data-order-control-action="correct_stage" data-order-id="' + esc(x.id) + '">🛠️ اصلاح مرحله</button>'
+      : '';
+    const directCancelHtml = can.all() && ['pending','confirmed','processing'].includes(x.status) && x.shipping_status === 'pending'
+      ? '<button class="btn ghost danger" type="button" data-order-control-action="cancel_order" data-order-id="' + esc(x.id) + '">لغو سفارش</button>'
+      : '';
 
     const actionHint = plan.kind === 'restore'
       ? 'این عملیات حساس با نشست MFA تأییدشده انجام می‌شود.'
@@ -3146,6 +3277,7 @@
         '<div><span>اقدام بعدی</span><b class="' + esc(plan.tone) + '">' + esc(plan.label) + '</b><small>' + esc(actionHint) + '</small></div>' +
         actionHtml +
       '</div>' +
+      ((correctionHtml || directCancelHtml) ? '<div class="az-order-control-secondary">' + correctionHtml + directCancelHtml + '</div>' : '') +
       '<div class="az-order-control-timeline">' + orderTimeline(x.status, x.shipping_status) + '</div>' +
 
       '<details id="orderSection-items" class="az-order-control-section"' + sectionOpen('items') + '>' +
@@ -3343,6 +3475,14 @@
     }
     if (action === 'record_manual_payment') {
       await openManualPaymentAction(id);
+      return;
+    }
+    if (action === 'correct_stage') {
+      await openOrderStageCorrection(id);
+      return;
+    }
+    if (action === 'cancel_order') {
+      await openAdminCancelOrder(id);
       return;
     }
     if (action === 'mark_shipped') {
