@@ -9,6 +9,7 @@ const paidOrderGuardMigration = readFileSync('supabase/migrations/20261007090300
 const manualPaymentMigration = readFileSync('supabase/migrations/20261007090400_admin_manual_payment_control.sql', 'utf8');
 const orderButtonHardeningMigration = readFileSync('supabase/migrations/20261007110000_admin_order_button_logic_hardening.sql', 'utf8');
 const stageCorrectionMigration = readFileSync('supabase/migrations/20261007150000_admin_order_stage_correction_and_direct_cancel.sql', 'utf8');
+const cancelHardeningMigration = readFileSync('supabase/migrations/20261007151000_harden_admin_order_cancel_private_core.sql', 'utf8');
 const orderRefundMigration = readFileSync('supabase/migrations/20261007130000_admin_refund_status_unification.sql', 'utf8');
 const orderRefundBatchMigration = readFileSync('supabase/migrations/20261007131000_admin_order_refund_batch_summary.sql', 'utf8');
 const orderRefundFixMigration = readFileSync('supabase/migrations/20261007133000_fix_order_refund_summary.sql', 'utf8');
@@ -185,6 +186,7 @@ if (!js.includes('data-order-control-action="correct_stage"')) fail('stage corre
 if (!js.includes('data-order-control-action="cancel_order"')) fail('direct cancel action hook is missing');
 if (!js.includes("azim_admin_correct_order_stage")) fail('stage correction RPC hook is missing');
 if (!js.includes("azim_admin_cancel_order")) fail('direct cancel RPC hook is missing');
+if (!cancelHardeningMigration.includes('private.azim_admin_cancel_order_core')) fail('private cancel core migration is missing');
 if (!js.includes("async function handleOrderControlAction")) fail('order control action handler must be async');
 if (!js.includes("if (action === 'open')")) fail('fallback order action has no safe open handler');
 if (!js.includes("!['done','open'].includes(actionPlan.kind)")) fail('fallback order state still renders a dead quick-action button');
