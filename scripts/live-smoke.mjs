@@ -31,6 +31,19 @@ async function rpc(name, payload = {}) {
   });
 }
 
+async function rpcExpectError(name, payload = {}) {
+  const response = await fetch(base + "/rest/v1/rpc/" + name, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  const text = await response.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch {}
+  assert.ok(!response.ok, "Expected RPC " + name + " to reject.");
+  return body;
+}
+
 function digits(value) {
   return String(value ?? "").replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
     .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
@@ -119,21 +132,40 @@ if (simple) {
 const checkoutOptions = await rpc("azim_checkout_options");
 assert.equal(typeof checkoutOptions?.online_available, "boolean", "Checkout options missing online_available.");
 
-const checkoutPreview = await rpc("azim_cart_checkout", {
-  p_mode: "preview",
-  p_full_name: "Smoke Test",
-  p_mobile: "09120000000",
-  p_email: null,
-  p_address: "آدرس تست",
-  p_city: "تهران",
-  p_discount_code: null,
-  p_items: [{ product_id: wrench.id, variant_label: vLabel, quantity: 1 }],
-  p_payment_method: "phone",
-  p_terms_accepted: true,
-});
-assert.equal(checkoutPreview?.mode, "preview");
-assert.equal(checkoutPreview?.valid, true);
-assert.equal(Number(checkoutPreview?.total), Number(v?.price ?? wrench.price ?? 0));
+let checkoutPreview = null;
+let checkoutMode = "gateway_disabled";
+if (checkoutOptions.online_available) {
+  checkoutPreview = await rpc("azim_cart_checkout", {
+    p_mode: "preview",
+    p_full_name: "Smoke Test",
+    p_mobile: "09120000000",
+    p_email: null,
+    p_address: "آدرس تست",
+    p_city: "تهران",
+    p_discount_code: null,
+    p_items: [{ product_id: wrench.id, variant_label: vLabel, quantity: 1 }],
+    p_payment_method: "online",
+    p_terms_accepted: true,
+  });
+  assert.equal(checkoutPreview?.mode, "preview");
+  assert.equal(checkoutPreview?.valid, true);
+  assert.equal(Number(checkoutPreview?.total), Number(v?.price ?? wrench.price ?? 0));
+  checkoutMode = "online_preview_ok";
+} else {
+  const rejectedPhone = await rpcExpectError("azim_cart_checkout", {
+    p_mode: "preview",
+    p_full_name: "Smoke Test",
+    p_mobile: "09120000000",
+    p_email: null,
+    p_address: "آدرس تست",
+    p_city: "تهران",
+    p_discount_code: null,
+    p_items: [{ product_id: wrench.id, variant_label: vLabel, quantity: 1 }],
+    p_payment_method: "phone",
+    p_terms_accepted: true,
+  });
+  assert.ok(/پرداخت آنلاین/.test(String(rejectedPhone?.message || rejectedPhone || "")), "Disabled checkout did not reject phone payment as expected.");
+}
 
 const bogusStatus = await rpc("azim_order_status", {
   p_order_code: "AZ-99999999-000000-AAAAA",
@@ -160,7 +192,8 @@ console.log(JSON.stringify({
     no_description: Boolean(noDescription),
     simple_product: Boolean(simple),
     checkout_options: true,
-    checkout_preview: true,
+    checkout_preview: checkoutMode === "online_preview_ok",
+    checkout_disabled_guard: checkoutMode === "gateway_disabled",
     order_code_gate: true,
     order_mobile_gate: true
   }
