@@ -2227,3 +2227,7 @@ body.az-service-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .modal.az-order-workspace .modal-box{animation:none!important}
 }
+
+
+.az-order-control-secondary{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.az-order-control-secondary .btn{flex:1 1 180px}
