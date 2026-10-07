@@ -1,7 +1,9 @@
 (() => {
   'use strict';
 
-  if (window.__AZIM_ADMIN_V36) return;
+  if (window.__AZIM_ADMIN_V37) return;
+  window.__AZIM_ADMIN_V37 = true;
+  window.__AZIM_ADMIN_V36 = true;
   window.__AZIM_ADMIN_V35 = true;
   window.__AZIM_ADMIN_V34 = true;
 
@@ -205,6 +207,7 @@
     const modal = $('modal');
     modal.classList.toggle('drawer-mode', /محصول|سفارش|محتوا|AI/.test(title));
     modal.classList.toggle('product-editor-modal', /محصول/.test(title));
+    modal.classList.toggle('az-order-workspace', /سفارش/.test(title));
     modal.classList.add('show');
   }
 
@@ -212,6 +215,7 @@
     $('modal').classList.remove('show');
     $('modal').classList.remove('drawer-mode');
     $('modal').classList.remove('product-editor-modal');
+    $('modal').classList.remove('az-order-workspace');
   }
 
   window.closeModal = closeModal;
@@ -2582,16 +2586,8 @@
     };
 
     const nextAction = (x) => {
-      if (x.status === 'cancelled') return ['لغو شده', 'red', 'بازگردانی سفارش'];
-      if (x.payment_status === 'unpaid') return ['نیازمند پرداخت', 'warn', 'بررسی پرداخت'];
-      if (x.payment_status === 'pending') return ['در انتظار تأیید پرداخت', 'warn', 'تأیید پرداخت'];
-      if (x.status === 'pending') return ['نیازمند تأیید سفارش', 'warn', 'تأیید سفارش'];
-      if (x.status === 'confirmed' && x.shipping_status === 'pending') return ['آماده پردازش', 'warn', 'شروع پردازش'];
-      if (x.status === 'processing' && x.shipping_status === 'pending') return ['آماده بسته‌بندی', 'warn', 'ثبت بسته‌بندی'];
-      if (x.shipping_status === 'packed') return ['آماده ارسال · ثبت رهگیری', 'warn', 'ثبت کد رهگیری'];
-      if (x.shipping_status === 'shipped') return ['در مسیر تحویل', 'ok', 'مشاهده رهگیری'];
-      if (x.status === 'delivered' || x.shipping_status === 'delivered') return ['تکمیل‌شده', 'ok', 'مشاهده جزئیات'];
-      return ['نیازمند بررسی', 'warn', 'مدیریت سفارش'];
+      const plan = orderActionPlan(x);
+      return [plan.label, plan.tone, plan.key];
     };
     const requestByOrder = new Map();
     if (can.all() && orderIds.length) {
@@ -2626,7 +2622,7 @@
       const status = labels[x.status] || x.status || '—';
       const payment = labels[x.payment_status] || x.payment_status || '—';
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
-      const [actionText, actionTone, ctaText] = nextAction(x);
+      const [actionText, actionTone, actionKey] = nextAction(x);
       const discount = Number(x.discount || 0);
       const orderItems = itemsByOrder.get(String(x.id)) || [];
       const requestSummary = requestByOrder.get(String(x.id));
@@ -2654,7 +2650,7 @@
           '</div>'
         : '<div class="az-order-products az-order-products-empty">محصولات این سفارش در دسترس نیست.</div>';
 
-      return '<article class="az-order-card az-order-card-clickable" data-order-card="' + esc(x.id) + '" role="button" tabindex="0" aria-label="مدیریت سفارش ' + esc(x.order_code || '') + '">' +
+      return '<article class="az-order-card az-order-card-clickable" data-order-card="' + esc(x.id) + '" tabindex="0" aria-label="مشاهده سفارش ' + esc(x.order_code || '') + '">' +
         '<div class="az-order-card-head">' +
           '<div class="az-order-code"><span>سفارش</span><strong dir="ltr">' + esc(x.order_code || '—') + '</strong><small>' + dateFa(x.created_at) + '</small></div>' +
           '<div class="az-order-statuses">' +
@@ -2684,9 +2680,8 @@
         '<div class="az-order-card-foot">' +
           '<span class="az-order-foot-note">' + (x.customer_id ? 'پرونده مشتری متصل است' : 'بدون پرونده مشتری') + '</span>' +
           '<div class="tools" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
-          (can.sales() && x.status === 'cancelled' ? '<button class="btn ghost az-order-restore" data-restore-order="' + esc(x.order_code || '') + '">🔄 بازگردانی سفارش</button>' : '') +
-          (can.sales() ? '<button class="btn az-order-quick-action" data-edit-order="' + x.id + '">' + esc(ctaText || 'مدیریت سفارش') + ' <span>←</span></button>' : '') +
-          (can.sales() ? '<button class="btn secondary az-order-manage" data-edit-order="' + x.id + '">جزئیات کامل</button>' : '') +
+          (can.sales() && actionKey !== 'done' ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
+          '<span class="az-order-card-open-hint">برای خلاصه و جزئیات ← کلیک کنید</span>' +
           '</div>' +
         '</div>' +
       '</article>';
@@ -2949,26 +2944,71 @@
           '<span>مشتری سفارش</span><strong>' + esc(x.customer_name || 'بدون نام') + '</strong>' +
           '<small dir="ltr">' + esc(x.customer_mobile || '—') + (x.customer_email ? ' · ' + esc(x.customer_email) : '') + '</small>' +
         '</div>' +
-        '<div class="az-order-context-side"><span>وضعیت فعلی</span><b>' + esc(labels[x.status] || x.status || '—') + '</b></div>' +
+        '<div class="az-order-context-side"><span>مرحله فعلی</span><b>' + esc(labels[x.status] || x.status || '—') + '</b><small>مراحل سفارش از عملیات مرحله‌ای تغییر می‌کنند.</small></div>' +
       '</div>'
     ) : '';
-    return '<div class="az-order-modal-head">' + customerHtml + '</div>' +
-      '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending', x?.shipping_status || 'pending') + '</div><form id="orderForm" class="grid2">' +
-      '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
-      '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
-      '<div class="field"><label>وضعیت</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered','cancelled'], x?.status || 'pending', labels) + '</select></div>' +
-      '<div class="field"><label>پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], x?.payment_status || 'unpaid', labels) + '</select></div>' +
-      '<div class="field"><label>ارسال</label><select class="select" name="shipping_status">' + selectOptions(['pending','packed','shipped','delivered'], x?.shipping_status || 'pending', labels) + '</select></div>' +
-      '<div class="field"><label>مبلغ نهایی محاسبه‌شده</label><input class="input" name="total" type="number" min="0" value="' + esc(x?.total ?? 0) + '" readonly aria-readonly="true"><div id="orderTotalPreview" class="muted" style="margin-top:4px">با اقلام، ارسال و تخفیف به‌صورت خودکار محاسبه می‌شود.</div></div>' +
-      '<div class="field"><label>کد رهگیری</label><input class="input" name="tracking_code" value="' + esc(x?.tracking_code) + '"></div>' +
-      '<div class="field"><label>لینک کامل پیگیری مرسوله</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr" value="' + esc(x?.tracking_url || '') + '" placeholder="https://..."></div>' +
-      '<div class="field"><label>شرکت ارسال</label><input class="input" name="shipping_carrier" maxlength="120" value="' + esc(x?.shipping_carrier || '') + '" placeholder="نام شرکت ارسال"></div>' +
-      '<div class="field"><label>کد تخفیف</label><div class="tools" style="width:100%"><input class="input" name="discount_code" dir="ltr" value="' + esc(x?.discount_code || '') + '" placeholder="مثلاً AZIM20"><button type="button" id="applyOrderDiscountBtn" class="btn secondary">اعمال تخفیف</button></div><div id="orderDiscountStatus" class="status"></div><input type="hidden" name="discount" value="' + esc(x?.discount ?? 0) + '"></div>' +
-      '<div class="field"><label>هزینه ارسال</label><input class="input" name="shipping_cost" type="number" min="0" value="' + esc(x?.shipping_cost ?? 0) + '"></div>' +
-      '<div class="field full"><label>یادداشت</label><textarea class="textarea" name="notes">' + esc(x?.notes) + '</textarea></div>' +
-      '<div class="field full"><div class="panel" style="margin:0"><div class="panel-head"><h2>اقلام سفارش</h2><button type="button" id="addOrderItemBtn" class="btn secondary">＋ قلم</button></div>' +
-      '<div id="orderItemsBox">' + (itemRows || '<div class="empty">قلمی اضافه نشده.</div>') + '</div></div></div>' +
-      '<div class="field full"><button class="btn">ذخیره سفارش</button></div><div id="orderStatus" class="status field full"></div></form>';
+
+    const statusField = x
+      ? '<div class="field"><label>وضعیت سفارش</label><div class="az-readonly-field"><b>' + esc(labels[x.status] || x.status || '—') + '</b><small>برای تغییر مرحله از «اقدام بعدی» استفاده کنید.</small></div><input type="hidden" name="status" value="' + esc(x.status || 'pending') + '"></div>'
+      : '<div class="field"><label>وضعیت سفارش</label><select class="select" name="status">' + selectOptions(['pending','confirmed','processing','shipped','delivered'], 'pending', labels) + '</select></div>';
+
+    const shippingField = x
+      ? '<div class="field"><label>وضعیت ارسال</label><div class="az-readonly-field"><b>' + esc(labels[x.shipping_status] || x.shipping_status || '—') + '</b><small>ثبت بسته‌بندی و ارسال از عملیات مرحله‌ای انجام می‌شود.</small></div><input type="hidden" name="shipping_status" value="' + esc(x.shipping_status || 'pending') + '"></div>'
+      : '<div class="field"><label>وضعیت ارسال</label><select class="select" name="shipping_status">' + selectOptions(['pending','packed','shipped','delivered'], 'pending', labels) + '</select></div>';
+
+    return '<div class="az-order-editor">' +
+      '<div class="az-order-modal-head">' + customerHtml + '</div>' +
+      '<div class="az-order-timeline-wrap">' + orderTimeline(x?.status || 'pending', x?.shipping_status || 'pending') + '</div>' +
+      '<form id="orderForm" class="az-order-edit-form">' +
+
+        '<details class="az-order-edit-section" open>' +
+          '<summary><span><b>اطلاعات سفارش</b><small>کد و مشتری</small></span><i>⌄</i></summary>' +
+          '<div class="az-order-edit-body grid2">' +
+            '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
+            '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
+            statusField +
+            '<div class="field"><label>پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], x?.payment_status || 'unpaid', labels) + '</select><small class="field-hint">پرداخت آنلاین فقط از مسیر تأیید واقعی درگاه قابل نهایی‌سازی است.</small></div>' +
+          '</div>' +
+        '</details>' +
+
+        '<details class="az-order-edit-section" open>' +
+          '<summary><span><b>ارسال و رهگیری</b><small>مرسوله و شرکت ارسال</small></span><i>⌄</i></summary>' +
+          '<div class="az-order-edit-body grid2">' +
+            shippingField +
+            '<div class="field"><label>شرکت ارسال</label><input class="input" name="shipping_carrier" maxlength="120" value="' + esc(x?.shipping_carrier || '') + '" placeholder="نام شرکت ارسال"></div>' +
+            '<div class="field"><label>کد رهگیری</label><input class="input" name="tracking_code" value="' + esc(x?.tracking_code || '') + '" inputmode="text"></div>' +
+            '<div class="field"><label>لینک کامل پیگیری مرسوله</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr" value="' + esc(x?.tracking_url || '') + '" placeholder="https://..."></div>' +
+          '</div>' +
+        '</details>' +
+
+        '<details class="az-order-edit-section">' +
+          '<summary><span><b>مالی و تخفیف</b><small>مبالغ محاسبه‌شده</small></span><i>⌄</i></summary>' +
+          '<div class="az-order-edit-body grid2">' +
+            '<div class="field"><label>مبلغ نهایی محاسبه‌شده</label><input class="input" name="total" type="number" min="0" value="' + esc(x?.total ?? 0) + '" readonly aria-readonly="true"><div id="orderTotalPreview" class="muted" style="margin-top:4px">با اقلام، ارسال و تخفیف محاسبه می‌شود.</div></div>' +
+            '<div class="field"><label>هزینه ارسال</label><input class="input" name="shipping_cost" type="number" min="0" value="' + esc(x?.shipping_cost ?? 0) + '"></div>' +
+            '<div class="field full"><label>کد تخفیف</label><div class="tools" style="width:100%"><input class="input" name="discount_code" dir="ltr" value="' + esc(x?.discount_code || '') + '" placeholder="مثلاً AZIM20"><button type="button" id="applyOrderDiscountBtn" class="btn secondary">اعمال تخفیف</button></div><div id="orderDiscountStatus" class="status"></div><input type="hidden" name="discount" value="' + esc(x?.discount ?? 0) + '"></div>' +
+          '</div>' +
+        '</details>' +
+
+        '<details class="az-order-edit-section" open>' +
+          '<summary><span><b>اقلام سفارش</b><small>' + esc((items || []).length.toLocaleString('fa-IR')) + ' قلم</small></span><i>⌄</i></summary>' +
+          '<div class="az-order-edit-body">' +
+            '<div class="az-order-items-toolbar"><span>ویرایش اقلام با شناسه اصلی آن‌ها ذخیره می‌شود.</span><button type="button" id="addOrderItemBtn" class="btn secondary">＋ قلم</button></div>' +
+            '<div id="orderItemsBox">' + (itemRows || '<div class="empty">قلمی اضافه نشده.</div>') + '</div>' +
+          '</div>' +
+        '</details>' +
+
+        '<details class="az-order-edit-section">' +
+          '<summary><span><b>یادداشت داخلی</b><small>فقط برای تیم فروش</small></span><i>⌄</i></summary>' +
+          '<div class="az-order-edit-body">' +
+            '<div class="field"><label>یادداشت</label><textarea class="textarea" name="notes">' + esc(x?.notes || '') + '</textarea></div>' +
+          '</div>' +
+        '</details>' +
+
+        '<div class="az-order-editor-actions"><button class="btn" type="submit">ذخیره تغییرات</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '<div id="orderStatus" class="status"></div>' +
+      '</form>' +
+    '</div>';
   }
 
   function newOrderCode() {
@@ -2999,22 +3039,235 @@
       '<div class="field full"><button type="button" class="btn ghost remove-item">حذف قلم</button></div></div>';
   }
 
-  async function openOrder(id) {
+  function orderActionPlan(x) {
+    if (!x) return { key:'none', label:'مدیریت سفارش', tone:'warn', kind:'open' };
+    if (x.status === 'cancelled') return { key:'restore', label:'بازگردانی سفارش', tone:'red', kind:'restore' };
+    if (['unpaid','pending'].includes(x.payment_status)) return { key:'review_payment', label:'بررسی پرداخت', tone:'warn', kind:'review' };
+    if (x.status === 'pending') return { key:'confirm_order', label:'تأیید سفارش', tone:'warn', kind:'transition' };
+    if (x.status === 'confirmed') return { key:'start_processing', label:'شروع پردازش', tone:'warn', kind:'transition' };
+    if (x.status === 'processing' && x.shipping_status === 'pending') return { key:'mark_packed', label:'ثبت بسته‌بندی', tone:'warn', kind:'transition' };
+    if (x.status === 'processing' && x.shipping_status === 'packed') return { key:'mark_shipped', label:'ثبت ارسال و رهگیری', tone:'warn', kind:'shipping' };
+    if (x.status === 'shipped' && x.shipping_status === 'shipped') return { key:'mark_delivered', label:'ثبت تحویل', tone:'ok', kind:'transition' };
+    if (x.status === 'delivered' || x.shipping_status === 'delivered') return { key:'done', label:'سفارش تکمیل شده', tone:'ok', kind:'none' };
+    return { key:'open', label:'بررسی سفارش', tone:'warn', kind:'open' };
+  }
+
+  function orderMethodText(method) {
+    return ({ online:'پرداخت آنلاین', phone:'تلفنی', message:'پیام' }[method] || method || '—');
+  }
+
+  function orderControlView(x, items, focusSection = '') {
+    const plan = orderActionPlan(x);
+    const status = labels[x.status] || x.status || '—';
+    const payment = labels[x.payment_status] || x.payment_status || '—';
+    const shipping = labels[x.shipping_status] || x.shipping_status || '—';
+    const itemRows = (items || []).map((it) => {
+      const variant = it?.variant && typeof it.variant === 'object'
+        ? (it.variant.label || it.variant.size || it.variant.name || '')
+        : String(it?.variant || '');
+      return '<div class="az-control-item">' +
+        '<div><b>' + esc(it.product_name || 'محصول') + '</b><small>' + esc(it.sku || '—') + (variant ? ' · ' + esc(variant) : '') + '</small></div>' +
+        '<span>×' + esc(Number(it.quantity || 0).toLocaleString('fa-IR')) + '</span>' +
+        '<strong>' + money(it.line_total) + '</strong>' +
+      '</div>';
+    }).join('');
+
+    const sectionOpen = (name, defaultOpen=false) => (focusSection === name || defaultOpen) ? ' open' : '';
+    const actionHtml = plan.kind === 'restore'
+      ? '<button class="btn ghost az-order-control-primary danger" type="button" data-order-control-action="restore">🔄 بازگردانی سفارش</button>'
+      : plan.kind === 'transition'
+        ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="' + esc(plan.key) + '" data-order-id="' + esc(x.id) + '">' + esc(plan.label) + ' <span>←</span></button>'
+        : plan.kind === 'shipping'
+          ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="mark_shipped" data-order-id="' + esc(x.id) + '">ثبت ارسال و رهگیری <span>←</span></button>'
+          : plan.kind === 'review'
+            ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_payment" data-order-id="' + esc(x.id) + '">بررسی وضعیت پرداخت <span>←</span></button>'
+            : '';
+
+    const actionHint = plan.kind === 'restore'
+      ? 'این عملیات حساس با نشست MFA تأییدشده انجام می‌شود.'
+      : plan.kind === 'review'
+        ? (x.payment_method === 'online' ? 'پرداخت آنلاین از مسیر درگاه کنترل می‌شود؛ تغییر دستی وضعیت پرداخت مجاز نیست.' : 'برای ثبت یا اصلاح پرداخت دستی، بخش «ویرایش کامل» را باز کنید.')
+        : plan.kind === 'none'
+          ? 'این سفارش به مرحله نهایی رسیده است.'
+          : 'اقدام بعدی بر اساس وضعیت واقعی سفارش و محدودیت‌های Supabase تعیین شده است.';
+
+    return '<div class="az-order-control">' +
+      '<div class="az-order-control-hero">' +
+        '<div class="az-order-control-code"><span>ORDER CONTROL</span><strong dir="ltr">' + esc(x.order_code || '—') + '</strong><small>' + dateFa(x.created_at) + '</small></div>' +
+        '<div class="az-order-control-total"><span>مبلغ نهایی</span><b>' + money(x.total) + '</b></div>' +
+      '</div>' +
+      '<div class="az-order-control-customer">' +
+        '<div><span>مشتری</span><b>' + esc(x.customer_name || 'مشتری ثبت‌نشده') + '</b></div>' +
+        '<div><span>موبایل</span><b dir="ltr">' + esc(x.customer_mobile || '—') + '</b></div>' +
+        '<div><span>ایمیل</span><b dir="ltr">' + esc(x.customer_email || '—') + '</b></div>' +
+      '</div>' +
+      '<div class="az-order-control-statuses">' +
+        '<span class="az-order-pill ' + (x.status === 'cancelled' ? 'red' : x.status === 'delivered' ? 'ok' : 'warn') + '">سفارش · ' + esc(status) + '</span>' +
+        '<span class="az-order-pill ' + (x.payment_status === 'paid' ? 'ok' : ['refunded','partially_refunded'].includes(x.payment_status) ? 'red' : 'warn') + '">پرداخت · ' + esc(payment) + '</span>' +
+        '<span class="az-order-pill ' + (x.shipping_status === 'delivered' ? 'ok' : 'warn') + '">ارسال · ' + esc(shipping) + '</span>' +
+      '</div>' +
+      '<div class="az-order-control-action">' +
+        '<div><span>اقدام بعدی</span><b class="' + esc(plan.tone) + '">' + esc(plan.label) + '</b><small>' + esc(actionHint) + '</small></div>' +
+        actionHtml +
+      '</div>' +
+      '<div class="az-order-control-timeline">' + orderTimeline(x.status, x.shipping_status) + '</div>' +
+
+      '<details id="orderSection-items" class="az-order-control-section"' + sectionOpen('items', true) + '>' +
+        '<summary><span><b>اقلام سفارش</b><small>' + esc((items || []).length.toLocaleString('fa-IR')) + ' قلم</small></span><i>⌄</i></summary>' +
+        '<div class="az-order-control-body">' + (itemRows || '<div class="empty">قلمی برای این سفارش ثبت نشده.</div>') + '</div>' +
+      '</details>' +
+
+      '<details id="orderSection-shipping" class="az-order-control-section"' + sectionOpen('shipping') + '>' +
+        '<summary><span><b>ارسال و رهگیری</b><small>' + esc(x.shipping_carrier || 'شرکت ارسال ثبت نشده') + '</small></span><i>⌄</i></summary>' +
+        '<div class="az-order-control-body"><div class="az-order-detail-grid">' +
+          '<div><span>شرکت ارسال</span><b>' + esc(x.shipping_carrier || '—') + '</b></div>' +
+          '<div><span>کد رهگیری</span><b dir="ltr">' + esc(x.tracking_code || '—') + '</b></div>' +
+          '<div class="full"><span>لینک پیگیری</span><b dir="ltr" class="break-any">' + esc(x.tracking_url || '—') + '</b></div>' +
+        '</div></div>' +
+      '</details>' +
+
+      '<details id="orderSection-payment" class="az-order-control-section"' + sectionOpen('payment') + '>' +
+        '<summary><span><b>پرداخت و مالی</b><small>' + esc(orderMethodText(x.payment_method)) + '</small></span><i>⌄</i></summary>' +
+        '<div class="az-order-control-body"><div class="az-order-detail-grid">' +
+          '<div><span>روش پرداخت</span><b>' + esc(orderMethodText(x.payment_method)) + '</b></div>' +
+          '<div><span>وضعیت پرداخت</span><b>' + esc(payment) + '</b></div>' +
+          '<div><span>قبل تخفیف</span><b>' + money(x.subtotal) + '</b></div>' +
+          '<div><span>تخفیف</span><b>' + (Number(x.discount || 0) ? money(x.discount) : 'بدون تخفیف') + '</b></div>' +
+          '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'هماهنگی با واحد فروش') + '</b></div>' +
+          '<div><span>مبلغ نهایی</span><b class="gold">' + money(x.total) + '</b></div>' +
+        '</div></div>' +
+      '</details>' +
+
+      '<details id="orderSection-notes" class="az-order-control-section"' + sectionOpen('notes') + '>' +
+        '<summary><span><b>یادداشت داخلی</b><small>اطلاعات تیم فروش</small></span><i>⌄</i></summary>' +
+        '<div class="az-order-control-body"><div class="az-order-note">' + esc(x.notes || 'یادداشتی ثبت نشده.') + '</div></div>' +
+      '</details>' +
+
+      '<div class="az-order-control-footer"><button class="btn secondary" type="button" data-order-edit-full="' + esc(x.id) + '">ویرایش کامل اطلاعات</button></div>' +
+    '</div>';
+  }
+
+  async function openOrder(id, focusSection = '') {
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
+    try {
+      const [o, i] = await Promise.all([
+        state.db.from('orders').select('*').eq('id', id).single(),
+        state.db.from('order_items').select('*').eq('order_id', id).order('id')
+      ]);
+      if (o.error) throw o.error;
+      if (i.error) throw i.error;
+      openModal('مدیریت سفارش', orderControlView(o.data, i.data || [], focusSection));
+      $('modal')?.classList.add('az-order-workspace');
+    } catch (err) {
+      toast('__AZICON_ERROR__ بارگذاری سفارش ناموفق بود: ' + errorText(err));
+    }
+  }
+
+  async function openOrderEditor(id, focusSection = '') {
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
     try {
       const [o, c, i] = await Promise.all([
         state.db.from('orders').select('*').eq('id', id).single(),
         loadCustomersForOrder(),
-        state.db.from('order_items').select('*').eq('order_id', id)
+        state.db.from('order_items').select('*').eq('order_id', id).order('id')
       ]);
       if (o.error) throw o.error;
       if (i.error) throw i.error;
       state.orderItems = i.data || [];
       await loadProductsForOrder();
-      openModal('مدیریت سفارش', orderForm(o.data, c, state.orderItems));
+      openModal('ویرایش سفارش', orderForm(o.data, c, state.orderItems));
+      $('modal')?.classList.add('az-order-workspace');
       wireOrderForm(id);
+      const section = focusSection === 'payment' ? document.querySelector('#orderForm .az-order-edit-section:nth-of-type(1)')
+        : focusSection === 'shipping' ? document.querySelector('#orderForm .az-order-edit-section:nth-of-type(2)') : null;
+      if (section && section.tagName === 'DETAILS') section.open = true;
+      if (focusSection === 'shipping') $('orderForm')?.elements?.tracking_code?.focus();
+      if (focusSection === 'payment') $('orderForm')?.elements?.payment_status?.focus();
     } catch (err) {
-      toast('__AZICON_ERROR__ بارگذاری سفارش ناموفق بود: ' + errorText(err));
+      toast('__AZICON_ERROR__ بارگذاری ویرایش سفارش ناموفق بود: ' + errorText(err));
+    }
+  }
+
+  async function openOrderShippingAction(id) {
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
+    try {
+      const {data,error}=await state.db.from('orders').select('id,order_code,status,payment_status,shipping_status,tracking_code,tracking_url,shipping_carrier').eq('id',id).single();
+      if(error) throw error;
+      openModal('ثبت ارسال سفارش',
+        '<form id="shippingActionForm" class="az-shipping-action-form">' +
+          '<div class="az-shipping-action-intro"><span>SHIPMENT CONTROL</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>با ثبت این اطلاعات، سفارش به «ارسال شده» منتقل می‌شود.</small></div>' +
+          '<div class="grid2">' +
+            '<div class="field"><label>شرکت ارسال *</label><input class="input" name="shipping_carrier" maxlength="120" required value="' + esc(data.shipping_carrier || '') + '" placeholder="نام شرکت ارسال"></div>' +
+            '<div class="field"><label>کد رهگیری *</label><input class="input" name="tracking_code" required value="' + esc(data.tracking_code || '') + '"></div>' +
+            '<div class="field full"><label>لینک کامل پیگیری *</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr" required value="' + esc(data.tracking_url || '') + '" placeholder="https://..."></div>' +
+          '</div>' +
+          '<div id="shippingActionStatus" class="status"></div>' +
+          '<div class="mfa-actions"><button class="btn" type="submit">ثبت ارسال</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '</form>'
+      );
+      $('modal')?.classList.add('az-order-workspace');
+      $('shippingActionForm').onsubmit=async(e)=>{
+        e.preventDefault();
+        const btn=e.target.querySelector('button[type="submit"]');
+        const st=$('shippingActionStatus');
+        if(btn) btn.disabled=true;
+        try{
+          const fd=new FormData(e.target);
+          const r=await state.db.rpc('azim_admin_transition_order',{
+            p_order_id:id,p_action:'mark_shipped',
+            p_tracking_code:String(fd.get('tracking_code')||'').trim(),
+            p_tracking_url:String(fd.get('tracking_url')||'').trim(),
+            p_shipping_carrier:String(fd.get('shipping_carrier')||'').trim()
+          });
+          if(r.error) throw r.error;
+          closeModal();
+          toast('__AZICON_SUCCESS__ ارسال سفارش ثبت شد.');
+          await Promise.all([loadOrders(),loadDashboard()]);
+        }catch(err){
+          if(st) st.textContent='__AZICON_ERROR__ '+errorText(err);
+          if(btn) btn.disabled=false;
+        }
+      };
+    }catch(err){toast('__AZICON_ERROR__ بارگذاری فرم ارسال ناموفق بود: '+errorText(err));}
+  }
+
+  async function handleOrderControlAction(id, action, button) {
+    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه عملیات سفارش ندارد.');
+    if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
+    if (action === 'restore') {
+      const code = button?.closest('.az-order-control')?.querySelector('.az-order-control-code strong')?.textContent || '';
+      openRestoreCancelledOrderConfirm(code);
+      return;
+    }
+    if (action === 'review_payment') {
+      await openOrder(id,'payment');
+      return;
+    }
+    if (action === 'mark_shipped') {
+      await openOrderShippingAction(id);
+      return;
+    }
+
+    const labelsByAction = {
+      confirm_order:'تأیید سفارش',
+      start_processing:'شروع پردازش',
+      mark_packed:'ثبت بسته‌بندی',
+      mark_delivered:'ثبت تحویل'
+    };
+    const textAction = labelsByAction[action];
+    if (!textAction) return;
+    if (!window.confirm('«' + textAction + '» برای این سفارش انجام شود؟')) return;
+    const oldText=button?.textContent || '';
+    if(button){button.disabled=true;button.textContent='در حال انجام…';}
+    try{
+      const r=await state.db.rpc('azim_admin_transition_order',{p_order_id:id,p_action:action});
+      if(r.error) throw r.error;
+      closeModal();
+      toast('__AZICON_SUCCESS__ '+textAction+' با موفقیت ثبت شد.');
+      await Promise.all([loadOrders(),loadDashboard()]);
+    }catch(err){
+      toast('__AZICON_ERROR__ '+errorText(err));
+      if(button){button.disabled=false;button.textContent=oldText;}
     }
   }
 
@@ -4895,6 +5148,15 @@
     const i = e.target.closest('[data-edit-inquiry]'); if (i) editInquiry(i.dataset.editInquiry);
     const cu = e.target.closest('[data-edit-customer]'); if (cu) editCustomer(cu.dataset.editCustomer);
     const ro = e.target.closest('[data-restore-order]'); if (ro) { e.preventDefault(); e.stopPropagation(); openRestoreCancelledOrderConfirm(ro.dataset.restoreOrder); return; }
+    const ocAction = e.target.closest('[data-order-control-action]');
+    if (ocAction) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOrderControlAction(ocAction.dataset.orderId || ocAction.closest('[data-order-card]')?.dataset.orderCard, ocAction.dataset.orderControlAction, ocAction);
+      return;
+    }
+    const editFull = e.target.closest('[data-order-edit-full]');
+    if (editFull) { e.preventDefault(); e.stopPropagation(); openOrderEditor(editFull.dataset.orderEditFull); return; }
     if (e.target.matches('#adminServiceRequestsPanel')) {
       e.preventDefault();
       $('closeServiceRequestsBtn')?.click();
@@ -4910,12 +5172,20 @@
       }
       return;
     }
-    const o = e.target.closest('[data-edit-order]'); if (o) { e.preventDefault(); openOrder(o.dataset.editOrder); return; }
+    const o = e.target.closest('[data-edit-order]'); if (o) { e.preventDefault(); openOrderEditor(o.dataset.editOrder); return; }
     const oc = e.target.closest('[data-order-card]'); if (oc) { e.preventDefault(); openOrder(oc.dataset.orderCard); return; }
     const sr = e.target.closest('[data-service-action]'); if (sr) { e.preventDefault(); e.stopPropagation(); handleAdminServiceRequest(sr.dataset.id, sr.dataset.kind, sr.dataset.action, sr); return; }
     const m = e.target.closest('[data-delete-media]'); if (m) deleteMedia(m.dataset.deleteMedia);
     const co = e.target.closest('[data-edit-content]'); if (co) editContent(co.dataset.editContent);
     const fc = e.target.closest('[data-filter-category]'); if (fc) { $('productSearch').value=''; if ($('productCategoryFilter')) $('productCategoryFilter').value=fc.dataset.filterCategory; setView('products'); }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const card = e.target.closest?.('[data-order-card]');
+    if (card && e.target === card && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      openOrder(card.dataset.orderCard);
+    }
   });
 
   document.addEventListener('change', (e) => {
