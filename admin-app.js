@@ -2566,6 +2566,13 @@
     if (loadSeq !== ordersLoadSeq) return;
     if (itemsRes.error) return showSectionError('ordersTable', itemsRes.error);
 
+    const refundRes = orderIds.length
+      ? await state.db.rpc('azim_admin_order_refund_summaries',{p_order_ids:orderIds})
+      : {data:{},error:null};
+    if (loadSeq !== ordersLoadSeq) return;
+    if (refundRes.error) return showSectionError('ordersTable', refundRes.error);
+    const refundByOrder = new Map(Object.entries(refundRes.data || {}));
+
     const itemsByOrder = new Map();
     (itemsRes.data || []).forEach((item) => {
       const key = String(item.order_id);
@@ -2587,8 +2594,8 @@
       return 'warn';
     };
 
-    const nextAction = (x) => {
-      const plan = orderActionPlan(x);
+    const nextAction = (x, refundSummary) => {
+      const plan = orderActionPlan(x, refundSummary);
       return [plan.label, plan.tone, plan.key];
     };
     const requestByOrder = new Map();
@@ -2624,7 +2631,8 @@
       const status = labels[x.status] || x.status || '—';
       const payment = labels[x.payment_status] || x.payment_status || '—';
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
-      const [actionText, actionTone, actionKey] = nextAction(x);
+      const refundSummary = refundByOrder.get(String(x.id)) || {status:'none',label:'عودت وجه ندارد'};
+      const [actionText, actionTone, actionKey] = nextAction(x, refundSummary);
       const actionPlan = orderActionPlan(x);
       const discount = Number(x.discount || 0);
       const orderItems = itemsByOrder.get(String(x.id)) || [];
@@ -2661,6 +2669,7 @@
             '<span class="az-order-pill ' + statusTone(x.status) + '">' + esc(status) + '</span>' +
             '<span class="az-order-pill ' + statusTone(x.payment_status) + '">' + esc(payment) + '</span>' +
             '<span class="az-order-pill ' + statusTone(x.shipping_status) + '">' + esc(shipping) + '</span>' +
+            (refundSummary.status !== 'none' ? '<span class="az-order-pill ' + (['refunded','partially_refunded'].includes(refundSummary.status) ? 'ok' : (['failed','review_required'].includes(refundSummary.status) ? 'red' : 'warn')) + '">💰 ' + esc(refundSummary.label || refundSummary.status) + '</span>' : '') +
           '</div>' +
         '</div>' +
         '<div class="az-order-card-body">' +
@@ -3044,9 +3053,16 @@
       '<div class="field full"><button type="button" class="btn ghost remove-item">حذف قلم</button></div></div>';
   }
 
-  function orderActionPlan(x) {
+  function orderActionPlan(x, refundSummary = null) {
     if (!x) return { key:'none', label:'مدیریت سفارش', tone:'warn', kind:'open' };
-    if (x.status === 'cancelled') return { key:'restore', label:'بازگردانی سفارش', tone:'red', kind:'restore' };
+    const refundStatus = String(refundSummary?.status || 'none');
+    if (['requested','pending','processing','review_required'].includes(refundStatus)) {
+      return { key:'review_refund', label:'پیگیری عودت وجه', tone:'warn', kind:'refund' };
+    }
+    if (x.status === 'cancelled') {
+      if (refundStatus === 'failed') return { key:'review_refund', label:'بررسی عودت ناموفق', tone:'warn', kind:'refund' };
+      return { key:'restore', label:'بازگردانی سفارش', tone:'red', kind:'restore' };
+    }
     if (x.status === 'delivered' || x.shipping_status === 'delivered') return { key:'done', label:'سفارش تکمیل شده', tone:'ok', kind:'none' };
     if (x.payment_status !== 'paid') {
       if (['unpaid','pending'].includes(x.payment_status) && ['phone','message'].includes(x.payment_method)) {
@@ -3066,8 +3082,8 @@
     return ({ online:'پرداخت آنلاین', phone:'تلفنی', message:'پیام' }[method] || method || '—');
   }
 
-  function orderControlView(x, items, focusSection = '') {
-    const plan = orderActionPlan(x);
+  function orderControlView(x, items, focusSection = '', refundSummary = null) {
+    const plan = orderActionPlan(x, refundSummary);
     const status = labels[x.status] || x.status || '—';
     const payment = labels[x.payment_status] || x.payment_status || '—';
     const shipping = labels[x.shipping_status] || x.shipping_status || '—';
@@ -3091,6 +3107,8 @@
           ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="mark_shipped" data-order-id="' + esc(x.id) + '">ثبت ارسال و رهگیری <span>←</span></button>'
           : plan.kind === 'review'
             ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_payment" data-order-id="' + esc(x.id) + '">بررسی وضعیت پرداخت <span>←</span></button>'
+          : plan.kind === 'refund'
+            ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_refund" data-order-id="' + esc(x.id) + '">پیگیری عودت وجه <span>←</span></button>'
           : plan.kind === 'manual_payment'
             ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="record_manual_payment" data-order-id="' + esc(x.id) + '">ثبت پرداخت دستی <span>←</span></button>'
             : '';
@@ -3121,6 +3139,7 @@
         '<span class="az-order-pill ' + (x.status === 'cancelled' ? 'red' : x.status === 'delivered' ? 'ok' : 'warn') + '">سفارش · ' + esc(status) + '</span>' +
         '<span class="az-order-pill ' + (x.payment_status === 'paid' ? 'ok' : ['refunded','partially_refunded'].includes(x.payment_status) ? 'red' : 'warn') + '">پرداخت · ' + esc(payment) + '</span>' +
         '<span class="az-order-pill ' + (x.shipping_status === 'delivered' ? 'ok' : 'warn') + '">ارسال · ' + esc(shipping) + '</span>' +
+        (refundSummary?.status && refundSummary.status !== 'none' ? '<span class="az-order-pill ' + (['refunded','partially_refunded'].includes(refundSummary.status) ? 'ok' : (['failed','review_required'].includes(refundSummary.status) ? 'red' : 'warn')) + '">💰 ' + esc(refundSummary.label || refundSummary.status) + '</span>' : '') +
       '</div>' +
       '<div class="az-order-control-action">' +
         '<div><span>اقدام بعدی</span><b class="' + esc(plan.tone) + '">' + esc(plan.label) + '</b><small>' + esc(actionHint) + '</small></div>' +
@@ -3153,6 +3172,9 @@
           '<div><span>مبلغ نهایی</span><b class="gold">' + money(x.total) + '</b></div>' +
           '<div><span>شناسه پرداخت</span><b dir="ltr">' + esc(x.payment_reference || '—') + '</b></div>' +
           '<div><span>زمان پرداخت</span><b>' + dateFa(x.paid_at) + '</b></div>' +
+          '<div><span>وضعیت عودت</span><b>' + esc(refundSummary?.label || 'عودت وجه ندارد') + '</b></div>' +
+          '<div><span>مبلغ عودت‌شده</span><b>' + (Number(refundSummary?.amount_refunded || 0) ? money(refundSummary.amount_refunded) : '—') + '</b></div>' +
+          '<div><span>مبلغ در انتظار عودت</span><b>' + (Number(refundSummary?.amount_pending || 0) ? money(refundSummary.amount_pending) : '—') + '</b></div>' +
         '</div></div>' +
       '</details>' +
 
@@ -3168,13 +3190,15 @@
   async function openOrder(id, focusSection = '') {
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما دسترسی سفارش‌ها ندارد.');
     try {
-      const [o, i] = await Promise.all([
+      const [o, i, rf] = await Promise.all([
         state.db.from('orders').select('*').eq('id', id).single(),
-        state.db.from('order_items').select('*').eq('order_id', id).order('id')
+        state.db.from('order_items').select('*').eq('order_id', id).order('id'),
+        state.db.rpc('azim_admin_order_refund_summary',{p_order_id:id})
       ]);
       if (o.error) throw o.error;
       if (i.error) throw i.error;
-      openModal('مدیریت سفارش', orderControlView(o.data, i.data || [], focusSection));
+      if (rf.error) throw rf.error;
+      openModal('مدیریت سفارش', orderControlView(o.data, i.data || [], focusSection, rf.data || null));
       $('modal')?.classList.add('az-order-workspace');
     } catch (err) {
       toast('__AZICON_ERROR__ بارگذاری سفارش ناموفق بود: ' + errorText(err));
@@ -3309,6 +3333,10 @@
       return;
     }
     if (action === 'review_payment') {
+      await openOrder(id,'payment');
+      return;
+    }
+    if (action === 'review_refund') {
       await openOrder(id,'payment');
       return;
     }
