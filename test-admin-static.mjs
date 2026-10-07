@@ -170,19 +170,45 @@ if (!js.includes("async function openOrderShippingAction(id)")) fail('focused sh
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
-if (!html.includes('admin-modern.css?v=37') || !html.includes('admin-app.js?v=61')) fail('order control asset versions were not bumped');
+if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=62')) fail('order control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
-if (!js.includes("window.__AZIM_ADMIN_V38 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("window.__AZIM_ADMIN_V39 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("async function handleOrderControlAction")) fail('order control action handler must be async');
+if (!js.includes("if (action === 'open')")) fail('fallback order action has no safe open handler');
+if (!js.includes("!['done','open'].includes(actionPlan.kind)")) fail('fallback order state still renders a dead quick-action button');
 if (!js.includes("sectionOpen('items')")) fail('order control items section is not compact by default');
 if (!js.includes("data-order-control-action") || !js.includes("data-order-edit-full")) fail('order control action hooks are missing');
+const orderActionKeys = ['restore','review_payment','record_manual_payment','confirm_order','start_processing','mark_packed','mark_shipped','mark_delivered','open'];
+for (const key of orderActionKeys) {
+  if (!js.includes("'" + key + "'")) fail('order action key missing: ' + key);
+}
+const orderPageButtonWiring = [
+  "$('newOrderBtn').onclick = () => newOrder();",
+  "$('ordersSearch')?.addEventListener('input'",
+  "$('clearOrdersSearch')?.addEventListener('click'",
+  "$('ordersPageSize')?.addEventListener('change'",
+  "data-order-page",
+  "data-order-card",
+  "data-order-control-action",
+  "data-order-edit-full",
+  "data-service-action",
+  "$('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests())",
+  "$('closeServiceRequestsBtn')?.addEventListener('click'"
+];
+for (const needle of orderPageButtonWiring) if (!js.includes(needle)) fail('orders page button/control wiring missing: ' + needle);
+if (!js.includes("if (action === 'restore')")) fail('restore action handler missing');
+if (!js.includes("if (action === 'review_payment')")) fail('payment review action handler missing');
+if (!js.includes("if (action === 'record_manual_payment')")) fail('manual payment action handler missing');
+if (!js.includes("if (action === 'mark_shipped')")) fail('shipment action handler missing');
+if (!js.includes("if (!textAction) return;")) fail('unknown order transition actions are not safely rejected');
 if (!js.includes("record_manual_payment") || !js.includes("openManualPaymentAction")) fail('manual payment action is missing');
 if (!orderTransitionMigration.includes("azim_admin_transition_order") || !orderTransitionMigration.includes("revoke execute on function public.azim_admin_transition_order")) fail('order transition migration is incomplete');
 if (!paidOrderGuardMigration.includes("orders_paid_amount_guard") || !paidOrderGuardMigration.includes("paid','partially_refunded','refunded")) fail('paid-order amount guard migration is incomplete');
 if (!manualPaymentMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'") || !manualPaymentMigration.includes("azim_admin_record_manual_payment") || !manualPaymentMigration.includes("revoke execute on function public.azim_admin_record_manual_payment")) fail('manual payment migration is incomplete');
 if (!js.includes("payment_method,payment_reference,paid_at")) fail('order list does not load payment method/reference/time');
 if (!js.includes("state.db.rpc('azim_admin_record_manual_payment'")) fail('manual payment RPC is not wired');
-if (!html.includes('admin-app.js?v=61')) fail('admin app cache version is stale');
+if (!html.includes('admin-app.js?v=62')) fail('admin app cache version is stale');
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log('ADMIN_STATIC_OK');
