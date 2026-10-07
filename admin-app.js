@@ -2680,7 +2680,7 @@
         '<div class="az-order-card-foot">' +
           '<span class="az-order-foot-note">' + (x.customer_id ? 'پرونده مشتری متصل است' : 'بدون پرونده مشتری') + '</span>' +
           '<div class="tools" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
-          (can.sales() && actionKey !== 'done' ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
+          (can.sales() && actionKey !== 'done' ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
           '<span class="az-order-card-open-hint">برای خلاصه و جزئیات ← کلیک کنید</span>' +
           '</div>' +
         '</div>' +
@@ -3235,7 +3235,7 @@
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه عملیات سفارش ندارد.');
     if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
     if (action === 'restore') {
-      const code = button?.closest('.az-order-control')?.querySelector('.az-order-control-code strong')?.textContent || '';
+      const code = button?.dataset?.orderCode || button?.closest('.az-order-control')?.querySelector('.az-order-control-code strong')?.textContent || '';
       openRestoreCancelledOrderConfirm(code);
       return;
     }
