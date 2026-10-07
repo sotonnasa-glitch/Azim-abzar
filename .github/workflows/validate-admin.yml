@@ -5,6 +5,8 @@ on:
     paths:
       - 'admin-app.js'
       - 'admin.html'
+      - 'admin-modern.css'
+      - 'supabase/migrations/**'
       - 'database/discount-engine-hardening.sql'
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
@@ -14,6 +16,8 @@ on:
     paths:
       - 'admin-app.js'
       - 'admin.html'
+      - 'admin-modern.css'
+      - 'supabase/migrations/**'
       - 'database/discount-engine-hardening.sql'
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
