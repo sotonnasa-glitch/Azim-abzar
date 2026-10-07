@@ -2967,7 +2967,9 @@
             '<div class="field"><label>کد سفارش *</label><input class="input" name="order_code" readonly required title="کد سفارش پس از ثبت غیرقابل تغییر است." value="' + esc(x?.order_code || newOrderCode()) + '"></div>' +
             '<div class="field"><label>مشتری</label><select class="select" name="customer_id"><option value="">بدون مشتری</option>' + customerOptions + '</select></div>' +
             statusField +
-            '<div class="field"><label>پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], x?.payment_status || 'unpaid', labels) + '</select><small class="field-hint">پرداخت آنلاین فقط از مسیر تأیید واقعی درگاه قابل نهایی‌سازی است.</small></div>' +
+            (x
+              ? '<div class="field"><label>وضعیت پرداخت</label><div class="az-readonly-field"><b>' + esc(labels[x.payment_status] || x.payment_status || '—') + '</b><small>وضعیت مالی سفارش موجود از مسیر پرداخت/عودت تغییر می‌کند.</small></div><input type="hidden" name="payment_status" value="' + esc(x.payment_status || 'unpaid') + '"></div>'
+              : '<div class="field"><label>وضعیت پرداخت</label><select class="select" name="payment_status">' + selectOptions(['unpaid','pending','paid','partially_refunded','refunded'], 'unpaid', labels) + '</select><small class="field-hint">برای سفارش موجود، تغییر وضعیت مالی از فرم عمومی انجام نمی‌شود.</small></div>') +
           '</div>' +
         '</details>' +
 
