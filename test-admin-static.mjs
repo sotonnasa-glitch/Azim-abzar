@@ -219,3 +219,5 @@ if (!js.includes("payment_method,payment_reference,paid_at")) fail('order list d
 if (!js.includes("سفارش جدید همیشه از مرحله «در انتظار» شروع می‌شود")) fail('new order status is not locked to pending');
 if (!js.includes("سفارش جدید بدون ثبت پرداخت ایجاد می‌شود")) fail('new order payment state is not locked to unpaid');
 if (!js.includes("این سفارش فعلاً شرایط ثبت ارسال را ندارد")) fail('shipment action is missing client-side state guard');
+
+// CI smoke marker: order button coverage
