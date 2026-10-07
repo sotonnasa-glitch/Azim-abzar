@@ -1,7 +1,8 @@
 (() => {
   'use strict';
 
-  if (window.__AZIM_ADMIN_V37) return;
+  if (window.__AZIM_ADMIN_V39) return;
+  window.__AZIM_ADMIN_V39 = true;
   window.__AZIM_ADMIN_V38 = true;
   window.__AZIM_ADMIN_V37 = true;
   window.__AZIM_ADMIN_V36 = true;
@@ -2624,6 +2625,7 @@
       const payment = labels[x.payment_status] || x.payment_status || '—';
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
       const [actionText, actionTone, actionKey] = nextAction(x);
+      const actionPlan = orderActionPlan(x);
       const discount = Number(x.discount || 0);
       const orderItems = itemsByOrder.get(String(x.id)) || [];
       const requestSummary = requestByOrder.get(String(x.id));
@@ -2638,7 +2640,7 @@
       const customerEmail = x.customer_email || '—';
       const productsHtml = orderItems.length
         ? '<div class="az-order-products"><span class="az-order-products-title">محصولات سفارش</span>' +
-            orderItems.map((it) => {
+            orderItems.slice(0, 3).map((it) => {
               const variant = it?.variant && typeof it.variant === 'object'
                 ? (it.variant.label || it.variant.size || it.variant.name || '')
                 : String(it?.variant || '');
@@ -2648,6 +2650,7 @@
                 '<strong>×' + esc(Number(it.quantity || 0).toLocaleString('fa-IR')) + '</strong>' +
                 '</div>';
             }).join('') +
+            (orderItems.length > 3 ? '<small class="az-order-products-more">+' + Number(orderItems.length - 3).toLocaleString('fa-IR') + ' قلم دیگر در کنترل سفارش</small>' : '') +
           '</div>'
         : '<div class="az-order-products az-order-products-empty">محصولات این سفارش در دسترس نیست.</div>';
 
@@ -2664,7 +2667,6 @@
           '<div class="az-order-customer">' +
             '<div><span>مشتری</span><b>' + esc(customerName) + '</b></div>' +
             '<div><span>موبایل</span><b dir="ltr">' + esc(customerMobile) + '</b></div>' +
-            '<div><span>ایمیل</span><b dir="ltr">' + esc(customerEmail) + '</b></div>' +
           '</div>' +
           requestHtml +
           '<div class="az-order-card-flow">' + orderTimeline(x.status, x.shipping_status) + '</div>' +
@@ -2681,8 +2683,8 @@
         '<div class="az-order-card-foot">' +
           '<span class="az-order-foot-note">' + (x.customer_id ? 'پرونده مشتری متصل است' : 'بدون پرونده مشتری') + '</span>' +
           '<div class="tools" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
-          (can.sales() && actionKey !== 'done' ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
-          '<span class="az-order-card-open-hint">برای خلاصه و جزئیات ← کلیک کنید</span>' +
+          (can.sales() && !['done','open'].includes(actionPlan.kind) ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '" title="' + esc(actionText) + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
+          '<span class="az-order-card-open-hint">برای کنترل سفارش و جزئیات ← کلیک کنید</span>' +
           '</div>' +
         '</div>' +
       '</article>';
@@ -3099,6 +3101,8 @@
         ? 'پرداخت آنلاین از مسیر درگاه کنترل می‌شود و تأیید دستی برای آن انجام نمی‌شود.'
         : plan.kind === 'manual_payment'
           ? 'برای سفارش تلفنی/پیامی، ثبت پرداخت با نشست MFA انجام می‌شود و در گزارش فعالیت ثبت خواهد شد.'
+        : plan.kind === 'open'
+          ? 'برای این وضعیت عملیات مرحله‌ای تعریف نشده؛ از بخش‌های پایین برای بررسی سفارش استفاده کنید.'
         : plan.kind === 'none'
           ? 'این سفارش به مرحله نهایی رسیده است.'
           : 'اقدام بعدی بر اساس وضعیت واقعی سفارش و محدودیت‌های Supabase تعیین شده است.';
@@ -3295,6 +3299,10 @@
   async function handleOrderControlAction(id, action, button) {
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه عملیات سفارش ندارد.');
     if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
+    if (action === 'open') {
+      await openOrder(id);
+      return;
+    }
     if (action === 'restore') {
       const code = button?.dataset?.orderCode || button?.closest('.az-order-control')?.querySelector('.az-order-control-code strong')?.textContent || '';
       openRestoreCancelledOrderConfirm(code);
