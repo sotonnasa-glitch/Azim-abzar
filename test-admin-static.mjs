@@ -4,6 +4,9 @@ const html = readFileSync('admin.html', 'utf8');
 const js = readFileSync('admin-app.js', 'utf8');
 const paymentMigration = readFileSync('supabase/migrations/20260926211435_admin_payment_control_center.sql', 'utf8');
 
+const css = readFileSync('admin-modern.css', 'utf8');
+const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section');
+
 const fail = (msg) => {
   console.error('ADMIN_STATIC_FAIL:', msg);
   process.exitCode = 1;
@@ -71,7 +74,7 @@ for (const needle of dynamicHooks) {
 const delegatedDataActions = [
   'data-edit-product','data-toggle-product','data-edit-category','data-toggle-category',
   'data-edit-brand','data-toggle-brand','data-edit-inquiry','data-edit-customer',
-  'data-edit-order','data-delete-media','data-edit-content','data-filter-category',
+  'data-edit-order','data-order-control-action','data-order-edit-full','data-delete-media','data-edit-content','data-filter-category',
   'data-edit-discount','data-toggle-discount','data-delete-discount',
   'data-new-discount-customer','data-new-discount-product','data-copy-discount','data-service-action'
 ];
@@ -158,4 +161,19 @@ if (html.includes('admin-app.js?v=50') || html.includes('admin-app.js?v=55') || 
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log('ADMIN_STATIC_OK');
+if (!js.includes("function orderActionPlan(x)")) fail('order action plan is missing');
+if (!js.includes("function orderControlView(x, items, focusSection = '')")) fail('order control drawer view is missing');
+if (!js.includes("async function openOrderEditor(id, focusSection = '')")) fail('separate full order editor is missing');
+if (!js.includes("async function openOrderShippingAction(id)")) fail('focused shipment workflow is missing');
+if (!js.includes("state.db.rpc('azim_admin_transition_order'") && !js.includes("state.db.rpc('azim_admin_transition_order',{")) fail('order transition RPC is not wired');
+if (js.includes('class="btn secondary az-order-manage') || js.includes('data-edit-order="' + ' + x.id + '>جزئیات کامل')) fail('duplicate full-details order button remains');
+if (!js.includes('data-order-code="' + ' + esc(x.order_code || \'\')')) fail('card action does not carry order code for restore workflow');
+if (!html.includes('admin-modern.css?v=37') || !html.includes('admin-app.js?v=59')) fail('order control asset versions were not bumped');
+if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
+if (!cssLike()) fail('order control CSS hooks are missing');
+if (!js.includes("window.__AZIM_ADMIN_V37 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("sectionOpen('items')")) fail('order control items section is not compact by default');
+if (!js.includes("document.addEventListener('keydown', (e) => {")) fail('order card keyboard behavior is missing');
+if (!js.includes("data-order-control-action") || !js.includes("data-order-edit-full")) fail('order control action hooks are missing');
+
 if (!js.includes("state.productCacheLoaded = false;")) fail('catalog reload does not invalidate order product cache');
