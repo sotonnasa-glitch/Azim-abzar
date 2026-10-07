@@ -172,7 +172,7 @@ if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')"))
 if (!html.includes('admin-modern.css?v=37') || !html.includes('admin-app.js?v=60')) fail('order control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
-if (!js.includes("window.__AZIM_ADMIN_V37 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("window.__AZIM_ADMIN_V38 = true;")) fail('admin script version guard was not updated');
 if (!js.includes("sectionOpen('items')")) fail('order control items section is not compact by default');
 if (!js.includes("data-order-control-action") || !js.includes("data-order-edit-full")) fail('order control action hooks are missing');
 if (!js.includes("record_manual_payment") || !js.includes("openManualPaymentAction")) fail('manual payment action is missing');
@@ -180,7 +180,14 @@ if (!orderTransitionMigration.includes("azim_admin_transition_order") || !orderT
 if (!paidOrderGuardMigration.includes("orders_paid_amount_guard") || !paidOrderGuardMigration.includes("paid','partially_refunded','refunded")) fail('paid-order amount guard migration is incomplete');
 if (!manualPaymentMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'") || !manualPaymentMigration.includes("azim_admin_record_manual_payment") || !manualPaymentMigration.includes("revoke execute on function public.azim_admin_record_manual_payment")) fail('manual payment migration is incomplete');
 if (!js.includes("state.db.rpc('azim_admin_record_manual_payment'")) fail('manual payment RPC is not wired');
-if (!html.includes('admin-app.js?v=60')) fail('admin app cache version is stale');
+if (!html.includes('admin-app.js?v=61')) fail('admin app cache version is stale');
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log('ADMIN_STATIC_OK');
+
+if (!js.includes("x.payment_status !== 'paid'")) fail('order action plan does not block non-paid workflow progression');
+if (!js.includes("x.status === 'pending' && x.shipping_status === 'pending'")) fail('order action plan does not require pending shipping state before confirmation');
+if (!js.includes("payment_method,payment_reference,paid_at")) fail('order list does not load payment method/reference/time');
+if (!js.includes("سفارش جدید همیشه از مرحله «در انتظار» شروع می‌شود")) fail('new order status is not locked to pending');
+if (!js.includes("سفارش جدید بدون ثبت پرداخت ایجاد می‌شود")) fail('new order payment state is not locked to unpaid');
+if (!js.includes("این سفارش فعلاً شرایط ثبت ارسال را ندارد")) fail('shipment action is missing client-side state guard');
