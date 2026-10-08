@@ -294,8 +294,8 @@ async function testCart(browser){
   await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 2, null, {timeout:10000});
   await page.goto(BASE+'/cart.html',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, {timeout:15000});
-  await page.waitForFunction(() => document.querySelectorAll('#cartItems .cart-item').length === 2, null, {timeout:20000});
-  assert.equal(await page.locator('#cartItems .cart-item').count(),2,'cart did not render two items');
+  await page.waitForFunction(() => document.querySelectorAll('#cartItems .cart-row').length === 2, null, {timeout:20000});
+  assert.equal(await page.locator('#cartItems .cart-row').count(),2,'cart did not render two items');
   assert.ok(await page.locator('#cartItems .cart-img img').evaluateAll(imgs=>imgs.length===2 && imgs.every(i=>i.complete&&i.naturalWidth>0)),'cart product images did not load');
   assert.ok(await page.locator('#cartItems [data-remove]').count()===2,'cart remove controls missing');
 
@@ -308,9 +308,9 @@ async function testCart(browser){
   await page.locator('#cartItems [data-qty="minus"]').first().click(); await page.waitForTimeout(150);
 
   await page.locator('#cartItems [data-remove]').first().click(); await page.waitForTimeout(200);
-  assert.equal(await page.locator('#cartItems .cart-item').count(),1,'cart remove first item failed');
+  assert.equal(await page.locator('#cartItems .cart-row').count(),1,'cart remove first item failed');
   await page.locator('#cartItems [data-remove]').first().click(); await page.waitForTimeout(250);
-  assert.equal(await page.locator('#cartItems .cart-item').count(),0,'cart remove final item failed');
+  assert.equal(await page.locator('#cartItems .cart-row').count(),0,'cart remove final item failed');
   await context.close();
   return {cart:true,images:true,quantity:true,remove:true,onlineOnly:true};
 }
