@@ -380,10 +380,14 @@ function testCartAndCheckout() {
   const paymentPhone = doc.querySelector('input[name="paymentMethod"][value="phone"]');
   const paymentMessage = doc.querySelector('input[name="paymentMethod"][value="message"]');
   const paymentOnline = doc.getElementById('onlinePaymentOption');
-  if (paymentPhone && paymentMessage && paymentOnline && cartHtml.includes('p_payment_method:')) {
-    pass('روش‌های پرداخت و ارسال روش انتخابی به RPC ثبت سفارش متصل هستند');
+  const paymentOnlineInput = doc.querySelector('input[name="paymentMethod"][value="online"]');
+  const onlineOnlyCheckout = !paymentPhone && !paymentMessage && paymentOnline && paymentOnlineInput &&
+    paymentOnlineInput.disabled && cartHtml.includes("p_payment_method:'online'") &&
+    cartHtml.includes('azim_checkout_options');
+  if (onlineOnlyCheckout) {
+    pass('Checkout فقط روش آنلاین امن را می‌پذیرد؛ گزینه آنلاین تا اعلام آمادگی درگاه از سمت سرور غیرفعال است');
   } else {
-    fail('اتصال روش‌های پرداخت به فرم/RPC کامل نیست');
+    fail('قرارداد پرداخت آنلاینِ امن با فرم و RPC هماهنگ نیست');
   }
 
   if (fullName.hasAttribute('required') && mobile.hasAttribute('required')) {
