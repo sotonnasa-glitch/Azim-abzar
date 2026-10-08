@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.__AZIM_ADMIN_V40) return;
-  window.__AZIM_ADMIN_V41 = true;
+  window.__AZIM_ADMIN_V42 = true;
   window.__AZIM_ADMIN_V40 = true;
   window.__AZIM_ADMIN_V39 = true;
   window.__AZIM_ADMIN_V38 = true;
