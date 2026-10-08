@@ -14,6 +14,8 @@ const orderRefundMigration = readFileSync('supabase/migrations/20261007130000_ad
 const orderRefundBatchMigration = readFileSync('supabase/migrations/20261007131000_admin_order_refund_batch_summary.sql', 'utf8');
 const orderRefundFixMigration = readFileSync('supabase/migrations/20261007133000_fix_order_refund_summary.sql', 'utf8');
 const orderIntegrityMigration = readFileSync('supabase/migrations/20261008230435_admin_orders_integrity_and_actions.sql', 'utf8');
+const orderTrackingPermissionMigration = readFileSync('supabase/migrations/20261008234852_fix_order_tracking_rpc_permissions.sql', 'utf8');
+const paymentReconciliationMigration = readFileSync('supabase/migrations/20261008234947_order_paid_at_reconciliation_and_reference_rpc.sql', 'utf8');
 
 const css = readFileSync('admin-modern.css', 'utf8');
 const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section') && css.includes('.az-order-control-secondary');
@@ -182,10 +184,10 @@ if (!js.includes('مشاهده وضعیت عودت')) fail('refund action label 
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
-if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=65')) fail('order control asset versions were not bumped');
+if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=66')) fail('order control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
-if (!js.includes("window.__AZIM_ADMIN_V41 = true;")) fail('admin script version guard was not updated');
+if (!js.includes("window.__AZIM_ADMIN_V42 = true;")) fail('admin script version guard was not updated');
 if (!js.includes("async function openOrderStageCorrection")) fail('order stage correction workflow is missing');
 if (!js.includes("async function openAdminCancelOrder")) fail('direct admin cancel workflow is missing');
 if (!js.includes('data-order-control-action="correct_stage"')) fail('stage correction action hook is missing');
@@ -234,7 +236,17 @@ if (!orderIntegrityMigration.includes('orders_shipped_tracking_immutability_guar
 if (!orderIntegrityMigration.includes("array['owner','admin']") || !orderIntegrityMigration.includes("admin_order_shipment_correction")) fail('privileged restore/correction checks or audit logging are missing');
 if (!js.includes("payment_method,payment_reference,paid_at")) fail('order list does not load payment method/reference/time');
 if (!js.includes("state.db.rpc('azim_admin_record_manual_payment'")) fail('manual payment RPC is not wired');
-if (!html.includes('admin-app.js?v=65')) fail('admin app cache version is stale');
+if (!js.includes("async function openAttachPaymentReferenceAction(id)")) fail('legacy payment reference reconciliation form is missing');
+if (!js.includes('data-order-control-action="attach_payment_reference"')) fail('legacy payment reference action is missing');
+if (!js.includes("state.db.rpc('azim_admin_attach_payment_reference'")) fail('legacy payment reference RPC is not wired');
+if (!js.includes("if (action === 'attach_payment_reference')")) fail('legacy payment reference action handler is missing');
+if (!js.includes('legacyPaidReferenceMissing')) fail('paid offline orders missing a payment reference are not flagged');
+if (!html.includes('admin-app.js?v=66')) fail('admin app cache version is stale');
+if (!orderTrackingPermissionMigration.includes('ALTER FUNCTION public.azim_order_status(text, text) SECURITY DEFINER')) fail('order tracking RPC security context fix is missing');
+if (!orderTrackingPermissionMigration.includes('GRANT EXECUTE ON FUNCTION public.azim_order_status(text, text) TO anon, authenticated')) fail('order tracking RPC grants are incomplete');
+if (!paymentReconciliationMigration.includes("action='telegram_offline_payment_status'") || !paymentReconciliationMigration.includes("'legacy_paid_at_reconciled'")) fail('legacy payment timestamp is not reconciled from its audit record');
+if (!paymentReconciliationMigration.includes('public.azim_admin_attach_payment_reference') || !paymentReconciliationMigration.includes("ARRAY['owner','admin']") || !paymentReconciliationMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'")) fail('historical payment reference RPC access controls are missing');
+if (!paymentReconciliationMigration.includes("'payment_status_changed',false") || !paymentReconciliationMigration.includes('payment_reference_fabricated')) fail('historical payment reference workflow does not preserve financial status and evidence');
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log('ADMIN_STATIC_OK');
