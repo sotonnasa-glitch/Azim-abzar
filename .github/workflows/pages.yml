@@ -230,11 +230,11 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           html = Path('_site/index.html').read_text(encoding='utf-8')
-          assert '<script src="./azim-motion.js?v=8" defer></script>' in html
+          assert '<script src="./azim-motion.js?v=11" defer></script>' in html
           assert '<script src="./azim-home-copy.js?v=9" defer></script>' in html
           assert 'azim-live-content.js?v=4' in html
           assert 'azim-home-gallery.js' not in html
-          print('HOMEPAGE VERIFIED: native hero gallery + optimized Motion V8 + copy V9')
+          print('HOMEPAGE VERIFIED: native hero gallery + optimized Motion V11 + copy V9')
           PY
 
       - name: Validate contact and catalog runtime
