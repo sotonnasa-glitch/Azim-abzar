@@ -178,7 +178,7 @@ if (!js.includes("const actionPlan = orderActionPlan(x, refundSummary);")) fail(
 if (!js.includes("const trackingReadonlyAttr = trackingReadonly ? ' readonly aria-readonly=\"true\"' : '';")) fail('shipped tracking fields are not readonly in the editor');
 if (!js.includes("async function openOrderShipmentCorrection(id)")) fail('privileged shipment correction workflow is missing');
 if (!js.includes("data-order-control-action=\"correct_shipment\"")) fail('shipment correction button is missing');
-if (!js.includes("'مشاهده وضعیت عودت'")) fail('refund action label is misleading');
+if (!js.includes('مشاهده وضعیت عودت')) fail('refund action label is misleading');
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
