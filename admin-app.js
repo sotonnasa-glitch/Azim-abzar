@@ -2635,7 +2635,7 @@
       const shipping = labels[x.shipping_status] || x.shipping_status || '—';
       const refundSummary = refundByOrder.get(String(x.id)) || {status:'none',label:'عودت وجه ندارد'};
       const [actionText, actionTone, actionKey] = nextAction(x, refundSummary);
-      const actionPlan = orderActionPlan(x);
+      const actionPlan = orderActionPlan(x, refundSummary);
       const discount = Number(x.discount || 0);
       const orderItems = itemsByOrder.get(String(x.id)) || [];
       const requestSummary = requestByOrder.get(String(x.id));
@@ -2694,7 +2694,7 @@
         '<div class="az-order-card-foot">' +
           '<span class="az-order-foot-note">' + (x.customer_id ? 'پرونده مشتری متصل است' : 'بدون پرونده مشتری') + '</span>' +
           '<div class="tools" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
-          (can.sales() && !['done','open'].includes(actionPlan.kind) ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '" title="' + esc(actionText) + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
+          (can.sales() && !['done','open'].includes(actionPlan.kind) && (actionPlan.kind !== 'restore' || can.all()) ? '<button class="btn ' + (actionTone === 'red' ? 'ghost' : (actionTone === 'ok' ? 'secondary' : '')) + ' az-order-quick-action" data-order-control-action="' + esc(actionKey) + '" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '" title="' + esc(actionText) + '">' + esc(actionText) + ' <span>←</span></button>' : '') +
           '<span class="az-order-card-open-hint">برای کنترل سفارش و جزئیات ← کلیک کنید</span>' +
           '</div>' +
         '</div>' +
@@ -2742,7 +2742,7 @@
       return '<button class="btn" type="button" data-service-action data-kind="return" data-action="received" data-id="' + esc(row.id) + '">📦 کالا دریافت شد</button>';
     }
     if (kind === 'return' && row.status === 'received' && row.refund_status === 'pending') {
-      return '<button class="btn" type="button" data-service-action data-kind="return" data-action="refund" data-id="' + esc(row.id) + '">💰 ثبت عودت وجه</button>';
+      return '<button class="btn" type="button" data-service-action data-kind="return" data-action="refund" data-id="' + esc(row.id) + '">' + (row.payment_method === 'online' ? '💳 درخواست عودت از درگاه' : '💰 ثبت عودت وجه دستی') + '</button>';
     }
     return '';
   }
@@ -2947,6 +2947,8 @@
   }
 
   function orderForm(x, customers, items) {
+    const trackingReadonly = !!x && (['shipped','delivered'].includes(x.status) || ['shipped','delivered'].includes(x.shipping_status));
+    const trackingReadonlyAttr = trackingReadonly ? ' readonly aria-readonly="true"' : '';
     const customerOptions = customers.map((c) =>
       '<option value="' + esc(c.id) + '" ' + (x?.customer_id === c.id ? 'selected' : '') + '>' +
       esc(c.full_name) + ' · ' + esc(c.mobile) + '</option>'
@@ -2991,9 +2993,10 @@
           '<summary><span><b>ارسال و رهگیری</b><small>مرسوله و شرکت ارسال</small></span><i>⌄</i></summary>' +
           '<div class="az-order-edit-body grid2">' +
             shippingField +
-            '<div class="field"><label>شرکت ارسال</label><input class="input" name="shipping_carrier" maxlength="120" value="' + esc(x?.shipping_carrier || '') + '" placeholder="نام شرکت ارسال"></div>' +
-            '<div class="field"><label>کد رهگیری</label><input class="input" name="tracking_code" value="' + esc(x?.tracking_code || '') + '" inputmode="text"></div>' +
-            '<div class="field"><label>لینک کامل پیگیری مرسوله</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr" value="' + esc(x?.tracking_url || '') + '" placeholder="https://..."></div>' +
+            (trackingReadonly ? '<div class="field full"><small class="muted">اطلاعات مرسوله پس از ثبت ارسال قفل است. برای اصلاح، از «اصلاح اطلاعات رهگیری» در جزئیات سفارش و همراه با دلیل استفاده کنید.</small></div>' : '') +
+            '<div class="field"><label>شرکت ارسال</label><input class="input" name="shipping_carrier" maxlength="120"'+trackingReadonlyAttr+' value="' + esc(x?.shipping_carrier || '') + '" placeholder="نام شرکت ارسال"></div>' +
+            '<div class="field"><label>کد رهگیری</label><input class="input" name="tracking_code"'+trackingReadonlyAttr+' value="' + esc(x?.tracking_code || '') + '" inputmode="text"></div>' +
+            '<div class="field"><label>لینک کامل پیگیری مرسوله</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr"'+trackingReadonlyAttr+' value="' + esc(x?.tracking_url || '') + '" placeholder="https://..."></div>' +
           '</div>' +
         '</details>' +
 
@@ -3059,7 +3062,7 @@
     if (!x) return { key:'none', label:'مدیریت سفارش', tone:'warn', kind:'open' };
     const refundStatus = String(refundSummary?.status || 'none');
     if (['requested','pending','processing','review_required'].includes(refundStatus)) {
-      return { key:'review_refund', label:'پیگیری عودت وجه', tone:'warn', kind:'refund' };
+      return { key:'review_refund', label:'مشاهده وضعیت عودت', tone:'warn', kind:'refund' };
     }
     if (x.status === 'cancelled') {
       if (refundStatus === 'failed') return { key:'review_refund', label:'بررسی عودت ناموفق', tone:'warn', kind:'refund' };
@@ -3224,8 +3227,10 @@
     }).join('');
 
     const sectionOpen = (name, defaultOpen=false) => (focusSection === name || defaultOpen) ? ' open' : '';
-    const actionHtml = plan.kind === 'restore'
+    const actionHtml = plan.kind === 'restore' && can.all()
       ? '<button class="btn ghost az-order-control-primary danger" type="button" data-order-control-action="restore" data-order-id="' + esc(x.id) + '" data-order-code="' + esc(x.order_code || '') + '">🔄 بازگردانی سفارش</button>'
+      : plan.kind === 'restore'
+        ? '<span class="muted">بازگردانی فقط برای مالک/مدیر مجاز است.</span>'
       : plan.kind === 'transition'
         ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="' + esc(plan.key) + '" data-order-id="' + esc(x.id) + '">' + esc(plan.label) + ' <span>←</span></button>'
         : plan.kind === 'shipping'
@@ -3238,6 +3243,10 @@
             ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="record_manual_payment" data-order-id="' + esc(x.id) + '">ثبت پرداخت دستی <span>←</span></button>'
             : '';
     const stageCorrectionTargets = orderStageCorrectionTargets(x);
+    const shipmentCorrectionHtml = can.all() &&
+      (['shipped','delivered'].includes(x.status) || ['shipped','delivered'].includes(x.shipping_status))
+      ? '<button class="btn ghost" type="button" data-order-control-action="correct_shipment" data-order-id="' + esc(x.id) + '">🧾 اصلاح اطلاعات رهگیری</button>'
+      : '';
     const correctionHtml = can.all() && stageCorrectionTargets.length
       ? '<button class="btn ghost" type="button" data-order-control-action="correct_stage" data-order-id="' + esc(x.id) + '">🛠️ اصلاح مرحله</button>'
       : '';
@@ -3277,7 +3286,7 @@
         '<div><span>اقدام بعدی</span><b class="' + esc(plan.tone) + '">' + esc(plan.label) + '</b><small>' + esc(actionHint) + '</small></div>' +
         actionHtml +
       '</div>' +
-      ((correctionHtml || directCancelHtml) ? '<div class="az-order-control-secondary">' + correctionHtml + directCancelHtml + '</div>' : '') +
+      ((correctionHtml || directCancelHtml || shipmentCorrectionHtml) ? '<div class="az-order-control-secondary">' + correctionHtml + directCancelHtml + shipmentCorrectionHtml + '</div>' : '') +
       '<div class="az-order-control-timeline">' + orderTimeline(x.status, x.shipping_status) + '</div>' +
 
       '<details id="orderSection-items" class="az-order-control-section"' + sectionOpen('items') + '>' +
@@ -3453,6 +3462,62 @@
     }catch(err){toast('__AZICON_ERROR__ بارگذاری فرم ارسال ناموفق بود: '+errorText(err));}
   }
 
+  async function openOrderShipmentCorrection(id) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ اصلاح اطلاعات رهگیری فقط برای مالک یا مدیر مجاز است.');
+    if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
+    try {
+      const {data,error}=await state.db.from('orders')
+        .select('id,order_code,status,shipping_status,tracking_code,tracking_url,shipping_carrier')
+        .eq('id',id).single();
+      if(error) throw error;
+      if(!(['shipped','delivered'].includes(data.status) || ['shipped','delivered'].includes(data.shipping_status))) {
+        return toast('__AZICON_BLOCK__ اصلاح این اطلاعات فقط پس از ثبت ارسال مجاز است.');
+      }
+      openModal('اصلاح اطلاعات رهگیری',
+        '<form id="shipmentCorrectionForm" class="az-shipping-action-form">' +
+          '<div class="az-shipping-action-intro"><span>SHIPMENT CORRECTION</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>اصلاح با تأیید دومرحله‌ای انجام می‌شود و مقدار قبلی و جدید همراه دلیل در گزارش فعالیت ثبت می‌شود.</small></div>' +
+          '<div class="grid2">' +
+            '<div class="field"><label>شرکت ارسال *</label><input class="input" name="shipping_carrier" maxlength="120" required value="' + esc(data.shipping_carrier || '') + '"></div>' +
+            '<div class="field"><label>کد رهگیری *</label><input class="input" name="tracking_code" maxlength="120" required value="' + esc(data.tracking_code || '') + '"></div>' +
+            '<div class="field full"><label>لینک کامل پیگیری *</label><input class="input" name="tracking_url" type="url" inputmode="url" dir="ltr" maxlength="500" required value="' + esc(data.tracking_url || '') + '" placeholder="https://..."></div>' +
+            '<div class="field full"><label>دلیل اصلاح *</label><textarea class="input" name="reason" minlength="5" maxlength="1000" rows="3" required placeholder="مثلاً: شماره مرسوله قبلی اشتباه ثبت شده بود."></textarea></div>' +
+          '</div>' +
+          '<div id="shipmentCorrectionStatus" class="status"></div>' +
+          '<div class="mfa-actions"><button class="btn" type="submit">ثبت اصلاح رهگیری</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '</form>'
+      );
+      $('modal')?.classList.add('az-order-workspace');
+      $('shipmentCorrectionForm').onsubmit=async(e)=>{
+        e.preventDefault();
+        const btn=e.target.querySelector('button[type="submit"]');
+        const st=$('shipmentCorrectionStatus');
+        if(btn) btn.disabled=true;
+        if(!(await requireAdminMFA())){
+          if(st) st.textContent='__AZICON_LOCK__ برای اصلاح رهگیری، نشست MFA باید تأیید شده باشد.';
+          if(btn) btn.disabled=false;
+          return;
+        }
+        try{
+          const fd=new FormData(e.target);
+          const r=await state.db.rpc('azim_admin_correct_order_shipment',{
+            p_order_id:id,
+            p_tracking_code:String(fd.get('tracking_code')||'').trim(),
+            p_tracking_url:String(fd.get('tracking_url')||'').trim(),
+            p_shipping_carrier:String(fd.get('shipping_carrier')||'').trim(),
+            p_reason:String(fd.get('reason')||'').trim()
+          });
+          if(r.error) throw r.error;
+          closeModal();
+          toast('__AZICON_SUCCESS__ اطلاعات رهگیری با دلیل ثبت و در گزارش فعالیت ذخیره شد.');
+          await Promise.all([loadOrders(),loadDashboard()]);
+        }catch(err){
+          if(st) st.textContent='__AZICON_ERROR__ '+errorText(err);
+          if(btn) btn.disabled=false;
+        }
+      };
+    }catch(err){toast('__AZICON_ERROR__ بارگذاری اصلاح رهگیری ناموفق بود: '+errorText(err));}
+  }
+
   async function handleOrderControlAction(id, action, button) {
     if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه عملیات سفارش ندارد.');
     if (!id) return toast('__AZICON_ERROR__ شناسه سفارش وجود ندارد.');
@@ -3461,6 +3526,7 @@
       return;
     }
     if (action === 'restore') {
+      if (!can.all()) return toast('__AZICON_BLOCK__ بازگردانی سفارش فقط برای مالک یا مدیر مجاز است.');
       const code = button?.dataset?.orderCode || button?.closest('.az-order-control')?.querySelector('.az-order-control-code strong')?.textContent || '';
       openRestoreCancelledOrderConfirm(code);
       return;
@@ -3487,6 +3553,10 @@
     }
     if (action === 'mark_shipped') {
       await openOrderShippingAction(id);
+      return;
+    }
+    if (action === 'correct_shipment') {
+      await openOrderShipmentCorrection(id);
       return;
     }
 
@@ -3523,7 +3593,7 @@
   }
 
   function openRestoreCancelledOrderConfirm(orderCode) {
-    if (!can.sales()) return toast('__AZICON_BLOCK__ نقش شما اجازه بازگردانی سفارش ندارد.');
+    if (!can.all()) return toast('__AZICON_BLOCK__ بازگردانی سفارش فقط برای مالک یا مدیر مجاز است.');
     const code = String(orderCode || '').trim();
     if (!code) return toast('__AZICON_ERROR__ کد سفارش برای بازگردانی موجود نیست.');
 
