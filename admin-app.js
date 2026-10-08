@@ -3238,7 +3238,7 @@
           : plan.kind === 'review'
             ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_payment" data-order-id="' + esc(x.id) + '">بررسی وضعیت پرداخت <span>←</span></button>'
           : plan.kind === 'refund'
-            ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_refund" data-order-id="' + esc(x.id) + '">پیگیری عودت وجه <span>←</span></button>'
+            ? '<button class="btn secondary az-order-control-primary" type="button" data-order-control-action="review_refund" data-order-id="' + esc(x.id) + '">مشاهده وضعیت عودت <span>←</span></button>'
           : plan.kind === 'manual_payment'
             ? '<button class="btn az-order-control-primary" type="button" data-order-control-action="record_manual_payment" data-order-id="' + esc(x.id) + '">ثبت پرداخت دستی <span>←</span></button>'
             : '';
