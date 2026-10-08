@@ -813,9 +813,9 @@ function testAuditAddendumGuards() {
   }
 
   const versions = cartPages.map(([name, html]) => [name, (html.match(/azim-cart\.js\?v=\d+/g) || [])]);
-  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=10');
+  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=13');
   if (!mismatched.length) {
-    pass('نسخه cache-busting azim-cart.js در هر ۴ صفحه یکسان و روی v5 است');
+    pass('نسخه cache-busting azim-cart.js در هر ۴ صفحه یکسان و روی v13 است');
   } else {
     fail('نسخه cache-busting azim-cart.js بین صفحات ناهماهنگ است', mismatched.map(([n,h]) => n + ':' + h.join(',')).join(' | '));
   }
