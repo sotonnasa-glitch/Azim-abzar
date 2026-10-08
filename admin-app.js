@@ -3215,6 +3215,9 @@
     const status = labels[x.status] || x.status || '—';
     const payment = labels[x.payment_status] || x.payment_status || '—';
     const shipping = labels[x.shipping_status] || x.shipping_status || '—';
+    const legacyPaidReferenceMissing = x.payment_status === 'paid' &&
+      ['phone','message'].includes(x.payment_method) && !String(x.payment_reference || '').trim();
+    const canAttachLegacyPaymentReference = legacyPaidReferenceMissing && !!x.paid_at && can.all();
     const itemRows = (items || []).map((it) => {
       const variant = it?.variant && typeof it.variant === 'object'
         ? (it.variant.label || it.variant.size || it.variant.name || '')
@@ -3317,7 +3320,15 @@
           '<div><span>وضعیت عودت</span><b>' + esc(refundSummary?.label || 'عودت وجه ندارد') + '</b></div>' +
           '<div><span>مبلغ عودت‌شده</span><b>' + (Number(refundSummary?.amount_refunded || 0) ? money(refundSummary.amount_refunded) : '—') + '</b></div>' +
           '<div><span>مبلغ در انتظار عودت</span><b>' + (Number(refundSummary?.amount_pending || 0) ? money(refundSummary.amount_pending) : '—') + '</b></div>' +
-        '</div></div>' +
+        '</div>' +
+        (legacyPaidReferenceMissing
+          ? '<div class="az-payment-confirm-danger" role="alert" style="margin-top:12px"><strong>سابقه مالی ناقص</strong><span>پرداخت این سفارش با روش تلفنی/پیامی «پرداخت‌شده» است اما مرجع واقعی پرداخت ثبت نشده. شناسه ساختگی وارد نکنید؛ مرجع را فقط از رسید یا مدرک معتبر وارد کنید.</span>' +
+            (canAttachLegacyPaymentReference
+              ? '<button class="btn" type="button" data-order-control-action="attach_payment_reference" data-order-id="' + esc(x.id) + '">ثبت مرجع واقعی پرداخت</button>'
+              : '<small>برای ثبت مرجع، زمان ثبت پرداخت باید در سابقه معتبر موجود باشد و دسترسی مالک/مدیر لازم است.</small>') +
+            '</div>'
+          : '') +
+        '</div>' +
       '</details>' +
 
       '<details id="orderSection-notes" class="az-order-control-section"' + sectionOpen('notes') + '>' +
@@ -3414,6 +3425,61 @@
         }
       };
     }catch(err){toast('__AZICON_ERROR__ بارگذاری ثبت پرداخت دستی ناموفق بود: '+errorText(err));}
+  }
+
+  async function openAttachPaymentReferenceAction(id) {
+    if (!can.all()) return toast('__AZICON_BLOCK__ ثبت مرجع پرداخت تاریخی فقط برای مالک یا مدیر مجاز است.');
+    try {
+      const {data,error}=await state.db.from('orders')
+        .select('id,order_code,status,payment_status,payment_method,payment_reference,paid_at,total')
+        .eq('id',id).single();
+      if(error) throw error;
+      if (!['phone','message'].includes(data.payment_method) || data.payment_status !== 'paid') {
+        return toast('__AZICON_BLOCK__ این عملیات فقط برای پرداخت دستیِ تأییدشده مجاز است.');
+      }
+      if (String(data.payment_reference || '').trim()) return toast('__AZICON_BLOCK__ مرجع پرداخت از قبل ثبت شده است.');
+      if (!data.paid_at) return toast('__AZICON_BLOCK__ زمان ثبت پرداخت سابقه معتبر ندارد؛ ابتدا سابقه را بررسی کنید.');
+      openModal('تکمیل سابقه مالی سفارش',
+        '<form id="legacyPaymentReferenceForm" class="az-shipping-action-form">' +
+          '<div class="az-shipping-action-intro"><span>LEGACY PAYMENT RECONCILIATION</span><strong dir="ltr">' + esc(data.order_code || '—') + '</strong><small>وضعیت پرداخت تغییر نمی‌کند. فقط مرجع واقعیِ موجود در رسید/مدرک ثبت می‌شود و دلیل تغییر در سابقه مدیریتی ذخیره خواهد شد.</small></div>' +
+          '<div class="field"><label>مرجع واقعی پرداخت *</label><input class="input" name="reference" minlength="3" maxlength="160" required autocomplete="off" placeholder="شماره پیگیری/رسید واقعی"></div>' +
+          '<div class="field"><label>دلیل و مدرک بررسی *</label><textarea class="input" name="reason" minlength="5" maxlength="500" rows="3" required placeholder="مثلاً تطبیق با رسید انتقال بانکی در تاریخ ثبت‌شده"></textarea></div>' +
+          '<div id="legacyPaymentReferenceStatus" class="status"></div>' +
+          '<div class="mfa-actions"><button class="btn" type="submit">ثبت مرجع تأییدشده</button><button class="btn secondary" type="button" onclick="closeModal()">انصراف</button></div>' +
+        '</form>'
+      );
+      $('modal')?.classList.add('az-order-workspace');
+      $('legacyPaymentReferenceForm').onsubmit=async(e)=>{
+        e.preventDefault();
+        const form=e.target;
+        const btn=form.querySelector('button[type="submit"]');
+        const st=$('legacyPaymentReferenceStatus');
+        const fd=new FormData(form);
+        const reference=String(fd.get('reference')||'').trim();
+        const reason=String(fd.get('reason')||'').trim();
+        if (btn) btn.disabled=true;
+        if (!(await requireAdminMFA())) {
+          if(st) st.textContent='__AZICON_LOCK__ نشست MFA باید تأیید شده باشد.';
+          if(btn) btn.disabled=false;
+          return;
+        }
+        try {
+          const result=await state.db.rpc('azim_admin_attach_payment_reference',{
+            p_order_id:id,p_reference:reference,p_reason:reason
+          });
+          if(result.error) throw result.error;
+          closeModal();
+          toast('__AZICON_SUCCESS__ مرجع واقعی ثبت شد؛ وضعیت پرداخت تغییر نکرد.');
+          await Promise.all([loadOrders(),loadDashboard()]);
+          await openOrder(id,'payment');
+        } catch(err) {
+          if(st) st.textContent='__AZICON_ERROR__ '+errorText(err);
+          if(btn) btn.disabled=false;
+        }
+      };
+    } catch(err) {
+      toast('__AZICON_ERROR__ بارگذاری سابقه مالی ناموفق بود: '+errorText(err));
+    }
   }
 
   async function openOrderShippingAction(id) {
@@ -3529,6 +3595,10 @@
       if (!can.all()) return toast('__AZICON_BLOCK__ بازگردانی سفارش فقط برای مالک یا مدیر مجاز است.');
       const code = button?.dataset?.orderCode || button?.closest('.az-order-control')?.querySelector('.az-order-control-code strong')?.textContent || '';
       openRestoreCancelledOrderConfirm(code);
+      return;
+    }
+    if (action === 'attach_payment_reference') {
+      await openAttachPaymentReferenceAction(id);
       return;
     }
     if (action === 'review_payment') {
