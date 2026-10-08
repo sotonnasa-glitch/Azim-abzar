@@ -13,7 +13,7 @@ const cancelHardeningMigration = readFileSync('supabase/migrations/2026100715100
 const orderRefundMigration = readFileSync('supabase/migrations/20261007130000_admin_refund_status_unification.sql', 'utf8');
 const orderRefundBatchMigration = readFileSync('supabase/migrations/20261007131000_admin_order_refund_batch_summary.sql', 'utf8');
 const orderRefundFixMigration = readFileSync('supabase/migrations/20261007133000_fix_order_refund_summary.sql', 'utf8');
-const orderIntegrityMigration = readFileSync('supabase/migrations/20261009110000_admin_orders_integrity_and_actions.sql', 'utf8');
+const orderIntegrityMigration = readFileSync('supabase/migrations/20261008230435_admin_orders_integrity_and_actions.sql', 'utf8');
 
 const css = readFileSync('admin-modern.css', 'utf8');
 const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section') && css.includes('.az-order-control-secondary');
