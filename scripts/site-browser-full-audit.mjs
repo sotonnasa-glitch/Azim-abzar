@@ -182,8 +182,20 @@ async function testCatalog(browser){
   await page.locator('#azAiModalClose').click();
 
   await page.evaluate(()=>{window.AZIM_CART?.clear?.()});
+  // P0001 is a size-variant product. Select a real sellable variant before
+  // testing cart persistence; adding an unspecified variant is not a valid
+  // checkout flow for this SKU.
+  const p1VariantSelect = card.locator('select[data-id="P0001"]').first();
+  await p1VariantSelect.waitFor({state:'visible',timeout:15000});
+  const p1Options = await p1VariantSelect.locator('option').evaluateAll(nodes =>
+    nodes.map((n, i) => ({ i, text: (n.textContent || '').trim() }))
+  );
+  const p1Variant = p1Options.find(x => x.text === '46' || x.text.startsWith('46 '));
+  assert.ok(p1Variant, 'P0001 size 46 option is missing');
+  await p1VariantSelect.selectOption({index:p1Variant.i});
   const add1=card.locator('[data-cart-add-link="P0001"]').first();
   await add1.click(); await page.waitForTimeout(300);
+  assert.ok(await page.evaluate(() => window.AZIM_CART?.items?.().some(x => x.code === 'P0001' && x.variant_label === '46')), 'catalog did not preserve selected P0001 size 46');
   assert.ok((await page.url()).includes('/products-v4.html'),'adding first product navigated away from catalog');
   assert.ok(await page.locator('[data-cart-count]').first().evaluate(el=>!el.hidden),'cart badge did not update after first add');
 
