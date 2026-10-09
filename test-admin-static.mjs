@@ -282,7 +282,7 @@ if (!js.includes('data-order-control-action="attach_payment_reference"')) fail('
 if (!js.includes("state.db.rpc('azim_admin_attach_payment_reference'")) fail('legacy payment reference RPC is not wired');
 if (!js.includes("if (action === 'attach_payment_reference')")) fail('legacy payment reference action handler is missing');
 if (!js.includes('legacyPaidReferenceMissing')) fail('paid offline orders missing a payment reference are not flagged');
-if (!html.includes('admin-app.js?v=68')) fail('admin app cache version is stale');
+if (!html.includes('admin-app.js?v=69')) fail('admin app cache version is stale');
 if (!orderTrackingPermissionMigration.includes('ALTER FUNCTION public.azim_order_status(text, text) SECURITY DEFINER')) fail('order tracking RPC security context fix is missing');
 if (!orderTrackingPermissionMigration.includes('GRANT EXECUTE ON FUNCTION public.azim_order_status(text, text) TO anon, authenticated')) fail('order tracking RPC grants are incomplete');
 if (!paymentReconciliationMigration.includes("action='telegram_offline_payment_status'") || !paymentReconciliationMigration.includes("'legacy_paid_at_reconciled'")) fail('legacy payment timestamp is not reconciled from its audit record');
