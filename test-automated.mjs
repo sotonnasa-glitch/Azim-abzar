@@ -444,9 +444,12 @@ async function testContactForm() {
 
   // Execute the real inline submit handler against a mocked Supabase client.
   // This proves the handler reaches the INSERT payload without touching production.
-  const submitScript = [...contactHtml.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
-    .map(match => match[1])
-    .find(source => source.includes('async function handleFormSubmission(e)'));
+  const handlerAt = contactHtml.indexOf('async function handleFormSubmission(e)');
+  const scriptStart = handlerAt >= 0 ? contactHtml.lastIndexOf('<script>', handlerAt) : -1;
+  const scriptEnd = handlerAt >= 0 ? contactHtml.indexOf('</script>', handlerAt) : -1;
+  const submitScript = scriptStart >= 0 && scriptEnd > scriptStart
+    ? contactHtml.slice(scriptStart + '<script>'.length, scriptEnd)
+    : ''
 
   if (!submitScript) {
     fail('اسکریپت واقعی ثبت فرم مشاوره پیدا نشد');
