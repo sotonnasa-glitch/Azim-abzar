@@ -89,6 +89,24 @@ try {
       await mockPage.locator('.nav button[data-view="' + view + '"]').click({ timeout: 5000 });
       await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
     }
+    const modalChecks = [
+      ['products', 'newProductBtn'],
+      ['categories', 'newCategoryBtn'],
+      ['brands', 'newBrandBtn'],
+      ['orders', 'newOrderBtn'],
+      ['customers', 'newCustomerBtn'],
+      ['discounts', 'newDiscountBtn'],
+      ['discount-codes', 'newDiscountCodeBtn'],
+      ['content', 'newContentBtn']
+    ];
+    for (const [view, buttonId] of modalChecks) {
+      await mockPage.locator('.nav button[data-view="' + view + '"]').click();
+      await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
+      await mockPage.locator('#' + buttonId).click({ timeout: 5000 });
+      await mockPage.waitForFunction(() => document.querySelector('#modal')?.classList.contains('show'), null, { timeout: 5000 });
+      await mockPage.locator('#modal button[onclick="closeModal()"]').first().click({ timeout: 5000 });
+      await mockPage.waitForFunction(() => !document.querySelector('#modal')?.classList.contains('show'), null, { timeout: 5000 });
+    }
     await mockPage.locator('#azMenuTrigger').click();
     assert.ok(await mockPage.locator('#azMenuOverlay').evaluate(el => el.classList.contains('show')), 'admin menu did not open');
     await mockPage.locator('#azMenuClose').click();
