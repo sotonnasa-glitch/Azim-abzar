@@ -44,4 +44,11 @@ for (const needle of [
 for (const needle of ["notification_settings","notification_logs","azim_notify_order_change","azim_notify_return_change","orders_azim_notification"]) {
   assert.ok(migration.includes(needle), "Migration missing " + needle);
 }
+const telegramAlertStart = notify.indexOf("async function notifyAdminsOfNewOrder");
+assert.ok(telegramAlertStart >= 0, "Telegram new-order alert builder missing");
+const telegramAlertEnd = notify.indexOf("\nasync function ", telegramAlertStart + 10);
+const telegramAlert = notify.slice(telegramAlertStart, telegramAlertEnd >= 0 ? telegramAlertEnd : undefined);
+assert.ok(telegramAlert.includes('title+"\\n\\n"+'), "Telegram new-order alert must use real line breaks");
+assert.ok(!telegramAlert.includes('title+"\\\\n\\\\n"+'), "Telegram alert must not contain literal escaped newline markers");
+
 console.log("Azim Abzar notification static checks passed.");
