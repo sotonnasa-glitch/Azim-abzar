@@ -2,6 +2,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
 const HAS_NEW_SECRET_KEY = Boolean(Deno.env.get("SUPABASE_SECRET_KEYS"));
+const TELEGRAM_BOT_TOKEN = String(Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "");
+const TELEGRAM_ADMIN_CHAT_IDS = [...new Set((Deno.env.get("TELEGRAM_ADMIN_CHAT_IDS") ?? "")
+  .split(",").map((v) => v.trim()).filter(Boolean))];
 const SERVICE_KEY = (() => {
   try {
     const raw = Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}";
@@ -266,6 +269,86 @@ async function deliver(channel:string,event:string,settingsRow:any,record:any,re
   }
   await patchLog(existingId,{status:"failed",message,error:lastError,attempts:3});
 }
+function uuidOrNull(value:unknown):string|null{
+  const v=String(value??"").trim();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)?v:null;
+}
+async function notifyAdminsOfNewOrder(record:any){
+  if(!TELEGRAM_BOT_TOKEN || !TELEGRAM_ADMIN_CHAT_IDS.length){
+    console.error("telegram admin order alert skipped: Telegram bot token or admin chat IDs are missing");
+    return {status:"not_configured",sent:0,failed:0};
+  }
+  const orderCode=clean(record?.order_code,80)||"—";
+  const isTest=record?.test===true || /^AZ-TEST-/i.test(orderCode);
+  const title=isTest?"🧪 تست اعلان سفارش جدید":"🛒 سفارش جدید در عظیم ابزار";
+  const amount=new Intl.NumberFormat("fa-IR").format(Number(record?.total??0));
+  const text=title+"\\n\\n"+
+    "شماره سفارش: "+orderCode+"\\n"+
+    "مبلغ: "+amount+" تومان\\n"+
+    "وضعیت: "+clean(record?.status,60)+"\\n"+
+    "پرداخت: "+clean(record?.payment_status,60)+"\\n\\n"+
+    "برای مشاهدهٔ جزئیات، دکمهٔ زیر را بزن.";
+  const buttons={inline_keyboard:[
+    [{text:"📄 مشاهدهٔ سفارش",callback_data:"order:"+orderCode.slice(0,48)}],
+    [{text:"📦 سفارش‌های جاری",callback_data:"orders"}]
+  ]};
+  let sent=0,failed=0,skipped=0;
+  const orderId=uuidOrNull(record?.id);
+  const customerId=uuidOrNull(record?.customer_id);
+  for(const chatId of TELEGRAM_ADMIN_CHAT_IDS){
+    const dedupe=(orderId||orderCode)+":order_created:telegram_admin:"+chatId;
+    const logId=await beginLog({
+      order_id:orderId,
+      customer_id:customerId,
+      event:"order_created",
+      channel:"telegram_admin",
+      recipient_masked:maskRecipient(chatId),
+      provider:"telegram",
+      status:"pending",
+      message:text,
+      attempts:1,
+      dedupe_key:dedupe,
+      metadata:{label:"اعلان مدیریتی سفارش جدید",test:isTest,order_code:orderCode}
+    });
+    if(!logId){skipped++;continue;}
+    let lastError="";
+    let delivered=false;
+    for(let attempt=1;attempt<=3;attempt++){
+      try{
+        const response=await fetch("https://api.telegram.org/bot"+TELEGRAM_BOT_TOKEN+"/sendMessage",{
+          method:"POST",
+          headers:{"content-type":"application/json"},
+          body:JSON.stringify({chat_id:chatId,text,reply_markup:buttons,disable_web_page_preview:true})
+        });
+        const body=await response.json().catch(()=>({}));
+        if(!response.ok||body?.ok!==true||!body?.result?.message_id){
+          throw new Error(clean(body?.description??"TELEGRAM_SEND_FAILED",500));
+        }
+        await patchLog(logId,{
+          status:"sent",
+          provider_message_id:String(body.result.message_id),
+          provider_status:"sent",
+          attempts:attempt,
+          sent_at:new Date().toISOString(),
+          error:null
+        });
+        sent++;delivered=true;break;
+      }catch(error){
+        lastError=clean((error as any)?.message??error,800);
+        if(attempt<3){
+          await patchLog(logId,{status:"pending",attempts:attempt,error:lastError});
+          await new Promise(r=>setTimeout(r,300*attempt));
+        }
+      }
+    }
+    if(!delivered){
+      await patchLog(logId,{status:"failed",attempts:3,error:lastError||"TELEGRAM_SEND_FAILED"});
+      failed++;
+    }
+  }
+  return {status:failed?(sent?"partial":"failed"):"sent",sent,failed,skipped};
+}
+
 async function getOrder(id:string){
   const q=await rest("/rest/v1/orders?select=id,order_code,customer_id,customer_name,customer_mobile,customer_email,total,status,payment_status,shipping_status,tracking_code,tracking_url,created_at&id=eq."+encodeURIComponent(id)+"&limit=1");
   return Array.isArray(q.body)?q.body[0]??null:null;
@@ -296,15 +379,26 @@ Deno.serve(async(req:Request)=>{
       order=await getOrder(String(record.order_id));
       if(!order)return json({ok:false,error:"ORDER_NOT_FOUND"},404);
       events=returnEvents(record,old);
-      const targets=["sms","email"];
-      for(const event of events)for(const ch of targets)await deliver(ch,event,cfg,order,ret,String(order.id));
+        const targets=["sms","email"];
+      const orderId=uuidOrNull(order?.id);
+      for(const event of events)for(const ch of targets)await deliver(ch,event,cfg,order,ret,orderId);
       return json({ok:true,kind,operation:op,events});
     }
 
     events=orderEvents(record,old);
     const targets=["sms","email"];
-    for(const event of events)for(const ch of targets)await deliver(ch,event,cfg,order,null,String(order.id));
-    return json({ok:true,kind:"order",operation:op,events});
+    const orderId=uuidOrNull(order?.id);
+    for(const event of events)for(const ch of targets)await deliver(ch,event,cfg,order,null,orderId);
+    let telegram_admin:any=null;
+    if(events.includes("order_created")){
+      try{
+        telegram_admin=await notifyAdminsOfNewOrder(record);
+      }catch(error){
+        telegram_admin={status:"failed",sent:0,failed:1};
+        console.error("telegram admin order alert failed:",clean((error as any)?.message??error,800));
+      }
+    }
+    return json({ok:true,kind:"order",operation:op,events,telegram_admin});
   }catch(e){
     return json({ok:false,error:clean((e as any)?.message??e,800)},500);
   }
