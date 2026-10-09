@@ -3316,9 +3316,6 @@
           '<div><span>هزینه ارسال</span><b>' + (Number(x.shipping_cost || 0) ? money(x.shipping_cost) : 'هماهنگی با واحد فروش') + '</b></div>' +
           '<div><span>مبلغ نهایی</span><b class="gold">' + money(x.total) + '</b></div>' +
           '<div><span>شناسه پرداخت</span><b dir="ltr">' + esc(x.payment_reference || '—') + '</b></div>' +
-          (x.payment_status === 'paid' && ['phone','message'].includes(x.payment_method) && !String(x.payment_reference || '').trim()
-            ? '<div class="full az-payment-confirm-danger" role="alert"><strong>سابقه مالی ناقص</strong><span>وضعیت پرداخت تأیید شده، اما شماره مرجع پرداخت ثبت نشده است. برای تکمیل پرونده، مدرک واقعی پرداخت لازم است؛ شناسه ساختگی وارد نکنید.</span></div>'
-            : '') +
           '<div><span>زمان پرداخت</span><b>' + dateFa(x.paid_at) + '</b></div>' +
           '<div><span>وضعیت عودت</span><b>' + esc(refundSummary?.label || 'عودت وجه ندارد') + '</b></div>' +
           '<div><span>مبلغ عودت‌شده</span><b>' + (Number(refundSummary?.amount_refunded || 0) ? money(refundSummary.amount_refunded) : '—') + '</b></div>' +
