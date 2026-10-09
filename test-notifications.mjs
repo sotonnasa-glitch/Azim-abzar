@@ -51,4 +51,36 @@ const telegramAlert = notify.slice(telegramAlertStart, telegramAlertEnd >= 0 ? t
 assert.ok(telegramAlert.includes('title+"\\n\\n"+'), "Telegram new-order alert must use real line breaks");
 assert.ok(!telegramAlert.includes('title+"\\\\n\\\\n"+'), "Telegram alert must not contain literal escaped newline markers");
 
+// Ensure every callback button has a matching admin-side dispatcher route.
+function quotedValuesAfter(source, marker) {
+  const values = [];
+  let cursor = 0;
+  while ((cursor = source.indexOf(marker, cursor)) !== -1) {
+    cursor += marker.length;
+    while (cursor < source.length && source.charCodeAt(cursor) <= 32) cursor += 1;
+    const quote = source[cursor];
+    if (quote !== "'" && quote !== '"') continue;
+    const endQuote = source.indexOf(quote, cursor + 1);
+    if (endQuote < 0) break;
+    values.push(source.slice(cursor + 1, endQuote));
+    cursor = endQuote + 1;
+  }
+  return values;
+}
+const callbackPayloads = quotedValuesAfter(telegramAdmin, "callback_data:");
+const callbackPrefixes = quotedValuesAfter(telegramAdmin, "data.startsWith(");
+const callbackExactRoutes = quotedValuesAfter(telegramAdmin, "data ===");
+const uniqueCallbacks = [...new Set(callbackPayloads)];
+assert.ok(uniqueCallbacks.length > 0, "Telegram bot has no inline callback buttons to audit");
+const unhandledCallbacks = uniqueCallbacks.filter(payload => {
+  if (callbackPrefixes.some(prefix => payload === prefix || payload.startsWith(prefix))) return false;
+  if (callbackExactRoutes.includes(payload)) return false;
+  if (payload.endsWith(":") && callbackExactRoutes.some(route => route.startsWith(payload))) return false;
+  return true;
+});
+assert.deepEqual(unhandledCallbacks, [], "Telegram callback_data entries without a handler: " + unhandledCallbacks.join(", "));
+assert.ok(telegramAdmin.includes("async function handleReplyMessage(msg: any)") && telegramAdmin.includes("if (!isAdmin(msg.chat?.id)) return false;"),
+  "Telegram reply-based admin actions must re-check admin authorization");
+console.log("Telegram inline callbacks are mapped to handler routes:", uniqueCallbacks.length);
+
 console.log("Azim Abzar notification static checks passed.");
