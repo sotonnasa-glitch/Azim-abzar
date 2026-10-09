@@ -115,7 +115,7 @@ for (const needle of serviceChecks) {
 if (!js.includes("if (!canView(name)) return toast('__AZICON_BLOCK__ دسترسی این بخش برای نقش فعلی وجود ندارد.');")) {
   fail('setView does not enforce role-aware navigation');
 }
-if (!js.includes("'ai-products': ['owner', 'admin', 'editor']")) {
+if (!js.includes("'ai-products': ['owner','admin','editor']")) {
   fail('ai-products role mapping is missing');
 }
 if (!js.includes("function initVariantEditor(form)")) {
