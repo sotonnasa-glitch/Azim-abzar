@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { chromium } from 'playwright';
+const base = (process.env.AZIM_ADMIN_BASE_URL || 'https://azimabzar.com').replace(/\/$/, '');
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const errors = [];
+const failed = [];
+page.on('pageerror', e => errors.push(e.message));
+page.on('requestfailed', r => { if (r.url().startsWith(base)) failed.push(r.url() + ': ' + r.failure()?.errorText); });
+try {
+  const response = await page.goto(base + '/admin.html?admin_smoke=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 45000 });
+  assert.ok(response?.ok(), 'admin page did not return HTTP success');
+  await page.waitForSelector('#loginBtn', { state: 'visible', timeout: 20000 });
+  await page.waitForFunction(() => !document.querySelector('#loginScreen')?.classList.contains('hidden') && document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 15000 });
+  assert.equal(await page.locator('#loginEmail').getAttribute('type'), 'email');
+  assert.equal(await page.locator('#loginPassword').getAttribute('type'), 'password');
+  await page.locator('#loginBtn').click();
+  let msg = (await page.locator('#loginStatus').innerText()).trim();
+  assert.ok(msg.includes('ایمیل و رمز عبور را وارد کن'), 'empty login was not blocked');
+  await page.locator('#loginEmail').fill('smoke-test@example.invalid');
+  await page.locator('#loginBtn').click();
+  msg = (await page.locator('#loginStatus').innerText()).trim();
+  assert.ok(msg.includes('ایمیل و رمز عبور را وارد کن'), 'email-only login was not blocked');
+  assert.equal(await page.locator('#app').isVisible(), false, 'admin workspace exposed without session');
+  assert.equal(await page.locator('.nav button').count(), 16, 'admin navigation count changed');
+  await page.waitForTimeout(500);
+  assert.deepEqual(errors, [], 'uncaught browser JavaScript errors: ' + errors.join('; '));
+  assert.deepEqual(failed, [], 'same-origin requests failed: ' + failed.join('; '));
+  console.log(JSON.stringify({ ok: true, checks: ['page loads', 'login validation', 'unauthenticated access gate', 'navigation inventory', 'no uncaught JS errors'], navButtons: 16 }, null, 2));
+} finally { await browser.close(); }
