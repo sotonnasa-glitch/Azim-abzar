@@ -64,8 +64,8 @@ jobs:
       - name: Run automated UI and notification regression tests
         run: npm test
 
-      - name: Dependency vulnerability audit
-        run: npm audit --omit=dev --audit-level=high
+      - name: Dependency vulnerability audit (production and test tooling)
+        run: npm audit --audit-level=high
 
       - name: JavaScript syntax checks
         run: |
