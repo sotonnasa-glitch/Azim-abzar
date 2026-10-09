@@ -125,7 +125,8 @@ for (const [view, roles] of [
   ['reports', "reports: ['owner','admin','sales']"],
   ['reviews', "reviews: ['owner','admin','editor']"],
   ['ai-products', "'ai-products': ['owner','admin','editor']"],
-  ['payment', "payment: ['owner','admin']"]
+  ['payment', "payment: ['owner','admin']"],
+  ['notifications', "notifications: ['owner','admin']"]
 ]) {
   if (!roleMatrix.includes(roles)) fail('canonical role matrix missing ' + view);
 }
@@ -205,7 +206,7 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (!html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
+if (!html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
   fail('admin-app cache version is stale');
 }
 if (html.includes('admin-modern.css?v=33')) {
@@ -224,7 +225,7 @@ if (!js.includes('مشاهده وضعیت عودت')) fail('refund action label 
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
-if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=68')) fail('order control asset versions were not bumped');
+if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=69')) fail('admin control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
 if (!js.includes("window.__AZIM_ADMIN_V42 = true;")) fail('admin script version guard was not updated');
