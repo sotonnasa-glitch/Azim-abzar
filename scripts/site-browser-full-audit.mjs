@@ -337,8 +337,12 @@ async function testContact(browser){
   assert.ok(await form.count(),'contact form missing');
   const fields=await form.locator('input,select,textarea').count();
   assert.ok(fields>=4,'contact form fields incomplete');
-  for(const sel of ['#frm-name','#frm-mobile','#frm-subject','#frm-details']){
+  for(const sel of ['#frm-name','#frm-mobile','#frm-details']){
     if(await page.locator(sel).count()) await page.locator(sel).first().fill('تست '+sel);
+  }
+  if(await page.locator('#frm-subject').count()){
+    const subject = page.locator('#frm-subject').first();
+    await subject.selectOption({index: Math.min(1, (await subject.locator('option').count()) - 1)});
   }
   assert.equal(await page.evaluate(()=>({w:document.documentElement.clientWidth,s:document.documentElement.scrollWidth,scale:visualViewport?.scale||1})).then(x=>x.s),await page.evaluate(()=>document.documentElement.clientWidth),'contact page still overflows horizontally');
   assert.equal(await page.evaluate(()=>visualViewport?.scale||1),1,'contact page scale changed');
