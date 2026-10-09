@@ -152,7 +152,7 @@ if (checkoutOptions.online_available) {
   assert.equal(Number(checkoutPreview?.total), Number(v?.price ?? wrench.price ?? 0));
   checkoutMode = "online_preview_ok";
 } else {
-  const rejectedPhone = await rpcExpectError("azim_cart_checkout", {
+  const rejectedOnline = await rpcExpectError("azim_cart_checkout", {
     p_mode: "preview",
     p_full_name: "Smoke Test",
     p_mobile: "09120000000",
@@ -161,10 +161,13 @@ if (checkoutOptions.online_available) {
     p_city: "تهران",
     p_discount_code: null,
     p_items: [{ product_id: wrench.id, variant_label: vLabel, quantity: 1 }],
-    p_payment_method: "phone",
+    p_payment_method: "online",
     p_terms_accepted: true,
   });
-  assert.ok(/پرداخت آنلاین/.test(String(rejectedPhone?.message || rejectedPhone || "")), "Disabled checkout did not reject phone payment as expected.");
+  assert.ok(
+    /درگاه پرداخت آنلاین هنوز کامل پیکربندی نشده است/.test(String(rejectedOnline?.message || rejectedOnline || "")),
+    "Disabled online gateway did not reject checkout at its configuration guard."
+  );
 }
 
 const bogusStatus = await rpc("azim_order_status", {
