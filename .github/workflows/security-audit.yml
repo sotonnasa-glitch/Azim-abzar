@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "AZIM_SUPABASE_URL=$(node -e "const fs=require('fs');const s=fs.readFileSync('supabase-config.js','utf8');const m=s.match(/window\\.AZIM_SUPABASE_URL='([^']+)'/);if(!m)process.exit(1);process.stdout.write(m[1])")" >> "$GITHUB_ENV"
+          echo "AZIM_SUPABASE_URL=$(node -e "const fs=require('fs');const s=fs.readFileSync('supabase-config.js','utf8');const m=s.match(/AZIM_SUPABASE_URL='([^']+)'/);if(!m)throw new Error('Public Supabase URL not found');process.stdout.write(m[1])")" >> "$GITHUB_ENV"
 
       - name: Start local Express server for HTTP route tests
         shell: bash
