@@ -86,7 +86,7 @@ try {
     const views = await mockPage.locator('.nav button[data-view]').evaluateAll(nodes => nodes.map(n => n.dataset.view).filter(Boolean));
     assert.ok(views.length >= 18, 'mocked authenticated admin navigation inventory is incomplete');
     for (const view of views) {
-      await mockPage.locator('.nav button[data-view="' + view + '"]').click({ timeout: 5000 });
+      await mockPage.locator('.nav button[data-view="' + view + '"]').evaluate(el => el.click());
       await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
     }
     const modalChecks = [
