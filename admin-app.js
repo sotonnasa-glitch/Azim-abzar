@@ -84,7 +84,8 @@
     ai: ['owner','admin','editor'],
     'ai-products': ['owner','admin','editor'],
     reviews: ['owner','admin','editor'],
-    payment: ['owner','admin']
+    payment: ['owner','admin'],
+    notifications: ['owner','admin']
   };
   const canView = (name) => !viewRoles[name] || viewRoles[name].includes(state.me?.role);
 
@@ -748,6 +749,9 @@
     }
 
     document.querySelectorAll('.nav button').forEach((b) => {
+      // The notification module owns its guarded async navigation handler.
+      // Do not attach the generic setView handler to it as well.
+      if (b.id === 'notificationNavBtn') return;
       b.onclick = () => setView(b.dataset.view);
     });
     document.querySelectorAll('[data-go]').forEach((b) => {
