@@ -45,6 +45,9 @@ jobs:
       - name: Verify reproducible npm install
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Run automated UI and notification regression tests
+        run: npm test
+
       - name: Dependency vulnerability audit
         run: npm audit --omit=dev --audit-level=high
 
