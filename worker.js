@@ -3,9 +3,9 @@ export default {
     const url = new URL(request.url);
     const requestPath = decodeURIComponent(url.pathname || "/");
 
-    // Live hotfix bridge: serve the two most recently corrected public files
-    // from the canonical GitHub main branch while the full Worker asset bundle
-    // remains unchanged. All other requests continue to use ASSETS.
+    // Live hotfix bridge: serve selected public files from the canonical GitHub
+    // main branch while the full Worker asset bundle remains unchanged.
+    // All other requests continue to use ASSETS.
     const liveHotfixFiles = new Set([
       "/index.html",
       "/products-v4.html",
@@ -46,7 +46,7 @@ export default {
     ]);
     if (liveHotfixFiles.has(requestPath)) {
       try {
-        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/be033cda31b38868b4835b2dac9889dc21ab8571" + requestPath;
+        const rawUrl = "https://raw.githubusercontent.com/sotonnasa-glitch/Azim-abzar/main" + requestPath;
         const hotfix = await fetch(rawUrl, {
           headers: {
             "accept": requestPath.endsWith(".js")
