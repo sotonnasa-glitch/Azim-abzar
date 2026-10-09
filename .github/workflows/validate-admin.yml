@@ -10,6 +10,7 @@ on:
       - 'database/discount-engine-hardening.sql'
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
+      - 'scripts/admin-browser-smoke.mjs'
       - 'supabase/migrations/20260927003600_admin_payment_control_center.sql'
       - '.github/workflows/validate-admin.yml'
   pull_request:
@@ -41,3 +42,9 @@ jobs:
           grep -q 'discounts_code_upper_uniq' database/discount-engine-hardening.sql
           grep -q 'azim_save_order_with_discount' database/discount-engine-hardening.sql
           grep -q 'security invoker' database/discount-engine-hardening.sql
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.63.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test live admin login and access gate
+        run: node scripts/admin-browser-smoke.mjs
