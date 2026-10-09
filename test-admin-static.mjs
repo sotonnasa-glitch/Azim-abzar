@@ -59,7 +59,11 @@ const requiredStaticHooks = {
   changePasswordBtn: "$('changePasswordBtn')?.addEventListener('click'",
   azMenuLogout: "$('azMenuLogout')?.addEventListener('click'",
   commandClose: "$('commandClose').onclick=close;",
-  refreshServiceRequestsBtn: "$('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());"
+  refreshServiceRequestsBtn: "$('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());",
+  azMenuTrigger: "function initAdminMenu()",
+  azMenuClose: "closeBtn?.addEventListener('click', close);",
+  inviteAdminBtn: "function setupAdminInvite()",
+  cancelInviteBtn: "cancel?.addEventListener('click',()=>{box.hidden=true;form.reset();"
 };
 
 for (const [id, needle] of Object.entries(requiredStaticHooks)) {
@@ -248,9 +252,6 @@ if (!paymentReconciliationMigration.includes("action='telegram_offline_payment_s
 if (!paymentReconciliationMigration.includes('public.azim_admin_attach_payment_reference') || !paymentReconciliationMigration.includes("ARRAY['owner','admin']") || !paymentReconciliationMigration.includes("auth.jwt()->>'aal','aal1') <> 'aal2'")) fail('historical payment reference RPC access controls are missing');
 if (!paymentReconciliationMigration.includes("'payment_status_changed',false") || !paymentReconciliationMigration.includes('payment_reference_fabricated')) fail('historical payment reference workflow does not preserve financial status and evidence');
 
-if (process.exitCode) process.exit(process.exitCode);
-console.log('ADMIN_STATIC_OK');
-
 if (!js.includes("x.payment_status !== 'paid'")) fail('order action plan does not block non-paid workflow progression');
 if (!js.includes("x.status === 'pending' && x.shipping_status === 'pending'")) fail('order action plan does not require pending shipping state before confirmation');
 if (!js.includes("payment_method,payment_reference,paid_at")) fail('order list does not load payment method/reference/time');
@@ -258,3 +259,6 @@ if (!js.includes("سفارش جدید همیشه از مرحله «در انتظ
 if (!js.includes("سفارش جدید بدون ثبت پرداخت ایجاد می‌شود")) fail('new order payment state is not locked to unpaid');
 if (!js.includes("این سفارش فعلاً شرایط ثبت ارسال را ندارد")) fail('shipment action is missing client-side state guard');
 if (!orderStatus.includes("refund_summary") || !orderStatus.includes("وضعیت عودت وجه")) fail('customer order tracking refund hook is missing');
+
+if (process.exitCode) process.exit(process.exitCode);
+console.log('ADMIN_STATIC_OK');
