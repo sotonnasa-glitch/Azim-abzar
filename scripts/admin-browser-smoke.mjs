@@ -94,9 +94,9 @@ try {
     await mockPage.locator('#azMenuClose').click();
     assert.ok(!(await mockPage.locator('#azMenuOverlay').evaluate(el => el.classList.contains('show'))), 'admin menu did not close');
     await mockPage.keyboard.press('Control+k');
-    assert.ok(await mockPage.locator('#commandOverlay').evaluate(el => el.classList.contains('show')), 'command palette did not open');
+    assert.ok(await mockPage.locator('#commandPalette').evaluate(el => el.classList.contains('show')), 'command palette did not open');
     await mockPage.locator('#commandClose').click();
-    assert.ok(!(await mockPage.locator('#commandOverlay').evaluate(el => el.classList.contains('show'))), 'command palette did not close');
+    assert.ok(!(await mockPage.locator('#commandPalette').evaluate(el => el.classList.contains('show'))), 'command palette did not close');
     assert.deepEqual(mockErrors, [], 'mocked admin UI raised browser errors: ' + mockErrors.join('; '));
     console.log(JSON.stringify({ ok: true, checks: ['all 18 navigation tabs clicked with isolated mock admin session', 'admin menu opens/closes', 'command palette opens/closes', 'no uncaught browser JS errors in mocked admin UI'] }, null, 2));
   } finally {
