@@ -115,8 +115,30 @@ for (const needle of serviceChecks) {
 if (!js.includes("if (!canView(name)) return toast('__AZICON_BLOCK__ دسترسی این بخش برای نقش فعلی وجود ندارد.');")) {
   fail('setView does not enforce role-aware navigation');
 }
-if (!js.includes("'ai-products': ['owner','admin','editor']")) {
-  fail('ai-products role mapping is missing');
+const roleMatrixStart = js.indexOf('const viewRoles = {');
+const roleMatrixEnd = js.indexOf('const animatedIconMap', roleMatrixStart);
+const roleMatrix = roleMatrixStart >= 0 && roleMatrixEnd > roleMatrixStart
+  ? js.slice(roleMatrixStart, roleMatrixEnd)
+  : '';
+for (const [view, roles] of [
+  ['dashboard', "dashboard: ['owner','admin','editor','sales']"],
+  ['reports', "reports: ['owner','admin','sales']"],
+  ['reviews', "reviews: ['owner','admin','editor']"],
+  ['ai-products', "'ai-products': ['owner','admin','editor']"],
+  ['payment', "payment: ['owner','admin']"]
+]) {
+  if (!roleMatrix.includes(roles)) fail('canonical role matrix missing ' + view);
+}
+const roleNavStart = js.indexOf('function applyRoleUI()');
+const roleNavEnd = js.indexOf('function activeView()', roleNavStart);
+const roleNav = roleNavStart >= 0 && roleNavEnd > roleNavStart ? js.slice(roleNavStart, roleNavEnd) : '';
+if (!roleNav.includes("const allowed = canView(b.dataset.view);")) fail('side navigation does not use canonical view roles');
+const menuNavStart = js.indexOf('function markAdminMenu()');
+const menuNavEnd = js.indexOf('function initCommandPalette()', menuNavStart);
+const menuNav = menuNavStart >= 0 && menuNavEnd > menuNavStart ? js.slice(menuNavStart, menuNavEnd) : '';
+if (!menuNav.includes("btn.style.display = canView(btn.dataset.menuView) ? '' : 'none';")) fail('admin menu does not use canonical view roles');
+for (const view of ['reports','reviews']) {
+  if (!roleMatrix.includes(view + ':')) fail('role matrix missing menu view ' + view);
 }
 if (!js.includes("function initVariantEditor(form)")) {
   fail('product variant editor function is missing');
@@ -172,8 +194,11 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (html.includes('admin-app.js?v=50') || html.includes('admin-app.js?v=55') || html.includes('admin-modern.css?v=33')) {
-  fail('admin-app cache version was not bumped');
+if (!html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66') || html.includes('admin-app.js?v=55')) {
+  fail('admin-app cache version is stale');
+}
+if (html.includes('admin-modern.css?v=33')) {
+  fail('admin-modern.css cache version was not bumped');
 }
 
 if (!js.includes("function orderActionPlan(x, refundSummary = null)")) fail('order action plan is missing');
