@@ -282,11 +282,11 @@ async function notifyAdminsOfNewOrder(record:any){
   const isTest=record?.test===true || /^AZ-TEST-/i.test(orderCode);
   const title=isTest?"🧪 تست اعلان سفارش جدید":"🛒 سفارش جدید در عظیم ابزار";
   const amount=new Intl.NumberFormat("fa-IR").format(Number(record?.total??0));
-  const text=title+"\\n\\n"+
-    "شماره سفارش: "+orderCode+"\\n"+
-    "مبلغ: "+amount+" تومان\\n"+
-    "وضعیت: "+clean(record?.status,60)+"\\n"+
-    "پرداخت: "+clean(record?.payment_status,60)+"\\n\\n"+
+  const text=title+"\n\n"+
+    "شماره سفارش: "+orderCode+"\n"+
+    "مبلغ: "+amount+" تومان\n"+
+    "وضعیت: "+clean(record?.status,60)+"\n"+
+    "پرداخت: "+clean(record?.payment_status,60)+"\n\n"+
     "برای مشاهدهٔ جزئیات، دکمهٔ زیر را بزن.";
   const buttons={inline_keyboard:[
     [{text:"📄 مشاهدهٔ سفارش",callback_data:"order:"+orderCode.slice(0,48)}],
