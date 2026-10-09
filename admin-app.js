@@ -538,29 +538,8 @@
     const current = activeView();
     document.querySelectorAll('[data-menu-view]').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.menuView === current);
-    });
-    const role = state.me?.role;
-    const allowed = {
-      dashboard:['owner','admin','editor','sales'],
-      products:['owner','admin','editor','sales'],
-      categories:['owner','admin','editor'],
-      brands:['owner','admin','editor'],
-      inquiries:['owner','admin','sales'],
-      orders:['owner','admin','sales'],
-      discounts:['owner','admin','sales'],
-      'discount-codes':['owner','admin','sales'],
-      customers:['owner','admin','sales'],
-      media:['owner','admin','editor'],
-      content:['owner','admin','editor'],
-      admins:['owner','admin'],
-      audit:['owner','admin'],
-      security:['owner','admin'],
-      ai:['owner','admin','editor'],
-      'ai-products':['owner','admin','editor'],
-      payment:['owner','admin']
-    };
-    document.querySelectorAll('[data-menu-view]').forEach((btn) => {
-      btn.style.display = (allowed[btn.dataset.menuView] || []).includes(role) ? '' : 'none';
+      // Use the same role matrix as side navigation and setView().
+      btn.style.display = canView(btn.dataset.menuView) ? '' : 'none';
     });
   }
 
@@ -880,28 +859,11 @@
   }
 
   function applyRoleUI() {
-    const role = state.me?.role;
-    const map = {
-      products: ['owner', 'admin', 'editor', 'sales'],
-      categories: ['owner', 'admin', 'editor'],
-      brands: ['owner', 'admin', 'editor'],
-      inquiries: ['owner', 'admin', 'sales'],
-      orders: ['owner', 'admin', 'sales'],
-      discounts: ['owner', 'admin', 'sales'],
-      'discount-codes': ['owner', 'admin', 'sales'],
-      customers: ['owner', 'admin', 'sales'],
-      media: ['owner', 'admin', 'editor'],
-      content: ['owner', 'admin', 'editor'],
-      payment: ['owner', 'admin'],
-      admins: ['owner', 'admin'],
-      audit: ['owner', 'admin'],
-      ai: ['owner', 'admin', 'editor'],
-      'ai-products': ['owner', 'admin', 'editor'],
-      reviews: ['owner', 'admin', 'editor']
-    };
+    // One canonical role map drives navigation visibility and setView() access.
+    // Duplicated maps previously caused restricted links to remain visible and
+    // valid links (reports/reviews) to disappear from the side menu.
     document.querySelectorAll('.nav button[data-view]').forEach((b) => {
-      const v = b.dataset.view;
-      const allowed = !map[v] || map[v].includes(role);
+      const allowed = canView(b.dataset.view);
       b.style.display = allowed ? '' : 'none';
     });
     if ($('newProductBtn')) $('newProductBtn').style.display = can.edit() ? '' : 'none';
