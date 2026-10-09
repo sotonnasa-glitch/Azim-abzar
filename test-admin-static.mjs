@@ -143,7 +143,6 @@ if (!menuNav.includes("btn.style.display = canView(btn.dataset.menuView) ? '' : 
 for (const view of ['reports','reviews']) {
   if (!roleMatrix.includes(view + ':')) fail('role matrix missing menu view ' + view);
 if (!html.includes('data-menu-view="notifications"')) fail('notifications settings are missing from the visible admin menu');
-if (!commandPalette.includes("['notifications','پیامک و ایمیل'")) fail('notifications settings are missing from command palette');
 if (!js.includes("if (view === 'notifications')") || !js.includes("el.dataset.commandView === 'notifications'")) fail('notifications menu/quick search is not wired to its guarded activation handler');
 }
 const commandPaletteStart = js.indexOf('const navItems = [', js.indexOf('function initCommandPalette()'));
@@ -151,6 +150,7 @@ const commandPaletteEnd = js.indexOf('];', commandPaletteStart);
 const commandPalette = commandPaletteStart >= 0 && commandPaletteEnd > commandPaletteStart
   ? js.slice(commandPaletteStart, commandPaletteEnd)
   : '';
+if (!commandPalette.includes("['notifications','پیامک و ایمیل'")) fail('notifications settings are missing from command palette');
 for (const view of ["['reports','گزارش فروش'", "['reviews','نظرات محصولات'"]) {
   if (!commandPalette.includes(view)) fail('command palette is missing ' + view);
 }
