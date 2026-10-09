@@ -26,5 +26,5 @@ try {
   await page.waitForTimeout(500);
   assert.deepEqual(errors, [], 'uncaught browser JavaScript errors: ' + errors.join('; '));
   assert.deepEqual(failed, [], 'same-origin requests failed: ' + failed.join('; '));
-  console.log(JSON.stringify({ ok: true, checks: ['page loads', 'login validation', 'unauthenticated access gate', 'navigation inventory', 'no uncaught JS errors'], navButtons: 16 }, null, 2));
+  console.log(JSON.stringify({ ok: true, checks: ['page loads', 'login validation', 'unauthenticated access gate', 'navigation inventory', 'no uncaught JS errors'], navButtons: 15 }, null, 2));
 } finally { await browser.close(); }
