@@ -132,7 +132,9 @@ for (const [view, roles] of [
 const roleNavStart = js.indexOf('function applyRoleUI()');
 const roleNavEnd = js.indexOf('function activeView()', roleNavStart);
 const roleNav = roleNavStart >= 0 && roleNavEnd > roleNavStart ? js.slice(roleNavStart, roleNavEnd) : '';
-if (!roleNav.includes("const allowed = canView(b.dataset.view);")) fail('side navigation does not use canonical view roles');
+if (!roleNav.includes("b.style.display = canView(b.dataset.view) ? '' : 'none';")) fail('side navigation does not use canonical view roles');
+if (!roleNav.includes("b.style.display = canView(b.dataset.go) ? '' : 'none';")) fail('dashboard shortcuts do not use canonical view roles');
+if (!roleNav.includes("b.style.display = canView('payment') ? '' : 'none';")) fail('payment shortcuts do not use canonical view roles');
 const menuNavStart = js.indexOf('function markAdminMenu()');
 const menuNavEnd = js.indexOf('function initCommandPalette()', menuNavStart);
 const menuNav = menuNavStart >= 0 && menuNavEnd > menuNavStart ? js.slice(menuNavStart, menuNavEnd) : '';
@@ -140,6 +142,15 @@ if (!menuNav.includes("btn.style.display = canView(btn.dataset.menuView) ? '' : 
 for (const view of ['reports','reviews']) {
   if (!roleMatrix.includes(view + ':')) fail('role matrix missing menu view ' + view);
 }
+const commandPaletteStart = js.indexOf('const navItems = [', js.indexOf('function initCommandPalette()'));
+const commandPaletteEnd = js.indexOf('];', commandPaletteStart);
+const commandPalette = commandPaletteStart >= 0 && commandPaletteEnd > commandPaletteStart
+  ? js.slice(commandPaletteStart, commandPaletteEnd)
+  : '';
+for (const view of ["['reports','گزارش فروش'", "['reviews','نظرات محصولات'"]) {
+  if (!commandPalette.includes(view)) fail('command palette is missing ' + view);
+}
+
 if (!js.includes("function initVariantEditor(form)")) {
   fail('product variant editor function is missing');
 }
@@ -194,7 +205,7 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (!html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66') || html.includes('admin-app.js?v=55')) {
+if (!html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
   fail('admin-app cache version is stale');
 }
 if (html.includes('admin-modern.css?v=33')) {
