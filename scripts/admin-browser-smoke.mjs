@@ -120,8 +120,8 @@ try {
     assert.ok(!(await mockPage.locator('#commandPalette').evaluate(el => el.classList.contains('show'))), 'command palette did not close');
     // Verify the same authorization matrix is reflected in all three navigation surfaces.
     const allowedByRole = {
-      owner: new Set(views),
-      admin: new Set(views),
+      owner: new Set([...views, 'notifications']),
+      admin: new Set([...views, 'notifications']),
       editor: new Set(['dashboard','products','reviews','categories','brands','media','content','ai-products','ai']),
       sales: new Set(['dashboard','reports','products','inquiries','orders','customers','discounts','discount-codes'])
     };
@@ -129,6 +129,11 @@ try {
       await mockPage.goto(base + '/admin.html?admin_ui_mock=1&admin_role_mock=' + role, { waitUntil: 'domcontentloaded', timeout: 45000 });
       await mockPage.waitForFunction(() => !document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 20000 });
       const allowed = allowedByRole[role];
+      if (allowed.has('notifications')) {
+        await mockPage.waitForSelector('#notificationNavBtn', { state: 'visible', timeout: 5000 });
+      } else if (await mockPage.locator('#notificationNavBtn').count()) {
+        assert.equal(await mockPage.locator('#notificationNavBtn').evaluate(n => n.style.display !== 'none'), false, role + ' should not see notification settings');
+      }
       const navState = await mockPage.locator('.nav button[data-view]').evaluateAll(nodes =>
         nodes.map(n => ({ view: n.dataset.view, shown: n.style.display !== 'none' })));
       for (const item of navState) assert.equal(item.shown, allowed.has(item.view), role + ' side-nav visibility mismatch for ' + item.view);
