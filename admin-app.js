@@ -550,7 +550,9 @@
     if (!overlay || !input || !list) return;
     const navItems = [
       ['dashboard','داشبورد','نمای کلی و سلامت سیستم'],
+      ['reports','گزارش فروش','درآمد و محصولات پرفروش'],
       ['products','محصولات','جستجو و ویرایش کاتالوگ'],
+      ['reviews','نظرات محصولات','بررسی و تأیید نظر مشتری'],
       ['categories','دسته‌بندی‌ها','گروه‌بندی محصولات'],
       ['brands','برندها','مدیریت برندها'],
       ['inquiries','درخواست‌ها','استعلام و پیگیری'],
@@ -859,12 +861,16 @@
   }
 
   function applyRoleUI() {
-    // One canonical role map drives navigation visibility and setView() access.
-    // Duplicated maps previously caused restricted links to remain visible and
-    // valid links (reports/reviews) to disappear from the side menu.
+    // One canonical role map drives navigation visibility, dashboard shortcuts,
+    // and setView() access so restricted destinations are neither shown nor clickable.
     document.querySelectorAll('.nav button[data-view]').forEach((b) => {
-      const allowed = canView(b.dataset.view);
-      b.style.display = allowed ? '' : 'none';
+      b.style.display = canView(b.dataset.view) ? '' : 'none';
+    });
+    document.querySelectorAll('[data-go]').forEach((b) => {
+      b.style.display = canView(b.dataset.go) ? '' : 'none';
+    });
+    document.querySelectorAll('[data-open-payment-admin]').forEach((b) => {
+      b.style.display = canView('payment') ? '' : 'none';
     });
     if ($('newProductBtn')) $('newProductBtn').style.display = can.edit() ? '' : 'none';
     if ($('newCategoryBtn')) $('newCategoryBtn').style.display = can.edit() ? '' : 'none';
