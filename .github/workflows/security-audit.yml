@@ -45,6 +45,22 @@ jobs:
       - name: Verify reproducible npm install
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Start local Express server for HTTP route tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npm run start > /tmp/azim-abzar-test-server.log 2>&1 &
+          echo $! > /tmp/azim-abzar-test-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              echo "Local Express health route is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/azim-abzar-test-server.log
+          exit 1
+
       - name: Run automated UI and notification regression tests
         run: npm test
 
