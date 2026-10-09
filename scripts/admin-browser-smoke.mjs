@@ -83,12 +83,15 @@ try {
   try {
     await mockPage.goto(base + '/admin.html?admin_ui_mock=1', { waitUntil: 'domcontentloaded', timeout: 45000 });
     await mockPage.waitForFunction(() => !document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 20000 });
-    const views = await mockPage.locator('.nav button[data-view]').evaluateAll(nodes => nodes.map(n => n.dataset.view).filter(Boolean));
-    assert.ok(views.length >= 18, 'mocked authenticated admin navigation inventory is incomplete');
-    for (const view of views) {
-      await mockPage.locator('.nav button[data-view="' + view + '"]').evaluate(el => el.click());
+    const views = await mockPage.locator('.az-menu-item[data-menu-view]').evaluateAll(nodes => nodes.map(n => n.dataset.menuView).filter(Boolean));
+    assert.ok(views.length >= 18, 'mocked authenticated menu inventory is incomplete');
+    const openView = async view => {
+      await mockPage.locator('#azMenuTrigger').click();
+      await mockPage.waitForFunction(() => document.querySelector('#azMenuOverlay')?.classList.contains('show'), null, { timeout: 5000 });
+      await mockPage.locator('.az-menu-item[data-menu-view="' + view + '"]').click({ timeout: 5000 });
       await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
-    }
+    };
+    for (const view of views) await openView(view);
     const modalChecks = [
       ['products', 'newProductBtn'],
       ['categories', 'newCategoryBtn'],
@@ -100,8 +103,7 @@ try {
       ['content', 'newContentBtn']
     ];
     for (const [view, buttonId] of modalChecks) {
-      await mockPage.locator('.nav button[data-view="' + view + '"]').click();
-      await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
+      await openView(view);
       await mockPage.locator('#' + buttonId).click({ timeout: 5000 });
       await mockPage.waitForFunction(() => document.querySelector('#modal')?.classList.contains('show'), null, { timeout: 5000 });
       await mockPage.locator('#modal button[onclick="closeModal()"]').first().click({ timeout: 5000 });
