@@ -51,4 +51,26 @@ const telegramAlert = notify.slice(telegramAlertStart, telegramAlertEnd >= 0 ? t
 assert.ok(telegramAlert.includes('title+"\\n\\n"+'), "Telegram new-order alert must use real line breaks");
 assert.ok(!telegramAlert.includes('title+"\\\\n\\\\n"+'), "Telegram alert must not contain literal escaped newline markers");
 
+// Every inline Telegram admin callback exposed by the bot must have a matching dispatcher route.
+const callbackPayloads = [...telegramAdmin.matchAll(/callback_data\\s*:\\s*(["'`])([^"'\`]+)\\1/g)]
+  .map(match => match[2]);
+const callbackPrefixes = [...telegramAdmin.matchAll(/data\\.startsWith\\(\\s*["'`]([^"'`]+)["'`]\\s*\\)/g)]
+  .map(match => match[1]);
+const callbackExactRoutes = [...telegramAdmin.matchAll(/data\\s*===\\s*["'`]([^"'`]+)["'`]/g)]
+  .map(match => match[1]);
+const callbackSwitchRoutes = [...telegramAdmin.matchAll(/case\\s*["'`]([^"'`]+)["'`]/g)]
+  .map(match => match[1]);
+const uniqueCallbacks = [...new Set(callbackPayloads)];
+assert.ok(uniqueCallbacks.length > 0, "Telegram bot has no inline callback buttons to audit");
+const unhandledCallbacks = uniqueCallbacks.filter(payload => {
+  if (callbackPrefixes.some(prefix => payload === prefix || payload.startsWith(prefix))) return false;
+  if (callbackExactRoutes.includes(payload) || callbackSwitchRoutes.includes(payload)) return false;
+  if (payload.endsWith(":") && callbackExactRoutes.some(route => route.startsWith(payload))) return false;
+  return true;
+});
+assert.deepEqual(unhandledCallbacks, [], "Telegram callback_data entries without a handler: " + unhandledCallbacks.join(", "));
+assert.ok(telegramAdmin.includes("async function handleReplyMessage(msg: any)") && telegramAdmin.includes("if (!isAdmin(msg.chat?.id)) return false;"),
+  "Telegram reply-based admin actions must re-check admin authorization");
+console.log("Telegram inline callbacks are mapped to handler routes:", uniqueCallbacks.length);
+
 console.log("Azim Abzar notification static checks passed.");
