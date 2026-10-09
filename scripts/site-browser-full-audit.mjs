@@ -288,8 +288,19 @@ async function testCart(browser){
   await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>document.querySelector('[data-cart-add-link="P0001"]'),null,{timeout:60000});
   await page.evaluate(()=>window.AZIM_CART?.clear?.());
+  // P0001 is a size-variant SKU, so choose a valid variant before testing
+  // persistence; the selected variant must survive navigation to the cart.
+  const p1VariantSelect = page.locator('#card-P0001 select[data-id="P0001"]').first();
+  await p1VariantSelect.waitFor({state:'visible',timeout:15000});
+  const p1Options = await p1VariantSelect.locator('option').evaluateAll(nodes =>
+    nodes.map((n, i) => ({ i, text: (n.textContent || '').trim() }))
+  );
+  const p1Variant = p1Options.find(x => x.text === '46' || x.text.startsWith('46 '));
+  assert.ok(p1Variant, 'P0001 size 46 option is missing in full-site cart flow');
+  await p1VariantSelect.selectOption({index:p1Variant.i});
   await page.locator('#card-P0001 [data-cart-add-link="P0001"]').click();
   await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 1, null, {timeout:10000});
+  assert.ok(await page.evaluate(() => window.AZIM_CART?.items?.().some(x => x.code === 'P0001' && x.variant_label === '46')), 'full-site cart flow did not persist P0001 size 46');
   await page.locator('#card-P0002 [data-cart-add-link="P0002"]').click();
   await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 2, null, {timeout:10000});
   await page.goto(BASE+'/cart.html',{waitUntil:'domcontentloaded',timeout:60000});
