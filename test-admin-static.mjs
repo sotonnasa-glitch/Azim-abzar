@@ -228,7 +228,7 @@ if (!js.includes('مشاهده وضعیت عودت')) fail('refund action label 
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
-if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=69')) fail('admin control asset versions were not bumped');
+if (!html.includes('admin-modern.css?v=38') || !html.includes('admin-app.js?v=70')) fail('admin control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
 if (!js.includes("window.__AZIM_ADMIN_V42 = true;")) fail('admin script version guard was not updated');
@@ -285,7 +285,7 @@ if (!js.includes('data-order-control-action="attach_payment_reference"')) fail('
 if (!js.includes("state.db.rpc('azim_admin_attach_payment_reference'")) fail('legacy payment reference RPC is not wired');
 if (!js.includes("if (action === 'attach_payment_reference')")) fail('legacy payment reference action handler is missing');
 if (!js.includes('legacyPaidReferenceMissing')) fail('paid offline orders missing a payment reference are not flagged');
-if (!html.includes('admin-app.js?v=69')) fail('admin app cache version is stale');
+if (!html.includes('admin-app.js?v=70')) fail('admin app cache version is stale');
 if (!orderTrackingPermissionMigration.includes('ALTER FUNCTION public.azim_order_status(text, text) SECURITY DEFINER')) fail('order tracking RPC security context fix is missing');
 if (!orderTrackingPermissionMigration.includes('GRANT EXECUTE ON FUNCTION public.azim_order_status(text, text) TO anon, authenticated')) fail('order tracking RPC grants are incomplete');
 if (!paymentReconciliationMigration.includes("action='telegram_offline_payment_status'") || !paymentReconciliationMigration.includes("'legacy_paid_at_reconciled'")) fail('legacy payment timestamp is not reconciled from its audit record');
