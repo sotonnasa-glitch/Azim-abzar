@@ -22,7 +22,7 @@ try {
   msg = (await page.locator('#loginStatus').innerText()).trim();
   assert.ok(msg.includes('ایمیل و رمز عبور را وارد کن'), 'email-only login was not blocked');
   assert.equal(await page.locator('#app').isVisible(), false, 'admin workspace exposed without session');
-  assert.equal(await page.locator('.nav button').count(), 16, 'admin navigation count changed');
+  assert.equal(await page.locator('.nav button').count(), 18, 'admin navigation count changed');
   await page.waitForTimeout(500);
   assert.deepEqual(errors, [], 'uncaught browser JavaScript errors: ' + errors.join('; '));
   assert.deepEqual(failed, [], 'same-origin requests failed: ' + failed.join('; '));
