@@ -52,13 +52,13 @@ assert.ok(telegramAlert.includes('title+"\\n\\n"+'), "Telegram new-order alert m
 assert.ok(!telegramAlert.includes('title+"\\\\n\\\\n"+'), "Telegram alert must not contain literal escaped newline markers");
 
 // Every inline Telegram admin callback exposed by the bot must have a matching dispatcher route.
-const callbackPayloads = [...telegramAdmin.matchAll(/callback_data\\s*:\\s*(["'`])([^"'\`]+)\\1/g)]
+const callbackPayloads = [...telegramAdmin.matchAll(/callback_data\\s*:\\s*(["'])([^"']+)\\1/g)]
   .map(match => match[2]);
-const callbackPrefixes = [...telegramAdmin.matchAll(/data\\.startsWith\\(\\s*["'`]([^"'`]+)["'`]\\s*\\)/g)]
+const callbackPrefixes = [...telegramAdmin.matchAll(/data\\.startsWith\\(\\s*["']([^"']+)["']\\s*\\)/g)]
   .map(match => match[1]);
-const callbackExactRoutes = [...telegramAdmin.matchAll(/data\\s*===\\s*["'`]([^"'`]+)["'`]/g)]
+const callbackExactRoutes = [...telegramAdmin.matchAll(/data\\s*===\\s*["']([^"']+)["']/g)]
   .map(match => match[1]);
-const callbackSwitchRoutes = [...telegramAdmin.matchAll(/case\\s*["'`]([^"'`]+)["'`]/g)]
+const callbackSwitchRoutes = [...telegramAdmin.matchAll(/case\\s*["']([^"']+)["']/g)]
   .map(match => match[1]);
 const uniqueCallbacks = [...new Set(callbackPayloads)];
 assert.ok(uniqueCallbacks.length > 0, "Telegram bot has no inline callback buttons to audit");
