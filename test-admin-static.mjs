@@ -142,6 +142,9 @@ const menuNav = menuNavStart >= 0 && menuNavEnd > menuNavStart ? js.slice(menuNa
 if (!menuNav.includes("btn.style.display = canView(btn.dataset.menuView) ? '' : 'none';")) fail('admin menu does not use canonical view roles');
 for (const view of ['reports','reviews']) {
   if (!roleMatrix.includes(view + ':')) fail('role matrix missing menu view ' + view);
+if (!html.includes('data-menu-view="notifications"')) fail('notifications settings are missing from the visible admin menu');
+if (!commandPalette.includes("['notifications','پیامک و ایمیل'")) fail('notifications settings are missing from command palette');
+if (!js.includes("if (view === 'notifications')") || !js.includes("el.dataset.commandView === 'notifications'")) fail('notifications menu/quick search is not wired to its guarded activation handler');
 }
 const commandPaletteStart = js.indexOf('const navItems = [', js.indexOf('function initCommandPalette()'));
 const commandPaletteEnd = js.indexOf('];', commandPaletteStart);
@@ -206,7 +209,7 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (!html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
+if (!html.includes('admin-app.js?v=70') || html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
   fail('admin-app cache version is stale');
 }
 if (html.includes('admin-modern.css?v=33')) {

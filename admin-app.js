@@ -528,6 +528,14 @@
       btn.addEventListener('click', () => {
         const view = btn.dataset.menuView;
         close();
+        if (view === 'notifications') {
+          // Notification settings are owned by azim-notification-admin.js;
+          // route through its guarded entry point instead of generic loadSection().
+          const notificationButton = $('notificationNavBtn');
+          if (notificationButton) notificationButton.click();
+          else toast('بخش پیامک و ایمیل هنوز آماده نشده است؛ دوباره تلاش کن.');
+          return;
+        }
         setView(view);
       });
     });
@@ -566,6 +574,7 @@
       ['admins','کاربران مدیر','نقش‌ها'],
       ['audit','گزارش فعالیت','Audit Log'],
       ['security','امنیت حساب','MFA، نشست و دسترسی'],
+      ['notifications','پیامک و ایمیل','تنظیم اعلان سفارش‌ها به پیامک و ایمیل'],
       ['ai-products','ربات محصولات','مشاوره خودکار محصولات'],
       ['ai','هوش مصنوعی','چت عمومی و تنظیمات AI'],
       ['payment','مدیریت درگاه پرداخت','تراکنش‌ها، وضعیت درگاه و بازگشت وجه']
@@ -580,7 +589,16 @@
       list.innerHTML = matches.length ? matches.map((x,i) =>
         '<div class="az-command-item ' + (i===active?'active':'') + '" data-command-view="' + x[0] + '"><span>' + esc(x[1]) + '</span><small>' + esc(x[2]) + '</small></div>'
       ).join('') : '<div class="empty">نتیجه‌ای پیدا نشد.</div>';
-      list.querySelectorAll('[data-command-view]').forEach(el => el.onclick = () => { close(); setView(el.dataset.commandView); });
+      list.querySelectorAll('[data-command-view]').forEach(el => el.onclick = () => {
+        close();
+        if (el.dataset.commandView === 'notifications') {
+          const notificationButton = $('notificationNavBtn');
+          if (notificationButton) notificationButton.click();
+          else toast('بخش پیامک و ایمیل هنوز آماده نشده است؛ دوباره تلاش کن.');
+          return;
+        }
+        setView(el.dataset.commandView);
+      });
     }
     function open() { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); input.value=''; active=0; render(); setTimeout(()=>input.focus(),20); }
     function close() { overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); }

@@ -81,12 +81,22 @@ try {
     const mockedLibrary = { createClient: () => client };
     Object.defineProperty(window, 'supabase', { configurable: true, get: () => mockedLibrary, set: () => {} });
   });
+  await mockPage.route('**/functions/v1/azim-notification-config', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      ok: true,
+      settings: { sms_enabled: false, email_enabled: false, events: {}, templates: { sms: {}, email: {} }, email_subjects: {} },
+      configured: { sms: false, email: false }
+    })
+  }));
   try {
     await mockPage.goto(base + '/admin.html?admin_ui_mock=1', { waitUntil: 'domcontentloaded', timeout: 45000 });
     await mockPage.waitForFunction(() => !document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 20000 });
     const views = await mockPage.locator('.az-menu-item[data-menu-view]').evaluateAll(nodes => nodes.map(n => n.dataset.menuView).filter(Boolean));
     assert.ok(views.length >= 18, 'mocked authenticated menu inventory is incomplete');
     const openView = async view => {
+      if (view === 'notifications') await mockPage.waitForSelector('#notificationNavBtn', { state: 'attached', timeout: 8000 });
       await mockPage.locator('#azMenuTrigger').click();
       await mockPage.waitForFunction(() => document.querySelector('#azMenuOverlay')?.classList.contains('show'), null, { timeout: 5000 });
       await mockPage.locator('.az-menu-item[data-menu-view="' + view + '"]').click({ timeout: 5000 });
@@ -129,13 +139,17 @@ try {
       await mockPage.goto(base + '/admin.html?admin_ui_mock=1&admin_role_mock=' + role, { waitUntil: 'domcontentloaded', timeout: 45000 });
       await mockPage.waitForFunction(() => !document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 20000 });
       const allowed = allowedByRole[role];
-      if (allowed.has('notifications')) {
-        await mockPage.waitForSelector('#notificationNavBtn', { state: 'visible', timeout: 5000 });
-      } else if (await mockPage.locator('#notificationNavBtn').count()) {
-        assert.equal(await mockPage.locator('#notificationNavBtn').evaluate(n => n.style.display !== 'none'), false, role + ' should not see notification settings');
-      }
+      await mockPage.locator('#azMenuTrigger').click();
+      await mockPage.waitForFunction(() => document.querySelector('#azMenuOverlay')?.classList.contains('show'), null, { timeout: 5000 });
+      const notificationMenuItem = mockPage.locator('.az-menu-item[data-menu-view="notifications"]');
+      assert.equal(
+        await notificationMenuItem.evaluate(n => n.style.display !== 'none'),
+        allowed.has('notifications'),
+        role + ' notification menu permission mismatch'
+      );
+      await mockPage.locator('#azMenuClose').click();
       const navState = await mockPage.locator('.nav button[data-view]').evaluateAll(nodes =>
-        nodes.map(n => ({ view: n.dataset.view, shown: n.style.display !== 'none' })));
+        nodes.filter(n => n.dataset.view !== 'notifications').map(n => ({ view: n.dataset.view, shown: n.style.display !== 'none' })));
       for (const item of navState) assert.equal(item.shown, allowed.has(item.view), role + ' side-nav visibility mismatch for ' + item.view);
       const menuState = await mockPage.locator('.az-menu-item[data-menu-view]').evaluateAll(nodes =>
         nodes.map(n => ({ view: n.dataset.menuView, shown: n.style.display !== 'none' })));
@@ -144,7 +158,7 @@ try {
         nodes.map(n => ({ view: n.dataset.go, shown: n.style.display !== 'none' })));
       for (const item of shortcutState) assert.equal(item.shown, allowed.has(item.view), role + ' dashboard shortcut visibility mismatch for ' + item.view);
       await mockPage.keyboard.press('Control+k');
-      for (const view of ['reports','reviews']) {
+      for (const view of ['reports','reviews','notifications']) {
         const count = await mockPage.locator('[data-command-view="' + view + '"]').count();
         assert.equal(count > 0, allowed.has(view), role + ' command palette visibility mismatch for ' + view);
       }
@@ -155,6 +169,7 @@ try {
       'all admin menu destinations opened with an isolated mock admin session',
       'new product/category/brand/order/customer/discount/code/content dialogs open and close',
       'admin menu and command palette open and close',
+      'notification settings reachable through the visible admin menu; notification config API mocked to avoid real writes',
       'owner/admin/editor/sales navigation, dashboard shortcuts and quick search match role permissions',
       'no uncaught browser JavaScript errors in mocked admin UI'
     ] }, null, 2));
