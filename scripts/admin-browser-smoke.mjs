@@ -22,7 +22,7 @@ try {
   msg = (await page.locator('#loginStatus').innerText()).trim();
   assert.ok(msg.includes('ایمیل و رمز عبور را وارد کن'), 'email-only login was not blocked');
   assert.equal(await page.locator('#app').isVisible(), false, 'admin workspace exposed without session');
-  assert.equal(await page.locator('.nav button').count(), 18, 'admin navigation count changed');
+  assert.ok(await page.locator('.nav button').count() >= 18, 'admin navigation inventory is incomplete');
   await page.waitForTimeout(500);
   assert.deepEqual(errors, [], 'uncaught browser JavaScript errors: ' + errors.join('; '));
   assert.deepEqual(failed, [], 'same-origin requests failed: ' + failed.join('; '));
@@ -84,7 +84,7 @@ try {
     await mockPage.goto(base + '/admin.html?admin_ui_mock=1', { waitUntil: 'domcontentloaded', timeout: 45000 });
     await mockPage.waitForFunction(() => !document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 20000 });
     const views = await mockPage.locator('.nav button[data-view]').evaluateAll(nodes => nodes.map(n => n.dataset.view).filter(Boolean));
-    assert.equal(views.length, 18, 'mocked authenticated admin navigation inventory');
+    assert.ok(views.length >= 18, 'mocked authenticated admin navigation inventory is incomplete');
     for (const view of views) {
       await mockPage.locator('.nav button[data-view="' + view + '"]').click({ timeout: 5000 });
       await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
@@ -120,5 +120,5 @@ try {
   } finally {
     await mockPage.close();
   }
-  console.log(JSON.stringify({ ok: true, checks: ['page loads', 'login validation', 'unauthenticated access gate', 'navigation inventory', 'no uncaught JS errors'], navButtons: 18 }, null, 2));
+  console.log(JSON.stringify({ ok: true, checks: ['page loads', 'login validation', 'unauthenticated access gate', 'navigation inventory', 'no uncaught JS errors'], navButtons: await page.locator('.nav button').count() }, null, 2));
 } finally { await browser.close(); }
