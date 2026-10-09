@@ -670,6 +670,91 @@ async function testAiChatInteraction() {
 }
 
 // ------------------------------------------------------------------------------
+// Product Review Submission Runtime Test
+// ------------------------------------------------------------------------------
+async function testProductReviewSubmission() {
+  suite('۸. تست اجرایی دکمه ثبت نظر محصول');
+
+  const productsHtml = fs.readFileSync(path.join(__dirname, 'products-v4.html'), 'utf8');
+  const start = productsHtml.indexOf('function setupReviewForm(productId)');
+  const end = start >= 0 ? productsHtml.indexOf('function getWishlist()', start) : -1;
+  const reviewScript = start >= 0 && end > start ? productsHtml.slice(start, end) : '';
+
+  if (!reviewScript) {
+    fail('تابع اجرایی ثبت نظر محصول پیدا نشد');
+    return;
+  }
+
+  const runtimeDom = new JSDOM(productsHtml, {
+    url: 'http://localhost:3000/products-v4.html',
+    runScripts: 'outside-only'
+  });
+
+  try {
+    const runtime = runtimeDom.window;
+    let request = null;
+    let toastMessage = '';
+    runtime.AZIM_SUPABASE_URL = 'https://test.example.invalid';
+    runtime.AZIM_SUPABASE_ANON_KEY = 'test-publishable-key';
+    runtime.showToast = message => { toastMessage = String(message); };
+    runtime.fetch = async (url, options = {}) => {
+      request = {
+        url: String(url),
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        body: options.body ? JSON.parse(options.body) : null
+      };
+      return { ok: true, status: 201 };
+    };
+
+    runtime.eval(reviewScript);
+    if (typeof runtime.setupReviewForm !== 'function') {
+      fail('تابع ثبت نظر محصول به‌صورت قابل اجرا تعریف نشده است');
+      return;
+    }
+
+    runtime.setupReviewForm('qa-product-id');
+    const form = runtime.document.getElementById('reviewForm');
+    const name = runtime.document.getElementById('reviewAuthorName');
+    const rating = runtime.document.getElementById('reviewRating');
+    const comment = runtime.document.getElementById('reviewComment');
+    const button = runtime.document.getElementById('reviewSubmitBtn');
+    if (!(form && name && rating && comment && button)) {
+      fail('فرم نظر محصول یا فیلدهای آن در DOM حاضر نیستند');
+      return;
+    }
+
+    name.value = 'QA Reviewer';
+    rating.value = '5';
+    comment.value = 'QA_REVIEW_COMMENT';
+    form.dispatchEvent(new runtime.Event('submit', { bubbles: true, cancelable: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    if (
+      request &&
+      request.url === 'https://test.example.invalid/rest/v1/product_reviews' &&
+      request.method === 'POST' &&
+      request.body?.product_id === 'qa-product-id' &&
+      request.body?.author_name === 'QA Reviewer' &&
+      request.body?.rating === 5 &&
+      request.body?.comment === 'QA_REVIEW_COMMENT' &&
+      request.body?.approved === false &&
+      comment.value === '' &&
+      toastMessage.includes('نظر ثبت شد') &&
+      button.disabled === false
+    ) {
+      pass('ارسال نظر به endpoint ساختگی می‌رسد، برای تأیید نگه داشته می‌شود و وضعیت موفق نشان داده می‌شود');
+    } else {
+      fail('ارسال نظر محصول به نتیجهٔ موفق و payload مورد انتظار نرسید', JSON.stringify({ request, toastMessage, comment: comment.value, disabled: button.disabled }));
+    }
+  } catch (error) {
+    fail('اجرای عملی فرم نظر محصول ناموفق بود', error);
+  } finally {
+    runtimeDom.window.close();
+  }
+}
+
+// ------------------------------------------------------------------------------
 // 6. Suite: Live Server Route Accessibility
 // ------------------------------------------------------------------------------
 async function testServerRoutes() {
@@ -1023,6 +1108,7 @@ async function main() {
   testCartAndCheckout();
   await testContactForm();
   await testAiChatInteraction();
+  await testProductReviewSubmission();
   testOrderTrackingFlow();
   testAuditAddendumGuards();
   await testServerRoutes();
