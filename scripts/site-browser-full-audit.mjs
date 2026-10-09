@@ -315,8 +315,11 @@ async function testCart(browser){
   assert.equal(await page.locator('input[name="paymentMethod"][value="phone"]').count(),0,'phone payment option still exists');
   assert.equal(await page.locator('input[name="paymentMethod"][value="message"]').count(),0,'message payment option still exists');
 
-  await page.locator('#cartItems [data-qty="plus"]').first().click(); await page.waitForTimeout(150);
-  await page.locator('#cartItems [data-qty="minus"]').first().click(); await page.waitForTimeout(150);
+  // Cart markup uses signed quantity deltas: +1 to increment and -1 to decrement.
+  await page.locator('#cartItems [data-qty="1"]').first().click();
+  await page.waitForTimeout(150);
+  await page.locator('#cartItems [data-qty="-1"]').first().click();
+  await page.waitForTimeout(150);
 
   await page.locator('#cartItems [data-remove]').first().click(); await page.waitForTimeout(200);
   assert.equal(await page.locator('#cartItems .cart-row').count(),1,'cart remove first item failed');
