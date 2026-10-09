@@ -33,6 +33,19 @@ function cleanPath(url){
   try{return new URL(url).pathname || '/';}catch{return '';}
 }
 
+async function getWithRetry(context, url, options = {}) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await context.request.get(url, options);
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 async function auditPage(browser, path){
   const context = await browser.newContext({ viewport: MOBILE, deviceScaleFactor: 1, isMobile:true, hasTouch:true });
   const page = await context.newPage();
@@ -98,7 +111,7 @@ async function auditPage(browser, path){
     const u=new URL(href);
     if(u.hash && u.pathname===new URL(BASE+path).pathname && !u.search) continue;
     if(/\.(pdf|mp4|jpg|jpeg|png|webp|svg|ico|css|js|json)$/i.test(u.pathname)) continue;
-    const rr=await context.request.get(href,{timeout:30000});
+    const rr=await getWithRetry(context,href,{timeout:30000});
     assert.ok(rr.status()<400, path+': broken same-origin link '+href+' => '+rr.status());
   }
 
