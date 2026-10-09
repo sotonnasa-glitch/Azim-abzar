@@ -408,7 +408,7 @@ function testCartAndCheckout() {
 // ------------------------------------------------------------------------------
 // 4. Suite: Contact Form in contact.html
 // ------------------------------------------------------------------------------
-function testContactForm() {
+async function testContactForm() {
   suite('۴. تست فرم ارتباط، مشاوره فنی و انتخاب موضوعات (Contact & Consultation)');
 
   const contactHtml = fs.readFileSync(path.join(__dirname, 'contact.html'), 'utf8');
@@ -420,16 +420,17 @@ function testContactForm() {
   const mobileInput = doc.getElementById('frm-mobile');
   const subjectSelect = doc.getElementById('frm-subject');
   const submitBtn = doc.getElementById('btnSubmitForm');
+  const emailInput = doc.getElementById('frm-email');
   const topicChips = doc.querySelectorAll('.quick-chips .chip-btn');
 
-  if (form && nameInput && mobileInput && subjectSelect && submitBtn) {
-    pass('فرم مشاوره فنی و ارتباط مستقیم با تمام فیلدها و دکمه ثبت آماده است');
+  if (form && nameInput && mobileInput && subjectSelect && submitBtn && emailInput) {
+    pass('فرم مشاوره و فیلد ایمیل در DOM حاضر هستند');
   } else {
-    fail('فرم تماس یا دکمه ارسال آن در contact.html پیدا نشد');
+    fail('فرم مشاوره یا یکی از فیلدهای لازم در contact.html پیدا نشد');
   }
 
   if (topicChips.length >= 3) {
-    pass(`چیپ‌های انتخاب سریع موضوع مشاوره آماده کلیک کاربر هستند`, `${topicChips.length} موضوع پرتکرار`);
+    pass(`چیپ‌های انتخاب سریع موضوع مشاوره حاضر هستند`, `${topicChips.length} موضوع پرتکرار`);
   } else {
     fail('چیپ‌های انتخاب موضوع کافی نیستند');
   }
@@ -439,6 +440,79 @@ function testContactForm() {
     pass('دکمه هوشمند بازگشت به صفحه قبل در نوار بالای فرم تماس موجود است');
   } else {
     fail('دکمه بازگشت هوشمند در صفحه تماس یافت نشد');
+  }
+
+  // Execute the real inline submit handler against a mocked Supabase client.
+  // This proves the handler reaches the INSERT payload without touching production.
+  const submitScript = [...contactHtml.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
+    .map(match => match[1])
+    .find(source => source.includes('async function handleFormSubmission(e)'));
+
+  if (!submitScript) {
+    fail('اسکریپت واقعی ثبت فرم مشاوره پیدا نشد');
+    dom.window.close();
+    return;
+  }
+
+  const runtimeDom = new JSDOM(contactHtml, {
+    url: 'http://localhost:3000/contact.html',
+    runScripts: 'outside-only'
+  });
+
+  try {
+    const runtime = runtimeDom.window;
+    let insertedTable = '';
+    let insertedPayload = null;
+    runtime.AZIM_SUPABASE_URL = 'https://test.supabase.co';
+    runtime.AZIM_SUPABASE_ANON_KEY = 'test-publishable-key';
+    runtime.supabase = {
+      createClient: () => ({
+        from(table) {
+          insertedTable = table;
+          return {
+            insert: async payload => {
+              insertedPayload = payload;
+              return { error: null };
+            }
+          };
+        }
+      })
+    };
+
+    runtime.document.getElementById('contactForm').reportValidity = () => true;
+    runtime.document.getElementById('frm-fullname').value = 'QA Test';
+    runtime.document.getElementById('frm-mobile').value = '09120000000';
+    runtime.document.getElementById('frm-email').value = 'qa@example.com';
+    runtime.document.getElementById('frm-subject').value = 'مشاوره تخصصی ابزارآلات';
+    runtime.document.getElementById('frm-business').value = 'کارگاه آزمایش';
+    runtime.document.getElementById('frm-details').value = 'آزمون خودکار محلی؛ پیام واقعی ارسال نمی‌شود.';
+
+    runtime.eval(submitScript);
+    if (typeof runtime.handleFormSubmission !== 'function') {
+      fail('تابع ثبت فرم به‌صورت قابل اجرا تعریف نشده است');
+    } else {
+      await runtime.handleFormSubmission({ preventDefault() {} });
+      if (
+        insertedTable === 'inquiries' &&
+        insertedPayload &&
+        insertedPayload.full_name === 'QA Test' &&
+        insertedPayload.mobile === '09120000000' &&
+        insertedPayload.email === 'qa@example.com' &&
+        insertedPayload.subject === 'مشاوره تخصصی ابزارآلات'
+      ) {
+        pass('ارسال واقعیِ تابع فرم در محیط آزمایشی تا INSERT رسید و ایمیل را بدون ReferenceError ارسال کرد');
+      } else {
+        fail(
+          'تابع ثبت فرم در آزمون اجرایی، payload کامل و معتبر به جدول inquiries نرساند',
+          JSON.stringify({ insertedTable, insertedPayload })
+        );
+      }
+    }
+  } catch (error) {
+    fail('اجرای عملی تابع ثبت فرم مشاوره ناموفق بود', error);
+  } finally {
+    runtimeDom.window.close();
+    dom.window.close();
   }
 }
 
@@ -836,7 +910,7 @@ async function main() {
   testNavigation();
   testProductsAndFilters();
   testCartAndCheckout();
-  testContactForm();
+  await testContactForm();
   testOrderTrackingFlow();
   testAuditAddendumGuards();
   await testServerRoutes();
