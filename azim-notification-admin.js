@@ -237,7 +237,9 @@
 
   function ensureView(){
     const main=document.querySelector(".main"), nav=document.querySelector(".nav");
-    if(!main||!nav||$("view-notifications")||!document.querySelector('[data-view="orders"]'))return;
+    if(!main||!nav||!document.querySelector('[data-view="orders"]'))return;
+    // Create the navigation control and its view independently. Returning early
+    // when only one already exists could leave the settings tab permanently missing.
     if(!$('notificationNavBtn')){
       const b=document.createElement("button");b.id="notificationNavBtn";b.dataset.view="notifications";b.innerHTML="🔔 پیامک و ایمیل";
       const t=nav.querySelector('[data-view="orders"]');t?.after(b);
@@ -260,9 +262,16 @@
   async function reconcile(){
     try{
       const ok=await eligible();
-      const b=$("notificationNavBtn");
-      if(ok){ensureView();if(b)b.style.display="";lastBoot=true;}
-      else if(b)b.style.display="none";
+      if(ok){
+        ensureView();
+        // Re-query after ensureView(): it may have just created the button.
+        const button=$("notificationNavBtn");
+        if(button){button.style.display="";button.removeAttribute("aria-hidden");}
+        lastBoot=true;
+      }else{
+        const button=$("notificationNavBtn");
+        if(button){button.style.display="none";button.setAttribute("aria-hidden","true");}
+      }
     }catch{}
   }
 
