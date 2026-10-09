@@ -34,8 +34,9 @@ try {
   mockPage.on('pageerror', e => mockErrors.push(e.message));
   await mockPage.addInitScript(() => {
     const adminUser = { id: '00000000-0000-4000-8000-000000000001', email: 'admin-smoke@example.invalid' };
+    const mockedRole = new URL(location.href).searchParams.get('admin_role_mock') || 'owner';
     const tables = {
-      admin_users: [{ user_id: adminUser.id, role: 'owner', is_active: true, created_at: '2026-01-01T00:00:00Z' }]
+      admin_users: [{ user_id: adminUser.id, role: mockedRole, is_active: true, created_at: '2026-01-01T00:00:00Z' }]
     };
     class Query {
       constructor(table) { this.table = table; this.rows = (tables[table] || []).slice(); this.filters = []; }
@@ -117,8 +118,41 @@ try {
     assert.ok(await mockPage.locator('#commandPalette').evaluate(el => el.classList.contains('show')), 'command palette did not open');
     await mockPage.locator('#commandClose').click();
     assert.ok(!(await mockPage.locator('#commandPalette').evaluate(el => el.classList.contains('show'))), 'command palette did not close');
+    // Verify the same authorization matrix is reflected in all three navigation surfaces.
+    const allowedByRole = {
+      owner: new Set(views),
+      admin: new Set(views),
+      editor: new Set(['dashboard','products','reviews','categories','brands','media','content','ai-products','ai']),
+      sales: new Set(['dashboard','reports','products','inquiries','orders','customers','discounts','discount-codes'])
+    };
+    for (const role of ['owner','admin','editor','sales']) {
+      await mockPage.goto(base + '/admin.html?admin_ui_mock=1&admin_role_mock=' + role, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await mockPage.waitForFunction(() => !document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 20000 });
+      const allowed = allowedByRole[role];
+      const navState = await mockPage.locator('.nav button[data-view]').evaluateAll(nodes =>
+        nodes.map(n => ({ view: n.dataset.view, shown: n.style.display !== 'none' })));
+      for (const item of navState) assert.equal(item.shown, allowed.has(item.view), role + ' side-nav visibility mismatch for ' + item.view);
+      const menuState = await mockPage.locator('.az-menu-item[data-menu-view]').evaluateAll(nodes =>
+        nodes.map(n => ({ view: n.dataset.menuView, shown: n.style.display !== 'none' })));
+      for (const item of menuState) assert.equal(item.shown, allowed.has(item.view), role + ' menu visibility mismatch for ' + item.view);
+      const shortcutState = await mockPage.locator('[data-go]').evaluateAll(nodes =>
+        nodes.map(n => ({ view: n.dataset.go, shown: n.style.display !== 'none' })));
+      for (const item of shortcutState) assert.equal(item.shown, allowed.has(item.view), role + ' dashboard shortcut visibility mismatch for ' + item.view);
+      await mockPage.keyboard.press('Control+k');
+      for (const view of ['reports','reviews']) {
+        const count = await mockPage.locator('[data-command-view="' + view + '"]').count();
+        assert.equal(count > 0, allowed.has(view), role + ' command palette visibility mismatch for ' + view);
+      }
+      await mockPage.locator('#commandClose').click();
+    }
     assert.deepEqual(mockErrors, [], 'mocked admin UI raised browser errors: ' + mockErrors.join('; '));
-    console.log(JSON.stringify({ ok: true, checks: ['all 18 navigation tabs clicked with isolated mock admin session', 'admin menu opens/closes', 'command palette opens/closes', 'no uncaught browser JS errors in mocked admin UI'] }, null, 2));
+    console.log(JSON.stringify({ ok: true, checks: [
+      'all admin menu destinations opened with an isolated mock admin session',
+      'new product/category/brand/order/customer/discount/code/content dialogs open and close',
+      'admin menu and command palette open and close',
+      'owner/admin/editor/sales navigation, dashboard shortcuts and quick search match role permissions',
+      'no uncaught browser JavaScript errors in mocked admin UI'
+    ] }, null, 2));
   } finally {
     await mockPage.close();
   }
