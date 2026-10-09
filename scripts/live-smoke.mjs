@@ -189,10 +189,10 @@ console.log(JSON.stringify({
     price_from_db: true,
     stock_guard: true,
     no_brand: Boolean(noBrand),
-    no_description: Boolean(noDescription),
+    no_description: noDescription ? "available_and_tested" : "not_applicable_no_missing_description_product",
     simple_product: Boolean(simple),
     checkout_options: true,
-    checkout_preview: checkoutMode === "online_preview_ok",
+    checkout_preview: checkoutMode === "online_preview_ok" ? "passed" : "skipped_gateway_disabled",
     checkout_disabled_guard: checkoutMode === "gateway_disabled",
     order_code_gate: true,
     order_mobile_gate: true
