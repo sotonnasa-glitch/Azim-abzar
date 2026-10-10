@@ -1108,7 +1108,7 @@ main{position:relative;padding:20px 0 64px}
         box.innerHTML=items.map(x=>{
           const total=x.unit_price*x.qty;
           const needsReview=Boolean(x.price_missing||x.unavailable);
-          const unitLabel=x.price_missing?'قیمت ثبت نشده — استعلام لازم است':(x.unavailable?'این کالا/سایز دیگر قابل سفارش نیست':money(x.unit_price));
+          const unitLabel=x.price_missing?'قیمت قابل تأیید نیست — استعلام لازم است':(x.unavailable?'این کالا/سایز دیگر قابل سفارش نیست':money(x.unit_price));
           const totalLabel=needsReview?'نیازمند بررسی':money(total);
           const image='<img loading="lazy" src="'+escapeHtml(cartImageSrc(x))+'" alt="'+escapeHtml(x.name)+'" onerror="this.onerror=null;this.src=\'./catalog_site_mapping_908/images/placeholder.svg\';">';
           return '<article class="cart-row">'+
@@ -1143,7 +1143,7 @@ main{position:relative;padding:20px 0 64px}
       if(warning){
         warning.hidden=!needsReview;
         warning.textContent=items.some(x=>x.price_missing)
-          ? 'قیمت یکی از سایزها/مدل‌ها در لیست ثبت نشده است؛ آن کالا را حذف کنید یا قبل از ثبت سفارش از فروشگاه استعلام بگیرید.'
+          ? 'قیمت یکی از کالاها/سایزها قابل تأیید نیست؛ ممکن است قیمت در فهرست ثبت نشده باشد یا اتصال به سرور برقرار نباشد. اتصال را بررسی کنید یا از فروشگاه استعلام بگیرید.'
           : 'یکی از کالاها یا سایزهای انتخاب‌شده دیگر قابل سفارش نیست؛ سبد را اصلاح کنید.';
       }
       const checkoutSubmit=$('submitOrderBtn');
@@ -1237,7 +1237,7 @@ main{position:relative;padding:20px 0 64px}
         const freshItems=C.items();
         if(freshItems.some(x=>x.price_missing||x.unavailable)){
           status.textContent=freshItems.some(x=>x.price_missing)
-            ? 'قیمت یکی از سایزها/مدل‌ها ثبت نشده است؛ آن کالا را حذف کنید یا از فروشگاه استعلام بگیرید.'
+            ? 'قیمت یکی از کالاها/سایزها قابل تأیید نیست؛ اتصال را بررسی کنید یا از فروشگاه استعلام بگیرید.'
             : 'یکی از کالاها یا سایزهای انتخاب‌شده دیگر قابل سفارش نیست؛ سبد را اصلاح کنید.';
           status.className='coupon-status err';
           render();
