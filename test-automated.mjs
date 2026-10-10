@@ -381,13 +381,27 @@ function testCartAndCheckout() {
   const paymentMessage = doc.querySelector('input[name="paymentMethod"][value="message"]');
   const paymentOnline = doc.getElementById('onlinePaymentOption');
   const paymentOnlineInput = doc.querySelector('input[name="paymentMethod"][value="online"]');
-  const onlineOnlyCheckout = !paymentPhone && !paymentMessage && paymentOnline && paymentOnlineInput &&
-    paymentOnlineInput.disabled && cartHtml.includes("p_payment_method:'online'") &&
+  const manualRequestCheckout = paymentPhone && !paymentMessage && paymentOnline && paymentOnlineInput &&
+    paymentOnlineInput.disabled && paymentPhone.checked &&
+    cartHtml.includes("p_payment_method:selectedPayment") &&
+    cartHtml.includes("selectedPayment==='online' && !onlinePaymentAvailable") &&
     cartHtml.includes('azim_checkout_options');
-  if (onlineOnlyCheckout) {
-    pass('Checkout فقط روش آنلاین امن را می‌پذیرد؛ گزینه آنلاین تا اعلام آمادگی درگاه از سمت سرور غیرفعال است');
+  if (manualRequestCheckout) {
+    pass('ثبت درخواست سفارش بدون پرداخت آنلاین در دسترس است و درگاه تا تأیید تنظیمات سرور غیرفعال می‌ماند');
   } else {
-    fail('قرارداد پرداخت آنلاینِ امن با فرم و RPC هماهنگ نیست');
+    fail('مسیر درخواست سفارش بدون پرداخت آنلاین با کنترل سمت سرور هماهنگ نیست');
+  }
+
+  const manualCheckoutMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20261011093000_enable_manual_order_requests_without_gateway.sql'), 'utf8');
+  if (
+    manualCheckoutMigration.includes("v_method not in ('online','phone')") &&
+    manualCheckoutMigration.includes("'offline_methods', jsonb_build_array('phone')") &&
+    manualCheckoutMigration.includes('private.azim_cart_checkout_v2') &&
+    manualCheckoutMigration.includes("'payment_status','unpaid'")
+  ) {
+    pass('migration مسیر درخواست سفارش بدون پرداخت را امن و وضعیت پرداخت را unpaid نگه می‌دارد');
+  } else {
+    fail('migration مسیر درخواست سفارش بدون پرداخت ناقص است');
   }
 
   if (fullName.hasAttribute('required') && mobile.hasAttribute('required')) {
