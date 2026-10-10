@@ -37,6 +37,8 @@
         variant_label: x.variant_label ? String(x.variant_label) : '',
         unit_price: Number(x.unit_price || 0),
         base_price: Number(x.base_price || x.unit_price || 0),
+        price_missing: x.price_missing === true,
+        unavailable: x.unavailable === true,
         qty: Math.min(99, Math.max(1, Number(x.qty || 1)))
       })).filter(x => x.product_id) : [];
     }catch(_){ return []; }
@@ -63,7 +65,9 @@
         variant_label:String(x.variant_label || ''),
         qty:Math.min(99,Math.max(1,Number(x.qty || 1))),
         unit_price:Number(x.unit_price || 0),
-        base_price:Number(x.base_price || x.unit_price || 0)
+        base_price:Number(x.base_price || x.unit_price || 0),
+        price_missing:x.price_missing === true,
+        unavailable:x.unavailable === true
       }));
       const value = encodeURIComponent(JSON.stringify(compact));
       // Use the parent domain only on the production domain. On other hosts
@@ -226,7 +230,12 @@
   }
 
   async function syncPrices(){
-    if(!SUPABASE_URL || !ANON_KEY || !state.items.length || state.syncing) return;
+    if(!state.items.length || state.syncing) return;
+    if(!SUPABASE_URL || !ANON_KEY){
+      for(const item of state.items){ item.price_missing=true; item.unit_price=0; }
+      write();
+      return;
+    }
     state.syncing = true;
     try{
       const url = SUPABASE_URL + '/rest/v1/products?select=id,code,name,img,price,variants,is_active,stock_quantity,stock_tracking_enabled,brand,category_name,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
@@ -242,8 +251,10 @@
         const p = map.get(String(item.product_id || '')) || byCode.get(String(item.code || '').trim().toUpperCase());
         if(!p) {
           // Never delete a cart item because of a temporary catalog/API miss.
-          // Keep the item locally so the user does not lose the cart.
+          // Keep it visible, but never let a stale local price reach checkout.
           item.unavailable = true;
+          item.price_missing = false;
+          item.unit_price = 0;
           continue;
         }
 
@@ -251,33 +262,47 @@
         if(p.id) item.product_id = String(p.id);
 
         item.unavailable = p.is_active === false;
+        item.price_missing = false;
         item.name = p.name || item.name;
         item.code = p.code || item.code;
         item.img = p.img || item.img;
 
         let unit = Number(p.price || 0);
+        item.price_missing = !(unit > 0);
         if(item.variant_label){
           const vs = Array.isArray(p.variants) ? p.variants : [];
-          const v = vs.find(v => String(v?.size ?? v?.label ?? v?.name ?? '').trim() === String(item.variant_label).trim());
+          const matchingVariants = vs.filter(v => String(v?.size ?? v?.label ?? v?.name ?? '').trim() === String(item.variant_label).trim());
+          const v = matchingVariants.find(v => v?.price != null && Number(v.price) > 0) || matchingVariants[0];
           if(!v){
             item.unavailable = true;
-          } else if(v.price != null && Number(v.price)>0) {
+            item.price_missing = false;
+            unit = 0;
+          } else if(v.price == null || !(Number(v.price) > 0)) {
+            item.price_missing = true;
+            unit = 0;
+          } else {
             unit = Number(v.price);
+            item.price_missing = false;
           }
         }
         const now=Date.now();
         const ds= p.discount_starts_at ? new Date(p.discount_starts_at).getTime() : -Infinity;
         const de= p.discount_ends_at ? new Date(p.discount_ends_at).getTime() : Infinity;
-        if(p.discount_is_active && Number(p.discount_value)>0 && now>=ds && now<=de){
+        if(!item.price_missing && !item.unavailable && p.discount_is_active && Number(p.discount_value)>0 && now>=ds && now<=de){
           if(p.discount_type==='percentage') unit=Math.max(0,Math.floor(unit*(100-Math.min(100,Math.max(1,Number(p.discount_value))))/100));
           else if(p.discount_type==='fixed') unit=Math.max(0,unit-Number(p.discount_value));
         }
-        if(unit>0) item.unit_price=unit;
+        if(item.price_missing || item.unavailable) item.unit_price=0;
+        else if(unit>0) item.unit_price=unit;
       }
       // Keep unavailable items visible instead of silently deleting the cart.
       // They can be re-validated on the next sync/submit.
       write();
-    }catch(_){}
+    }catch(_){
+      // If prices cannot be revalidated, never display/use a stale local price.
+      for(const item of state.items){ item.price_missing=true; item.unit_price=0; }
+      write();
+    }
     finally{ state.syncing=false; }
   }
 
