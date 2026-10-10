@@ -2279,7 +2279,7 @@ body.az-service-open{overflow:hidden}
 #view-orders .az-order-stat:nth-child(2)::before{background:linear-gradient(180deg,#63d9a0,rgba(57,217,138,.04))}
 #view-orders .az-order-stat:nth-child(3)::before{background:linear-gradient(180deg,#f3bd56,rgba(243,189,86,.04))}
 #view-orders .az-order-stat:nth-child(4)::before{background:linear-gradient(180deg,#7db6ff,rgba(125,182,255,.04))}
-#view-orders .az-order-stat span{font-size:11px;color:#a6b2aa}
+#view-orders .az-order-stat-copy>span{font-size:11px;color:#a6b2aa}
 #view-orders .az-order-stat strong{font-size:23px;line-height:1.4;color:#f5f7f5}
 #view-orders .az-order-stat small{font-size:10px;color:#7d8b82;line-height:1.6}
 #view-orders .az-orders-pagination{border:1px solid rgba(255,255,255,.055);border-radius:12px;background:rgba(7,11,9,.48)}
@@ -2346,7 +2346,7 @@ body.az-service-open{overflow:hidden}
   #view-orders #clearOrdersSearch{grid-column:1/-1}
   #view-orders .az-order-overview{gap:8px}
   #view-orders .az-order-stat{padding:13px 12px}
-  #view-orders .az-order-stat span{font-size:10px}
+  #view-orders .az-order-stat-copy>span{font-size:10px}
   #view-orders .az-order-stat strong{font-size:19px}
   #view-orders .az-order-stat small{font-size:9px}
   #view-orders .az-order-card-head,
