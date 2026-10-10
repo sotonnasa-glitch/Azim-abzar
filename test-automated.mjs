@@ -404,6 +404,18 @@ function testCartAndCheckout() {
     fail('migration مسیر درخواست سفارش بدون پرداخت ناقص است');
   }
 
+  const browserAudit = fs.readFileSync(path.join(__dirname, 'scripts', 'site-browser-full-audit.mjs'), 'utf8');
+  if (
+    browserAudit.includes('async function testManualCheckoutRequest(browser)') &&
+    browserAudit.includes('results.push(await testManualCheckoutRequest(browser))') &&
+    browserAudit.includes("p_payment_method,'phone'") &&
+    browserAudit.includes("req.headers()['x-idempotency-key']")
+  ) {
+    pass('آزمون مرورگر ثبت نهایی درخواست سفارش با پاسخ ساختگی و بدون ایجاد سفارش زنده اضافه شده است');
+  } else {
+    fail('آزمون end-to-end ثبت درخواست سفارش ناقص است');
+  }
+
   if (fullName.hasAttribute('required') && mobile.hasAttribute('required')) {
     pass('اعتبارسنجی فیلدهای اجباری خریدار (نام و شماره همراه) با ویژگی required تایید شد');
   } else {
