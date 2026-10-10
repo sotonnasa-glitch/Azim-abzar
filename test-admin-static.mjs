@@ -46,6 +46,7 @@ const requiredStaticHooks = {
   loginBtn: "$('loginBtn').onclick = async () =>",
   logoutBtn: "$('logoutBtn').onclick = async () =>",
   refreshBtn: "$('refreshBtn').onclick = () => loadSection(activeView());",
+  refreshOrdersBtn: "$('refreshOrdersBtn')?.addEventListener('click', async (e) =>",
   dashboardOpenSite: "$('dashboardOpenSite')?.addEventListener('click'",
   newProductBtn: "$('newProductBtn').onclick = () => newProduct();",
   newCategoryBtn: "$('newCategoryBtn').onclick = () => newCategory();",
@@ -98,6 +99,17 @@ const delegatedDataActions = [
 for (const attr of delegatedDataActions) {
   if (!js.includes("closest('[" + attr + "]')")) fail('no click delegation for ' + attr);
 }
+
+const orderRegressionChecks = [
+  ['orders command heading', html.includes('class="az-orders-eyebrow"')],
+  ['manual refresh control', html.includes('id="refreshOrdersBtn"') && js.includes("refreshOrdersBtn")],
+  ['search filter grammar sanitization', js.includes(".replace(/[\\\\%(),.*\"']/g, ' ')")],
+  ['calendar-day filter starts at midnight', js.includes("since.setHours(0, 0, 0, 0)")],
+  ['filtered no-results state has a reset action', js.includes('class="az-orders-empty-state"') && js.includes('data-clear-orders-empty')],
+  ['cancelled orders do not inflate unpaid KPI', js.includes("x.status !== 'cancelled'") && js.includes("['unpaid','pending','failed'].includes(x.payment_status)")],
+  ['refresh action always restores its UI state', js.includes("button.removeAttribute('aria-busy')") && js.includes("button.innerHTML = originalLabel")]
+];
+for (const [name, ok] of orderRegressionChecks) if (!ok) fail('orders regression check failed: ' + name);
 
 const serviceChecks = [
   "id=\"adminServiceRequestsPanel\"",
