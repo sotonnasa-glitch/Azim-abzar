@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 const html = readFileSync('admin.html', 'utf8');
 const orderStatus = readFileSync('order-status.html', 'utf8');
 const js = readFileSync('admin-app.js', 'utf8');
+const telegramAdmin = readFileSync('supabase/functions/azim-telegram-admin/index.ts', 'utf8');
 const paymentMigration = readFileSync('supabase/migrations/20260926211435_admin_payment_control_center.sql', 'utf8');
 const orderTransitionMigration = readFileSync('supabase/migrations/20261007090000_admin_order_control_center.sql', 'utf8');
 const paidOrderGuardMigration = readFileSync('supabase/migrations/20261007090300_guard_paid_order_amount_changes.sql', 'utf8');
@@ -116,6 +117,20 @@ const orderRegressionChecks = [
   ['orders filter row cannot overlap controls with a sticky header', css.includes('#view-orders .panel-head{\n  grid-template-columns:minmax(220px,.82fr) minmax(0,2.18fr);\n  align-items:end;gap:18px;padding-bottom:14px;margin-bottom:14px;\n  position:relative;top:auto;z-index:2;background:transparent;')]
 ];
 for (const [name, ok] of orderRegressionChecks) if (!ok) fail('orders regression check failed: ' + name);
+
+const archiveStart = telegramAdmin.indexOf('async function showArchivedOrders(');
+const archiveEnd = telegramAdmin.indexOf('\nasync function showOrder(', archiveStart);
+const archiveCode = archiveStart >= 0 && archiveEnd > archiveStart
+  ? telegramAdmin.slice(archiveStart, archiveEnd)
+  : '';
+if (!archiveCode.includes('requestedPage = 0') ||
+    !archiveCode.includes('.select("order_code,status,payment_status,payment_method,shipping_status,total,created_at", { count: "exact" })') ||
+    !archiveCode.includes('.range(offset, offset + pageSize - 1)') ||
+    !archiveCode.includes('completed_orders:') ||
+    !archiveCode.includes('cancelled_orders:')) {
+  fail('Telegram completed/cancelled order archive pagination is missing or incomplete');
+}
+
 
 const serviceChecks = [
   "id=\"adminServiceRequestsPanel\"",
