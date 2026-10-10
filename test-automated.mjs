@@ -1009,6 +1009,23 @@ function testAuditAddendumGuards() {
     fail('fail-closed وبهوک یا حفظ روش پرداخت پس از ثبت مرسوله ناقص است');
   }
 
+  const consultationNotifyJs = fs.readFileSync(
+    path.join(__dirname, 'supabase', 'functions', 'azim-consultation-notify', 'index.ts'),
+    'utf8'
+  );
+  if (
+    consultationNotifyJs.includes('const payload = await req.json();') &&
+    consultationNotifyJs.includes('payload as Record<string, unknown>') &&
+    consultationNotifyJs.includes('envelope.record && typeof envelope.record === "object"') &&
+    consultationNotifyJs.includes(': envelope;') &&
+    consultationNotifyJs.includes('clean(b.full_name,120)') &&
+    consultationNotifyJs.includes('clean(b.mobile,60)')
+  ) {
+    pass('اعلان مشاوره رکورد تو‌در‌توی تریگر دیتابیس را باز می‌کند و نام/موبایل درخواست را می‌خواند');
+  } else {
+    fail('قرارداد داده بین تریگر درخواست مشاوره و تابع تلگرام هماهنگ نیست');
+  }
+
   const telegramMigration = fs.readFileSync(
     path.join(__dirname, 'supabase', 'migrations-archive', '20260927142000_harden_telegram_tracking_update.sql'),
     'utf8'
