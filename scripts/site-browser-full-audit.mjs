@@ -386,7 +386,7 @@ async function testManualCheckoutRequest(browser){
   });
 
   await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
-  await waitForProduct(page,'P0001');
+  await page.waitForFunction(()=>!!document.querySelector('[data-cart-add-link="P0001"]'),null,{timeout:60000});
   await page.waitForFunction(()=>!!window.AZIM_CART,null,{timeout:15000});
   await page.evaluate(()=>window.AZIM_CART.clear());
   const card=page.locator('#card-P0001').first();
