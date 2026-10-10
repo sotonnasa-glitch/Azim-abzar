@@ -162,6 +162,14 @@ try {
     await mockPage.locator('[data-clear-orders-empty]').click();
     await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
 
+    // A query with only special filter characters must not silently reveal every order.
+    await mockPage.locator('#ordersSearch').fill('.*%(),');
+    await mockPage.waitForFunction(() => !!document.querySelector('#ordersTable .az-orders-empty-state'), null, { timeout: 10000 });
+    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('با این جستجو'),
+      'special-character-only order search did not return a no-results state');
+    await mockPage.locator('[data-clear-orders-empty]').click();
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
+
     const refreshOrders = mockPage.locator('#refreshOrdersBtn');
     await refreshOrders.click();
     await mockPage.waitForFunction(() => !document.querySelector('#refreshOrdersBtn')?.disabled, null, { timeout: 10000 });
