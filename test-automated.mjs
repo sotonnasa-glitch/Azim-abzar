@@ -408,7 +408,7 @@ function testCartAndCheckout() {
   const cartModule = fs.readFileSync(path.join(__dirname, 'azim-cart.js'), 'utf8');
   if (
     unpricedMigration.includes('قیمت سایز / مدل انتخاب‌شده ثبت نشده است') &&
-    unpricedMigration.includes("order by (nullif(trim(coalesce(v->>'price','')), '') is not null) desc") &&
+    unpricedMigration.includes("order by (nullif(trim(coalesce(v->>'price','')), '')::bigint > 0) desc nulls last") &&
     cartModule.includes('price_missing') &&
     cartModule.includes('matchingVariants.find(v => v?.price != null && Number(v.price) > 0)') &&
     cartHtml.includes('cartPriceWarning') &&
