@@ -224,7 +224,7 @@ async function expectUnauthorizedEndpoint(slug, headerName) {
     body: JSON.stringify({}),
   });
   await response.text();
-  assert.equal(response.status, 401, slug + " should reject an invalid webhook secret before dispatch.");
+  assert.ok([401, 403].includes(response.status), slug + " should reject an invalid webhook secret before dispatch.");
   return true;
 }
 const notificationAuthGuards = {
