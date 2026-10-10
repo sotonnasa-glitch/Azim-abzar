@@ -2371,3 +2371,20 @@ body.az-service-open{overflow:hidden}
   #view-orders .az-order-card{transition:none!important}
   #view-orders .az-order-card:hover{transform:none}
 }
+
+
+/* Deterministic filter-grid placement prevents refresh/reset buttons from overlapping. */
+#view-orders .az-orders-tools{grid-template-columns:repeat(4,minmax(0,1fr))}
+#view-orders .az-orders-tools #ordersSearch{grid-column:1 / span 2;grid-row:1}
+#view-orders .az-orders-tools #ordersStatusFilter{grid-column:3;grid-row:1}
+#view-orders .az-orders-tools #ordersPaymentFilter{grid-column:4;grid-row:1}
+#view-orders .az-orders-tools #ordersShippingFilter{grid-column:1;grid-row:2}
+#view-orders .az-orders-tools #ordersPeriodFilter{grid-column:2;grid-row:2}
+#view-orders .az-orders-tools #ordersPageSize{grid-column:3;grid-row:2}
+#view-orders .az-orders-tools #refreshOrdersBtn{grid-column:4;grid-row:2}
+#view-orders .az-orders-tools #clearOrdersSearch{grid-column:1 / -1;grid-row:3}
+@media(max-width:720px){
+  #view-orders .az-orders-tools>*{grid-row:auto;grid-column:auto}
+  #view-orders .az-orders-tools #ordersSearch,
+  #view-orders .az-orders-tools #clearOrdersSearch{grid-column:1 / -1;grid-row:auto}
+}
