@@ -57,6 +57,15 @@ try {
           subtotal: 25000, discount: 5000, discount_id: null, discount_code: null, shipping_cost: 0,
           total: 20000, tracking_code: null, tracking_url: null, shipping_carrier: null, notes: null,
           created_at: '2026-10-10T10:00:00.000Z'
+        },
+        {
+          id: '00000000-0000-4000-8000-000000000103', order_code: 'AZ-TEST-2003',
+          customer_id: null, customer_name: 'مشتری آزمایشی سوم', customer_mobile: '09120000003',
+          customer_email: 'third@example.invalid', status: 'delivered', payment_status: 'paid',
+          payment_method: 'phone', payment_reference: null, paid_at: '2026-10-09T11:00:00.000Z', shipping_status: 'delivered',
+          subtotal: 75000, discount: 0, discount_id: null, discount_code: null, shipping_cost: 0,
+          total: 75000, tracking_code: 'TEST-TRACKING', tracking_url: null, shipping_carrier: null, notes: null,
+          created_at: '2026-10-09T10:00:00.000Z'
         }
       ],
       order_items: [],
@@ -64,7 +73,7 @@ try {
       order_return_requests: []
     };
     class Query {
-      constructor(table) { this.table = table; this.rows = (tables[table] || []).slice(); this.filters = []; }
+      constructor(table) { this.table = table; this.rows = (tables[table] || []).slice(); this.filters = []; this.rangeStart = null; this.rangeEnd = null; }
       select() { return this; } insert() { return this; } update() { return this; } delete() { return this; } upsert() { return this; }
       eq(k,v) { this.filters.push(x => x[k] === v); return this; }
       neq(k,v) { this.filters.push(x => x[k] !== v); return this; }
@@ -82,9 +91,14 @@ try {
         this.filters.push(row => fields.some(field => terms.some(term => String(row[field] ?? '').toLowerCase().includes(term))));
         return this;
       }
-      order() { return this; } limit() { return this; } range() { return this; }
+      order() { return this; } limit() { return this; }
+      range(start, end) { this.rangeStart = start; this.rangeEnd = end; return this; }
       contains() { return this; } match() { return this; }
-      result() { const rows = this.rows.filter(x => this.filters.every(f => f(x))); return { data: rows, error: null, count: rows.length }; }
+      result() {
+        const rows = this.rows.filter(x => this.filters.every(f => f(x)));
+        const visible = this.rangeStart === null ? rows : rows.slice(this.rangeStart, this.rangeEnd + 1);
+        return { data: visible, error: null, count: rows.length };
+      }
       maybeSingle() { const r = this.result(); return Promise.resolve({ data: r.data[0] || null, error: null }); }
       single() { const r = this.result(); return Promise.resolve({ data: r.data[0] || null, error: null }); }
       then(resolve, reject) { return Promise.resolve(this.result()).then(resolve, reject); }
@@ -142,18 +156,33 @@ try {
 
     // Order command-center regression coverage using the isolated synthetic rows above.
     await openView('orders');
-    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
     assert.equal((await mockPage.locator('#ordersTable .az-order-stat').count()), 4, 'orders KPI cards are missing');
-    assert.equal((await mockPage.locator('#ordersTable .az-order-stat').nth(2).locator('strong').innerText()).trim(), '۱',
+    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2001'), 'default active queue must only show orders needing follow-up');
+    assert.ok(!(await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2002'), 'cancelled order leaked into active queue');
+    assert.ok(!(await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2003'), 'delivered order leaked into active queue');
+
+    await mockPage.locator('[data-order-queue="completed"]').click();
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
+    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2003'), 'completed queue did not show delivered order');
+    assert.ok(!(await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2001'), 'completed queue leaked an active order');
+
+    await mockPage.locator('[data-order-queue="cancelled"]').click();
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
+    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2002'), 'cancelled queue did not show cancelled order');
+    assert.equal((await mockPage.locator('#ordersTable .az-order-stat').nth(2).locator('strong').innerText()).trim(), '۰',
       'cancelled unpaid orders must not inflate the needs-payment KPI');
 
     await mockPage.locator('#ordersStatusFilter').selectOption('cancelled');
     await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
-    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2002'), 'order status filter did not isolate the cancelled order');
-    assert.equal((await mockPage.locator('#ordersTable .az-order-stat').nth(2).locator('strong').innerText()).trim(), '۰',
-      'cancelled order should not be counted as needing payment');
+    assert.ok((await mockPage.locator('[data-order-queue="cancelled"]').getAttribute('aria-selected')) === 'true',
+      'status filter should synchronize the selected queue');
 
-    await mockPage.locator('#ordersStatusFilter').selectOption('');
+    await mockPage.locator('[data-order-queue="active"]').click();
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
+    assert.ok((await mockPage.locator('[data-order-queue="active"]').getAttribute('aria-selected')) === 'true',
+      'active queue tab was not reselected');
+
     await mockPage.locator('#ordersSearch').fill('AZ-TEST-2001');
     await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
     assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2001'), 'order search did not find matching order code');
@@ -161,7 +190,7 @@ try {
     await mockPage.locator('#ordersSearch').fill('NO-SUCH-ORDER');
     await mockPage.waitForFunction(() => !!document.querySelector('#ordersTable .az-orders-empty-state'), null, { timeout: 10000 });
     await mockPage.locator('[data-clear-orders-empty]').click();
-    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
 
     // A query with only special filter characters must not silently reveal every order.
     await mockPage.locator('#ordersSearch').fill('.*%(),');
@@ -169,7 +198,7 @@ try {
     assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('با این جستجو'),
       'special-character-only order search did not return a no-results state');
     await mockPage.locator('[data-clear-orders-empty]').click();
-    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
 
     const refreshOrders = mockPage.locator('#refreshOrdersBtn');
     await refreshOrders.click();
