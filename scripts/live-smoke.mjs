@@ -132,6 +132,30 @@ if (simple) {
 const checkoutOptions = await rpc("azim_checkout_options");
 assert.equal(typeof checkoutOptions?.online_available, "boolean", "Checkout options missing online_available.");
 
+const unpricedVariantCase = products.flatMap(product =>
+  variants(product)
+    .filter(variant => variant?.price == null)
+    .map(variant => ({ product, variant }))
+).find(entry => entry.product?.id && String(entry.variant?.size ?? entry.variant?.label ?? entry.variant?.name ?? "").trim());
+let unpricedVariantGuard = "not_applicable";
+if (unpricedVariantCase) {
+  const variantLabel = String(unpricedVariantCase.variant.size ?? unpricedVariantCase.variant.label ?? unpricedVariantCase.variant.name).trim();
+  const error = await rpcExpectError("azim_cart_checkout", {
+    p_mode: "preview",
+    p_full_name: null,
+    p_mobile: null,
+    p_email: null,
+    p_address: null,
+    p_city: null,
+    p_discount_code: null,
+    p_items: [{ product_id: unpricedVariantCase.product.id, variant_label: variantLabel, quantity: 1 }],
+    p_payment_method: "phone",
+    p_terms_accepted: false,
+  });
+  assert.match(String(error?.message || error || ""), /قیمت سایز \/ مدل انتخاب‌شده ثبت نشده است/, "Checkout did not block a variant with no listed price.");
+  unpricedVariantGuard = "passed";
+}
+
 let checkoutPreview = null;
 let checkoutMode = "gateway_disabled";
 if (checkoutOptions.online_available) {
@@ -195,6 +219,7 @@ console.log(JSON.stringify({
     no_description: noDescription ? "available_and_tested" : "not_applicable_no_missing_description_product",
     simple_product: Boolean(simple),
     checkout_options: true,
+    unpriced_variant_guard: unpricedVariantGuard,
     checkout_preview: checkoutMode === "online_preview_ok" ? "passed" : "skipped_gateway_disabled",
     checkout_disabled_guard: checkoutMode === "gateway_disabled",
     order_code_gate: true,
