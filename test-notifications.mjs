@@ -41,6 +41,37 @@ for (const needle of [
   "azim_telegram_set_tracking"
 ]) assert.ok(telegramAdmin.includes(needle), "Telegram admin order management missing " + needle);
 
+const callbackStart = telegramAdmin.indexOf("async function handleCallbackQuery(query: any)");
+const callbackEnd = telegramAdmin.indexOf("\nasync function ", callbackStart + 12);
+assert.ok(callbackStart >= 0 && callbackEnd > callbackStart, "Could not isolate Telegram callback handler");
+const callbackHandler = telegramAdmin.slice(callbackStart, callbackEnd);
+const callbackAuthIndex = callbackHandler.indexOf("const authorized = isAdmin(chatId)");
+const unauthorizedIndex = callbackHandler.indexOf("if (!authorized)");
+const callbackDispatchIndex = callbackHandler.indexOf('const data = String(query.data ?? "")');
+assert.ok(
+  callbackAuthIndex >= 0 && unauthorizedIndex > callbackAuthIndex && callbackDispatchIndex > unauthorizedIndex,
+  "Telegram admin callback must authorize the chat before reading or dispatching callback_data"
+);
+assert.match(callbackHandler.slice(unauthorizedIndex, callbackDispatchIndex), /return;/,
+  "Unauthorized Telegram callback must stop before reaching any action handler");
+
+const replyStart = telegramAdmin.indexOf("async function handleReplyMessage(msg: any)");
+const replyEnd = telegramAdmin.indexOf("\nasync function ", replyStart + 12);
+assert.ok(replyStart >= 0 && replyEnd > replyStart, "Could not isolate Telegram reply handler");
+const replyHandler = telegramAdmin.slice(replyStart, replyEnd);
+const replyAuthIndex = replyHandler.indexOf("if (!isAdmin(msg.chat?.id)) return false;");
+const replyParseIndex = replyHandler.indexOf("const replyText = String(msg.reply_to_message?.text ?? \"\")");
+assert.ok(replyAuthIndex >= 0 && replyParseIndex > replyAuthIndex,
+  "Telegram reply actions must reject non-admins before reading action state");
+
+const webhookStart = telegramAdmin.indexOf("Deno.serve(async (req) => {");
+const webhookSecretIndex = telegramAdmin.indexOf("if (suppliedSecret !== expectedSecret)", webhookStart);
+const webhookParseIndex = telegramAdmin.indexOf("const update = await req.json();", webhookSecretIndex);
+assert.ok(webhookStart >= 0 && webhookSecretIndex > webhookStart && webhookParseIndex > webhookSecretIndex,
+  "Telegram webhook must validate its secret before parsing/dispatching updates");
+assert.match(telegramAdmin.slice(webhookSecretIndex, webhookParseIndex), /status: 403/,
+  "Invalid Telegram webhook secret must be rejected with HTTP 403");
+
 for (const needle of ["notification_settings","notification_logs","azim_notify_order_change","azim_notify_return_change","orders_azim_notification"]) {
   assert.ok(migration.includes(needle), "Migration missing " + needle);
 }
