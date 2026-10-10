@@ -101,6 +101,9 @@ for (const attr of delegatedDataActions) {
 }
 
 const orderRegressionChecks = [
+  ['empty-special search cannot broaden to all orders', js.includes("rawSearch && !search") && js.includes("__azim_no_match_for_empty_search__")],
+  ['network errors do not leave refresh disabled', js.includes("showSectionError('ordersTable', err)") && js.includes("button.removeAttribute('aria-busy')")],
+
   ['orders command heading', html.includes('class="az-orders-eyebrow"')],
   ['manual refresh control', html.includes('id="refreshOrdersBtn"') && js.includes("refreshOrdersBtn")],
   ['search filter grammar sanitization', js.includes(".replace(/[\\\\%(),.*\"']/g, ' ')")],
