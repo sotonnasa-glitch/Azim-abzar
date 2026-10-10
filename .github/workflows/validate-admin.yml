@@ -47,6 +47,11 @@ jobs:
         run: npm install --no-save playwright@1.63.0
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Read public Supabase URL for local server boot
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "AZIM_SUPABASE_URL=$(node -e "const fs=require('fs');const s=fs.readFileSync('supabase-config.js','utf8');const m=s.match(/AZIM_SUPABASE_URL='([^']+)'/);if(!m)throw new Error('Public Supabase URL not found');process.stdout.write(m[1])")" >> "$GITHUB_ENV"
       - name: Start local Express server for source-accurate UI tests
         shell: bash
         run: |
