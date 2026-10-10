@@ -56,7 +56,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          nohup npm run start > /tmp/azim-abzar-admin-test-server.log 2>&1 &
+          export AZIM_SUPABASE_URL="$(node -e "const fs=require('fs');const s=fs.readFileSync('supabase-config.js','utf8');const m=s.match(/AZIM_SUPABASE_URL='([^']+)'/);if(!m)throw new Error('Public Supabase URL not found');process.stdout.write(m[1])")"
+          test -n "$AZIM_SUPABASE_URL"
+          nohup env AZIM_SUPABASE_URL="$AZIM_SUPABASE_URL" npm run start > /tmp/azim-abzar-admin-test-server.log 2>&1 &
           echo $! > /tmp/azim-abzar-admin-test-server.pid
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
