@@ -110,3 +110,5 @@ grant execute on function public.azim_cart_checkout(text,text,text,text,text,tex
 revoke all on function public.azim_checkout_options() from public;
 grant execute on function public.azim_checkout_options() to anon;
 revoke execute on function public.azim_checkout_options() from authenticated;
+
+notify pgrst, 'reload schema';
