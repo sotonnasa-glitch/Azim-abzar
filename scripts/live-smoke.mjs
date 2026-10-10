@@ -134,9 +134,18 @@ assert.equal(typeof checkoutOptions?.online_available, "boolean", "Checkout opti
 
 const unpricedVariantCase = products.flatMap(product =>
   variants(product)
-    .filter(variant => variant?.price == null)
+    .filter(variant => variant?.price == null || !(Number(variant.price) > 0))
     .map(variant => ({ product, variant }))
-).find(entry => entry.product?.id && String(entry.variant?.size ?? entry.variant?.label ?? entry.variant?.name ?? "").trim());
+).find(entry => {
+  if (!entry.product?.id) return false;
+  const label = String(entry.variant?.size ?? entry.variant?.label ?? entry.variant?.name ?? "").trim();
+  if (!label) return false;
+  // Exclude ambiguous duplicate labels if another row for that same label has a valid price.
+  return !variants(entry.product).some(other =>
+    String(other?.size ?? other?.label ?? other?.name ?? "").trim() === label &&
+    other?.price != null && Number(other.price) > 0
+  );
+});
 let unpricedVariantGuard = "not_applicable";
 if (unpricedVariantCase) {
   const variantLabel = String(unpricedVariantCase.variant.size ?? unpricedVariantCase.variant.label ?? unpricedVariantCase.variant.name).trim();
