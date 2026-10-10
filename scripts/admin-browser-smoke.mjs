@@ -36,7 +36,31 @@ try {
     const adminUser = { id: '00000000-0000-4000-8000-000000000001', email: 'admin-smoke@example.invalid' };
     const mockedRole = new URL(location.href).searchParams.get('admin_role_mock') || 'owner';
     const tables = {
-      admin_users: [{ user_id: adminUser.id, role: mockedRole, is_active: true, created_at: '2026-01-01T00:00:00Z' }]
+      admin_users: [{ user_id: adminUser.id, role: mockedRole, is_active: true, created_at: '2026-01-01T00:00:00Z' }],
+      // All order fixtures are synthetic and never touch production orders.
+      orders: [
+        {
+          id: '00000000-0000-4000-8000-000000000101', order_code: 'AZ-TEST-2001',
+          customer_id: null, customer_name: 'مشتری آزمایشی اول', customer_mobile: '09120000001',
+          customer_email: 'first@example.invalid', status: 'pending', payment_status: 'unpaid',
+          payment_method: 'phone', payment_reference: null, paid_at: null, shipping_status: 'pending',
+          subtotal: 50000, discount: 0, discount_id: null, discount_code: null, shipping_cost: 0,
+          total: 50000, tracking_code: null, tracking_url: null, shipping_carrier: null, notes: null,
+          created_at: '2026-10-11T10:00:00.000Z'
+        },
+        {
+          id: '00000000-0000-4000-8000-000000000102', order_code: 'AZ-TEST-2002',
+          customer_id: null, customer_name: 'مشتری آزمایشی دوم', customer_mobile: '09120000002',
+          customer_email: 'second@example.invalid', status: 'cancelled', payment_status: 'unpaid',
+          payment_method: 'phone', payment_reference: null, paid_at: null, shipping_status: 'pending',
+          subtotal: 25000, discount: 5000, discount_id: null, discount_code: null, shipping_cost: 0,
+          total: 20000, tracking_code: null, tracking_url: null, shipping_carrier: null, notes: null,
+          created_at: '2026-10-10T10:00:00.000Z'
+        }
+      ],
+      order_items: [],
+      order_action_requests: [],
+      order_return_requests: []
     };
     class Query {
       constructor(table) { this.table = table; this.rows = (tables[table] || []).slice(); this.filters = []; }
@@ -44,9 +68,20 @@ try {
       eq(k,v) { this.filters.push(x => x[k] === v); return this; }
       neq(k,v) { this.filters.push(x => x[k] !== v); return this; }
       in(k,v) { this.filters.push(x => v.includes(x[k])); return this; }
-      not() { return this; } is() { return this; } gte() { return this; } lte() { return this; }
-      gt() { return this; } lt() { return this; } like() { return this; } ilike() { return this; }
-      or() { return this; } order() { return this; } limit() { return this; } range() { return this; }
+      not() { return this; } is() { return this; }
+      gte(k,v) { this.filters.push(x => String(x[k] ?? '') >= String(v)); return this; }
+      lte(k,v) { this.filters.push(x => String(x[k] ?? '') <= String(v)); return this; }
+      gt(k,v) { this.filters.push(x => String(x[k] ?? '') > String(v)); return this; }
+      lt(k,v) { this.filters.push(x => String(x[k] ?? '') < String(v)); return this; }
+      like() { return this; } ilike() { return this; }
+      or(expression) {
+        const source = String(expression || '');
+        const fields = [...source.matchAll(/([a-z_]+)\\.ilike\\./gi)].map(m => m[1]);
+        const terms = [...source.matchAll(/\\.ilike\\.%([^%]*)%/g)].map(m => m[1].toLowerCase()).filter(Boolean);
+        this.filters.push(row => fields.some(field => terms.some(term => String(row[field] ?? '').toLowerCase().includes(term))));
+        return this;
+      }
+      order() { return this; } limit() { return this; } range() { return this; }
       contains() { return this; } match() { return this; }
       result() { const rows = this.rows.filter(x => this.filters.every(f => f(x))); return { data: rows, error: null, count: rows.length }; }
       maybeSingle() { const r = this.result(); return Promise.resolve({ data: r.data[0] || null, error: null }); }
@@ -103,6 +138,39 @@ try {
       await mockPage.waitForFunction(name => document.querySelector('#view-' + name)?.classList.contains('active'), view, { timeout: 5000 });
     };
     for (const view of views) await openView(view);
+
+    // Order command-center regression coverage using the isolated synthetic rows above.
+    await openView('orders');
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
+    assert.equal((await mockPage.locator('#ordersTable .az-order-stat').count()), 4, 'orders KPI cards are missing');
+    assert.equal((await mockPage.locator('#ordersTable .az-order-stat').nth(2).locator('strong').innerText()).trim(), '۱',
+      'cancelled unpaid orders must not inflate the needs-payment KPI');
+
+    await mockPage.locator('#ordersStatusFilter').selectOption('cancelled');
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
+    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2002'), 'order status filter did not isolate the cancelled order');
+    assert.equal((await mockPage.locator('#ordersTable .az-order-stat').nth(2).locator('strong').innerText()).trim(), '۰',
+      'cancelled order should not be counted as needing payment');
+
+    await mockPage.locator('#ordersStatusFilter').selectOption('');
+    await mockPage.locator('#ordersSearch').fill('AZ-TEST-2001');
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 1, null, { timeout: 10000 });
+    assert.ok((await mockPage.locator('#ordersTable').innerText()).includes('AZ-TEST-2001'), 'order search did not find matching order code');
+
+    await mockPage.locator('#ordersSearch').fill('NO-SUCH-ORDER');
+    await mockPage.waitForFunction(() => !!document.querySelector('#ordersTable .az-orders-empty-state'), null, { timeout: 10000 });
+    await mockPage.locator('[data-clear-orders-empty]').click();
+    await mockPage.waitForFunction(() => document.querySelectorAll('#ordersTable [data-order-card]').length === 2, null, { timeout: 10000 });
+
+    const refreshOrders = mockPage.locator('#refreshOrdersBtn');
+    await refreshOrders.click();
+    await mockPage.waitForFunction(() => !document.querySelector('#refreshOrdersBtn')?.disabled, null, { timeout: 10000 });
+    await mockPage.locator('#ordersTable .az-order-code').first().click();
+    await mockPage.waitForFunction(() => document.querySelector('#modal')?.classList.contains('show'), null, { timeout: 10000 });
+    assert.ok(await mockPage.locator('#modal .az-order-control-hero').count(), 'opening an order card did not display the order control workspace');
+    await mockPage.locator('#modal .modal-head .x').click();
+    await mockPage.waitForFunction(() => !document.querySelector('#modal')?.classList.contains('show'), null, { timeout: 10000 });
+
     const modalChecks = [
       ['products', 'newProductBtn'],
       ['categories', 'newCategoryBtn'],
@@ -167,6 +235,8 @@ try {
     assert.deepEqual(mockErrors, [], 'mocked admin UI raised browser errors: ' + mockErrors.join('; '));
     console.log(JSON.stringify({ ok: true, checks: [
       'all admin menu destinations opened with an isolated mock admin session',
+      'orders filters by status and order code; filtered-empty state resets; refresh and order detail work',
+      'cancelled unpaid orders do not inflate the needs-payment KPI',
       'new product/category/brand/order/customer/discount/code/content dialogs open and close',
       'admin menu and command palette open and close',
       'notification settings reachable through the visible admin menu; notification config API mocked to avoid real writes',
