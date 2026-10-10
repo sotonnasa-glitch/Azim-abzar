@@ -324,9 +324,12 @@ async function testCart(browser){
   assert.ok(await page.locator('#cartItems [data-remove]').count()===2,'cart remove controls missing');
 
   const online=page.locator('input[name="paymentMethod"][value="online"]');
+  const manualRequest=page.locator('input[name="paymentMethod"][value="phone"]');
   assert.equal(await online.count(),1,'online payment option missing');
-  assert.equal(await page.locator('input[name="paymentMethod"][value="phone"]').count(),0,'phone payment option still exists');
-  assert.equal(await page.locator('input[name="paymentMethod"][value="message"]').count(),0,'message payment option still exists');
+  assert.equal(await manualRequest.count(),1,'manual order-request option is missing');
+  assert.equal(await page.locator('input[name="paymentMethod"][value="message"]').count(),0,'unsupported message method was shown');
+  const onlineDisabled=await online.isDisabled();
+  assert.equal(await manualRequest.isChecked(),onlineDisabled,'checkout did not select the safe default method for current gateway state');
 
   // Cart markup uses signed quantity deltas: +1 to increment and -1 to decrement.
   await page.locator('#cartItems [data-qty="1"]').first().click();
