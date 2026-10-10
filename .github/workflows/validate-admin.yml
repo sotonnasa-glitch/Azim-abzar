@@ -72,4 +72,5 @@ jobs:
       - name: Test admin login, orders workflow and access gate
         env:
           AZIM_ADMIN_BASE_URL: http://127.0.0.1:3000
+          AZIM_ADMIN_LIVE_BASE_URL: https://azimabzar.com
         run: node scripts/admin-browser-smoke.mjs
