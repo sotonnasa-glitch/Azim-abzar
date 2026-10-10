@@ -78,6 +78,9 @@ jobs:
           node --check server.js
           node --input-type=module --check < api/chat.js
           node --check admin-app.js
+          node --check azim-notification-admin.js
+          node --check scripts/cart-browser-smoke.mjs
+          node --check scripts/site-browser-full-audit.mjs
 
       - name: Secret and security invariants
         shell: bash
