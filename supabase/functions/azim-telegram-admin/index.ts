@@ -1507,15 +1507,15 @@ async function handleCallbackQuery(query: any) {
     return;
   }
 
-  const completedPage = data.match(/^completed_orders(?::(\d+))?$/);
-  if (completedPage) {
-    await showArchivedOrders(chatId, "completed", Number(completedPage[1] || 0));
+  if (data === "completed_orders" || data.startsWith("completed_orders:")) {
+    const completedPage = data.match(/^completed_orders(?::(\d+))?$/);
+    if (completedPage) await showArchivedOrders(chatId, "completed", Number(completedPage[1] || 0));
     return;
   }
 
-  const cancelledPage = data.match(/^cancelled_orders(?::(\d+))?$/);
-  if (cancelledPage) {
-    await showArchivedOrders(chatId, "cancelled", Number(cancelledPage[1] || 0));
+  if (data === "cancelled_orders" || data.startsWith("cancelled_orders:")) {
+    const cancelledPage = data.match(/^cancelled_orders(?::(\d+))?$/);
+    if (cancelledPage) await showArchivedOrders(chatId, "cancelled", Number(cancelledPage[1] || 0));
     return;
   }
 
