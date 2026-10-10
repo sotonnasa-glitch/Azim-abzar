@@ -404,6 +404,21 @@ function testCartAndCheckout() {
     fail('migration مسیر درخواست سفارش بدون پرداخت ناقص است');
   }
 
+  const unpricedMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20261011101500_reject_unpriced_variants_in_checkout.sql'), 'utf8');
+  const cartModule = fs.readFileSync(path.join(__dirname, 'azim-cart.js'), 'utf8');
+  if (
+    unpricedMigration.includes('قیمت سایز / مدل انتخاب‌شده ثبت نشده است') &&
+    unpricedMigration.includes("order by (nullif(trim(coalesce(v->>'price','')), '') is not null) desc") &&
+    cartModule.includes('price_missing') &&
+    cartModule.includes('matchingVariants.find(v => v?.price != null && Number(v.price) > 0)') &&
+    cartHtml.includes('cartPriceWarning') &&
+    cartHtml.includes('needsReview')
+  ) {
+    pass('قیمت سایز خالی به‌جای قیمت پایه جایگزین نمی‌شود و مسیر ثبت سفارش قفل است');
+  } else {
+    fail('گارد قیمت نامشخص در سمت سرور و سبد خرید ناقص است');
+  }
+
   const browserAudit = fs.readFileSync(path.join(__dirname, 'scripts', 'site-browser-full-audit.mjs'), 'utf8');
   if (
     browserAudit.includes('async function testManualCheckoutRequest(browser)') &&
@@ -828,7 +843,7 @@ function testAuditAddendumGuards() {
   const telegramAdminJs = fs.readFileSync(path.join(__dirname, 'supabase', 'functions', 'azim-telegram-admin', 'index.ts'), 'utf8');
   const checkoutSql = fs.readFileSync(path.join(__dirname, 'database', 'checkout-actions.sql'), 'utf8');
   const publicCartSql = fs.readFileSync(path.join(__dirname, 'database', 'public-cart.sql'), 'utf8');
-  const cartPages = ['cart.html', 'index.html', 'contact.html', 'products-v4.html']
+  const cartPages = ['cart.html', 'index.html', 'contact.html', 'products-v4.html', 'wishlist.html']
     .map(name => [name, fs.readFileSync(path.join(__dirname, name), 'utf8')]);
 
   for (const needle of [
@@ -1109,9 +1124,9 @@ function testAuditAddendumGuards() {
   }
 
   const versions = cartPages.map(([name, html]) => [name, (html.match(/azim-cart\.js\?v=\d+/g) || [])]);
-  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=13');
+  const mismatched = versions.filter(([, hits]) => hits.length !== 1 || hits[0] !== 'azim-cart.js?v=14');
   if (!mismatched.length) {
-    pass('نسخه cache-busting azim-cart.js در هر ۴ صفحه یکسان و روی v13 است');
+    pass('نسخه cache-busting azim-cart.js در هر ۵ صفحه یکسان و روی v14 است');
   } else {
     fail('نسخه cache-busting azim-cart.js بین صفحات ناهماهنگ است', mismatched.map(([n,h]) => n + ':' + h.join(',')).join(' | '));
   }
