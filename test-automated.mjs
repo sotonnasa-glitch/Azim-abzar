@@ -408,7 +408,7 @@ function testCartAndCheckout() {
 // ------------------------------------------------------------------------------
 // 4. Suite: Contact Form in contact.html
 // ------------------------------------------------------------------------------
-function testContactForm() {
+async function testContactForm() {
   suite('۴. تست فرم ارتباط، مشاوره فنی و انتخاب موضوعات (Contact & Consultation)');
 
   const contactHtml = fs.readFileSync(path.join(__dirname, 'contact.html'), 'utf8');
@@ -420,16 +420,17 @@ function testContactForm() {
   const mobileInput = doc.getElementById('frm-mobile');
   const subjectSelect = doc.getElementById('frm-subject');
   const submitBtn = doc.getElementById('btnSubmitForm');
+  const emailInput = doc.getElementById('frm-email');
   const topicChips = doc.querySelectorAll('.quick-chips .chip-btn');
 
-  if (form && nameInput && mobileInput && subjectSelect && submitBtn) {
-    pass('فرم مشاوره فنی و ارتباط مستقیم با تمام فیلدها و دکمه ثبت آماده است');
+  if (form && nameInput && mobileInput && subjectSelect && submitBtn && emailInput) {
+    pass('فرم مشاوره و فیلد ایمیل در DOM حاضر هستند');
   } else {
-    fail('فرم تماس یا دکمه ارسال آن در contact.html پیدا نشد');
+    fail('فرم مشاوره یا یکی از فیلدهای لازم در contact.html پیدا نشد');
   }
 
   if (topicChips.length >= 3) {
-    pass(`چیپ‌های انتخاب سریع موضوع مشاوره آماده کلیک کاربر هستند`, `${topicChips.length} موضوع پرتکرار`);
+    pass(`چیپ‌های انتخاب سریع موضوع مشاوره حاضر هستند`, `${topicChips.length} موضوع پرتکرار`);
   } else {
     fail('چیپ‌های انتخاب موضوع کافی نیستند');
   }
@@ -439,6 +440,82 @@ function testContactForm() {
     pass('دکمه هوشمند بازگشت به صفحه قبل در نوار بالای فرم تماس موجود است');
   } else {
     fail('دکمه بازگشت هوشمند در صفحه تماس یافت نشد');
+  }
+
+  // Execute the real inline submit handler against a mocked Supabase client.
+  // This proves the handler reaches the INSERT payload without touching production.
+  const handlerAt = contactHtml.indexOf('async function handleFormSubmission(e)');
+  const scriptStart = handlerAt >= 0 ? contactHtml.lastIndexOf('<script>', handlerAt) : -1;
+  const scriptEnd = handlerAt >= 0 ? contactHtml.indexOf('</script>', handlerAt) : -1;
+  const submitScript = scriptStart >= 0 && scriptEnd > scriptStart
+    ? contactHtml.slice(scriptStart + '<script>'.length, scriptEnd)
+    : ''
+
+  if (!submitScript) {
+    fail('اسکریپت واقعی ثبت فرم مشاوره پیدا نشد');
+    dom.window.close();
+    return;
+  }
+
+  const runtimeDom = new JSDOM(contactHtml, {
+    url: 'http://localhost:3000/contact.html',
+    runScripts: 'outside-only'
+  });
+
+  try {
+    const runtime = runtimeDom.window;
+    let insertedTable = '';
+    let insertedPayload = null;
+    runtime.AZIM_SUPABASE_URL = 'https://test.supabase.co';
+    runtime.AZIM_SUPABASE_ANON_KEY = 'test-publishable-key';
+    runtime.supabase = {
+      createClient: () => ({
+        from(table) {
+          insertedTable = table;
+          return {
+            insert: async payload => {
+              insertedPayload = payload;
+              return { error: null };
+            }
+          };
+        }
+      })
+    };
+
+    runtime.document.getElementById('contactForm').reportValidity = () => true;
+    runtime.document.getElementById('frm-fullname').value = 'QA Test';
+    runtime.document.getElementById('frm-mobile').value = '09120000000';
+    runtime.document.getElementById('frm-email').value = 'qa@example.com';
+    runtime.document.getElementById('frm-subject').value = 'مشاوره تخصصی ابزارآلات';
+    runtime.document.getElementById('frm-business').value = 'کارگاه آزمایش';
+    runtime.document.getElementById('frm-details').value = 'آزمون خودکار محلی؛ پیام واقعی ارسال نمی‌شود.';
+
+    runtime.eval(submitScript);
+    if (typeof runtime.handleFormSubmission !== 'function') {
+      fail('تابع ثبت فرم به‌صورت قابل اجرا تعریف نشده است');
+    } else {
+      await runtime.handleFormSubmission({ preventDefault() {} });
+      if (
+        insertedTable === 'inquiries' &&
+        insertedPayload &&
+        insertedPayload.full_name === 'QA Test' &&
+        insertedPayload.mobile === '09120000000' &&
+        insertedPayload.email === 'qa@example.com' &&
+        insertedPayload.subject === 'مشاوره تخصصی ابزارآلات'
+      ) {
+        pass('ارسال واقعیِ تابع فرم در محیط آزمایشی تا INSERT رسید و ایمیل را بدون ReferenceError ارسال کرد');
+      } else {
+        fail(
+          'تابع ثبت فرم در آزمون اجرایی، payload کامل و معتبر به جدول inquiries نرساند',
+          JSON.stringify({ insertedTable, insertedPayload })
+        );
+      }
+    }
+  } catch (error) {
+    fail('اجرای عملی تابع ثبت فرم مشاوره ناموفق بود', error);
+  } finally {
+    runtimeDom.window.close();
+    dom.window.close();
   }
 }
 
@@ -481,6 +558,199 @@ function testOrderTrackingFlow() {
     pass('دکمه بازگشت به صفحه اصلی در هدر پیگیری سفارش فعال است');
   } else {
     fail('دکمه بازگشت به صفحه اصلی در هدر پیگیری سفارش یافت نشد');
+  }
+}
+
+// ------------------------------------------------------------------------------
+// AI Assistant UI Runtime Test
+// ------------------------------------------------------------------------------
+async function testAiChatInteraction() {
+  suite('۷. تست اجرایی دکمه ارسال، پاک‌کردن گفتگو و پرسش سریع دستیار هوشمند');
+
+  const aiHtml = fs.readFileSync(path.join(__dirname, 'ai.html'), 'utf8');
+  const handlerAt = aiHtml.indexOf('async function handleSendMessage(query)');
+  const scriptStart = handlerAt >= 0 ? aiHtml.lastIndexOf('<script>', handlerAt) : -1;
+  const scriptEnd = handlerAt >= 0 ? aiHtml.indexOf('</script>', handlerAt) : -1;
+  const aiScript = scriptStart >= 0 && scriptEnd > scriptStart
+    ? aiHtml.slice(scriptStart + '<script>'.length, scriptEnd)
+    : '';
+
+  if (!aiScript) {
+    fail('اسکریپت اجرایی چت دستیار پیدا نشد');
+    return;
+  }
+
+  const runtimeDom = new JSDOM(aiHtml, {
+    url: 'http://localhost:3000/ai.html',
+    runScripts: 'outside-only'
+  });
+
+  try {
+    const runtime = runtimeDom.window;
+    const fetchCalls = [];
+    const canvasContext = {
+      clearRect() {}, beginPath() {}, arc() {}, fill() {},
+      moveTo() {}, lineTo() {}, stroke() {}
+    };
+    runtime.MutationObserver = class {
+      observe() {}
+      disconnect() {}
+    };
+    runtime.requestAnimationFrame = () => 0;
+    runtime.HTMLElement.prototype.scrollTo = () => {};
+    runtime.HTMLCanvasElement.prototype.getContext = () => canvasContext;
+    runtime.AZIM_AI_API_URL = 'https://test.example.invalid/ai';
+    runtime.fetch = async (url, options = {}) => {
+      fetchCalls.push({
+        url: String(url),
+        body: options.body ? JSON.parse(options.body) : null
+      });
+      return { ok: true, status: 200, json: async () => ({ reply: 'QA_REPLY' }) };
+    };
+
+    runtime.eval(aiScript);
+    const chatForm = runtime.document.getElementById('chatForm');
+    const chatInput = runtime.document.getElementById('chatInput');
+    const sendButton = runtime.document.getElementById('sendBtn');
+    const clearButton = runtime.document.getElementById('clearChatBtn');
+    const messages = runtime.document.getElementById('chatMessages');
+
+    if (!(chatForm && chatInput && sendButton && clearButton && messages)) {
+      fail('فرم گفتگو یا یکی از دکمه‌های دستیار در DOM پیدا نشد');
+      return;
+    }
+
+    chatInput.value = 'QA_FIRST_MESSAGE';
+    chatForm.dispatchEvent(new runtime.Event('submit', { bubbles: true, cancelable: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    if (
+      fetchCalls.length === 1 &&
+      fetchCalls[0].body?.message === 'QA_FIRST_MESSAGE' &&
+      messages.textContent.includes('QA_FIRST_MESSAGE') &&
+      messages.textContent.includes('QA_REPLY') &&
+      sendButton.disabled === false
+    ) {
+      pass('دکمه ارسال پیام، پاسخ دستیار را در رابط گفتگو نمایش می‌دهد (شبکهٔ ساختگی)');
+    } else {
+      fail('ارسال پیام دستیار به پاسخ قابل‌نمایش منتهی نشد', JSON.stringify({ fetchCalls, text: messages.textContent, disabled: sendButton.disabled }));
+    }
+
+    clearButton.click();
+    if (messages.querySelector('#aiWelcomeCard') && !messages.textContent.includes('QA_FIRST_MESSAGE')) {
+      pass('دکمه پاک‌کردن گفتگو تاریخچه را پاک و کارت شروع گفتگو را برمی‌گرداند');
+    } else {
+      fail('دکمه پاک‌کردن گفتگو رابط را به حالت اولیه برنگرداند');
+    }
+
+    const chip = runtime.document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'quick-prompt-chip';
+    chip.setAttribute('data-prompt', 'QA_QUICK_PROMPT');
+    chip.textContent = 'پرسش سریع آزمایشی';
+    messages.appendChild(chip);
+    chip.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    if (
+      fetchCalls.length === 2 &&
+      fetchCalls[1].body?.message === 'QA_QUICK_PROMPT' &&
+      messages.textContent.includes('QA_QUICK_PROMPT') &&
+      messages.textContent.includes('QA_REPLY')
+    ) {
+      pass('کلیک روی پرسش سریع به همان مسیر ارسال پیام وصل است');
+    } else {
+      fail('کلیک روی پرسش سریع درخواست معتبر به دستیار نفرستاد', JSON.stringify({ fetchCalls, text: messages.textContent }));
+    }
+  } catch (error) {
+    fail('اجرای عملی رابط دستیار هوشمند ناموفق بود', error);
+  } finally {
+    runtimeDom.window.close();
+  }
+}
+
+// ------------------------------------------------------------------------------
+// Product Review Submission Runtime Test
+// ------------------------------------------------------------------------------
+async function testProductReviewSubmission() {
+  suite('۸. تست اجرایی دکمه ثبت نظر محصول');
+
+  const productsHtml = fs.readFileSync(path.join(__dirname, 'products-v4.html'), 'utf8');
+  const start = productsHtml.indexOf('function setupReviewForm(productId)');
+  const end = start >= 0 ? productsHtml.indexOf('function getWishlist()', start) : -1;
+  const reviewScript = start >= 0 && end > start ? productsHtml.slice(start, end) : '';
+
+  if (!reviewScript) {
+    fail('تابع اجرایی ثبت نظر محصول پیدا نشد');
+    return;
+  }
+
+  const runtimeDom = new JSDOM(productsHtml, {
+    url: 'http://localhost:3000/products-v4.html',
+    runScripts: 'outside-only'
+  });
+
+  try {
+    const runtime = runtimeDom.window;
+    let request = null;
+    let toastMessage = '';
+    runtime.AZIM_SUPABASE_URL = 'https://test.example.invalid';
+    runtime.AZIM_SUPABASE_ANON_KEY = 'test-publishable-key';
+    runtime.showToast = message => { toastMessage = String(message); };
+    runtime.fetch = async (url, options = {}) => {
+      request = {
+        url: String(url),
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        body: options.body ? JSON.parse(options.body) : null
+      };
+      return { ok: true, status: 201 };
+    };
+
+    runtime.eval(reviewScript);
+    if (typeof runtime.setupReviewForm !== 'function') {
+      fail('تابع ثبت نظر محصول به‌صورت قابل اجرا تعریف نشده است');
+      return;
+    }
+
+    runtime.setupReviewForm('qa-product-id');
+    const form = runtime.document.getElementById('reviewForm');
+    const name = runtime.document.getElementById('reviewAuthorName');
+    const rating = runtime.document.getElementById('reviewRating');
+    const comment = runtime.document.getElementById('reviewComment');
+    const button = runtime.document.getElementById('reviewSubmitBtn');
+    if (!(form && name && rating && comment && button)) {
+      fail('فرم نظر محصول یا فیلدهای آن در DOM حاضر نیستند');
+      return;
+    }
+
+    name.value = 'QA Reviewer';
+    rating.value = '5';
+    comment.value = 'QA_REVIEW_COMMENT';
+    form.dispatchEvent(new runtime.Event('submit', { bubbles: true, cancelable: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    if (
+      request &&
+      request.url === 'https://test.example.invalid/rest/v1/product_reviews' &&
+      request.method === 'POST' &&
+      request.body?.product_id === 'qa-product-id' &&
+      request.body?.author_name === 'QA Reviewer' &&
+      request.body?.rating === 5 &&
+      request.body?.comment === 'QA_REVIEW_COMMENT' &&
+      request.body?.approved === false &&
+      comment.value === '' &&
+      toastMessage.includes('نظر ثبت شد') &&
+      button.disabled === false
+    ) {
+      pass('ارسال نظر به endpoint ساختگی می‌رسد، برای تأیید نگه داشته می‌شود و وضعیت موفق نشان داده می‌شود');
+    } else {
+      fail('ارسال نظر محصول به نتیجهٔ موفق و payload مورد انتظار نرسید', JSON.stringify({ request, toastMessage, comment: comment.value, disabled: button.disabled }));
+    }
+  } catch (error) {
+    fail('اجرای عملی فرم نظر محصول ناموفق بود', error);
+  } finally {
+    runtimeDom.window.close();
   }
 }
 
@@ -836,7 +1106,9 @@ async function main() {
   testNavigation();
   testProductsAndFilters();
   testCartAndCheckout();
-  testContactForm();
+  await testContactForm();
+  await testAiChatInteraction();
+  await testProductReviewSubmission();
   testOrderTrackingFlow();
   testAuditAddendumGuards();
   await testServerRoutes();
