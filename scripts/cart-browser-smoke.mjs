@@ -114,16 +114,19 @@ async function runHost(host) {
     const option = document.querySelector('#onlinePaymentOption');
     return {
       phonePresent: !!phone,
+      phoneChecked: !!phone && phone.checked,
       messagePresent: !!message,
       onlinePresent: !!online,
+      onlineChecked: !!online && online.checked,
       onlineVisible: !!option && !option.hidden,
       onlineDisabled: !!online && online.disabled
     };
   });
-  assert.equal(paymentState.phonePresent, false, host + ': phone payment option still exists');
-  assert.equal(paymentState.messagePresent, false, host + ': message payment option still exists');
+  assert.equal(paymentState.phonePresent, true, host + ': manual order-request option is missing');
+  assert.equal(paymentState.messagePresent, false, host + ': unsupported message method was shown');
   assert.equal(paymentState.onlinePresent, true, host + ': online payment option is missing');
   assert.equal(paymentState.onlineVisible, true, host + ': online payment option is not visible');
+  assert.equal(paymentState.onlineDisabled ? paymentState.phoneChecked : paymentState.onlineChecked, true, host + ': no safe default checkout method is selected');
   const otherHost = host.includes('://www.') ? 'https://azimabzar.com' : 'https://www.azimabzar.com';
   await page.goto(otherHost + '/cart.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, { timeout: 30000 });
