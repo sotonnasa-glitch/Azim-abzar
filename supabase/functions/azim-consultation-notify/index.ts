@@ -68,7 +68,15 @@ Deno.serve(async(req:Request)=>{
       return response({ok:false,error:"UNAUTHORIZED"},401);
     }
 
-    const b=await req.json();
+    const payload = await req.json();
+    const envelope = payload && typeof payload === "object"
+      ? payload as Record<string, unknown>
+      : {};
+    // DB triggers pass the inquiry row under `record`. Keep direct payload
+    // support for backward compatibility with any callers using the old shape.
+    const b = envelope.record && typeof envelope.record === "object"
+      ? envelope.record as Record<string, unknown>
+      : envelope;
     const msg=
       "🔔 درخواست مشاوره جدید — عظیم ابزار\n\n"+
       "👤 نام: "+clean(b.full_name,120)+"\n"+
