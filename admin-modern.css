@@ -2384,7 +2384,13 @@ body.az-service-open{overflow:hidden}
 #view-orders .az-orders-tools #refreshOrdersBtn{grid-column:4;grid-row:2}
 #view-orders .az-orders-tools #clearOrdersSearch{grid-column:1 / -1;grid-row:3}
 @media(max-width:720px){
-  #view-orders .az-orders-tools>*{grid-row:auto;grid-column:auto}
+  #view-orders .az-orders-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #view-orders .az-orders-tools #ordersStatusFilter,
+  #view-orders .az-orders-tools #ordersPaymentFilter,
+  #view-orders .az-orders-tools #ordersShippingFilter,
+  #view-orders .az-orders-tools #ordersPeriodFilter,
+  #view-orders .az-orders-tools #ordersPageSize,
+  #view-orders .az-orders-tools #refreshOrdersBtn{grid-column:auto;grid-row:auto}
   #view-orders .az-orders-tools #ordersSearch,
   #view-orders .az-orders-tools #clearOrdersSearch{grid-column:1 / -1;grid-row:auto}
 }
