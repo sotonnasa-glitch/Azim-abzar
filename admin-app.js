@@ -851,8 +851,25 @@
     $('clearOrdersSearch')?.addEventListener('click', () => {
       if($('ordersSearch')) $('ordersSearch').value='';
       ['ordersStatusFilter','ordersPaymentFilter','ordersShippingFilter','ordersPeriodFilter'].forEach((id) => { if ($(id)) $(id).value = id === 'ordersPeriodFilter' ? '0' : ''; });
+      ordersQueue = 'active';
+      syncOrdersQueueUI();
       ordersPage = 1;
       loadOrders();
+    });
+    document.querySelectorAll('[data-order-queue]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const nextQueue = button.dataset.orderQueue;
+        if (!['active', 'completed', 'cancelled'].includes(nextQueue)) return;
+        ordersQueue = nextQueue;
+        const status = String($('ordersStatusFilter')?.value || '');
+        const allowed = ordersQueue === 'active'
+          ? ['', 'pending', 'confirmed', 'processing', 'shipped']
+          : ordersQueue === 'completed' ? ['', 'delivered'] : ['', 'cancelled'];
+        if (!allowed.includes(status) && $('ordersStatusFilter')) $('ordersStatusFilter').value = '';
+        syncOrdersQueueUI();
+        ordersPage = 1;
+        loadOrders();
+      });
     });
     $('refreshOrdersBtn')?.addEventListener('click', async (e) => {
       const button = e.currentTarget;
@@ -877,7 +894,16 @@
       ordersPage = 1;
       loadOrders();
     });
-    ['ordersStatusFilter','ordersPaymentFilter','ordersShippingFilter','ordersPeriodFilter'].forEach((id) => {
+    $('ordersStatusFilter')?.addEventListener('change', () => {
+      const status = String($('ordersStatusFilter')?.value || '');
+      if (status === 'delivered') ordersQueue = 'completed';
+      else if (status === 'cancelled') ordersQueue = 'cancelled';
+      else if (['pending', 'confirmed', 'processing', 'shipped'].includes(status)) ordersQueue = 'active';
+      syncOrdersQueueUI();
+      ordersPage = 1;
+      loadOrders();
+    });
+    ['ordersPaymentFilter','ordersShippingFilter','ordersPeriodFilter'].forEach((id) => {
       $(id)?.addEventListener('change', () => { ordersPage = 1; loadOrders(); });
     });
     $('refreshServiceRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
@@ -2504,6 +2530,15 @@
   let ordersPage = 1;
   let ordersPageSize = 25;
   let ordersLoadSeq = 0;
+  let ordersQueue = 'active';
+
+  function syncOrdersQueueUI() {
+    document.querySelectorAll('[data-order-queue]').forEach((button) => {
+      const selected = button.dataset.orderQueue === ordersQueue;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-selected', selected ? 'true' : 'false');
+    });
+  }
 
   function normalizeOrderSearch(value) {
     return String(value || '')
@@ -2551,6 +2586,9 @@
     let q = state.db.from('orders')
       .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,payment_method,payment_reference,paid_at,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at', { count: 'exact' })
       .order('created_at', { ascending: false });
+    if (ordersQueue === 'completed') q = q.eq('status', 'delivered');
+    else if (ordersQueue === 'cancelled') q = q.eq('status', 'cancelled');
+    else q = q.in('status', ['pending', 'confirmed', 'processing', 'shipped']);
     if (rawSearch && !search) {
       // A query made only of filter-grammar characters must return no rows,
       // never silently fall back to the unfiltered order list.
@@ -2578,13 +2616,17 @@
       return loadOrders();
     }
     if (!rows.length) {
-      const hasActiveFilters = Boolean(rawSearch || statusFilter || paymentFilter || shippingFilter || periodFilter);
-      const title = hasActiveFilters
+      const hasActiveFilters = Boolean(rawSearch || statusFilter || paymentFilter || shippingFilter || periodFilter || ordersQueue !== 'active');
+      const title = rawSearch || statusFilter || paymentFilter || shippingFilter || periodFilter
         ? 'با این جستجو یا فیلتر، سفارشی پیدا نشد.'
-        : 'هنوز سفارشی ثبت نشده است.';
+        : ordersQueue === 'completed'
+          ? 'هنوز سفارش تحویل‌شده‌ای در آرشیو نیست.'
+          : ordersQueue === 'cancelled'
+            ? 'سفارش لغوشده‌ای در آرشیو نیست.'
+            : 'در حال حاضر سفارش جاری نداریم.';
       const detail = hasActiveFilters
-        ? 'عبارت جستجو یا فیلترها را تغییر بده؛ ممکن است سفارش‌ها در بازهٔ دیگری باشند.'
-        : 'بعد از ثبت نخستین سفارش، اطلاعات آن در همین بخش نمایش داده می‌شود.';
+        ? 'عبارت جستجو یا فیلترها را تغییر بده؛ برای دیدن گروه دیگر، یکی از فهرست‌های بالا را انتخاب کن.'
+        : 'با ثبت یا تغییر وضعیت سفارش‌ها، این فهرست به‌روز می‌شود.';
       $('ordersTable').innerHTML =
         '<div class="az-orders-empty-state" role="status">' +
           '<span class="az-orders-empty-icon" aria-hidden="true">⌕</span>' +
