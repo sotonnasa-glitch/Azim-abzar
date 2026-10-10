@@ -757,7 +757,8 @@ main{position:relative;padding:20px 0 64px}
               <div class="payment-box">
                 <div class="payment-title">روش پرداخت</div>
                 <div class="payment-options">
-                  <label class="payment-option" id="onlinePaymentOption"><input type="radio" name="paymentMethod" value="online" disabled><div><strong>💳 پرداخت آنلاین</strong><span>پرداخت سفارش فقط از طریق درگاه آنلاین فروشگاه انجام می‌شود.</span></div></label>
+                  <label class="payment-option" id="phonePaymentOption"><input type="radio" name="paymentMethod" value="phone" checked><div><strong>📞 ثبت درخواست سفارش (بدون پرداخت آنلاین)</strong><span>پس از ثبت، کارشناسان برای تأیید موجودی، هزینه ارسال و نحوه پرداخت با شما تماس می‌گیرند.</span></div></label>
+                  <label class="payment-option" id="onlinePaymentOption"><input type="radio" name="paymentMethod" value="online" disabled><div><strong>💳 پرداخت آنلاین</strong><span>فقط پس از فعال‌سازی رسمی درگاه قابل انتخاب است.</span></div></label>
                 </div>
                 <div id="paymentNote" class="payment-note">در حال دریافت روش‌های پرداخت…</div>
               </div>
@@ -1206,9 +1207,10 @@ main{position:relative;padding:20px 0 64px}
       }
       const items=C.items();
       if(!items.length) return;
-      if(!onlinePaymentAvailable){
+      const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
+      if(selectedPayment==='online' && !onlinePaymentAvailable){
         const status=$('checkoutStatus');
-        status.textContent='درگاه پرداخت آنلاین هنوز فعال نشده است. فعلاً امکان ثبت سفارش وجود ندارد.';
+        status.textContent='درگاه پرداخت آنلاین هنوز فعال نشده است. روش «ثبت درخواست سفارش بدون پرداخت آنلاین» را انتخاب کنید.';
         status.className='coupon-status err';
         return;
       }
@@ -1247,12 +1249,10 @@ main{position:relative;padding:20px 0 64px}
             p_city:$('city').value.trim()||null,
             p_discount_code:$('couponInput').value.trim().toUpperCase().replace(/\s+/g,'')||null,
             p_items:freshItems.map(x=>({product_id:x.product_id,variant_label:x.variant_label||null,quantity:x.qty})),
-            p_payment_method:'online',
+            p_payment_method:selectedPayment,
             p_terms_accepted:$('termsAccepted')?.checked===true
           })
         }).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d?.message||d?.hint||'ثبت سفارش ناموفق بود.');return d;});
-        const selectedPayment=document.querySelector('input[name="paymentMethod"]:checked')?.value||'phone';
-
         if(selectedPayment==='online'){
           saveOnlineRecovery({
             order_code:data.order_code||'',
@@ -1382,17 +1382,26 @@ main{position:relative;padding:20px 0 64px}
       onlinePaymentAvailable=Boolean(data?.online_available);
       const onlineOption=$('onlinePaymentOption');
       const onlineInput=document.querySelector('input[name="paymentMethod"][value="online"]');
+      const phoneInput=document.querySelector('input[name="paymentMethod"][value="phone"]');
       const note=$('paymentNote');
       if(onlineOption) onlineOption.hidden=false;
+      if(phoneInput) {
+        phoneInput.disabled=false;
+        phoneInput.checked=!onlinePaymentAvailable;
+      }
       if(onlineInput) {
         onlineInput.disabled=!onlinePaymentAvailable;
         if(onlinePaymentAvailable) onlineInput.checked=true;
         else onlineInput.checked=false;
       }
       if(note) note.textContent=onlinePaymentAvailable
-        ? 'پرداخت سفارش فقط از طریق درگاه آنلاین امن فروشگاه انجام می‌شود.'
-        : 'درگاه پرداخت آنلاین هنوز در حساب فروشگاه فعال نشده است؛ پس از فعال‌سازی می‌توانید پرداخت را انجام دهید.';
+        ? 'می‌توانید پرداخت آنلاین را انتخاب کنید یا درخواست سفارش را برای هماهنگی تلفنی ثبت کنید.'
+        : 'درگاه آنلاین هنوز فعال نشده است؛ درخواست سفارش بدون پرداخت اینترنتی ثبت می‌شود و تأیید نهایی با هماهنگی فروشگاه خواهد بود.';
       }catch(error){
+        const phoneInput=document.querySelector('input[name="paymentMethod"][value="phone"]');
+        const note=$('paymentNote');
+        if(phoneInput){phoneInput.disabled=false;phoneInput.checked=true;}
+        if(note) note.textContent='ثبت درخواست سفارش بدون پرداخت آنلاین در دسترس است؛ پس از ثبت، فروشگاه با شما هماهنگ می‌کند.';
         console.warn('payment options:',cartFriendlyError(error,'روش‌های پرداخت دریافت نشد.'));
       }
     }
