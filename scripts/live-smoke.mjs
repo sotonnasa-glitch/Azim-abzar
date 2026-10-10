@@ -215,6 +215,24 @@ const wrongMobile = await rpc("azim_order_status", {
 });
 assert.equal(wrongMobile?.found, false, "Wrong mobile was able to retrieve an existing order.");
 
+// Negative authorization probes only: each request uses an intentionally bad
+// secret, so handlers must stop before parsing an event or sending any message.
+async function expectUnauthorizedEndpoint(slug, headerName) {
+  const response = await fetch(base + "/functions/v1/" + slug, {
+    method: "POST",
+    headers: { ...headers, [headerName]: "invalid-smoke-probe" },
+    body: JSON.stringify({}),
+  });
+  await response.text();
+  assert.equal(response.status, 401, slug + " should reject an invalid webhook secret before dispatch.");
+  return true;
+}
+const notificationAuthGuards = {
+  consultation: await expectUnauthorizedEndpoint("azim-consultation-notify", "x-azim-internal-token"),
+  order: await expectUnauthorizedEndpoint("azim-order-notify", "x-azim-internal-token"),
+  telegramWebhook: await expectUnauthorizedEndpoint("azim-telegram-admin", "x-telegram-bot-api-secret-token"),
+};
+
 console.log(JSON.stringify({
   ok: true,
   active_products: products.length,
@@ -232,6 +250,7 @@ console.log(JSON.stringify({
     checkout_preview: checkoutMode === "online_preview_ok" ? "passed" : "skipped_gateway_disabled",
     checkout_disabled_guard: checkoutMode === "gateway_disabled",
     order_code_gate: true,
-    order_mobile_gate: true
+    order_mobile_gate: true,
+    notification_auth_guards: notificationAuthGuards
   }
 }));
