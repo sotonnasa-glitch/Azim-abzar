@@ -854,6 +854,21 @@
       ordersPage = 1;
       loadOrders();
     });
+    $('refreshOrdersBtn')?.addEventListener('click', async (e) => {
+      const button = e.currentTarget;
+      if (!button || button.disabled) return;
+      const originalLabel = button.innerHTML;
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.innerHTML = '<span class="az-orders-spinner" aria-hidden="true"></span> در حال بروزرسانی…';
+      try {
+        await loadOrders();
+      } finally {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.innerHTML = originalLabel;
+      }
+    });
     $('ordersPageSize')?.addEventListener('change', () => {
       ordersPageSize = Math.max(1, Number($('ordersPageSize').value || 25));
       ordersPage = 1;
@@ -2524,13 +2539,23 @@
       .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,payment_method,payment_reference,paid_at,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at', { count: 'exact' })
       .order('created_at', { ascending: false });
     if (search) {
-      const s = search.replace(/[%(),]/g, ' ');
-      q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
+      // Keep PostgREST's .or() filter grammar safe while allowing Persian,
+      // Latin, phone, and order-code searches.
+      const s = search
+        .replace(/[\\%(),.*"']/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (s) q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
     }
     if (statusFilter) q = q.eq('status', statusFilter);
     if (paymentFilter) q = q.eq('payment_status', paymentFilter);
     if (shippingFilter) q = q.eq('shipping_status', shippingFilter);
-    if (periodFilter) q = q.gte('created_at', new Date(Date.now() - periodFilter * 86400000).toISOString());
+    if (periodFilter) {
+      const since = new Date();
+      if (periodFilter === 1) since.setHours(0, 0, 0, 0);
+      else since.setTime(since.getTime() - periodFilter * 86400000);
+      q = q.gte('created_at', since.toISOString());
+    }
     const r = await q.range((ordersPage - 1) * ordersPageSize, (ordersPage * ordersPageSize) - 1);
     if (loadSeq !== ordersLoadSeq) return;
     if (r.error) return showSectionError('ordersTable', r.error);
@@ -2542,7 +2567,20 @@
       return loadOrders();
     }
     if (!rows.length) {
-      $('ordersTable').innerHTML = '<div class="empty">هنوز سفارشی ثبت نشده؛ از «＋ سفارش جدید» استفاده کن.</div>';
+      const hasActiveFilters = Boolean(search || statusFilter || paymentFilter || shippingFilter || periodFilter);
+      const title = hasActiveFilters
+        ? 'با این جستجو یا فیلتر، سفارشی پیدا نشد.'
+        : 'هنوز سفارشی ثبت نشده است.';
+      const detail = hasActiveFilters
+        ? 'عبارت جستجو یا فیلترها را تغییر بده؛ ممکن است سفارش‌ها در بازهٔ دیگری باشند.'
+        : 'بعد از ثبت نخستین سفارش، اطلاعات آن در همین بخش نمایش داده می‌شود.';
+      $('ordersTable').innerHTML =
+        '<div class="az-orders-empty-state" role="status">' +
+          '<span class="az-orders-empty-icon" aria-hidden="true">⌕</span>' +
+          '<strong>' + esc(title) + '</strong>' +
+          '<small>' + esc(detail) + '</small>' +
+          (hasActiveFilters ? '<button type="button" class="btn ghost" data-clear-orders-empty>پاک کردن فیلترها</button>' : '') +
+        '</div>';
       return;
     }
 
@@ -2574,7 +2612,11 @@
     });
 
     const totalValue = rows.reduce((sum, x) => sum + Number(x.total || 0), 0);
-    const unpaidCount = rows.filter(x => x.payment_status !== 'paid').length;
+    // Cancelled/refunded orders must not inflate the "needs payment" KPI.
+    const unpaidCount = rows.filter(x =>
+      x.status !== 'cancelled' &&
+      ['unpaid','pending','failed'].includes(x.payment_status)
+    ).length;
     const pendingCount = rows.filter(x => ['pending','confirmed','processing'].includes(x.status)).length;
 
     const stat = (label, value, sub) =>
@@ -5532,6 +5574,12 @@
     if (e.target.matches('#adminServiceRequestsPanel')) {
       e.preventDefault();
       $('closeServiceRequestsBtn')?.click();
+      return;
+    }
+    const clearEmptyOrders = e.target.closest('[data-clear-orders-empty]');
+    if (clearEmptyOrders) {
+      e.preventDefault();
+      $('clearOrdersSearch')?.click();
       return;
     }
     const op = e.target.closest('[data-order-page]');
