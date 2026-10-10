@@ -333,19 +333,29 @@ async function showOrderArchive(chatId: number | string) {
   );
 }
 
-async function showArchivedOrders(chatId: number | string, kind: "completed" | "cancelled") {
+async function showArchivedOrders(chatId: number | string, kind: "completed" | "cancelled", requestedPage = 0) {
   const supabase = await getSupabase();
   const status = kind === "completed" ? "delivered" : "cancelled";
   const title = kind === "completed" ? "✅ سفارش‌های تکمیل‌شده" : "❌ سفارش‌های لغوشده";
+  const pageSize = 10;
+  const page = Number.isSafeInteger(requestedPage) ? Math.max(0, requestedPage) : 0;
+  const offset = page * pageSize;
 
-  const { data, error } = await supabase
+  const { data, count, error } = await supabase
     .from("orders")
-    .select("order_code,status,payment_status,payment_method,shipping_status,total,created_at")
+    .select("order_code,status,payment_status,payment_method,shipping_status,total,created_at", { count: "exact" })
     .eq("status", status)
     .order("created_at", { ascending: false })
-    .limit(30);
+    .range(offset, offset + pageSize - 1);
 
   if (error) throw error;
+
+  const totalCount = Number(count || 0);
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  if (totalCount > 0 && page >= pageCount) {
+    await showArchivedOrders(chatId, kind, pageCount - 1);
+    return;
+  }
 
   if (!data?.length) {
     await sendText(chatId, title + "\n\nموردی ثبت نشده است.", {
@@ -374,6 +384,18 @@ async function showArchivedOrders(chatId: number | string, kind: "completed" | "
     return [orderButton];
   });
 
+  if (page > 0 || page + 1 < pageCount) {
+    const pageNav: Array<{ text: string; callback_data: string }> = [];
+    if (page > 0) pageNav.push({
+      text: "⬅️ قبلی",
+      callback_data: (kind === "completed" ? "completed_orders:" : "cancelled_orders:") + String(page - 1),
+    });
+    if (page + 1 < pageCount) pageNav.push({
+      text: "بعدی ➡️",
+      callback_data: (kind === "completed" ? "completed_orders:" : "cancelled_orders:") + String(page + 1),
+    });
+    rows.push(pageNav);
+  }
   rows.push([
     { text: "🗂 آرشیو", callback_data: "order_archive" },
     { text: "📦 جاری", callback_data: "orders" },
@@ -383,7 +405,8 @@ async function showArchivedOrders(chatId: number | string, kind: "completed" | "
   await sendText(
     chatId,
     title + "\n\n" +
-    "آخرین " + String(data.length) + " مورد نمایش داده می‌شود.\n" +
+    "نمایش " + String(offset + 1) + " تا " + String(Math.min(offset + data.length, totalCount)) +
+    " از " + String(totalCount) + " سفارش · صفحه " + String(page + 1) + "/" + String(pageCount) + "\n" +
     "برای جزئیات روی سفارش بزن.",
     { reply_markup: { inline_keyboard: rows } }
   );
@@ -1484,13 +1507,15 @@ async function handleCallbackQuery(query: any) {
     return;
   }
 
-  if (data === "completed_orders") {
-    await showArchivedOrders(chatId, "completed");
+  if (data === "completed_orders" || data.startsWith("completed_orders:")) {
+    const completedPage = data.match(/^completed_orders(?::(\d+))?$/);
+    if (completedPage) await showArchivedOrders(chatId, "completed", Number(completedPage[1] || 0));
     return;
   }
 
-  if (data === "cancelled_orders") {
-    await showArchivedOrders(chatId, "cancelled");
+  if (data === "cancelled_orders" || data.startsWith("cancelled_orders:")) {
+    const cancelledPage = data.match(/^cancelled_orders(?::(\d+))?$/);
+    if (cancelledPage) await showArchivedOrders(chatId, "cancelled", Number(cancelledPage[1] || 0));
     return;
   }
 

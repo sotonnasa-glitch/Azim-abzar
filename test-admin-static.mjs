@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 const html = readFileSync('admin.html', 'utf8');
 const orderStatus = readFileSync('order-status.html', 'utf8');
 const js = readFileSync('admin-app.js', 'utf8');
+const telegramAdmin = readFileSync('supabase/functions/azim-telegram-admin/index.ts', 'utf8');
 const paymentMigration = readFileSync('supabase/migrations/20260926211435_admin_payment_control_center.sql', 'utf8');
 const orderTransitionMigration = readFileSync('supabase/migrations/20261007090000_admin_order_control_center.sql', 'utf8');
 const paidOrderGuardMigration = readFileSync('supabase/migrations/20261007090300_guard_paid_order_amount_changes.sql', 'utf8');
@@ -105,6 +106,8 @@ const orderRegressionChecks = [
   ['network errors do not leave refresh disabled', js.includes("showSectionError('ordersTable', err)") && js.includes("button.removeAttribute('aria-busy')")],
 
   ['orders command heading', html.includes('class="az-orders-eyebrow"')],
+  ['order queues exist for in-progress/completed/cancelled states', ['active','completed','cancelled'].every(q => html.includes('data-order-queue="' + q + '"')) && js.includes("q.in('status', ['pending', 'confirmed', 'processing', 'shipped'])") && js.includes("q.eq('status', 'delivered')") && js.includes("q.eq('status', 'cancelled')")],
+  ['queue tabs are wired and status filters switch queues', js.includes("button.addEventListener('click', () => {") && js.includes("if (status === 'delivered') ordersQueue = 'completed'") && js.includes("ordersQueue = 'active'")],
   ['manual refresh control', html.includes('id="refreshOrdersBtn"') && js.includes("refreshOrdersBtn")],
   ['search filter grammar sanitization', js.includes(".replace(/[\\\\%(),.*\"']/g, ' ')")],
   ['calendar-day filter starts at midnight', js.includes("since.setHours(0, 0, 0, 0)")],
@@ -114,6 +117,20 @@ const orderRegressionChecks = [
   ['orders filter row cannot overlap controls with a sticky header', css.includes('#view-orders .panel-head{\n  grid-template-columns:minmax(220px,.82fr) minmax(0,2.18fr);\n  align-items:end;gap:18px;padding-bottom:14px;margin-bottom:14px;\n  position:relative;top:auto;z-index:2;background:transparent;')]
 ];
 for (const [name, ok] of orderRegressionChecks) if (!ok) fail('orders regression check failed: ' + name);
+
+const archiveStart = telegramAdmin.indexOf('async function showArchivedOrders(');
+const archiveEnd = telegramAdmin.indexOf('\nasync function showOrder(', archiveStart);
+const archiveCode = archiveStart >= 0 && archiveEnd > archiveStart
+  ? telegramAdmin.slice(archiveStart, archiveEnd)
+  : '';
+if (!archiveCode.includes('requestedPage = 0') ||
+    !archiveCode.includes('.select("order_code,status,payment_status,payment_method,shipping_status,total,created_at", { count: "exact" })') ||
+    !archiveCode.includes('.range(offset, offset + pageSize - 1)') ||
+    !archiveCode.includes('completed_orders:') ||
+    !archiveCode.includes('cancelled_orders:')) {
+  fail('Telegram completed/cancelled order archive pagination is missing or incomplete');
+}
+
 
 const serviceChecks = [
   "id=\"adminServiceRequestsPanel\"",
@@ -225,7 +242,7 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (!html.includes('admin-app.js?v=71') || html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
+if (!html.includes('admin-app.js?v=72') || html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
   fail('admin-app cache version is stale');
 }
 if (html.includes('admin-modern.css?v=33')) {
@@ -244,7 +261,7 @@ if (!js.includes('مشاهده وضعیت عودت')) fail('refund action label 
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
-if (!html.includes('admin-modern.css?v=39') || !html.includes('admin-app.js?v=71')) fail('admin control asset versions were not bumped');
+if (!html.includes('admin-modern.css?v=40') || !html.includes('admin-app.js?v=72')) fail('admin control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
 if (!js.includes("window.__AZIM_ADMIN_V42 = true;")) fail('admin script version guard was not updated');
@@ -301,7 +318,7 @@ if (!js.includes('data-order-control-action="attach_payment_reference"')) fail('
 if (!js.includes("state.db.rpc('azim_admin_attach_payment_reference'")) fail('legacy payment reference RPC is not wired');
 if (!js.includes("if (action === 'attach_payment_reference')")) fail('legacy payment reference action handler is missing');
 if (!js.includes('legacyPaidReferenceMissing')) fail('paid offline orders missing a payment reference are not flagged');
-if (!html.includes('admin-app.js?v=71')) fail('admin app cache version is stale');
+if (!html.includes('admin-app.js?v=72')) fail('admin app cache version is stale');
 if (html.includes('admin-app.js?v=70') || html.includes('admin-modern.css?v=38')) fail('stale admin asset cache URL remains');
 if (!orderTrackingPermissionMigration.includes('ALTER FUNCTION public.azim_order_status(text, text) SECURITY DEFINER')) fail('order tracking RPC security context fix is missing');
 if (!orderTrackingPermissionMigration.includes('GRANT EXECUTE ON FUNCTION public.azim_order_status(text, text) TO anon, authenticated')) fail('order tracking RPC grants are incomplete');
