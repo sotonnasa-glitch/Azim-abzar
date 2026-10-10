@@ -392,23 +392,27 @@ function testCartAndCheckout() {
     fail('مسیر درخواست سفارش بدون پرداخت آنلاین با کنترل سمت سرور هماهنگ نیست');
   }
 
-  const manualCheckoutMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20261011093000_enable_manual_order_requests_without_gateway.sql'), 'utf8');
+  const manualCheckoutMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20261010211604_enable_manual_order_requests_without_gateway.sql'), 'utf8');
+  const manualCheckoutArchive = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20261011093000_enable_manual_order_requests_without_gateway.sql'), 'utf8');
   if (
     manualCheckoutMigration.includes("v_method not in ('online','phone')") &&
     manualCheckoutMigration.includes("'offline_methods', jsonb_build_array('phone')") &&
     manualCheckoutMigration.includes('private.azim_cart_checkout_v2') &&
-    manualCheckoutMigration.includes("'payment_status','unpaid'")
+    manualCheckoutMigration.includes("'payment_status','unpaid'") &&
+    manualCheckoutArchive === manualCheckoutMigration
   ) {
     pass('migration مسیر درخواست سفارش بدون پرداخت را امن و وضعیت پرداخت را unpaid نگه می‌دارد');
   } else {
     fail('migration مسیر درخواست سفارش بدون پرداخت ناقص است');
   }
 
-  const unpricedMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20261011101500_reject_unpriced_variants_in_checkout.sql'), 'utf8');
+  const unpricedMigration = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations', '20261010214908_reject_unpriced_variants_in_checkout.sql'), 'utf8');
+  const unpricedMigrationArchive = fs.readFileSync(path.join(__dirname, 'supabase', 'migrations-archive', '20261011101500_reject_unpriced_variants_in_checkout.sql'), 'utf8');
   const cartModule = fs.readFileSync(path.join(__dirname, 'azim-cart.js'), 'utf8');
   if (
     unpricedMigration.includes('قیمت سایز / مدل انتخاب‌شده ثبت نشده است') &&
     unpricedMigration.includes("order by (nullif(trim(coalesce(v->>'price','')), '')::bigint > 0) desc nulls last") &&
+    unpricedMigrationArchive === unpricedMigration &&
     cartModule.includes('price_missing') &&
     cartModule.includes('matchingVariants.find(v => v?.price != null && Number(v.price) > 0)') &&
     cartHtml.includes('cartPriceWarning') &&
