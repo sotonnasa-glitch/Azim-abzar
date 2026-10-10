@@ -22,6 +22,7 @@ on:
       - 'database/discount-engine-hardening.sql'
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
+      - 'scripts/admin-browser-smoke.mjs'
       - '.github/workflows/validate-admin.yml'
 
 jobs:
@@ -46,5 +47,22 @@ jobs:
         run: npm install --no-save playwright@1.63.0
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Test live admin login and access gate
+      - name: Start local Express server for source-accurate UI tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npm run start > /tmp/azim-abzar-admin-test-server.log 2>&1 &
+          echo $! > /tmp/azim-abzar-admin-test-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              echo "Local Express health route is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/azim-abzar-admin-test-server.log
+          exit 1
+      - name: Test admin login, orders workflow and access gate
+        env:
+          AZIM_ADMIN_BASE_URL: http://127.0.0.1:3000
         run: node scripts/admin-browser-smoke.mjs
