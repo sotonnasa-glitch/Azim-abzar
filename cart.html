@@ -720,6 +720,7 @@ main{position:relative;padding:20px 0 64px}
             <div class="summary-line"><span>نحوه و هزینه ارسال</span><strong>هماهنگی با واحد فروش</strong></div>
             <div class="summary-total"><span>مبلغ نهایی سفارش</span><strong id="total">۰ تومان</strong></div>
             <div class="total-caption">مبلغ فوق پس از تأیید سفارش و هماهنگی ارسال کالا قطعی خواهد شد.</div>
+            <div id="cartPriceWarning" class="coupon-status err" hidden style="margin-top:9px">قیمت یا وضعیت بعضی کالاها نیازمند بررسی است. کالا را حذف کنید یا از فروشگاه استعلام بگیرید.</div>
             
             <button id="startCheckoutBtn" class="btn submit" type="button">
               <span>تکمیل مشخصات و صدور فاکتور</span>
@@ -929,7 +930,7 @@ main{position:relative;padding:20px 0 64px}
   </footer>
 
   <script src="./supabase-config.js"></script>
-  <script src="./azim-cart.js?v=13"></script>
+  <script src="./azim-cart.js?v=14"></script>
   <script>
   (function(){
     const C=window.AZIM_CART;
@@ -1106,6 +1107,9 @@ main{position:relative;padding:20px 0 64px}
       }else{
         box.innerHTML=items.map(x=>{
           const total=x.unit_price*x.qty;
+          const needsReview=Boolean(x.price_missing||x.unavailable);
+          const unitLabel=x.price_missing?'قیمت ثبت نشده — استعلام لازم است':(x.unavailable?'این کالا/سایز دیگر قابل سفارش نیست':money(x.unit_price));
+          const totalLabel=needsReview?'نیازمند بررسی':money(total);
           const image='<img loading="lazy" src="'+escapeHtml(cartImageSrc(x))+'" alt="'+escapeHtml(x.name)+'" onerror="this.onerror=null;this.src=\'./catalog_site_mapping_908/images/placeholder.svg\';">';
           return '<article class="cart-row">'+
             '<div class="cart-img">'+image+'</div>'+
@@ -1113,7 +1117,7 @@ main{position:relative;padding:20px 0 64px}
               '<div class="cart-name">'+escapeHtml(x.name)+'</div>'+
               '<div class="cart-code">کد: '+escapeHtml(x.code||x.product_id)+'</div>'+
               (x.variant_label?'<div class="cart-variant">مدل: '+escapeHtml(x.variant_label)+'</div>':'')+
-              '<div class="cart-price"><span class="label">واحد:</span>'+money(x.unit_price)+'</div>'+
+              '<div class="cart-price"><span class="label">واحد:</span>'+unitLabel+'</div>'+
               '<div class="row-actions">'+
                 '<div class="qty">'+
                   '<button type="button" data-qty="-1" data-key="'+escapeHtml(x.key)+'" aria-label="کاهش تعداد">−</button>'+
@@ -1128,17 +1132,27 @@ main{position:relative;padding:20px 0 64px}
             '</div>'+
             '<div class="row-total">'+
               '<span style="font-size:10px;color:#859088;font-weight:700">جمع:</span>'+
-              '<strong>'+money(total)+'</strong>'+
+              '<strong>'+totalLabel+'</strong>'+
             '</div>'+
           '</article>';
         }).join('');
-        $('startCheckoutBtn').disabled=false;
+        $('startCheckoutBtn').disabled=items.some(x=>x.price_missing||x.unavailable);
       }
+      const needsReview=items.some(x=>x.price_missing||x.unavailable);
+      const warning=$('cartPriceWarning');
+      if(warning){
+        warning.hidden=!needsReview;
+        warning.textContent=items.some(x=>x.price_missing)
+          ? 'قیمت یکی از سایزها/مدل‌ها در لیست ثبت نشده است؛ آن کالا را حذف کنید یا قبل از ثبت سفارش از فروشگاه استعلام بگیرید.'
+          : 'یکی از کالاها یا سایزهای انتخاب‌شده دیگر قابل سفارش نیست؛ سبد را اصلاح کنید.';
+      }
+      const checkoutSubmit=$('submitOrderBtn');
+      if(checkoutSubmit) checkoutSubmit.disabled=needsReview;
       const sub=C.subtotal();
-      $('subtotal').textContent=money(sub);
       const d=Number(coupon?.discount||0);
-      $('discount').textContent='− '+money(d);
-      $('total').textContent=money(Math.max(0,sub-d));
+      $('subtotal').textContent=needsReview?'نیازمند بررسی':money(sub);
+      $('discount').textContent=needsReview?'—':'− '+money(d);
+      $('total').textContent=needsReview?'استعلام قیمت / وضعیت':money(Math.max(0,sub-d));
       $('couponInput').value=C.raw.couponCode||'';
     }
 
@@ -1221,6 +1235,14 @@ main{position:relative;padding:20px 0 64px}
       try{
         await C.syncPrices();
         const freshItems=C.items();
+        if(freshItems.some(x=>x.price_missing||x.unavailable)){
+          status.textContent=freshItems.some(x=>x.price_missing)
+            ? 'قیمت یکی از سایزها/مدل‌ها ثبت نشده است؛ آن کالا را حذف کنید یا از فروشگاه استعلام بگیرید.'
+            : 'یکی از کالاها یا سایزهای انتخاب‌شده دیگر قابل سفارش نیست؛ سبد را اصلاح کنید.';
+          status.className='coupon-status err';
+          render();
+          return;
+        }
         let checkoutIdempotencyKey='';
         try{
           checkoutIdempotencyKey=sessionStorage.getItem('azim_checkout_idempotency')||'';
@@ -1367,7 +1389,7 @@ main{position:relative;padding:20px 0 64px}
           status.className='coupon-status err';
         }
       }finally{
-        if(!onlineRecovery?.order_code) btn.disabled=false;
+        if(!onlineRecovery?.order_code) btn.disabled=C.items().some(x=>x.price_missing||x.unavailable);
         btn.innerHTML='<span>ثبت نهایی و صدور کد رهگیری</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
       }
     };
