@@ -230,7 +230,12 @@
   }
 
   async function syncPrices(){
-    if(!SUPABASE_URL || !ANON_KEY || !state.items.length || state.syncing) return;
+    if(!state.items.length || state.syncing) return;
+    if(!SUPABASE_URL || !ANON_KEY){
+      for(const item of state.items){ item.price_missing=true; item.unit_price=0; }
+      write();
+      return;
+    }
     state.syncing = true;
     try{
       const url = SUPABASE_URL + '/rest/v1/products?select=id,code,name,img,price,variants,is_active,stock_quantity,stock_tracking_enabled,brand,category_name,cat,discount_type,discount_value,discount_is_active,discount_starts_at,discount_ends_at&limit=2000';
@@ -293,7 +298,11 @@
       // Keep unavailable items visible instead of silently deleting the cart.
       // They can be re-validated on the next sync/submit.
       write();
-    }catch(_){}
+    }catch(_){
+      // If prices cannot be revalidated, never display/use a stale local price.
+      for(const item of state.items){ item.price_missing=true; item.unit_price=0; }
+      write();
+    }
     finally{ state.syncing=false; }
   }
 
