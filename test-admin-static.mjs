@@ -105,6 +105,8 @@ const orderRegressionChecks = [
   ['network errors do not leave refresh disabled', js.includes("showSectionError('ordersTable', err)") && js.includes("button.removeAttribute('aria-busy')")],
 
   ['orders command heading', html.includes('class="az-orders-eyebrow"')],
+  ['order queues exist for in-progress/completed/cancelled states', ['active','completed','cancelled'].every(q => html.includes('data-order-queue="' + q + '"')) && js.includes("q.in('status', ['pending', 'confirmed', 'processing', 'shipped'])") && js.includes("q.eq('status', 'delivered')") && js.includes("q.eq('status', 'cancelled')")],
+  ['queue tabs are wired and status filters switch queues', js.includes("button.addEventListener('click', () => {") && js.includes("if (status === 'delivered') ordersQueue = 'completed'") && js.includes("ordersQueue = 'active'")],
   ['manual refresh control', html.includes('id="refreshOrdersBtn"') && js.includes("refreshOrdersBtn")],
   ['search filter grammar sanitization', js.includes(".replace(/[\\\\%(),.*\"']/g, ' ')")],
   ['calendar-day filter starts at midnight', js.includes("since.setHours(0, 0, 0, 0)")],
@@ -225,7 +227,7 @@ if (!js.includes("state.db.rpc('azim_save_category'")) {
 if (!js.includes("state.db.rpc('azim_save_brand'")) {
   fail('brand editor is not using atomic save RPC');
 }
-if (!html.includes('admin-app.js?v=71') || html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
+if (!html.includes('admin-app.js?v=72') || html.includes('admin-app.js?v=69') || html.includes('admin-app.js?v=68') || html.includes('admin-app.js?v=67') || html.includes('admin-app.js?v=66')) {
   fail('admin-app cache version is stale');
 }
 if (html.includes('admin-modern.css?v=33')) {
@@ -244,7 +246,7 @@ if (!js.includes('مشاهده وضعیت عودت')) fail('refund action label 
 if (!js.includes("state.db.rpc('azim_admin_transition_order'")) fail('order transition RPC is not wired');
 if (js.includes('az-order-manage') || js.includes('>جزئیات کامل</button>')) fail('duplicate full-details order button remains');
 if (!js.includes('data-order-code=') || !js.includes("esc(x.order_code || '')")) fail('card action does not carry order code for restore workflow');
-if (!html.includes('admin-modern.css?v=39') || !html.includes('admin-app.js?v=71')) fail('admin control asset versions were not bumped');
+if (!html.includes('admin-modern.css?v=40') || !html.includes('admin-app.js?v=71')) fail('admin control asset versions were not bumped');
 if (!html.includes('id="serviceRequestsLauncher"') || html.includes('id="adminServiceRequestsPanel" class="panel"')) fail('service request center layout regressed');
 if (!cssLike()) fail('order control CSS hooks are missing');
 if (!js.includes("window.__AZIM_ADMIN_V42 = true;")) fail('admin script version guard was not updated');
