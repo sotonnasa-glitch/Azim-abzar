@@ -863,6 +863,9 @@
       button.innerHTML = '<span class="az-orders-spinner" aria-hidden="true"></span> در حال بروزرسانی…';
       try {
         await loadOrders();
+      } catch (err) {
+        showSectionError('ordersTable', err);
+        toast('__AZICON_ERROR__ بروزرسانی سفارش‌ها ناموفق بود: ' + errorText(err));
       } finally {
         button.disabled = false;
         button.removeAttribute('aria-busy');
@@ -2502,6 +2505,15 @@
   let ordersPageSize = 25;
   let ordersLoadSeq = 0;
 
+  function normalizeOrderSearch(value) {
+    return String(value || '')
+      .normalize('NFKC')
+      .replace(/[\\%(),.*"']/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120);
+  }
+
   function renderOrdersPagination(totalCount, page, pageCount, start, end) {
     if (!totalCount) return '';
     const pageItems = [];
@@ -2529,7 +2541,8 @@
   }
 
   async function loadOrders() {
-    const search = String($('ordersSearch')?.value || '').trim();
+    const rawSearch = String($('ordersSearch')?.value || '').normalize('NFKC').trim().slice(0, 160);
+    const search = normalizeOrderSearch(rawSearch);
     const statusFilter = String($('ordersStatusFilter')?.value || '');
     const paymentFilter = String($('ordersPaymentFilter')?.value || '');
     const shippingFilter = String($('ordersShippingFilter')?.value || '');
@@ -2538,14 +2551,12 @@
     let q = state.db.from('orders')
       .select('id,order_code,customer_id,customer_name,customer_mobile,customer_email,status,payment_status,payment_method,payment_reference,paid_at,shipping_status,subtotal,discount,discount_id,discount_code,shipping_cost,total,tracking_code,tracking_url,shipping_carrier,notes,created_at', { count: 'exact' })
       .order('created_at', { ascending: false });
-    if (search) {
-      // Keep PostgREST's .or() filter grammar safe while allowing Persian,
-      // Latin, phone, and order-code searches.
-      const s = search
-        .replace(/[\\%(),.*"']/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      if (s) q = q.or('order_code.ilike.%' + s + '%,customer_name.ilike.%' + s + '%,customer_mobile.ilike.%' + s + '%');
+    if (rawSearch && !search) {
+      // A query made only of filter-grammar characters must return no rows,
+      // never silently fall back to the unfiltered order list.
+      q = q.eq('order_code', '__azim_no_match_for_empty_search__');
+    } else if (search) {
+      q = q.or('order_code.ilike.%' + search + '%,customer_name.ilike.%' + search + '%,customer_mobile.ilike.%' + search + '%');
     }
     if (statusFilter) q = q.eq('status', statusFilter);
     if (paymentFilter) q = q.eq('payment_status', paymentFilter);
@@ -2567,7 +2578,7 @@
       return loadOrders();
     }
     if (!rows.length) {
-      const hasActiveFilters = Boolean(search || statusFilter || paymentFilter || shippingFilter || periodFilter);
+      const hasActiveFilters = Boolean(rawSearch || statusFilter || paymentFilter || shippingFilter || periodFilter);
       const title = hasActiveFilters
         ? 'با این جستجو یا فیلتر، سفارشی پیدا نشد.'
         : 'هنوز سفارشی ثبت نشده است.';
