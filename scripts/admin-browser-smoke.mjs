@@ -76,8 +76,8 @@ try {
       like() { return this; } ilike() { return this; }
       or(expression) {
         const source = String(expression || '');
-        const fields = [...source.matchAll(/([a-z_]+)\\.ilike\\./gi)].map(m => m[1]);
-        const terms = [...source.matchAll(/\\.ilike\\.%([^%]*)%/g)].map(m => m[1].toLowerCase()).filter(Boolean);
+        const fields = [...source.matchAll(/([a-z_]+)\.ilike\./gi)].map(m => m[1]);
+        const terms = [...source.matchAll(/\.ilike\.%([^%]*)%/g)].map(m => m[1].toLowerCase()).filter(Boolean);
         this.filters.push(row => fields.some(field => terms.some(term => String(row[field] ?? '').toLowerCase().includes(term))));
         return this;
       }
