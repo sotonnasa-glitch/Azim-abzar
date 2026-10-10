@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 const base = (process.env.AZIM_ADMIN_BASE_URL || 'https://azimabzar.com').replace(/\/$/, '');
+const liveBase = (process.env.AZIM_ADMIN_LIVE_BASE_URL || base).replace(/\/$/, '');
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const errors = [];
 const failed = [];
 page.on('pageerror', e => errors.push(e.message));
-page.on('requestfailed', r => { if (r.url().startsWith(base)) failed.push(r.url() + ': ' + r.failure()?.errorText); });
+page.on('requestfailed', r => { if (r.url().startsWith(liveBase)) failed.push(r.url() + ': ' + r.failure()?.errorText); });
 try {
-  const response = await page.goto(base + '/admin.html?admin_smoke=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 45000 });
+  const response = await page.goto(liveBase + '/admin.html?admin_smoke=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 45000 });
   assert.ok(response?.ok(), 'admin page did not return HTTP success');
   await page.waitForSelector('#loginBtn', { state: 'visible', timeout: 20000 });
   await page.waitForFunction(() => !document.querySelector('#loginScreen')?.classList.contains('hidden') && document.querySelector('#app')?.classList.contains('hidden'), null, { timeout: 15000 });
