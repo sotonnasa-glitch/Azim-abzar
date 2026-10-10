@@ -426,7 +426,7 @@ function testCartAndCheckout() {
     liveSmoke.includes('azim-order-notify') &&
     liveSmoke.includes('azim-telegram-admin') &&
     liveSmoke.includes('invalid-smoke-probe') &&
-    liveSmoke.includes('response.status,401')
+    liveSmoke.includes('response.status, 401')
   ) {
     pass('Live smoke سه webhook را با توکن جعلی و بدون ارسال پیام واقعی از نظر مجوز بررسی می‌کند');
   } else {
