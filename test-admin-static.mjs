@@ -46,6 +46,7 @@ const requiredStaticHooks = {
   loginBtn: "$('loginBtn').onclick = async () =>",
   logoutBtn: "$('logoutBtn').onclick = async () =>",
   refreshBtn: "$('refreshBtn').onclick = () => loadSection(activeView());",
+  refreshOrdersBtn: "$('refreshOrdersBtn')?.addEventListener('click', async (e) =>",
   dashboardOpenSite: "$('dashboardOpenSite')?.addEventListener('click'",
   newProductBtn: "$('newProductBtn').onclick = () => newProduct();",
   newCategoryBtn: "$('newCategoryBtn').onclick = () => newCategory();",
@@ -98,6 +99,21 @@ const delegatedDataActions = [
 for (const attr of delegatedDataActions) {
   if (!js.includes("closest('[" + attr + "]')")) fail('no click delegation for ' + attr);
 }
+
+const orderRegressionChecks = [
+  ['empty-special search cannot broaden to all orders', js.includes("rawSearch && !search") && js.includes("__azim_no_match_for_empty_search__")],
+  ['network errors do not leave refresh disabled', js.includes("showSectionError('ordersTable', err)") && js.includes("button.removeAttribute('aria-busy')")],
+
+  ['orders command heading', html.includes('class="az-orders-eyebrow"')],
+  ['manual refresh control', html.includes('id="refreshOrdersBtn"') && js.includes("refreshOrdersBtn")],
+  ['search filter grammar sanitization', js.includes(".replace(/[\\\\%(),.*\"']/g, ' ')")],
+  ['calendar-day filter starts at midnight', js.includes("since.setHours(0, 0, 0, 0)")],
+  ['filtered no-results state has a reset action', js.includes('class="az-orders-empty-state"') && js.includes('data-clear-orders-empty')],
+  ['cancelled orders do not inflate unpaid KPI', js.includes("x.status !== 'cancelled'") && js.includes("['unpaid','pending','failed'].includes(x.payment_status)")],
+  ['refresh action always restores its UI state', js.includes("button.removeAttribute('aria-busy')") && js.includes("button.innerHTML = originalLabel")],
+  ['orders filter row cannot overlap controls with a sticky header', css.includes('#view-orders .panel-head{\n  grid-template-columns:minmax(220px,.82fr) minmax(0,2.18fr);\n  align-items:end;gap:18px;padding-bottom:14px;margin-bottom:14px;\n  position:relative;top:auto;z-index:2;background:transparent;')]
+];
+for (const [name, ok] of orderRegressionChecks) if (!ok) fail('orders regression check failed: ' + name);
 
 const serviceChecks = [
   "id=\"adminServiceRequestsPanel\"",
