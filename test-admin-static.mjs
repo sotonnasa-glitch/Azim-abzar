@@ -110,7 +110,8 @@ const orderRegressionChecks = [
   ['calendar-day filter starts at midnight', js.includes("since.setHours(0, 0, 0, 0)")],
   ['filtered no-results state has a reset action', js.includes('class="az-orders-empty-state"') && js.includes('data-clear-orders-empty')],
   ['cancelled orders do not inflate unpaid KPI', js.includes("x.status !== 'cancelled'") && js.includes("['unpaid','pending','failed'].includes(x.payment_status)")],
-  ['refresh action always restores its UI state', js.includes("button.removeAttribute('aria-busy')") && js.includes("button.innerHTML = originalLabel")]
+  ['refresh action always restores its UI state', js.includes("button.removeAttribute('aria-busy')") && js.includes("button.innerHTML = originalLabel")],
+  ['orders filter row cannot overlap controls with a sticky header', css.includes('#view-orders .panel-head{\n  grid-template-columns:minmax(220px,.82fr) minmax(0,2.18fr);\n  align-items:end;gap:18px;padding-bottom:14px;margin-bottom:14px;\n  position:relative;top:auto;z-index:2;background:transparent;')]
 ];
 for (const [name, ok] of orderRegressionChecks) if (!ok) fail('orders regression check failed: ' + name);
 
