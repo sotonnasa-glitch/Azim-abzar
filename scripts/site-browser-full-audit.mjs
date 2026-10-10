@@ -345,6 +345,95 @@ async function testCart(browser){
   return {cart:true,images:true,quantity:true,remove:true,onlineOnly:true};
 }
 
+
+async function testManualCheckoutRequest(browser){
+  const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
+  const page=await context.newPage();
+  const errors=[];
+  page.on('console',m=>{if(m.type()==='error'&&!IGNORE_CONSOLE.test(m.text()))errors.push(m.text())});
+  page.on('pageerror',e=>errors.push(String(e)));
+
+  let captured=null;
+  await page.route('**/rest/v1/rpc/azim_cart_checkout',async route=>{
+    const req=route.request();
+    let body=null;
+    try{body=req.postDataJSON()}catch(_){}
+    if(body && body.p_mode==='submit'){
+      captured={body,idempotencyKey:req.headers()['x-idempotency-key']||''};
+      // This mocked response proves the complete UI flow without writing a fake
+      // customer/order or triggering real Telegram notifications in production.
+      await route.fulfill({
+        status:200,
+        contentType:'application/json; charset=utf-8',
+        body:JSON.stringify({
+          valid:true,
+          mode:'submit',
+          order_id:'00000000-0000-4000-8000-000000000001',
+          order_code:'AZ-20990101-000001-ABCDE',
+          customer_id:'00000000-0000-4000-8000-000000000002',
+          subtotal:63600000,
+          total:63600000,
+          discount:0,
+          shipping_cost:0,
+          payment_method:'phone',
+          payment_status:'unpaid',
+          message:'درخواست سفارش آزمایشی ثبت شد.'
+        })
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
+  await waitForProduct(page,'P0001');
+  await page.waitForFunction(()=>!!window.AZIM_CART,null,{timeout:15000});
+  await page.evaluate(()=>window.AZIM_CART.clear());
+  const card=page.locator('#card-P0001').first();
+  const select=card.locator('select[data-id="P0001"]').first();
+  await select.waitFor({state:'visible',timeout:15000});
+  const options=await select.locator('option').evaluateAll(nodes=>nodes.map((n,i)=>({i,text:(n.textContent||'').trim()})));
+  const size46=options.find(x=>x.text==='46'||x.text.startsWith('46 '));
+  assert.ok(size46,'manual checkout test could not find P0001 size 46');
+  await select.selectOption({index:size46.i});
+  await card.locator('[data-cart-add-link="P0001"]').first().click();
+  await page.waitForFunction(()=>window.AZIM_CART?.items?.().length===1,null,{timeout:10000});
+
+  await page.goto(BASE+'/cart.html',{waitUntil:'domcontentloaded',timeout:60000});
+  await page.waitForFunction(()=>!!window.AZIM_CART&&document.querySelector('#cartItems'),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelectorAll('#cartItems .cart-row').length===1,null,{timeout:15000});
+  await page.locator('#startCheckoutBtn').click();
+  await page.locator('#checkoutBox').waitFor({state:'visible',timeout:10000});
+  await page.locator('#fullName').fill('آزمون کنترل‌شده وب‌سایت');
+  await page.locator('#mobile').fill('09120000000');
+  await page.locator('#termsAccepted').check();
+  await page.locator('input[name="paymentMethod"][value="phone"]').check();
+  await page.locator('#submitOrderBtn').click();
+
+  await page.waitForFunction(()=>{
+    const success=document.querySelector('#cartSuccess');
+    return success && !success.hidden && success.textContent.includes('AZ-20990101-000001-ABCDE');
+  },null,{timeout:20000});
+
+  assert.ok(captured,'manual checkout did not call the submit RPC');
+  assert.equal(captured.body.p_mode,'submit','manual checkout did not send submit mode');
+  assert.equal(captured.body.p_payment_method,'phone','manual checkout did not send the no-online-payment method');
+  assert.equal(captured.body.p_terms_accepted,true,'manual checkout did not send terms acceptance');
+  assert.equal(captured.body.p_full_name,'آزمون کنترل‌شده وب‌سایت','manual checkout sent the wrong customer name');
+  assert.equal(captured.body.p_mobile,'09120000000','manual checkout sent the wrong mobile number');
+  assert.ok(Array.isArray(captured.body.p_items)&&captured.body.p_items.length===1,'manual checkout sent the wrong cart items');
+  assert.equal(captured.body.p_items[0].variant_label,'46','manual checkout lost the selected size');
+  assert.equal(Number(captured.body.p_items[0].quantity),1,'manual checkout sent the wrong quantity');
+  assert.ok(captured.idempotencyKey.length>=16,'manual checkout omitted its idempotency key');
+  const success=await page.locator('#cartSuccess').innerText();
+  assert.match(success,/پیش‌فاکتور با موفقیت ثبت شد/,'manual checkout did not display confirmation');
+  assert.match(success,/AZ-20990101-000001-ABCDE/,'manual checkout did not display its tracking code');
+  assert.equal(errors.length,0,'manual checkout browser errors: '+errors.join(' | '));
+
+  await context.close();
+  return {manualCheckoutSubmit:true,serverValidatedPayload:true,confirmation:true,trackingCode:true,idempotencyKey:true,mockedNoProductionOrder:true};
+}
+
 async function testContact(browser){
   const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
   const page=await context.newPage();
@@ -479,6 +568,7 @@ async function main(){
   results.push(await testCatalog(browser));
   results.push(await testWishlist(browser));
   results.push(await testCart(browser));
+  results.push(await testManualCheckoutRequest(browser));
   results.push(await testContact(browser));
   results.push(await testOrderStatus(browser));
   results.push(await testAI(browser));
