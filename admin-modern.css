@@ -2394,3 +2394,125 @@ body.az-service-open{overflow:hidden}
   #view-orders .az-orders-tools #ordersSearch,
   #view-orders .az-orders-tools #clearOrdersSearch{grid-column:1 / -1;grid-row:auto}
 }
+
+
+/* === Service request center redesign 2026-10-13 === */
+.az-service-launcher{
+  min-height:64px;gap:13px;padding:12px 15px;
+  border-color:rgba(255,255,255,.09);border-radius:15px;
+  background:linear-gradient(120deg,rgba(22,30,25,.98),rgba(10,14,12,.98));
+}
+.az-service-launcher-copy b{font-size:12px;line-height:1.7;color:#f1f4f1}
+.az-service-launcher-copy small{margin-top:3px;font-size:10px;line-height:1.7;color:#9ba69e}
+.az-service-launcher>strong{min-width:32px;height:32px;font-size:12px}
+.az-service-launcher>i{font-size:18px}
+.az-service-launcher-dot{width:10px;height:10px}
+.az-service-overlay{align-items:center;padding:clamp(10px,2.2vw,28px);background:rgba(2,4,3,.78)}
+.az-service-dialog{
+  width:min(900px,100%);max-height:min(88vh,900px);max-height:min(88dvh,900px);
+  border:1px solid rgba(245,185,0,.22);border-radius:22px;
+  background:linear-gradient(180deg,#121915 0%,#0a0f0c 100%);
+  box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.025);
+}
+.az-service-dialog-head{
+  gap:18px;padding:22px 24px;border-bottom:1px solid rgba(255,255,255,.08);
+  background:radial-gradient(320px 150px at 100% 0%,rgba(245,185,0,.08),transparent 75%),rgba(13,18,15,.98);
+}
+.az-service-dialog-head span{color:#e2b63e;font:800 10px/1.8 Vazirmatn,Tahoma,sans-serif;letter-spacing:0}
+.az-service-dialog-head h2{margin:5px 0 0;font-size:21px;line-height:1.65;font-weight:900}
+.az-service-dialog-head small{margin-top:5px;color:#a0aaa3;font-size:12px;line-height:1.8}
+.az-service-dialog-head .tools{gap:9px;align-items:center}
+.az-service-dialog-head #refreshServiceRequestsBtn{
+  display:inline-flex!important;align-items:center;justify-content:center;min-height:40px;
+  padding:9px 13px;font-size:11px;border-radius:11px;
+}
+.az-service-dialog-head .x{
+  display:grid;place-items:center;width:40px;height:40px;border-radius:12px;
+  border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.045);
+  color:#e9eee9;font-size:27px;line-height:1;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.az-service-dialog-head .x:hover{background:rgba(255,105,105,.12);border-color:rgba(255,130,130,.42);transform:rotate(3deg)}
+.az-service-dialog-body{padding:20px 24px 24px;scrollbar-gutter:stable}
+.az-service-stats{gap:12px;margin-bottom:17px}
+.az-service-stats>div{
+  min-height:88px;padding:14px 16px;border:1px solid rgba(255,255,255,.075);
+  border-radius:15px;background:linear-gradient(145deg,rgba(24,32,27,.8),rgba(12,17,14,.8));
+}
+.az-service-stats>div:first-child{border-top-color:rgba(255,128,128,.35)}
+.az-service-stats>div:nth-child(2){border-top-color:rgba(245,185,0,.4)}
+.az-service-stats>div:last-child{border-top-color:rgba(100,220,157,.35)}
+.az-service-stats span{font-size:11px;line-height:1.8;color:#a4afa7}
+.az-service-stats b{margin-top:5px;font-size:24px;line-height:1.35;color:#f5f7f5}
+.az-service-dialog-body>div[style*="display:grid"]{gap:14px!important}
+.az-service-dialog-body article.card{
+  position:relative;margin:0!important;padding:18px 20px!important;overflow:hidden;
+  border:1px solid rgba(255,255,255,.075);border-right:3px solid rgba(245,185,0,.72);
+  border-radius:16px;background:linear-gradient(135deg,rgba(20,27,23,.98),rgba(10,14,12,.98));
+  box-shadow:0 10px 26px rgba(0,0,0,.15);
+  transition:border-color .18s ease,transform .18s ease,background .18s ease;
+}
+.az-service-dialog-body article.card:hover{
+  border-color:rgba(245,185,0,.2);border-right-color:#f5b900;
+  background:linear-gradient(135deg,rgba(23,31,26,.99),rgba(11,15,13,.99));
+}
+.az-service-dialog-body article.card .panel-head{
+  align-items:flex-start;gap:12px;margin-bottom:13px;padding-bottom:12px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.az-service-dialog-body article.card .panel-head>div{min-width:0}
+.az-service-dialog-body article.card .panel-head strong{
+  display:block;color:#f4f6f4;font-size:14px;line-height:1.8;font-weight:900;
+}
+.az-service-dialog-body article.card .panel-head .muted{
+  margin-top:3px;color:#e0b84c;font-size:12px;line-height:1.8;overflow-wrap:anywhere;
+}
+.az-service-dialog-body article.card .badge{
+  flex:0 0 auto;padding:6px 10px;font-size:10px;line-height:1.5;white-space:nowrap;
+}
+.az-service-dialog-body article.card>.muted{
+  color:#bac3bc;font-size:12px;line-height:2.15!important;overflow-wrap:anywhere;
+}
+.az-service-dialog-body article.card .tools{
+  gap:8px;margin-top:15px!important;padding-top:13px;border-top:1px solid rgba(255,255,255,.055);
+}
+.az-service-dialog-body article.card .tools .btn{
+  min-height:40px;padding:9px 13px;border-radius:10px;font-size:11px;line-height:1.6;
+}
+.az-service-dialog-body>.empty{
+  padding:40px 18px;border:1px dashed rgba(255,255,255,.14);border-radius:15px;
+  background:rgba(255,255,255,.018);color:#aab4ad;font-size:13px;line-height:2;
+}
+@media(max-width:720px){
+  .az-service-overlay{align-items:center;padding:8px}
+  .az-service-dialog{width:100%;max-height:92vh;max-height:92dvh;border-radius:17px}
+  .az-service-dialog-head{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:16px 16px 14px}
+  .az-service-dialog-head h2{font-size:18px;line-height:1.7}
+  .az-service-dialog-head small{font-size:11px}
+  .az-service-dialog-head .tools{width:100%;justify-content:space-between}
+  .az-service-dialog-head #refreshServiceRequestsBtn{display:inline-flex!important}
+  .az-service-dialog-head .x{width:40px;height:40px}
+  .az-service-dialog-body{padding:14px 13px 18px}
+  .az-service-stats{gap:8px;margin-bottom:12px}
+  .az-service-stats>div{min-height:76px;padding:11px 12px;border-radius:12px}
+  .az-service-stats span{font-size:10px}
+  .az-service-stats b{font-size:21px}
+  .az-service-dialog-body article.card{padding:15px!important;border-radius:13px}
+  .az-service-dialog-body article.card .panel-head{gap:8px}
+  .az-service-dialog-body article.card .panel-head strong{font-size:13px}
+  .az-service-dialog-body article.card>.muted{font-size:11.5px;line-height:2.1!important}
+  .az-service-dialog-body article.card .tools .btn{flex:1 1 auto;min-width:calc(50% - 8px);padding:9px 10px}
+  .az-service-launcher{min-height:58px}
+}
+@media(max-width:460px){
+  .az-service-stats{grid-template-columns:1fr 1fr}
+  .az-service-stats>div:last-child{grid-column:1/-1}
+  .az-service-launcher-copy b{font-size:11px}
+  .az-service-launcher-copy small{font-size:9px}
+  .az-service-dialog-body article.card .panel-head{display:grid;grid-template-columns:minmax(0,1fr);align-items:start}
+  .az-service-dialog-body article.card .badge{justify-self:start}
+  .az-service-dialog-body article.card .tools .btn{min-width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .az-service-launcher,.az-service-dialog,.az-service-dialog-head .x,.az-service-dialog-body article.card{animation:none!important;transition:none!important}
+}
