@@ -292,8 +292,18 @@ async function testWishlist(browser){
   await page.locator('#nav-btn-wishlist').click();
   await page.waitForURL(/\/wishlist\.html/, {timeout:30000});
   const wishlistResponses=[];
-  page.on('response',r=>{if(r.url().includes('wishlist')||r.url().includes('catalog_site_mapping_908')) wishlistResponses.push(r.url()+' => '+r.status())});
-  await page.waitForTimeout(2500);
+  page.on('response',r=>{if(r.url().includes('wishlist')||r.url().includes('catalog_site_mapping_908')||r.url().includes('/rest/v1/products')) wishlistResponses.push(r.url()+' => '+r.status())});
+  // Wishlist resolves static metadata and then attempts a live Supabase lookup;
+  // wait for its actual terminal state rather than a fixed 2.5-second sleep.
+  await page.waitForFunction(()=>{
+    const grid=document.querySelector('#grid');
+    const status=document.querySelector('#status');
+    const empty=document.querySelector('#empty.show');
+    const text=(status?.textContent||'').trim();
+    return !!grid?.querySelector('.card') || !!empty ||
+      text==='بارگذاری علاقه‌مندی‌ها انجام نشد. دوباره تلاش کنید.' ||
+      text.startsWith('بعضی از محصولات دیگر در کاتالوگ فعال نیستند');
+  },null,{timeout:20000}).catch(()=>{});
   const wishDiag=await page.evaluate(()=>({
     cards:document.querySelectorAll('#grid .card').length,
     status:document.querySelector('#status')?.textContent||'',
