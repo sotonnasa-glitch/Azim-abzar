@@ -207,7 +207,15 @@ async function testCatalog(browser){
   assert.ok(await page.locator('#azProductAiModal').isVisible(),'product AI assistant did not open');
   await page.locator('#azAiModalClose').click();
 
-  await page.evaluate(()=>{window.AZIM_CART?.clear?.()});
+  await page.evaluate(()=>{
+    window.AZIM_CART?.clear?.();
+    window.__catalogAddCalls = [];
+    const originalAdd = window.AZIM_CART?.add?.bind(window.AZIM_CART);
+    if (originalAdd) window.AZIM_CART.add = payload => {
+      window.__catalogAddCalls.push(payload);
+      return originalAdd(payload);
+    };
+  });
   const p1VariantSelect = card.locator('select[data-id="P0001"]').first();
   await p1VariantSelect.waitFor({state:'visible',timeout:15000});
   const p1Options = await p1VariantSelect.locator('option').evaluateAll(nodes =>
@@ -219,8 +227,17 @@ async function testCatalog(browser){
   await p1VariantSelect.selectOption({index:unpricedVariant.i});
   assert.match(await card.locator('[data-price]').innerText(), /قیمت در لیست درج نشده/, 'selected unpriced variant did not update card price');
   const add1=card.locator('[data-cart-add-link="P0001"]').first();
-  await add1.click(); await page.waitForTimeout(250);
-  assert.equal(await page.evaluate(()=>window.AZIM_CART?.items?.().length||0),0,'catalog added an unpriced size using the base product price');
+  await add1.click(); await page.waitForTimeout(500);
+  const unpricedCartState = await page.evaluate(() => ({
+    items: window.AZIM_CART?.items?.() || [],
+    addCalls: window.__catalogAddCalls || [],
+    selectedIndex: document.querySelector('#card-P0001 select[data-id="P0001"]')?.value || '',
+    selectedOption: document.querySelector('#card-P0001 select[data-id="P0001"] option:checked')?.textContent || '',
+    displayPrice: document.querySelector('#card-P0001 [data-price]')?.textContent || '',
+    stored: localStorage.getItem('azim_abzar_cart_v2') || ''
+  }));
+  assert.equal(unpricedCartState.addCalls.length,0,'unpriced variant called AZIM_CART.add: '+JSON.stringify(unpricedCartState));
+  assert.equal(unpricedCartState.items.length,0,'catalog added an unpriced size using the base product price: '+JSON.stringify(unpricedCartState));
   const p1Variant = p1Options.find(x => x.text === '46' || x.text.startsWith('46 '));
   assert.ok(p1Variant, 'P0001 size 46 option is missing');
   await p1VariantSelect.selectOption({index:p1Variant.i});
