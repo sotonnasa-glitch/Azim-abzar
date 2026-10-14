@@ -453,14 +453,28 @@
     img.onerror=()=>{img.onerror=null;img.src='./catalog_site_mapping_908/images/placeholder.svg'}
   }
   function variants(item){
-    return Array.isArray(item?.variants)?item.variants.map(v=>({
-      label:String(v?.size??v?.label??v?.name??'').trim(),price:Number(v?.price??0)
-    })).filter(v=>v.label):[];
+    const result=[],byLabel=new Map();
+    const rows=Array.isArray(item?.variants)?item.variants:[];
+    rows.forEach(v=>{
+      const label=String(v?.size??v?.label??v?.name??'').trim();
+      if(!label)return;
+      const raw=v?.price??v?.sale_price??v?.final_price??null;
+      const n=raw==null||raw===''?null:Number(raw);
+      const price=Number.isFinite(n)&&n>0?n:null;
+      const key=label.normalize('NFKC').replace(/\u200c/g,' ').replace(/\s+/g,' ').trim().toLocaleLowerCase('en-US');
+      if(byLabel.has(key)){
+        const prior=result[byLabel.get(key)];
+        if(prior.price==null&&price!=null)prior.price=price;
+        return;
+      }
+      byLabel.set(key,result.length);result.push({label,price});
+    });
+    return result;
   }
   function basePrice(item){return Number(item?.price||0)}
   function getSelected(card,item){
     const vs=variants(item),sel=card?.querySelector('select[data-variant]'),idx=sel?Math.max(0,Number(sel.value)||0):0;
-    if(vs.length)return {label:vs[idx]?.label||'',price:vs[idx]?.price>0?vs[idx].price:basePrice(item)};
+    if(vs.length)return {label:vs[idx]?.label||'',price:vs[idx]?.price>0?vs[idx].price:0};
     return {label:'',price:basePrice(item)};
   }
   function addToCart(id){
@@ -488,7 +502,7 @@
 
   function productCard(item){
     const code=String(item.code||'').toUpperCase(),vs=variants(item);
-    const firstPrice=vs.length&&vs[0].price>0?vs[0].price:basePrice(item);
+    const firstPrice=vs.length?(Number(vs[0].price)>0?Number(vs[0].price):0):basePrice(item);
     const variantHtml=vs.length
       ?'<div class="variant"><label>انتخاب سایز / مدل</label><select data-variant>'+vs.map((v,i)=>'<option value="'+i+'">'+esc(v.label)+' — '+(v.price>0?fmt(v.price)+' تومان':'قیمت ثبت نشده')+'</option>').join('')+'</select></div>'
       :'';
@@ -496,7 +510,7 @@
       '<a class="photo" href="products-v4.html?q='+encodeURIComponent(code)+'" aria-label="مشاهده '+esc(item.name)+'"><img src="'+esc(imageUrl(item.img,code))+'" alt="'+esc(item.name)+'" loading="lazy" onerror="imageFallback(this,\''+esc(code)+'\')"></a>'+
       '<div class="meta"><span class="code">'+esc(code)+'</span><span class="saved-dot"><i></i>ذخیره‌شده</span></div>'+
       '<div class="name">'+esc(item.name)+'</div>'+
-      '<div class="price">'+(firstPrice>0?fmt(firstPrice)+' <small>تومان</small>':'قیمت ثبت نشده')+'</div>'+
+      '<div class="price" data-selected-price>'+(firstPrice>0?fmt(firstPrice)+' <small>تومان</small>':'قیمت ثبت نشده')+'</div>'+
       variantHtml+
       '<div class="actions">'+
         '<button type="button" class="btn primary" data-add-cart="'+esc(item.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l1.5 11.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 1.9-1.45L20.5 8H6"/><path d="M10 20h.01M17 20h.01" stroke-width="3"/></svg><span>افزودن به سبد</span></button>'+
@@ -543,7 +557,7 @@
       const catalog=await catalogRes.json(),prices=await priceRes.json(),variantsMap=await variantRes.json();
       const staticMap=new Map((Array.isArray(catalog)?catalog:[]).map(x=>[String(x.id).toUpperCase(),{
         id:String(x.id||'').toUpperCase(),code:String(x.id||'').toUpperCase(),name:String(x.name||'محصول'),img:String(x.image||''),
-        price:Number(prices?.[String(x.id||'').toUpperCase()]?.p||0),
+        price:Number(prices?.[String(x.id||'').toUpperCase()]?.p ?? prices?.[String(x.id||'').toUpperCase()] ?? 0),
         variants:Array.isArray(variantsMap?.[String(x.id||'').toUpperCase()]?.v)?variantsMap[String(x.id||'').toUpperCase()].v.map(v=>({size:v?.[0],price:v?.[1]})):[]
       }]).filter(x=>x.id));
       let liveRows=[];try{liveRows=await fetchByIds(set)}catch(_){liveRows=[]}
@@ -568,7 +582,17 @@
       status.textContent='بارگذاری علاقه‌مندی‌ها انجام نشد. دوباره تلاش کنید.';empty.classList.remove('show');grid.innerHTML=''
     }
   }
-  function bind(){document.querySelectorAll('[data-add-cart]').forEach(btn=>btn.addEventListener('click',()=>addToCart(btn.dataset.addCart)))}
+  function bind(){
+    document.querySelectorAll('[data-add-cart]').forEach(btn=>btn.addEventListener('click',()=>addToCart(btn.dataset.addCart)));
+    document.querySelectorAll('select[data-variant]').forEach(sel=>sel.addEventListener('change',()=>{
+      const card=sel.closest('.card');
+      const item=window.__wishProducts?.get(String(card?.dataset.cardId||''));
+      if(!card||!item)return;
+      const picked=getSelected(card,item);
+      const price=card.querySelector('[data-selected-price]');
+      if(price)price.innerHTML=picked.price>0?fmt(picked.price)+' <small>تومان</small>':'قیمت این سایز ثبت نشده';
+    }));
+  }
   document.getElementById('clearAllBtn').addEventListener('click',()=>{
     if(!getWishlist().size)return;
     if(!saveWishlist(new Set())){showToast('پاک‌سازی انجام نشد.');return}

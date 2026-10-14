@@ -2389,15 +2389,72 @@
       return value;
     }
 
+    const LOCAL_CATALOG_FALLBACK_CODES = new Set([
+      'P0452','P0453','P0454','P0455','P0457','P0460','P0468',
+      'P0524','P0525','P0526','P0528','P0529','P0530','P0533',
+      'P0537','P0538','P0821','P0838','P0840'
+    ]);
+
     function catalogImageFallback(img, id) {
       if (!img) return;
-      // The production catalog is sourced from Supabase storage. Do not make
-      // a second network request to optional legacy local images after a
-      // failed primary image; missing legacy files create noisy 404s.
-      img.onerror = null;
-      img.src = './catalog_site_mapping_908/images/placeholder.svg';
-      img.alt = 'تصویر ' + id + ' در دسترس نیست';
+      const code = String(id || '').trim().toUpperCase();
+      const placeholder = './catalog_site_mapping_908/images/placeholder.svg';
+      const missingAlt = 'تصویر ' + code + ' در دسترس نیست';
+      // Only try fallback files verified to exist. Other known gaps go straight
+      // to the designed placeholder, avoiding a second request that would 404.
+      if (img.dataset.catalogFallbackTried === '1') {
+        img.onerror = null;
+        img.src = placeholder;
+        img.alt = missingAlt;
+        img.style.display = '';
+        return;
+      }
+      img.dataset.catalogFallbackTried = '1';
+      if (!LOCAL_CATALOG_FALLBACK_CODES.has(code)) {
+        img.onerror = null;
+        img.src = placeholder;
+        img.alt = missingAlt;
+        img.style.display = '';
+        return;
+      }
+      img.onerror = () => {
+        img.onerror = null;
+        img.src = placeholder;
+        img.alt = missingAlt;
+        img.style.display = '';
+      };
+      img.src = './catalog_site_mapping_908/images/' + code + '.jpg';
+      img.alt = 'تصویر ' + code;
       img.style.display = '';
+    }
+
+    function normalizeVariantPairs(input) {
+      const normalized = [];
+      const indexByLabel = new Map();
+      for (const row of (Array.isArray(input) ? input : [])) {
+        const label = String(Array.isArray(row)
+          ? row[0]
+          : (row?.size ?? row?.label ?? row?.name ?? '')).trim();
+        if (!label) continue;
+        const rawPrice = Array.isArray(row)
+          ? row[1]
+          : (row?.price ?? row?.sale_price ?? row?.final_price ?? null);
+        const n = rawPrice == null || rawPrice === '' ? null : Number(rawPrice);
+        const price = Number.isFinite(n) && n > 0 ? n : null;
+        const key = label.normalize('NFKC')
+          .replace(/\u200c/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLocaleLowerCase('en-US');
+        if (indexByLabel.has(key)) {
+          const prior = normalized[indexByLabel.get(key)];
+          if (prior[1] == null && price != null) prior[1] = price;
+          continue;
+        }
+        indexByLabel.set(key, normalized.length);
+        normalized.push([label, price]);
+      }
+      return normalized;
     }
 
     function renderRelatedProducts(item) {
@@ -2617,9 +2674,8 @@
           params.set('order', 'name.asc,code.asc');
           break;
         case 'variants_first':
-          // Keep this mode stable without downloading the full catalog.
-          // Variant richness is still shown on each returned card.
-          params.set('order', 'code.asc');
+          // Populated JSONB arrays rank ahead of empty arrays; code breaks ties.
+          params.set('order', 'variants.desc.nullslast,code.asc');
           break;
         default:
           params.set('order', 'code.asc');
@@ -2664,7 +2720,7 @@
         product_id: x?.id || null,
         code: String(x?.code ?? '').trim().toUpperCase(),
         p: x?.price ?? null,
-        v: vs,
+        v: normalizeVariantPairs(vs),
         name: String(x?.name ?? '').trim(),
         description: String(x?.description ?? '').trim(),
         img: String(x?.img ?? '').trim(),
@@ -2702,7 +2758,8 @@
       const local = priceData[id] || {};
       const liveVariants = Array.isArray(live.v) ? live.v : [];
       const localVariants = Array.isArray(local.v) ? local.v : [];
-      const vs = liveVariants.length ? liveVariants : (localVariants.length ? localVariants : (id === 'P0008' ? P0008 : []));
+      const rawVariants = liveVariants.length ? liveVariants : (localVariants.length ? localVariants : (id === 'P0008' ? P0008 : []));
+      const vs = normalizeVariantPairs(rawVariants);
       const liveBase = live.p != null ? Number(live.p) : 0;
       const localBase = local.p != null ? Number(local.p) : Number(basePrices[id] ?? 0);
       const base = liveBase > 0 ? liveBase : localBase;
@@ -2742,9 +2799,7 @@
     }
 
     function optionLabel(v, d) {
-      const raw = Number(v?.[1] || 0);
-      const fallback = Number(d?.base || 0);
-      const effective = raw > 0 ? raw : fallback;
+      const effective = Number(v?.[1] || 0);
       if (!(effective > 0)) return `${v[0]} — قیمت در لیست درج نشده`;
       const net = discountedPrice(effective, d.discount);
       return net < effective ? `${v[0]} — ${fmt(net)} تومان · تخفیف` : `${v[0]} — ${fmt(effective)} تومان`;

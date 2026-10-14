@@ -173,7 +173,19 @@ async function testCatalog(browser){
   assert.ok(initial.cards>0,'catalog cards did not render');
   assert.ok(initial.search&&initial.sort&&initial.cart&&initial.contact&&initial.tracking,'catalog controls missing');
 
-  const search=page.locator('#q'); await search.fill('P0001'); await page.waitForTimeout(300);
+  await page.locator('#sortSelect').selectOption('variants_first');
+  await page.waitForTimeout(550);
+  assert.ok(await page.locator('#grid .card').first().locator('select[data-id]').count()===1,
+    'variants-first sort did not prioritize products with variants');
+
+  const search=page.locator('#q');
+  await search.fill('P0502');
+  await page.waitForFunction(()=>!!document.querySelector('#card-P0502 img'),null,{timeout:15000});
+  await page.waitForFunction(()=>{
+    const img=document.querySelector('#card-P0502 .photo-wrap img');
+    return !!img && img.complete && img.naturalWidth>0 && new URL(img.src).pathname.endsWith('/placeholder.svg');
+  },null,{timeout:15000});
+  await search.fill('P0001'); await page.waitForTimeout(300);
   assert.ok(await page.locator('#card-P0001').count(),'catalog search failed for P0001');
   await page.locator('#clearSearch').click(); await page.waitForTimeout(200);
 
@@ -195,18 +207,22 @@ async function testCatalog(browser){
   await page.locator('#azAiModalClose').click();
 
   await page.evaluate(()=>{window.AZIM_CART?.clear?.()});
-  // P0001 is a size-variant product. Select a real sellable variant before
-  // testing cart persistence; adding an unspecified variant is not a valid
-  // checkout flow for this SKU.
   const p1VariantSelect = card.locator('select[data-id="P0001"]').first();
   await p1VariantSelect.waitFor({state:'visible',timeout:15000});
   const p1Options = await p1VariantSelect.locator('option').evaluateAll(nodes =>
     nodes.map((n, i) => ({ i, text: (n.textContent || '').trim() }))
   );
+  const unpricedVariant = p1Options.find(x => x.text.startsWith('1-1/16'));
+  assert.ok(unpricedVariant, 'P0001 unpriced variant 1-1/16 is missing');
+  assert.match(unpricedVariant.text, /قیمت در لیست درج نشده/, 'unpriced variant incorrectly displays the base product price');
+  await p1VariantSelect.selectOption({index:unpricedVariant.i});
+  assert.match(await card.locator('[data-price]').innerText(), /قیمت در لیست درج نشده/, 'selected unpriced variant did not update card price');
+  const add1=card.locator('[data-cart-add-link="P0001"]').first();
+  await add1.click(); await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(()=>window.AZIM_CART?.items?.().length||0),0,'catalog added an unpriced size using the base product price');
   const p1Variant = p1Options.find(x => x.text === '46' || x.text.startsWith('46 '));
   assert.ok(p1Variant, 'P0001 size 46 option is missing');
   await p1VariantSelect.selectOption({index:p1Variant.i});
-  const add1=card.locator('[data-cart-add-link="P0001"]').first();
   await add1.click(); await page.waitForTimeout(300);
   assert.ok(await page.evaluate(() => window.AZIM_CART?.items?.().some(x => x.code === 'P0001' && x.variant_label === '46')), 'catalog did not preserve selected P0001 size 46');
   assert.ok((await page.url()).includes('/products-v4.html'),'adding first product navigated away from catalog');

@@ -247,7 +247,58 @@ function testProductsAndFilters() {
     fail(`${invalidProducts.length} محصول دارای مشخصات ناقص هستند`);
   }
 
-  // 2.3 Filter Algorithm Verification
+  // 2.3 Verify the static fallback catalog has internally consistent prices and variants.
+  const staticPricesPath = path.join(__dirname, 'catalog_site_mapping_908', 'prices.json');
+  const staticVariantsPath = path.join(__dirname, 'catalog_site_mapping_908', 'price-size-data.json');
+  let staticPrices = {};
+  let staticVariantData = {};
+  try {
+    staticPrices = JSON.parse(fs.readFileSync(staticPricesPath, 'utf8'));
+    staticVariantData = JSON.parse(fs.readFileSync(staticVariantsPath, 'utf8'));
+    if (Object.keys(staticPrices).length === 908 && Object.keys(staticVariantData).length === 908) pass('فایل‌های قیمت پایه و سایز/قیمت هر دو ۹۰۸ شناسه دارند');
+    else fail('تعداد شناسه‌های فایل‌های قیمت با کاتالوگ برابر نیست', `prices=${Object.keys(staticPrices).length}, variants=${Object.keys(staticVariantData).length}`);
+    const invalidBasePrices = Object.entries(staticPrices).filter(([, value]) => !(Number(value) > 0));
+    if (invalidBasePrices.length === 0) pass('برای همه ۹۰۸ کد، قیمت پایه مثبت و قابل خواندن است');
+    else fail('کدهایی با قیمت پایه خالی/غیرمثبت در فایل قیمت', invalidBasePrices.map(([code]) => code).join(', '));
+    const baseMismatches = Object.entries(staticPrices).filter(([code, value]) => Number(staticVariantData[code]?.p) !== Number(value));
+    if (baseMismatches.length === 0) pass('قیمت پایه در دو فایل قیمت کاملاً هم‌خوان است');
+    else fail('مغایرت قیمت پایه بین دو فایل کاتالوگ', baseMismatches.map(([code]) => code).join(', '));
+    const duplicateVariantLabels = [];
+    Object.entries(staticVariantData).forEach(([code, data]) => {
+      const seen = new Set();
+      (Array.isArray(data?.v) ? data.v : []).forEach(v => {
+        const key = String(v?.[0] ?? '').normalize('NFKC').replace(/\u200c/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('en-US');
+        if (key && seen.has(key)) duplicateVariantLabels.push(code + ':' + key);
+        if (key) seen.add(key);
+      });
+    });
+    if (duplicateVariantLabels.length === 0) pass('سایزهای تکراری در فایل جایگزین کاتالوگ باقی نمانده‌اند');
+    else fail('سایزهای تکراری در فایل جایگزین', duplicateVariantLabels.join(', '));
+    const unpricedVariants = Object.entries(staticVariantData).flatMap(([code, data]) =>
+      (Array.isArray(data?.v) ? data.v : []).filter(v => !(Number(v?.[1]) > 0)).map(v => code + ':' + String(v?.[0] || '')));
+    if (unpricedVariants.length > 0) pass('سایزهای فاقد قیمت جدا نگه داشته شده‌اند و قیمت ساختگی نخورده‌اند', unpricedVariants.length + ' سایز');
+  } catch (e) {
+    fail('خواندن/اعتبارسنجی فایل‌های کاتالوگ قیمت شکست خورد', e.message);
+  }
+
+  const liveProductsHtml = fs.readFileSync(path.join(__dirname, 'products-v4.html'), 'utf8');
+  const liveWishlistHtml = fs.readFileSync(path.join(__dirname, 'wishlist.html'), 'utf8');
+  const localFallbackCodes = ['P0452','P0453','P0454','P0455','P0457','P0460','P0468','P0524','P0525','P0526','P0528','P0529','P0530','P0533','P0537','P0538','P0821','P0838','P0840'];
+  const missingFallbacks = localFallbackCodes.filter(code => !fs.existsSync(path.join(__dirname, 'catalog_site_mapping_908', 'images', code + '.jpg')));
+  if (missingFallbacks.length === 0 && fs.existsSync(path.join(__dirname, 'catalog_site_mapping_908', 'images', 'placeholder.svg'))) pass('تصاویر fallback و تصویر جایگزین عمومی در مخزن موجود هستند');
+  else fail('فایل‌های fallback تصویر ناقص‌اند', missingFallbacks.join(', ') || 'placeholder.svg missing');
+  if (liveProductsHtml.includes('normalizeVariantPairs') &&
+      liveProductsHtml.includes('variants.desc.nullslast,code.asc') &&
+      liveProductsHtml.includes('LOCAL_CATALOG_FALLBACK_CODES') &&
+      !liveProductsHtml.includes('const fallback = Number(d?.base || 0);') &&
+      liveWishlistHtml.includes("prices?.[String(x.id||'').toUpperCase()]?.p ?? prices?.[String(x.id||'').toUpperCase()] ?? 0") &&
+      liveWishlistHtml.includes('price:vs[idx]?.price>0?vs[idx].price:0')) {
+    pass('قواعد مرتب‌سازی، جلوگیری از قیمت پایهٔ اشتباه و fallback تصاویر در کد سایت فعال‌اند');
+  } else {
+    fail('یکی از قواعد اصلاح‌شدهٔ کاتالوگ/علاقه‌مندی در کد سایت پیدا نشد');
+  }
+
+  // 2.4 Filter Algorithm Verification
   const normalizeFa = v => String(v ?? '')
     .normalize('NFKC')
     .replace(/[يى]/g,'ی')
