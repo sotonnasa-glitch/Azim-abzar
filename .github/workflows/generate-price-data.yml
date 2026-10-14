@@ -28,6 +28,23 @@ jobs:
           assert all(('p' in d and (d['p'] is None or isinstance(d['p'], (int, float)))) for d in data.values())
           assert all(('v' not in d or isinstance(d['v'], list)) for d in data.values())
 
+          # These five base prices are absent from the PDF source but are present
+          # in the live Supabase product records. Keep them in a separate,
+          # documented build-time overlay for safe offline catalog fallback.
+          overrides = json.loads(Path('.github/live-price-overrides.json').read_text(encoding='utf-8'))
+          expected_overrides = {
+              'P0184': 16800000,
+              'P0626': 324000000,
+              'P0631': 336000000,
+              'P0720': 9000000,
+              'P0737': 43200000,
+          }
+          assert overrides == expected_overrides
+          for pid, price in overrides.items():
+              assert data[pid].get('p') is None, f'{pid} PDF source unexpectedly gained a base price'
+              assert isinstance(price, (int, float)) and price > 0
+              data[pid]['p'] = price
+
           text = json.dumps(data, ensure_ascii=False, separators=(',',':'))
           Path('catalog_site_mapping_908/price-size-data.json').write_text(text, encoding='utf-8')
           Path('catalog_site_mapping_908/price-size-data.js').write_text(
@@ -46,5 +63,5 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add catalog_site_mapping_908/price-size-data.json catalog_site_mapping_908/price-size-data.js catalog_site_mapping_908/prices.json .github/price-size-source.b64
+          git add catalog_site_mapping_908/price-size-data.json catalog_site_mapping_908/price-size-data.js catalog_site_mapping_908/prices.json .github/price-size-source.b64 .github/live-price-overrides.json
           if git diff --cached --quiet; then echo "No generated changes"; else git commit -m "build: materialize canonical PDF price variants [skip ci]"; git push origin HEAD:main; fi

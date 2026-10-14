@@ -257,15 +257,26 @@ function testProductsAndFilters() {
     staticVariantData = JSON.parse(fs.readFileSync(staticVariantsPath, 'utf8'));
     if (Object.keys(staticPrices).length === 908 && Object.keys(staticVariantData).length === 908) pass('فایل‌های قیمت پایه و سایز/قیمت هر دو ۹۰۸ شناسه دارند');
     else fail('تعداد شناسه‌های فایل‌های قیمت با کاتالوگ برابر نیست', `prices=${Object.keys(staticPrices).length}, variants=${Object.keys(staticVariantData).length}`);
-    const expectedMissingBasePrices = ['P0184','P0626','P0631','P0720','P0737'];
-    const missingBasePrices = Object.entries(staticPrices)
+    const invalidBasePrices = Object.entries(staticPrices)
       .filter(([, value]) => value == null || !(Number(value) > 0))
-      .map(([code]) => code).sort();
-    if (JSON.stringify(missingBasePrices) === JSON.stringify(expectedMissingBasePrices)) {
-      pass('۵ محصول فاقد قیمت در PDF دقیقاً با مقدار خالی حفظ شده‌اند؛ قیمت ساختگی تولید نشده است');
+      .map(([code]) => code);
+    if (invalidBasePrices.length === 0) pass('همهٔ ۹۰۸ محصول در حالت fallback قیمت پایهٔ معتبر دارند');
+    else fail('محصولات فاقد قیمت پایه در فایل‌های fallback', invalidBasePrices.join(', '));
+    const overridePath = path.join(__dirname, '.github', 'live-price-overrides.json');
+    const livePriceOverrides = JSON.parse(fs.readFileSync(overridePath, 'utf8'));
+    const overrideMismatches = Object.entries(livePriceOverrides).filter(([code, value]) =>
+      Number(staticPrices[code]) !== Number(value) || Number(staticVariantData[code]?.p) !== Number(value));
+    if (Object.keys(livePriceOverrides).length === 5 && overrideMismatches.length === 0) {
+      pass('۵ قیمتِ غایب از PDF از snapshot تأییدشدهٔ Supabase در fallback اعمال شده‌اند');
     } else {
-      fail('فهرست قیمت‌های پایهٔ خالی با موارد شناخته‌شدهٔ فاقد قیمت PDF مطابقت ندارد',
-        missingBasePrices.join(', ') || 'هیچ قیمت خالی ثبت نشده');
+      fail('قیمت‌های override با فایل‌های fallback هم‌خوان نیستند',
+        overrideMismatches.map(([code]) => code).join(', ') || 'override file malformed');
+    }
+    const generatorSource = fs.readFileSync(path.join(__dirname, '.github', 'workflows', 'generate-price-data.yml'), 'utf8');
+    if (generatorSource.includes('.github/live-price-overrides.json') && generatorSource.includes('expected_overrides')) {
+      pass('فرایند تولید خودکار کاتالوگ، override قیمت‌های تأییدشده را حفظ می‌کند');
+    } else {
+      fail('فرایند تولید کاتالوگ، overlay قیمت‌های زنده را ثبت نکرده است');
     }
     const baseMismatches = Object.entries(staticPrices).filter(([code, value]) => Number(staticVariantData[code]?.p) !== Number(value));
     if (baseMismatches.length === 0) pass('قیمت پایه در دو فایل قیمت کاملاً هم‌خوان است');
