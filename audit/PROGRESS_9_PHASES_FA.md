@@ -57,7 +57,7 @@ Commit نهایی حفظ انتخاب سایز هنگام بازنمایش کا�
 - GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209606 — **موفق**
 - Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209015 — **موفق**
 - Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209359 — **موفق**
-- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587204899 — **موفق**
+- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869714 — **موفق**
 
 آزمون مرورگر شامل جست‌وجو و مرتب‌سازی، جزئیات محصول، دستیار محصول، جلوگیری از افزودن سایز بی‌قیمت، افزودن سایز معتبر ۴۶، حفظ سایز انتخاب‌شده پس از بازنمایش کارت، انتخاب چند محصول، علاقه‌مندی‌ها و سبد خرید بود. آزمون علاقه‌مندی‌ها به‌جای مکث ثابت ۲٫۵ ثانیه‌ای، منتظر پایان واقعی بارگذاری می‌ماند تا کندی لحظه‌ای شبکه نتیجهٔ کاذب نسازد. موفقیت تست‌ها فقط سناریوهای پوشش‌داده‌شده را تأیید می‌کند و به معنی تضمین صفر باگ در کل سامانه نیست.
 
