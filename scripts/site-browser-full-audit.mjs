@@ -185,7 +185,8 @@ async function testCatalog(browser){
     const img=document.querySelector('#card-P0502 .photo-wrap img');
     return !!img && img.complete && img.naturalWidth>0 && new URL(img.src).pathname.endsWith('/placeholder.svg');
   },null,{timeout:15000});
-  await search.fill('P0001'); await page.waitForTimeout(300);
+  await search.fill('P0001');
+  await page.waitForFunction(()=>!!document.querySelector('#card-P0001'),null,{timeout:15000});
   assert.ok(await page.locator('#card-P0001').count(),'catalog search failed for P0001');
   await page.locator('#clearSearch').click(); await page.waitForTimeout(200);
 
