@@ -50,16 +50,16 @@ Commit نهایی حفظ انتخاب سایز هنگام بازنمایش کا�
 - مرتب‌سازی «دارای سایزبندی»، نمایش قیمت هنگام انتخاب سایز، fallback تصاویر، و علاقه‌مندی‌ها به‌روزرسانی شدند. اگر سایز انتخاب‌شده قیمت ندارد، قیمت پایه به‌جای آن نشان داده نمی‌شود و همان سایز وارد سبد نمی‌شود.
 
 آزمون‌ها روی تغییرات مرحلهٔ ۳:
-- Full site browser audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869333 — **موفق**
-- Security audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869349 — **موفق**
-- Browser cart smoke: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585870441 — **موفق**
-- Live smoke tests: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869291 — **موفق**
-- GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869285 — **موفق**
-- Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869235 — **موفق**
-- Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585871063 — **موفق**
-- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869714 — **موفق**
+- Full site browser audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209577 — **موفق**
+- Security audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209835 — **موفق**
+- Browser cart smoke: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209222 — **موفق**
+- Live smoke tests: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209210 — **موفق**
+- GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209606 — **موفق**
+- Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209015 — **موفق**
+- Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209359 — **موفق**
+- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587204899 — **موفق**
 
-آزمون مرورگر شامل جست‌وجو و مرتب‌سازی، جزئیات محصول، دستیار محصول، جلوگیری از افزودن سایز بی‌قیمت، افزودن سایز معتبر ۴۶، انتخاب چند محصول، علاقه‌مندی‌ها و سبد خرید بود. موفقیت تست‌ها فقط سناریوهای پوشش‌داده‌شده را تأیید می‌کند و به معنی تضمین صفر باگ در کل سامانه نیست.
+آزمون مرورگر شامل جست‌وجو و مرتب‌سازی، جزئیات محصول، دستیار محصول، جلوگیری از افزودن سایز بی‌قیمت، افزودن سایز معتبر ۴۶، حفظ سایز انتخاب‌شده پس از بازنمایش کارت، انتخاب چند محصول، علاقه‌مندی‌ها و سبد خرید بود. آزمون علاقه‌مندی‌ها به‌جای مکث ثابت ۲٫۵ ثانیه‌ای، منتظر پایان واقعی بارگذاری می‌ماند تا کندی لحظه‌ای شبکه نتیجهٔ کاذب نسازد. موفقیت تست‌ها فقط سناریوهای پوشش‌داده‌شده را تأیید می‌کند و به معنی تضمین صفر باگ در کل سامانه نیست.
 
 ## ترتیب ادامه — مراحل ۴ تا ۹
 
