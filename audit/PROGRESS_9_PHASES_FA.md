@@ -38,7 +38,7 @@ Commit اصلاح کد: https://github.com/sotonnasa-glitch/Azim-abzar/commit/80
 
 Commit اصلاحات و تست‌های کاتالوگ: https://github.com/sotonnasa-glitch/Azim-abzar/commit/9197ffc35c00718137fa769a62287a5869329877  
 Commit تثبیت آزمون‌ها و fallback تصاویر: https://github.com/sotonnasa-glitch/Azim-abzar/commit/4cef15d0cd54815a480b6129d64f70e6775a1c60  
-آخرین commit تست جامع: https://github.com/sotonnasa-glitch/Azim-abzar/commit/e24b63e619981f0938bcb7f5341df5e162ae46e9
+Commit نهایی حفظ انتخاب سایز هنگام بازنمایش کارت: https://github.com/sotonnasa-glitch/Azim-abzar/commit/853ab0eb101488fb4931cff7ff467bf2a5979602
 
 نتیجهٔ تطبیق زندهٔ Supabase با فایل‌های کاتالوگ:
 - ۹۰۸ ردیف در دیتابیس و ۹۰۸ محصول در فایل کاتالوگ؛ کد مفقود/اضافی: صفر، مغایرت نام: صفر، مغایرت دسته‌بندی: صفر.
@@ -50,14 +50,14 @@ Commit تثبیت آزمون‌ها و fallback تصاویر: https://github.com
 - مرتب‌سازی «دارای سایزبندی»، نمایش قیمت هنگام انتخاب سایز، fallback تصاویر، و علاقه‌مندی‌ها به‌روزرسانی شدند. اگر سایز انتخاب‌شده قیمت ندارد، قیمت پایه به‌جای آن نشان داده نمی‌شود و همان سایز وارد سبد نمی‌شود.
 
 آزمون‌ها روی تغییرات مرحلهٔ ۳:
-- Full site browser audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193890 — **موفق**
-- Security audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193875 — **موفق**
-- Browser cart smoke: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193797 — **موفق**
-- Live smoke tests: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193904 — **موفق**
-- GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193747 — **موفق**
-- Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193893 — **موفق**
-- Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584193853 — **موفق**
-- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38584104899 — **موفق**
+- Full site browser audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869333 — **موفق**
+- Security audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869349 — **موفق**
+- Browser cart smoke: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585870441 — **موفق**
+- Live smoke tests: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869291 — **موفق**
+- GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869285 — **موفق**
+- Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869235 — **موفق**
+- Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585871063 — **موفق**
+- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869714 — **موفق**
 
 آزمون مرورگر شامل جست‌وجو و مرتب‌سازی، جزئیات محصول، دستیار محصول، جلوگیری از افزودن سایز بی‌قیمت، افزودن سایز معتبر ۴۶، انتخاب چند محصول، علاقه‌مندی‌ها و سبد خرید بود. موفقیت تست‌ها فقط سناریوهای پوشش‌داده‌شده را تأیید می‌کند و به معنی تضمین صفر باگ در کل سامانه نیست.
 
