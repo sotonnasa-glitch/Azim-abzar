@@ -2331,6 +2331,8 @@
 
     let all = [];
     let categoriesMap = {};
+    // Preserve a customer's chosen variant when search/sort/network refresh rerenders the catalog.
+    const selectedVariantByCode = new Map();
     let q = _u.get('q') || '';
     let selectedCategory = _u.get('cat') ? (_cMap[_u.get('cat')] || _u.get('cat')) : 'all';
     const _allowedSorts = new Set(['code_asc','price_asc','price_desc','variants_first','name_asc']);
@@ -2809,21 +2811,29 @@
     function card(x) {
       const d = getData(x.id);
       const vs = d.vs;
-      const nums = vs.map(v => Number(v[1])).filter(n => Number.isFinite(n) && n > 0);
-      const shownBase = nums.length ? Math.min(...nums) : Number(d.base || 0);
+      const rememberedIndex = Number(selectedVariantByCode.get(x.id));
+      const selectedVariantIndex = vs.length
+        ? Math.min(vs.length - 1, Math.max(0, Number.isInteger(rememberedIndex) ? rememberedIndex : 0))
+        : 0;
+      const selectedVariant = vs[selectedVariantIndex] || null;
+      // Variant cards display the price of the selected size/model, never a base
+      // price borrowed from a different size (especially when a size is unpriced).
+      const shownBase = vs.length
+        ? Number(selectedVariant?.[1] || 0)
+        : Number(d.base || 0);
       const shownNet = discountedPrice(shownBase, d.discount);
-      const shown = nums.length ? `از ${priceHtml(shownNet, shownBase)}` : priceHtml(shownNet, d.base);
-      const discountBadge = shownNet < shownBase ? '<span class="badge-discount">تخفیف</span>' : '';
+      const shown = priceHtml(shownNet, shownBase);
+      const discountBadge = shownNet > 0 && shownNet < shownBase ? '<span class="badge-discount">تخفیف</span>' : '';
       const cat = categoriesMap[x.id] || 'ابزار تخصصی';
 
-      const selectedVariantLabel = vs.length ? String(vs[0]?.[0] || '').trim() : '';
+      const selectedVariantLabel = vs.length ? String(selectedVariant?.[0] || '').trim() : '';
       const variantBadge = vs.length ? `<span class="badge-variant" data-variant-badge="${esc(x.id)}">سایز ${esc(selectedVariantLabel)}</span>` : '';
       
       const select = vs.length 
         ? `<div class="sizebox">
             <label>انتخاب سایز / مدل (${fmt(vs.length)} گزینه)</label>
             <select data-id="${esc(x.id)}">
-              ${vs.map((v, i) => `<option value="${i}">${esc(optionLabel(v, d))}</option>`).join('')}
+              ${vs.map((v, i) => `<option value="${i}"${i === selectedVariantIndex ? ' selected' : ''}>${esc(optionLabel(v, d))}</option>`).join('')}
             </select>
           </div>`
         : '';
@@ -2874,8 +2884,10 @@
       document.querySelectorAll('select[data-id]').forEach(s => {
         s.addEventListener('change', () => {
           const id = s.dataset.id;
+          const selectedIndex = Number(s.value);
+          selectedVariantByCode.set(id, selectedIndex);
           const d = getData(id);
-          const v = d.vs[Number(s.value)];
+          const v = d.vs[selectedIndex];
           
           const cardEl = s.closest('.card');
           if (!cardEl || !v) return;
@@ -3086,10 +3098,13 @@
       if (!item) return;
 
       activeModalItem = item;
-      activeModalVariantIndex = 0;
 
       const d = getData(id);
       const vs = d.vs;
+      const rememberedIndex = Number(selectedVariantByCode.get(id));
+      activeModalVariantIndex = vs.length
+        ? Math.min(vs.length - 1, Math.max(0, Number.isInteger(rememberedIndex) ? rememberedIndex : 0))
+        : 0;
       const cat = categoriesMap[id] || 'ابزار تخصصی صنعتی';
 
       document.getElementById('modalTitle').textContent = item.name;
@@ -3167,6 +3182,7 @@
     function selectModalVariant(idx) {
       if (!activeModalItem) return;
       activeModalVariantIndex = idx;
+      selectedVariantByCode.set(activeModalItem.id, Number(idx));
 
       const d = getData(activeModalItem.id);
       const v = d.vs[idx];
