@@ -1009,8 +1009,11 @@ main{position:relative;padding:20px 0 64px}
         if (!chosen) throw new Error('سایز انتخاب‌شده برای این محصول پیدا نشد.');
       }
 
-      const unitPrice = chosen?.price != null ? Number(chosen.price) : Number(product.price || 0);
-      if (!(unitPrice > 0)) throw new Error('قیمت فعلی این محصول برای افزودن به سبد ثبت نشده است.');
+      const unitPrice = chosen ? Number(chosen.price ?? 0) : Number(product.price || 0);
+      if (!(unitPrice > 0)) {
+        if (chosen) throw new Error('قیمت سایز / مدل انتخاب‌شده در فروشگاه ثبت نشده است؛ این کالا به سبد اضافه نشد.');
+        throw new Error('قیمت فعلی این محصول برای افزودن به سبد ثبت نشده است.');
+      }
 
       const selectedVariantLabel = chosen ? String(chosen.size ?? chosen.label ?? chosen.name ?? '') : '';
       const existing = C.items().some(x =>

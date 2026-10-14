@@ -415,6 +415,8 @@ function testCartAndCheckout() {
     unpricedMigrationArchive === unpricedMigration &&
     cartModule.includes('price_missing') &&
     cartModule.includes('matchingVariants.find(v => v?.price != null && Number(v.price) > 0)') &&
+    cartHtml.includes('const unitPrice = chosen ? Number(chosen.price ?? 0) : Number(product.price || 0);') &&
+    cartHtml.includes('قیمت سایز / مدل انتخاب‌شده') &&
     cartHtml.includes('cartPriceWarning') &&
     cartHtml.includes('needsReview')
   ) {

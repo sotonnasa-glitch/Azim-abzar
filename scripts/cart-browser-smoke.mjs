@@ -144,6 +144,36 @@ async function runHost(host) {
   await page.locator('#cartItems [data-remove]').first().click();
   await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 0, null, {timeout:10000});
 
+  // Regression: an external product hand-off can open cart.html directly with
+  // add_code + variant and must import exactly once, including after refresh.
+  await page.goto(otherHost + '/cart.html?add_code=P0001&variant=46', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForFunction(() => !!window.AZIM_CART && !!document.querySelector('#cartItems'), null, { timeout: 30000 });
+  await page.waitForFunction(() => window.AZIM_CART?.items?.().some(x =>
+    String(x.code || '').toUpperCase() === 'P0001' &&
+    String(x.variant_label || '').trim() === '46'
+  ), null, { timeout: 30000 });
+  const directCart = await readCart(page);
+  assert.equal(directCart.items.length, 1, otherHost + ': direct add_code import did not produce exactly one cart item');
+  const directItem = directCart.items[0];
+  assert.equal(directItem.code, P1, otherHost + ': direct add_code import changed product code');
+  assert.equal(directItem.variant_label, '46', otherHost + ': direct add_code import changed selected size');
+  assert.equal(directItem.unit_price, P1_PRICE, otherHost + ': direct add_code import used an incorrect base/variant price');
+  assert.ok(directCart.localStorage, otherHost + ': direct add_code import was not persisted');
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has('add_code'), null, { timeout: 10000 });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForFunction(() => !!window.AZIM_CART && !!document.querySelector('#cartItems'), null, { timeout: 30000 });
+  await page.waitForFunction(() => window.AZIM_CART?.items?.().length === 1, null, { timeout: 15000 });
+  assert.equal((await readCart(page)).items.length, 1, otherHost + ': refresh duplicated the direct add_code item');
+
+  // Regression: a requested variant without a price must never fall back to
+  // the product base price, even if the URL is opened directly.
+  await page.evaluate(() => window.AZIM_CART.clear());
+  await page.goto(otherHost + '/cart.html?add_code=P0001&variant=1-1%2F16', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForFunction(() => !!window.AZIM_CART && !!document.querySelector('#cartItems'), null, { timeout: 30000 });
+  await page.waitForFunction(() => (document.querySelector('#checkoutStatus')?.textContent || '').includes('قیمت سایز / مدل انتخاب‌شده'), null, { timeout: 30000 });
+  assert.equal((await readCart(page)).items.length, 0, otherHost + ': unpriced variant incorrectly entered cart using the base price');
+  assert.equal(new URL(page.url()).searchParams.get('variant'), '1-1/16', otherHost + ': unpriced variant query was silently discarded');
+
   await browser.close();
   assert.equal(relevantConsoleErrors().length, 0, host + ': browser console/page errors: ' + relevantConsoleErrors().join(' | '));
   return { host, items: 2, crossHost: true };
