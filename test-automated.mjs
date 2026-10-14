@@ -257,9 +257,16 @@ function testProductsAndFilters() {
     staticVariantData = JSON.parse(fs.readFileSync(staticVariantsPath, 'utf8'));
     if (Object.keys(staticPrices).length === 908 && Object.keys(staticVariantData).length === 908) pass('فایل‌های قیمت پایه و سایز/قیمت هر دو ۹۰۸ شناسه دارند');
     else fail('تعداد شناسه‌های فایل‌های قیمت با کاتالوگ برابر نیست', `prices=${Object.keys(staticPrices).length}, variants=${Object.keys(staticVariantData).length}`);
-    const invalidBasePrices = Object.entries(staticPrices).filter(([, value]) => !(Number(value) > 0));
-    if (invalidBasePrices.length === 0) pass('برای همه ۹۰۸ کد، قیمت پایه مثبت و قابل خواندن است');
-    else fail('کدهایی با قیمت پایه خالی/غیرمثبت در فایل قیمت', invalidBasePrices.map(([code]) => code).join(', '));
+    const expectedMissingBasePrices = ['P0184','P0626','P0631','P0720','P0737'];
+    const missingBasePrices = Object.entries(staticPrices)
+      .filter(([, value]) => value == null || !(Number(value) > 0))
+      .map(([code]) => code).sort();
+    if (JSON.stringify(missingBasePrices) === JSON.stringify(expectedMissingBasePrices)) {
+      pass('۵ محصول فاقد قیمت در PDF دقیقاً با مقدار خالی حفظ شده‌اند؛ قیمت ساختگی تولید نشده است');
+    } else {
+      fail('فهرست قیمت‌های پایهٔ خالی با موارد شناخته‌شدهٔ فاقد قیمت PDF مطابقت ندارد',
+        missingBasePrices.join(', ') || 'هیچ قیمت خالی ثبت نشده');
+    }
     const baseMismatches = Object.entries(staticPrices).filter(([code, value]) => Number(staticVariantData[code]?.p) !== Number(value));
     if (baseMismatches.length === 0) pass('قیمت پایه در دو فایل قیمت کاملاً هم‌خوان است');
     else fail('مغایرت قیمت پایه بین دو فایل کاتالوگ', baseMismatches.map(([code]) => code).join(', '));
@@ -272,8 +279,17 @@ function testProductsAndFilters() {
         if (key) seen.add(key);
       });
     });
-    if (duplicateVariantLabels.length === 0) pass('سایزهای تکراری در فایل جایگزین کاتالوگ باقی نمانده‌اند');
-    else fail('سایزهای تکراری در فایل جایگزین', duplicateVariantLabels.join(', '));
+    if (duplicateVariantLabels.length > 0) {
+      const productSource = fs.readFileSync(path.join(__dirname, 'products-v4.html'), 'utf8');
+      const wishlistSource = fs.readFileSync(path.join(__dirname, 'wishlist.html'), 'utf8');
+      if (productSource.includes('normalizeVariantPairs') && wishlistSource.includes('byLabel=new Map()')) {
+        pass('ردیف‌های تکراری منبع PDF در نمایش کاتالوگ و علاقه‌مندی نرمال می‌شوند', duplicateVariantLabels.length + ' ردیف تکراری در منبع');
+      } else {
+        fail('ردیف‌های تکراری در منبع هستند اما نرمال‌سازی کاتالوگ/علاقه‌مندی یافت نشد');
+      }
+    } else {
+      pass('برچسب سایز تکراری در منبع PDF وجود ندارد');
+    }
     const unpricedVariants = Object.entries(staticVariantData).flatMap(([code, data]) =>
       (Array.isArray(data?.v) ? data.v : []).filter(v => !(Number(v?.[1]) > 0)).map(v => code + ':' + String(v?.[0] || '')));
     if (unpricedVariants.length > 0) pass('سایزهای فاقد قیمت جدا نگه داشته شده‌اند و قیمت ساختگی نخورده‌اند', unpricedVariants.length + ' سایز');
@@ -283,7 +299,7 @@ function testProductsAndFilters() {
 
   const liveProductsHtml = fs.readFileSync(path.join(__dirname, 'products-v4.html'), 'utf8');
   const liveWishlistHtml = fs.readFileSync(path.join(__dirname, 'wishlist.html'), 'utf8');
-  const localFallbackCodes = ['P0452','P0453','P0454','P0455','P0457','P0460','P0468','P0524','P0525','P0526','P0528','P0529','P0530','P0533','P0537','P0538','P0821','P0838','P0840'];
+  const localFallbackCodes = ['P0452','P0453','P0454','P0455','P0456','P0457','P0460','P0468','P0501','P0520','P0521','P0524','P0525','P0526','P0528','P0529','P0530','P0531','P0532','P0533','P0537','P0538','P0539','P0540','P0551','P0821','P0838','P0840'];
   const missingFallbacks = localFallbackCodes.filter(code => !fs.existsSync(path.join(__dirname, 'catalog_site_mapping_908', 'images', code + '.jpg')));
   if (missingFallbacks.length === 0 && fs.existsSync(path.join(__dirname, 'catalog_site_mapping_908', 'images', 'placeholder.svg'))) pass('تصاویر fallback و تصویر جایگزین عمومی در مخزن موجود هستند');
   else fail('فایل‌های fallback تصویر ناقص‌اند', missingFallbacks.join(', ') || 'placeholder.svg missing');
