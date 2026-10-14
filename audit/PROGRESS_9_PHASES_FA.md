@@ -36,30 +36,35 @@ Commit اصلاح کد: https://github.com/sotonnasa-glitch/Azim-abzar/commit/80
 
 ## مرحله ۳ — تطبیق کاتالوگ، قیمت/سایز، تصاویر و ابزارهای جست‌وجو — تکمیل شد
 
-Commit اصلاحات و تست‌های کاتالوگ: https://github.com/sotonnasa-glitch/Azim-abzar/commit/9197ffc35c00718137fa769a62287a5869329877  
-Commit تثبیت آزمون‌ها و fallback تصاویر: https://github.com/sotonnasa-glitch/Azim-abzar/commit/4cef15d0cd54815a480b6129d64f70e6775a1c60  
-Commit نهایی حفظ انتخاب سایز هنگام بازنمایش کارت: https://github.com/sotonnasa-glitch/Azim-abzar/commit/853ab0eb101488fb4931cff7ff467bf2a5979602
+Commit اصلاحات کاتالوگ و تصاویر: https://github.com/sotonnasa-glitch/Azim-abzar/commit/9197ffc35c00718137fa769a62287a5869329877  
+Commit تثبیت آزمون‌ها و فهرست fallback تصاویر: https://github.com/sotonnasa-glitch/Azim-abzar/commit/4cef15d0cd54815a480b6129d64f70e6775a1c60  
+Commit حفظ سایز انتخاب‌شده هنگام بازنمایش کارت: https://github.com/sotonnasa-glitch/Azim-abzar/commit/853ab0eb101488fb4931cff7ff467bf2a5979602  
+Commit تست نهایی انتظار بارگذاری علاقه‌مندی‌ها: https://github.com/sotonnasa-glitch/Azim-abzar/commit/f909c634b5e82f90a3e17e329e2413533e1bdd34  
+Commit تکمیل قیمت‌های fallback برای پنج کد فاقد قیمت در PDF: https://github.com/sotonnasa-glitch/Azim-abzar/commit/973d814497a51b89ad308c9675290b0f8c6c9507
 
-نتیجهٔ تطبیق زندهٔ Supabase با فایل‌های کاتالوگ:
-- ۹۰۸ ردیف در دیتابیس و ۹۰۸ محصول در فایل کاتالوگ؛ کد مفقود/اضافی: صفر، مغایرت نام: صفر، مغایرت دسته‌بندی: صفر.
-- تعداد کلیدهای هر دو فایل پایهٔ قیمت و قیمت/سایز ۹۰۸ است. در تمام قیمت‌های پایه‌ای که منبع PDF مقدار معتبر دارد، اختلاف با دیتابیس زنده پیدا نشد.
-- ۳۶ محصول سایزبندی دارند. پس از یکسان‌سازی نام سایزها، مجموعهٔ گزینه‌ها با دیتابیس منطبق بود؛ مغایرت قیمت میان گزینه‌های متناظر: صفر.
-- منبع PDF شامل ردیف‌های تکراری برای بعضی سایزهاست. به‌جای تغییر یا حذف کورکورانهٔ دادهٔ مرجع، کد نمایش کاتالوگ و علاقه‌مندی‌ها در زمان اجرا گزینه‌ها را نرمال می‌کند؛ اگر نسخهٔ تکراری قیمت نداشته باشد و نسخهٔ هم‌نام قیمت معتبر داشته باشد، قیمت معتبر حفظ می‌شود.
-- پنج کد `P0184`, `P0626`, `P0631`, `P0720`, `P0737` در منبع قیمت PDF قیمت پایه ندارند. آن‌ها به‌عنوان `null` در فایل PDF-محور حفظ شدند، نه اینکه به‌زور قیمت ساختگی داخل منبع درج شود. دیتابیس زنده برای این محصولات قیمت دارد؛ در حالت اتصال زنده از همان داده استفاده می‌شود، و در fallback استاتیک قیمت ناموجود جعلی نمایش داده نمی‌شود.
-- فهرست ۲۸ تصویر جایگزین محلی با فهرست شناخته‌شدهٔ تصاویر استخراج‌نشده همگام شد. بررسی انتشار تأیید کرد هر ۲۸ فایل fallback حاضر است؛ برای موردی که تصویر اصلی و fallback محلی ندارد، تصویر جایگزین طراحی‌شده نمایش داده می‌شود.
-- مرتب‌سازی «دارای سایزبندی»، نمایش قیمت هنگام انتخاب سایز، fallback تصاویر، و علاقه‌مندی‌ها به‌روزرسانی شدند. اگر سایز انتخاب‌شده قیمت ندارد، قیمت پایه به‌جای آن نشان داده نمی‌شود و همان سایز وارد سبد نمی‌شود.
+### نتیجهٔ تطبیق مستقیم Supabase و کاتالوگ
 
-آزمون‌ها روی تغییرات مرحلهٔ ۳:
-- Full site browser audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209577 — **موفق**
-- Security audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209835 — **موفق**
-- Browser cart smoke: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209222 — **موفق**
-- Live smoke tests: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209210 — **موفق**
-- GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209606 — **موفق**
-- Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209015 — **موفق**
-- Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38587209359 — **موفق**
-- Validate cart: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869714 — **موفق**
+- ۹۰۸ محصول در دیتابیس و ۹۰۸ محصول در فایل کاتالوگ وجود دارند؛ کد مفقود/اضافی: صفر؛ مغایرت نام: صفر؛ مغایرت دسته‌بندی: صفر.
+- قیمت پایهٔ زنده با داده‌های کاتالوگ تطبیق داده شد. ۳۶ محصول دارای سایز/مدل‌اند؛ پس از نرمال‌سازی نام سایزها، مغایرت گزینه‌های متناظر و قیمت‌هایشان پیدا نشد.
+- منبع PDF برای بعضی سایزها ردیف‌های تکراری دارد. فایل مرجع PDF بی‌دلیل بازنویسی نشده؛ کاتالوگ و علاقه‌مندی در زمان نمایش سایزها را deduplicate می‌کنند و اگر یک تکرار قیمت نداشته باشد، قیمت معتبر هم‌نام را نگه می‌دارند.
+- پنج کد `P0184`, `P0626`, `P0631`, `P0720`, `P0737` در منبع PDF قیمت پایه ندارند، اما در Supabase قیمت زنده دارند. برای اینکه حالت fallback استاتیک هم قیمت قابل‌استفاده داشته باشد، قیمت‌های تأییدشده در `.github/live-price-overrides.json` جداگانه ثبت و در فرایند تولید کاتالوگ اعمال می‌شوند؛ منبع اصلی PDF همچنان همان دادهٔ خام خود را حفظ می‌کند. این پنج مقدار snapshot دیتابیس در ۱۴ اکتبر ۲۰۲۶ است و هنگام تغییر قیمت‌های فروشگاه باید همراه فهرست قیمت به‌روزرسانی شود.
+- قیمت پایهٔ تمام ۹۰۸ کد در فایل‌های fallback معتبر است و `prices.json` با فیلد قیمت پایه در `price-size-data.json` برابر است. ۱۲ ردیف سایز در منبع فاقد قیمت‌اند؛ آن‌ها قیمت ساختگی نمی‌گیرند و از مسیر افزودن به سبد رد می‌شوند.
+- ۲۸ کد تصویر fallback محلی بررسی شدند؛ فایل‌ها در مخزن هستند. اگر تصویر اصلی و fallback محلی معتبر نباشند، تصویر placeholder طراحی‌شده نمایش داده می‌شود.
+- مرتب‌سازی محصولات سایزبندی‌دار، نمایش قیمت انتخاب جاری، حفظ انتخاب سایز هنگام فیلتر/مرتب‌سازی و بازنمایی کارت، fallback تصاویر و علاقه‌مندی‌ها اصلاح شدند. درخواست زندهٔ علاقه‌مندی هم دیگر در تست با مکث ثابت سنجیده نمی‌شود؛ تست منتظر نتیجهٔ واقعی بارگذاری می‌ماند.
 
-آزمون مرورگر شامل جست‌وجو و مرتب‌سازی، جزئیات محصول، دستیار محصول، جلوگیری از افزودن سایز بی‌قیمت، افزودن سایز معتبر ۴۶، حفظ سایز انتخاب‌شده پس از بازنمایش کارت، انتخاب چند محصول، علاقه‌مندی‌ها و سبد خرید بود. آزمون علاقه‌مندی‌ها به‌جای مکث ثابت ۲٫۵ ثانیه‌ای، منتظر پایان واقعی بارگذاری می‌ماند تا کندی لحظه‌ای شبکه نتیجهٔ کاذب نسازد. موفقیت تست‌ها فقط سناریوهای پوشش‌داده‌شده را تأیید می‌کند و به معنی تضمین صفر باگ در کل سامانه نیست.
+### آزمون‌های موفق روی کد مرحلهٔ ۳
+
+- Full site browser audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304490 — **موفق**
+- Security audit: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304714 — **موفق**
+- Browser cart smoke: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304221 — **موفق**
+- Live smoke tests: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304216 — **موفق**
+- GitHub Pages deploy: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588305082 — **موفق**
+- Verify PDF price variants: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304158 — **موفق**
+- Inspect size source: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304398 — **موفق**
+- Materialize PDF price-size data: https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38588304207 — **موفق**
+- Validate cart (آخرین اجرای مربوط به تغییرات کاتالوگ/سبد): https://github.com/sotonnasa-glitch/Azim-abzar/actions/runs/38585869714 — **موفق**
+
+تست مرورگر شامل جست‌وجو و مرتب‌سازی، جزئیات محصول، دستیار محصول، جلوگیری از افزودن سایز بی‌قیمت با قیمت پایه، افزودن سایز معتبر ۴۶، حفظ انتخاب پس از بازنمایی کارت، افزودن چند کالا، علاقه‌مندی، حذف از علاقه‌مندی و نمایش سبد بود. تست‌های موفق صرفاً سناریوهای پوشش‌داده‌شده را تأیید می‌کنند؛ این نتیجه تضمین مطلق «صفر باگ در کل سایت» نیست. هشدار تنظیمات Supabase Auth ثبت‌شده در مرحلهٔ ۱ نیز جداگانه باز است.
 
 ## ترتیب ادامه — مراحل ۴ تا ۹
 
