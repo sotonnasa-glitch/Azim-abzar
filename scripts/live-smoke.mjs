@@ -132,6 +132,89 @@ if (simple) {
 const checkoutOptions = await rpc("azim_checkout_options");
 assert.equal(typeof checkoutOptions?.online_available, "boolean", "Checkout options missing online_available.");
 
+const checkoutItem = { product_id: wrench.id, variant_label: vLabel, quantity: 1 };
+const checkoutBase = {
+  p_full_name: "Smoke Test",
+  p_mobile: "09120000000",
+  p_email: null,
+  p_address: null,
+  p_city: null,
+  p_discount_code: null,
+  p_items: [checkoutItem],
+  p_payment_method: "phone",
+  p_terms_accepted: true,
+};
+
+// Prove the API recomputes amounts from the database rather than trusting
+// client-supplied prices/line totals. Both requests use preview mode only.
+const canonicalPreview = await rpc("azim_cart_checkout", {
+  p_mode: "preview", ...checkoutBase
+});
+const forgedPricePreview = await rpc("azim_cart_checkout", {
+  p_mode: "preview",
+  ...checkoutBase,
+  p_items: [{ ...checkoutItem, unit_price: 1, price: 1, line_total: 1 }],
+});
+assert.equal(Number(forgedPricePreview?.subtotal), Number(canonicalPreview?.subtotal),
+  "Checkout trusted a client-supplied price/line total.");
+assert.equal(Number(forgedPricePreview?.total), Number(canonicalPreview?.total),
+  "Checkout total changed when client-supplied prices were forged.");
+
+const emptyBasketError = await rpcExpectError("azim_cart_checkout", {
+  p_mode: "preview", ...checkoutBase, p_items: []
+});
+assert.match(String(emptyBasketError?.message || emptyBasketError || ""), /سبد خرید خالی است/,
+  "Checkout accepted an empty cart.");
+
+for (const invalidQuantity of [0, 100]) {
+  const quantityError = await rpcExpectError("azim_cart_checkout", {
+    p_mode: "preview",
+    ...checkoutBase,
+    p_items: [{ ...checkoutItem, quantity: invalidQuantity }],
+  });
+  assert.match(String(quantityError?.message || quantityError || ""), /تعداد هر محصول باید بین ۱ تا ۹۹ باشد/,
+    "Checkout accepted quantity " + invalidQuantity + ".");
+}
+
+const duplicateLineError = await rpcExpectError("azim_cart_checkout", {
+  p_mode: "preview",
+  ...checkoutBase,
+  p_items: [
+    { ...checkoutItem },
+    { ...checkoutItem, variant_label: " " + vLabel + " " },
+  ],
+});
+assert.match(String(duplicateLineError?.message || duplicateLineError || ""), /سبد سفارش تکراری است/,
+  "Checkout accepted duplicate product+variant lines.");
+const duplicateLineGuard = "passed";
+
+const invalidDiscountError = await rpcExpectError("azim_cart_checkout", {
+  p_mode: "preview",
+  ...checkoutBase,
+  p_discount_code: "AZIM-PHASE4-INVALID-PROBE-20261019",
+});
+assert.match(String(invalidDiscountError?.message || invalidDiscountError || ""), /کد تخفیف معتبر نیست/,
+  "Checkout accepted a nonexistent discount code.");
+
+const termsError = await rpcExpectError("azim_cart_checkout", {
+  p_mode: "submit",
+  ...checkoutBase,
+  p_terms_accepted: false,
+});
+assert.match(String(termsError?.message || termsError || ""), /پذیرش شرایط استفاده و حریم خصوصی/,
+  "Checkout accepted a submit without terms acceptance.");
+
+const missingIdempotencyError = await rpcExpectError("azim_cart_checkout", {
+  p_mode: "submit",
+  ...checkoutBase,
+  p_terms_accepted: true,
+});
+assert.match(String(missingIdempotencyError?.message || missingIdempotencyError || ""), /شناسه ثبت سفارش نامعتبر است/,
+  "Checkout accepted a submit without an idempotency key.");
+
+// No submit payload above contains x-idempotency-key; each must be rejected
+// before the server reaches the customer/order insert statements.
+
 const unpricedVariantCase = products.flatMap(product =>
   variants(product)
     .filter(variant => variant?.price == null || !(Number(variant.price) > 0))
@@ -246,6 +329,13 @@ console.log(JSON.stringify({
     no_description: noDescription ? "available_and_tested" : "not_applicable_no_missing_description_product",
     simple_product: Boolean(simple),
     checkout_options: true,
+    client_price_tampering_guard: true,
+    empty_basket_guard: true,
+    invalid_quantity_guards: [0, 100],
+    duplicate_line_guard: duplicateLineGuard,
+    invalid_discount_guard: true,
+    terms_acceptance_guard: true,
+    idempotency_key_required: true,
     unpriced_variant_guard: unpricedVariantGuard,
     checkout_preview: checkoutMode === "online_preview_ok" ? "passed" : "skipped_gateway_disabled",
     checkout_disabled_guard: checkoutMode === "gateway_disabled",

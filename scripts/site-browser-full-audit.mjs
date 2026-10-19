@@ -342,6 +342,27 @@ async function testWishlist(browser){
 async function testCart(browser){
   const context=await browser.newContext({viewport:MOBILE,isMobile:true,hasTouch:true});
   const page=await context.newPage();
+  let couponPreviewCaptured=null;
+  await page.route('**/rest/v1/rpc/azim_cart_checkout',async route=>{
+    const request=route.request();
+    let body=null;
+    try{body=request.postDataJSON();}catch(_){}
+    if(body?.p_mode==='preview' && body?.p_discount_code==='AZIMTEST20'){
+      couponPreviewCaptured=body;
+      await route.fulfill({
+        status:200,
+        contentType:'application/json; charset=utf-8',
+        body:JSON.stringify({
+          valid:true,mode:'preview',subtotal:127200000,eligible_subtotal:127200000,
+          discount:5000000,shipping_cost:0,total:122200000,
+          discount_id:'00000000-0000-4000-8000-000000000003',
+          discount_code:'AZIMTEST20',message:'کد آزمایشی معتبر است.'
+        })
+      });
+      return;
+    }
+    await route.continue();
+  });
   await page.goto(BASE+'/products-v4.html',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>document.querySelector('[data-cart-add-link="P0001"]'),null,{timeout:60000});
   await page.evaluate(()=>window.AZIM_CART?.clear?.());
@@ -375,18 +396,33 @@ async function testCart(browser){
   const onlineDisabled=await online.isDisabled();
   assert.equal(await manualRequest.isChecked(),onlineDisabled,'checkout did not select the safe default method for current gateway state');
 
-  // Cart markup uses signed quantity deltas: +1 to increment and -1 to decrement.
-  await page.locator('#cartItems [data-qty="1"]').first().click();
-  await page.waitForTimeout(150);
-  await page.locator('#cartItems [data-qty="-1"]').first().click();
-  await page.waitForTimeout(150);
+  // Coupon preview is mocked so this tests UI state without depending on a live promotion.
+  await page.locator('#couponInput').fill('azimtest20');
+  await page.locator('#applyCouponBtn').click();
+  await page.waitForFunction(()=>document.querySelector('#couponStatus')?.textContent.includes('کد آزمایشی معتبر است.'),null,{timeout:15000});
+  assert.ok(couponPreviewCaptured,'coupon button did not call checkout preview RPC');
+  assert.equal(couponPreviewCaptured.p_discount_code,'AZIMTEST20','coupon code was not normalized');
+  assert.equal(couponPreviewCaptured.p_items.length,2,'coupon preview did not include both cart lines');
+  assert.ok((await page.locator('#discount').innerText())!=='− ۰ تومان','valid coupon discount was not displayed');
 
-  await page.locator('#cartItems [data-remove]').first().click(); await page.waitForTimeout(200);
-  assert.equal(await page.locator('#cartItems .cart-row').count(),1,'cart remove first item failed');
-  await page.locator('#cartItems [data-remove]').first().click(); await page.waitForTimeout(250);
-  assert.equal(await page.locator('#cartItems .cart-row').count(),0,'cart remove final item failed');
+  // Changing quantity invalidates the displayed quote and clears the stale code;
+  // users must explicitly re-apply so the UI never shows a misleading total.
+  await page.locator('#cartItems [data-qty="1"]').first().click();
+  await page.waitForFunction(()=>window.AZIM_CART?.items?.().find(x=>x.code==='P0001'&&x.variant_label==='46')?.qty===2,null,{timeout:10000});
+  assert.equal(await page.locator('#couponInput').inputValue(),'','stale coupon code remained after quantity change');
+  assert.equal(await page.locator('#discount').innerText(),'− ۰ تومان','discount was not cleared after basket mutation');
+  assert.match(await page.locator('#couponStatus').innerText(),/سبد سفارش تغییر کرد.*کد را مجدداً اعمال کنید/,'coupon invalidation notice missing');
+  await page.locator('#cartItems [data-qty="-1"]').first().click();
+  await page.waitForFunction(()=>window.AZIM_CART?.items?.().find(x=>x.code==='P0001'&&x.variant_label==='46')?.qty===1,null,{timeout:10000});
+
+  // Removing the last item must leave the visible empty-cart state and disable checkout.
+  await page.locator('#cartItems [data-remove]').first().click();
+  await page.waitForFunction(()=>document.querySelectorAll('#cartItems .cart-row').length===1,null,{timeout:10000});
+  await page.locator('#cartItems [data-remove]').first().click();
+  await page.waitForFunction(()=>document.querySelectorAll('#cartItems .cart-row').length===0,null,{timeout:10000});
+  assert.equal(await page.locator('#startCheckoutBtn').isDisabled(),true,'checkout remained enabled for an empty cart');
   await context.close();
-  return {cart:true,images:true,quantity:true,remove:true,onlineOnly:true};
+  return {cart:true,images:true,quantity:true,remove:true,emptyCartGuard:true,couponInvalidation:true,onlineOnly:true};
 }
 
 

@@ -1165,7 +1165,7 @@ main{position:relative;padding:20px 0 64px}
       const code=$('couponInput').value.trim().toUpperCase().replace(/\s+/g,'');
       const mobile=$('mobile').value.trim();
       const status=$('couponStatus');
-      if(!code){ coupon=null; C.raw.couponCode=''; status.textContent='کد تخفیف وارد نشده است.'; status.className='coupon-status'; render(); return; }
+      if(!code){ coupon=null; C.raw.couponCode=''; C.raw.coupon=null; status.textContent='کد تخفیف وارد نشده است.'; status.className='coupon-status'; render(); return; }
       if(!C.items().length){ status.textContent='ابتدا محصولی به سبد اضافه کن.'; status.className='coupon-status err'; return; }
       status.textContent='در حال بررسی کد…'; status.className='coupon-status';
       try{
@@ -1173,11 +1173,27 @@ main{position:relative;padding:20px 0 64px}
         status.textContent=(coupon?.message||'کد تخفیف معتبر است.')+' • تخفیف: '+money(coupon?.discount||0);
         status.className='coupon-status ok';
       }catch(err){
-        coupon=null; C.raw.couponCode=code;
+        coupon=null; C.raw.couponCode=code; C.raw.coupon=null;
         status.textContent=err.message||'کد تخفیف معتبر نیست.';
         status.className='coupon-status err';
       }
       render();
+    }
+
+    function invalidateCouponAfterCartChange(){
+      const hadCoupon=Boolean(coupon || C.raw?.couponCode || $('couponInput')?.value.trim());
+      coupon=null;
+      if(C.raw){
+        C.raw.couponCode='';
+        C.raw.coupon=null;
+      }
+      if(hadCoupon){
+        const status=$('couponStatus');
+        if(status){
+          status.textContent='سبد سفارش تغییر کرد؛ برای محاسبه دوبارهٔ تخفیف، کد را مجدداً اعمال کنید.';
+          status.className='coupon-status';
+        }
+      }
     }
 
     $('cartItems').addEventListener('click',e=>{
@@ -1188,7 +1204,7 @@ main{position:relative;padding:20px 0 64px}
         e.stopPropagation();
         const x=C.items().find(v=>v.key===q.dataset.key);
         if(x) C.update(q.dataset.key,x.qty+Number(q.dataset.qty||0));
-        coupon=null;
+        invalidateCouponAfterCartChange();
         render();
       }
       if(rm){
@@ -1197,7 +1213,7 @@ main{position:relative;padding:20px 0 64px}
         const key=rm.dataset.remove;
         if(key){
           C.remove(key);
-          coupon=null;
+          invalidateCouponAfterCartChange();
           render();
         }
         return;
