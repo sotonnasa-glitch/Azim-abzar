@@ -10,6 +10,8 @@ on:
       - 'database/discount-engine-hardening.sql'
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
+      - 'test-admin-stage5-security-v2.mjs'
+      - 'audit/PROGRESS_9_PHASES_FA.md'
       - 'scripts/admin-browser-smoke.mjs'
       - 'supabase/migrations/20260927003600_admin_payment_control_center.sql'
       - '.github/workflows/validate-admin.yml'
@@ -22,6 +24,8 @@ on:
       - 'database/discount-engine-hardening.sql'
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
+      - 'test-admin-stage5-security-v2.mjs'
+      - 'audit/PROGRESS_9_PHASES_FA.md'
       - 'scripts/admin-browser-smoke.mjs'
       - '.github/workflows/validate-admin.yml'
 
@@ -37,6 +41,8 @@ jobs:
         run: node --check admin-app.js
       - name: Deep admin static regression audit
         run: node test-admin-static.mjs
+      - name: Stage 5 admin security regression tests
+        run: node test-admin-stage5-security-v2.mjs
       - name: Verify discount SQL
         shell: bash
         run: |
