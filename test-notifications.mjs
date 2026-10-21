@@ -5,6 +5,7 @@ const files = [
   "azim-notification-admin.js",
   "supabase/functions/azim-notification-config/index.ts",
   "supabase/functions/azim-order-notify/index.ts",
+  "supabase/functions/azim-consultation-notify/index.ts",
   "supabase/functions/azim-telegram-admin/index.ts",
   "supabase/migrations-archive/20260928090000_notification_system.sql",
   "admin.html"
@@ -14,6 +15,7 @@ for (const file of files) assert.ok(existsSync(file), "Missing " + file);
 const admin = readFileSync("azim-notification-admin.js","utf8");
 const cfg = readFileSync("supabase/functions/azim-notification-config/index.ts","utf8");
 const notify = readFileSync("supabase/functions/azim-order-notify/index.ts","utf8");
+const consultNotify = readFileSync("supabase/functions/azim-consultation-notify/index.ts","utf8");
 const telegramAdmin = readFileSync("supabase/functions/azim-telegram-admin/index.ts","utf8");
 const migration = readFileSync("supabase/migrations-archive/20260928090000_notification_system.sql","utf8");
 const html = readFileSync("admin.html","utf8");
@@ -65,12 +67,32 @@ assert.ok(replyAuthIndex >= 0 && replyParseIndex > replyAuthIndex,
   "Telegram reply actions must reject non-admins before reading action state");
 
 const webhookStart = telegramAdmin.indexOf("Deno.serve(async (req) => {");
-const webhookSecretIndex = telegramAdmin.indexOf("if (suppliedSecret !== expectedSecret)", webhookStart);
+const webhookSecretIndex = telegramAdmin.indexOf("if (!constantTimeEqual(suppliedSecret, expectedSecret))", webhookStart);
 const webhookParseIndex = telegramAdmin.indexOf("const update = await req.json();", webhookSecretIndex);
 assert.ok(webhookStart >= 0 && webhookSecretIndex > webhookStart && webhookParseIndex > webhookSecretIndex,
   "Telegram webhook must validate its secret before parsing/dispatching updates");
 assert.match(telegramAdmin.slice(webhookSecretIndex, webhookParseIndex), /status: 403/,
   "Invalid Telegram webhook secret must be rejected with HTTP 403");
+
+assert.ok(telegramAdmin.includes("if (!supplied || !constantTimeEqual(supplied, expected))"),
+  "Telegram setup endpoint must compare its secret in constant time");
+assert.ok(telegramAdmin.includes("function constantTimeEqual("),
+  "Telegram handler must define constant-time secret comparison");
+
+for (const [name, source] of [
+  ["Telegram webhook", telegramAdmin],
+  ["order notification", notify],
+  ["consultation notification", consultNotify]
+]) {
+  assert.ok(source.includes("function constantTimeEqual("), name + " must define constant-time comparison");
+}
+assert.ok(notify.includes("!constantTimeEqual(provided,expected)"),
+  "Order notification must compare its internal token in constant time");
+assert.ok(consultNotify.includes("!constantTimeEqual(provided, expected)"),
+  "Consultation notification must compare its internal token in constant time");
+assert.ok(!/provided\\s*!==\\s*expected/.test(notify), "Order notification retains direct token comparison");
+assert.ok(!/provided\\s*!==\\s*expected/.test(consultNotify), "Consultation notification retains direct token comparison");
+
 
 for (const needle of ["notification_settings","notification_logs","azim_notify_order_change","azim_notify_return_change","orders_azim_notification"]) {
   assert.ok(migration.includes(needle), "Migration missing " + needle);
