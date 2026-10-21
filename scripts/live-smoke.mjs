@@ -314,6 +314,8 @@ const notificationAuthGuards = {
   consultation: await expectUnauthorizedEndpoint("azim-consultation-notify", "x-azim-internal-token"),
   order: await expectUnauthorizedEndpoint("azim-order-notify", "x-azim-internal-token"),
   telegramWebhook: await expectUnauthorizedEndpoint("azim-telegram-admin", "x-telegram-bot-api-secret-token"),
+  paymentReconcile: await expectUnauthorizedEndpoint("azim-payment-reconcile", "x-azim-reconcile-secret"),
+  paymentRefund: await expectUnauthorizedEndpoint("azim-payment-gateway", "authorization", { action: "refund" }),
 };
 
 console.log(JSON.stringify({
