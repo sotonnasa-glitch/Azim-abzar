@@ -12,6 +12,17 @@ const SERVICE_KEY = (() => {
 const LEGACY_RECONCILE_SECRET = String(Deno.env.get("AZIM_PAYMENT_RECONCILE_SECRET") ?? "");
 const RECONCILE_AGE_MINUTES = Math.max(1, Math.min(1440, Number(Deno.env.get("PAYMENT_RECONCILE_AGE_MINUTES") || 10) || 10));
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let difference = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let i = 0; i < length; i++) {
+    difference |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return difference === 0;
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -36,7 +47,7 @@ async function currentSettings() {
 }
 
 async function validateReconcileSecret(presented: string) {
-  if (presented && LEGACY_RECONCILE_SECRET && presented === LEGACY_RECONCILE_SECRET) return true;
+  if (presented && LEGACY_RECONCILE_SECRET && constantTimeEqual(presented, LEGACY_RECONCILE_SECRET)) return true;
   if (!presented) return false;
   try {
     const { response, body } = await rest("/rest/v1/rpc/azim_validate_reconcile_secret", {
@@ -104,7 +115,7 @@ Deno.serve(async (req) => {
   const presentedSecret = req.headers.get("x-azim-reconcile-secret") ?? "";
   const serviceKey = req.headers.get("apikey") ?? "";
   const secretOk = await validateReconcileSecret(presentedSecret);
-  const legacyServiceOk = serviceKey === SERVICE_KEY && serviceKey !== "";
+  const legacyServiceOk = serviceKey !== "" && constantTimeEqual(serviceKey, SERVICE_KEY);
   if (!secretOk && !legacyServiceOk) return json({ ok: false, error: "Unauthorized" }, 401);
 
   try {

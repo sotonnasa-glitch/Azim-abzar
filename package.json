@@ -9,7 +9,7 @@
     "build": "node -e \"console.log('Build complete')\"",
     "lint": "npm run check",
     "check": "node --check server.js && node --input-type=module --check < api/chat.js && node --check admin-app.js && node --check azim-notification-admin.js",
-    "test": "node test-automated.mjs && node test-notifications.mjs && node test-rpc-security-hardening.mjs"
+    "test": "node test-automated.mjs && node test-notifications.mjs && node test-rpc-security-hardening.mjs && node test-payment-secret-comparisons.mjs"
   },
   "dependencies": {
     "express": "4.22.3",

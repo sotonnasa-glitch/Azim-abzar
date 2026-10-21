@@ -300,11 +300,11 @@ assert.equal(wrongMobile?.found, false, "Wrong mobile was able to retrieve an ex
 
 // Negative authorization probes only: each request uses an intentionally bad
 // secret, so handlers must stop before parsing an event or sending any message.
-async function expectUnauthorizedEndpoint(slug, headerName) {
+async function expectUnauthorizedEndpoint(slug, headerName, body = {}) {
   const response = await fetch(base + "/functions/v1/" + slug, {
     method: "POST",
     headers: { ...headers, [headerName]: "invalid-smoke-probe" },
-    body: JSON.stringify({}),
+    body: JSON.stringify(body),
   });
   await response.text();
   assert.ok([401, 403].includes(response.status), slug + " should reject an invalid webhook secret before dispatch.");
@@ -314,6 +314,8 @@ const notificationAuthGuards = {
   consultation: await expectUnauthorizedEndpoint("azim-consultation-notify", "x-azim-internal-token"),
   order: await expectUnauthorizedEndpoint("azim-order-notify", "x-azim-internal-token"),
   telegramWebhook: await expectUnauthorizedEndpoint("azim-telegram-admin", "x-telegram-bot-api-secret-token"),
+  paymentReconcile: await expectUnauthorizedEndpoint("azim-payment-reconcile", "x-azim-reconcile-secret"),
+  paymentRefund: await expectUnauthorizedEndpoint("azim-payment-gateway", "authorization", { action: "refund" }),
 };
 
 console.log(JSON.stringify({
