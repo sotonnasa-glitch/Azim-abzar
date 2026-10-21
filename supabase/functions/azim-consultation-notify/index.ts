@@ -21,6 +21,17 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let difference = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let i = 0; i < length; i++) {
+    difference |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return difference === 0;
+}
+
 function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -64,7 +75,7 @@ Deno.serve(async(req:Request)=>{
     }
     const expected=await secret("azim_notification_internal_token");
     const provided=String(req.headers.get("x-azim-internal-token")??"");
-    if(!expected || !provided || provided!==expected){
+    if(!expected || !provided || !constantTimeEqual(provided, expected)){
       return response({ok:false,error:"UNAUTHORIZED"},401);
     }
 
