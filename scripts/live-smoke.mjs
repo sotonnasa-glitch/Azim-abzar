@@ -300,11 +300,11 @@ assert.equal(wrongMobile?.found, false, "Wrong mobile was able to retrieve an ex
 
 // Negative authorization probes only: each request uses an intentionally bad
 // secret, so handlers must stop before parsing an event or sending any message.
-async function expectUnauthorizedEndpoint(slug, headerName) {
+async function expectUnauthorizedEndpoint(slug, headerName, body = {}) {
   const response = await fetch(base + "/functions/v1/" + slug, {
     method: "POST",
     headers: { ...headers, [headerName]: "invalid-smoke-probe" },
-    body: JSON.stringify({}),
+    body: JSON.stringify(body),
   });
   await response.text();
   assert.ok([401, 403].includes(response.status), slug + " should reject an invalid webhook secret before dispatch.");
