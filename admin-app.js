@@ -2021,14 +2021,15 @@
       const discountValue = s.discount_value?.value === '' ? null : Number(s.discount_value.value);
       const discountStarts = s.discount_starts_at?.value ? new Date(s.discount_starts_at.value).toISOString() : null;
       const discountEnds = s.discount_ends_at?.value ? new Date(s.discount_ends_at.value).toISOString() : null;
-      if (discountActive && (!discountValue || !Number.isFinite(discountValue) || discountValue < 1)) throw new Error('مقدار تخفیف الزامی است.');
+      if (discountValue != null && (!Number.isSafeInteger(discountValue) || discountValue < 0)) throw new Error('مقدار تخفیف باید عدد صحیح صفر یا بیشتر باشد.');
+      if (discountActive && (!discountValue || discountValue < 1)) throw new Error('مقدار تخفیف الزامی است.');
       if (discountActive && discountType === 'percentage' && discountValue > 100) throw new Error('درصد تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد.');
       if (discountStarts && discountEnds && new Date(discountEnds) <= new Date(discountStarts)) throw new Error('پایان تخفیف باید بعد از شروع باشد.');
       const originalPrice = s.original_price.value === '' ? null : Number(s.original_price.value);
       const currentPrice = s.price.value === '' ? null : Number(s.price.value);
       const stockQuantity = s.stock_quantity?.value === '' ? 0 : Number(s.stock_quantity?.value);
-      if (originalPrice != null && (!Number.isFinite(originalPrice) || originalPrice < 0)) throw new Error('قیمت اصلی نامعتبر است.');
-      if (currentPrice != null && (!Number.isFinite(currentPrice) || currentPrice < 0)) throw new Error('قیمت فعلی نامعتبر است.');
+      if (originalPrice != null && (!Number.isSafeInteger(originalPrice) || originalPrice < 0)) throw new Error('قیمت اصلی باید عدد صحیح صفر یا بیشتر باشد.');
+      if (currentPrice != null && (!Number.isSafeInteger(currentPrice) || currentPrice < 0)) throw new Error('قیمت فعلی باید عدد صحیح صفر یا بیشتر باشد.');
       if (!Number.isInteger(stockQuantity) || stockQuantity < 0) throw new Error('موجودی باید یک عدد صحیح صفر یا بیشتر باشد.');
 
       const p = {
@@ -2180,7 +2181,7 @@
         const active = row.querySelector('[data-q-active]').checked;
         if (!name) throw new Error('نام محصول نمی‌تواند خالی باشد.');
         const price = priceValue === '' ? null : Number(priceValue);
-        if (priceValue !== '' && !Number.isFinite(price)) throw new Error('قیمت نامعتبر برای «' + name + '».');
+        if (priceValue !== '' && (!Number.isSafeInteger(price) || price < 0)) throw new Error('قیمت باید عدد صحیح صفر یا بیشتر باشد؛ مقدار واردشده برای «' + name + '» معتبر نیست.');
 
         const patch = {
           name,
