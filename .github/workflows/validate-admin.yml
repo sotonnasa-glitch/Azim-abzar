@@ -37,6 +37,8 @@ jobs:
         run: node --check admin-app.js
       - name: Deep admin static regression audit
         run: node test-admin-static.mjs
+      - name: Verify admin request MFA and role guards
+        run: node test-admin-stage5-security.mjs
       - name: Verify discount SQL
         shell: bash
         run: |
