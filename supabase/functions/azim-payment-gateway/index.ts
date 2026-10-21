@@ -84,9 +84,21 @@ async function allowed(req: Request, scope: string) {
   return result?.allowed === true;
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let difference = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let i = 0; i < length; i++) {
+    difference |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return difference === 0;
+}
+
 function isInternalReconcile(req: Request) {
+  const apiKey = String(req.headers.get("apikey") ?? "");
   return req.headers.get("x-azim-internal") === "reconcile"
-    && String(req.headers.get("apikey") ?? "") === SERVICE_KEY;
+    && apiKey.length > 0 && constantTimeEqual(apiKey, SERVICE_KEY);
 }
 
 function clean(value: unknown, max = 500) {
