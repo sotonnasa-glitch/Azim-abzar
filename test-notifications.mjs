@@ -90,8 +90,8 @@ assert.ok(notify.includes("!constantTimeEqual(provided,expected)"),
   "Order notification must compare its internal token in constant time");
 assert.ok(consultNotify.includes("!constantTimeEqual(provided, expected)"),
   "Consultation notification must compare its internal token in constant time");
-assert.ok(!/provided\\s*!==\\s*expected/.test(notify), "Order notification retains direct token comparison");
-assert.ok(!/provided\\s*!==\\s*expected/.test(consultNotify), "Consultation notification retains direct token comparison");
+assert.ok(!/provided\s*!==\s*expected/.test(notify), "Order notification retains direct token comparison");
+assert.ok(!/provided\s*!==\s*expected/.test(consultNotify), "Consultation notification retains direct token comparison");
 
 
 for (const needle of ["notification_settings","notification_logs","azim_notify_order_change","azim_notify_return_change","orders_azim_notification"]) {
