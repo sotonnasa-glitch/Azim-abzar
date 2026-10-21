@@ -5,9 +5,12 @@ const PUBLISHABLE_KEYS = (() => {
   try { return JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}"); } catch { return {}; }
 })();
 const PUBLIC_KEY = PUBLISHABLE_KEYS.default ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? PUBLIC_KEY;
+const SECRET_KEYS = (() => {
+  try { return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}"); } catch { return {}; }
+})();
+const HAS_SERVICE_KEY = Boolean(SECRET_KEYS.default || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+const SERVICE_KEY = String(SECRET_KEYS.default ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? PUBLIC_KEY);
 
-const RATE = new Map<string, { start: number; count: number }>();
 const WINDOW_MS = 10 * 60 * 1000;
 const DEFAULT_RATE_LIMIT = 12;
 
@@ -43,24 +46,51 @@ function response(body: unknown, status = 200, req?: Request) {
 }
 
 function clientIp(req: Request) {
-  return req.headers.get("cf-connecting-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown";
+  return req.headers.get("cf-connecting-ip")?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "";
 }
 
-function allowed(req: Request, limit = DEFAULT_RATE_LIMIT) {
-  const now = Date.now();
-  const key = clientIp(req);
-  const item = RATE.get(key) ?? { start: now, count: 0 };
-  if (now - item.start >= WINDOW_MS) { item.start = now; item.count = 0; }
-  item.count++;
-  RATE.set(key, item);
-  if (RATE.size > 5000) {
-    for (const [k, v] of RATE) {
-      if (now - v.start >= WINDOW_MS) RATE.delete(k);
+async function allowed(req: Request, limit = DEFAULT_RATE_LIMIT): Promise<{
+  allowed: boolean;
+  retryAfterSeconds: number;
+} | null> {
+  const ip = clientIp(req);
+  if (!SUPABASE_URL || !HAS_SERVICE_KEY || !SERVICE_KEY || !ip) return null;
+
+  try {
+    // Hash the client IP before storing it in the shared rate-limit table.
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
+    const bucketKey = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+    const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/azim_consume_payment_rate_limit", {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: "Bearer " + SERVICE_KEY,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        p_scope: "ai_chat",
+        p_bucket_key: bucketKey,
+        p_limit: Math.max(1, Math.min(60, Number(limit) || DEFAULT_RATE_LIMIT)),
+        p_window_seconds: WINDOW_MS / 1000,
+      }),
+    });
+    if (!r.ok) {
+      console.error("AI rate-limit store unavailable:", r.status);
+      return null;
     }
+    const result = await r.json().catch(() => null);
+    if (typeof result?.allowed !== "boolean") return null;
+    return {
+      allowed: result.allowed,
+      retryAfterSeconds: Math.max(0, Number(result.retry_after_seconds) || 0),
+    };
+  } catch (error) {
+    console.error("AI rate-limit store unavailable:", error instanceof Error ? error.message : "unknown");
+    return null;
   }
-  return item.count <= Math.max(1, Math.min(60, Number(limit) || DEFAULT_RATE_LIMIT));
 }
 
 async function getSettings() {
@@ -550,8 +580,15 @@ Deno.serve(async (req) => {
 
   const settings = await getSettings();
   const rateLimit = Number(settings?.max_requests_10m || DEFAULT_RATE_LIMIT);
-  if (!allowed(req, rateLimit)) {
-    return response({ error: "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کنید." }, 429, req);
+  const quota = await allowed(req, rateLimit);
+  if (!quota) {
+    return response({ error: "سامانه کنترل تعداد درخواست‌ها موقتاً در دسترس نیست؛ بعداً دوباره تلاش کنید." }, 503, req);
+  }
+  if (!quota.allowed) {
+    return response({
+      error: "تعداد درخواست‌ها زیاد است؛ کمی بعد دوباره تلاش کنید.",
+      retry_after_seconds: quota.retryAfterSeconds,
+    }, 429, req);
   }
 
   let incomingMessage = "";
