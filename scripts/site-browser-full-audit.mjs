@@ -385,11 +385,13 @@ async function testCart(browser){
   await page.waitForFunction(() => !!window.AZIM_CART && document.querySelector('#cartItems'), null, {timeout:15000});
   await page.waitForFunction(() => document.querySelectorAll('#cartItems .cart-row').length === 2, null, {timeout:20000});
   assert.equal(await page.locator('#cartItems .cart-row').count(),2,'cart did not render two items');
-  const cartImages = await page.locator('#cartItems .cart-img img').all();
-  assert.equal(cartImages.length,2,'cart product image elements missing');
-  // Cart images are lazy-loaded. Bring each into the viewport before asserting
-  // naturalWidth, otherwise a valid image can be checked before the browser starts it.
-  for (const image of cartImages) await image.scrollIntoViewIfNeeded();
+  const cartImages = page.locator('#cartItems .cart-img img');
+  assert.equal(await cartImages.count(),2,'cart product image elements missing');
+  // Use live locators rather than ElementHandles: the cart can re-render while
+  // image loading begins, which detaches ElementHandles returned by locator.all().
+  // Each locator action re-resolves its target after a re-render.
+  await cartImages.nth(0).scrollIntoViewIfNeeded();
+  await cartImages.nth(1).scrollIntoViewIfNeeded();
   await page.waitForFunction(() => {
     const imgs=[...document.querySelectorAll('#cartItems .cart-img img')];
     return imgs.length===2 && imgs.every(i=>i.complete && i.naturalWidth>0);
