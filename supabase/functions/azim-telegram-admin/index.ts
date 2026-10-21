@@ -53,6 +53,17 @@ async function tokenDigestHex() {
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let difference = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let i = 0; i < length; i++) {
+    difference |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return difference === 0;
+}
+
 function isAdmin(chatId: number | string) {
   return ADMIN_IDS.has(String(chatId));
 }
@@ -2145,7 +2156,7 @@ Deno.serve(async (req) => {
       if (url.pathname.endsWith("/setup-webhook")) {
         const supplied = req.headers.get("x-telegram-setup-secret") ?? "";
         const expected = (await tokenDigestHex()).slice(0, 64);
-        if (!supplied || supplied !== expected) {
+        if (!supplied || !constantTimeEqual(supplied, expected)) {
           return new Response("forbidden", { status: 403 });
         }
         const result = await setupWebhook();
@@ -2169,7 +2180,7 @@ Deno.serve(async (req) => {
     const expectedSecret = (await tokenDigestHex()).slice(0, 64);
     const suppliedSecret = req.headers.get("x-telegram-bot-api-secret-token") ?? "";
 
-    if (suppliedSecret !== expectedSecret) {
+    if (!constantTimeEqual(suppliedSecret, expectedSecret)) {
       return new Response("forbidden", { status: 403 });
     }
 

@@ -80,6 +80,17 @@ const DEFAULT_SUBJECTS: Record<string,string> = {
   refund_paid:"وضعیت استرداد {{order_code}} | عظیم ابزار"
 };
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let difference = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let i = 0; i < length; i++) {
+    difference |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return difference === 0;
+}
+
 function json(body:unknown,status=200){
   return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8"}});
 }
@@ -360,7 +371,7 @@ Deno.serve(async(req:Request)=>{
   try{
     const expected=await secret("azim_notification_internal_token");
     const provided=String(req.headers.get("x-azim-internal-token")??"");
-    if(!expected||!provided||provided!==expected)return json({ok:false,error:"UNAUTHORIZED"},401);
+    if(!expected||!provided||!constantTimeEqual(provided,expected))return json({ok:false,error:"UNAUTHORIZED"},401);
 
     const body=await req.json();
     const kind=clean(body?.kind,20);
