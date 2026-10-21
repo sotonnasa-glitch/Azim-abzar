@@ -505,16 +505,20 @@ function testCartAndCheckout() {
 
   const liveSmoke = fs.readFileSync(path.join(__dirname, 'scripts', 'live-smoke.mjs'), 'utf8');
   if (
-    liveSmoke.includes('async function expectUnauthorizedEndpoint(slug, headerName)') &&
+    liveSmoke.includes('async function expectUnauthorizedEndpoint(slug, headerName, body = {})') &&
     liveSmoke.includes('azim-consultation-notify') &&
     liveSmoke.includes('azim-order-notify') &&
     liveSmoke.includes('azim-telegram-admin') &&
+    liveSmoke.includes('azim-payment-reconcile') &&
+    liveSmoke.includes('azim-payment-gateway') &&
+    liveSmoke.includes('paymentRefund: await expectUnauthorizedEndpoint') &&
+    liveSmoke.includes('paymentReconcile: await expectUnauthorizedEndpoint') &&
     liveSmoke.includes('invalid-smoke-probe') &&
     liveSmoke.includes('includes(response.status)') && liveSmoke.includes('[401, 403]')
   ) {
-    pass('Live smoke سه webhook را با توکن جعلی و بدون ارسال پیام واقعی از نظر مجوز بررسی می‌کند');
+    pass('Live smoke پنج endpoint وب‌هوک/پرداخت را با اعتبار جعلی و بدون تغییر سفارش واقعی از نظر مجوز بررسی می‌کند');
   } else {
-    fail('آزمون بی‌خطر مجوز webhookهای تلگرام/اعلان ناقص است');
+    fail('آزمون بی‌خطر مجوز وب‌هوک‌ها و endpointهای پرداخت ناقص است');
   }
 
   const browserAudit = fs.readFileSync(path.join(__dirname, 'scripts', 'site-browser-full-audit.mjs'), 'utf8');
