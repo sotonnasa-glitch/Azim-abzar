@@ -17,6 +17,7 @@ const orderRefundFixMigration = readFileSync('supabase/migrations/20261007133000
 const orderIntegrityMigration = readFileSync('supabase/migrations/20261008230435_admin_orders_integrity_and_actions.sql', 'utf8');
 const orderTrackingPermissionMigration = readFileSync('supabase/migrations/20261008234852_fix_order_tracking_rpc_permissions.sql', 'utf8');
 const paymentReconciliationMigration = readFileSync('supabase/migrations/20261008234947_order_paid_at_reconciliation_and_reference_rpc.sql', 'utf8');
+const productIntegrityMigration = readFileSync('supabase/migrations/20261021100000_admin_product_numeric_integrity.sql', 'utf8');
 
 const css = readFileSync('admin-modern.css', 'utf8');
 const cssLike = () => css.includes('.az-order-control') && css.includes('.az-order-edit-section') && css.includes('.az-order-control-secondary');
@@ -233,6 +234,22 @@ if (!js.includes("readonly aria-readonly=\"true\"")) {
 if (!js.includes("حجم تصویر محصول نباید بیشتر از ۱۰ مگابایت باشد.")) {
   fail('product image size validation is missing at save time');
 }
+
+if (!js.includes("!Number.isSafeInteger(price) || price < 0")) fail('quick product editor does not reject negative/non-integer prices');
+if (!js.includes("!Number.isSafeInteger(originalPrice) || originalPrice < 0") || !js.includes("!Number.isSafeInteger(currentPrice) || currentPrice < 0")) fail('product editor does not enforce integer non-negative prices');
+for (const constraint of [
+  'products_price_nonnegative',
+  'products_original_price_nonnegative',
+  'products_stock_quantity_nonnegative',
+  'products_discount_value_nonnegative',
+  'products_active_discount_valid'
+]) if (!productIntegrityMigration.includes(constraint)) fail('database product integrity constraint is missing: ' + constraint);
+if (!productIntegrityMigration.includes('price IS NULL OR price >= 0') ||
+    !productIntegrityMigration.includes('original_price IS NULL OR original_price >= 0') ||
+    !productIntegrityMigration.includes('stock_quantity >= 0') ||
+    !productIntegrityMigration.includes('discount_value IS NULL OR discount_value >= 0') ||
+    !productIntegrityMigration.includes('discount_value <= 100')) fail('database product numeric integrity rules are incomplete');
+
 if (!js.includes("state.db.rpc('azim_save_discount'")) {
   fail('discount editor is not using atomic save RPC');
 }
