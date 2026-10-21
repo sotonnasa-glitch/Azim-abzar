@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const migration = readFileSync('supabase/migrations/20261021101000_harden_admin_request_mfa.sql', 'utf8');
+const migration = readFileSync('supabase/migrations/20261021070851_harden_admin_request_mfa.sql', 'utf8');
 const adminJs = readFileSync('admin-app.js', 'utf8');
 
 function functionBlock(name, nextName) {
