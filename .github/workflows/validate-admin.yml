@@ -11,6 +11,7 @@ on:
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
       - 'test-admin-stage5-security-v2.mjs'
+      - 'audit/PROGRESS_9_PHASES_FA.md'
       - 'scripts/admin-browser-smoke.mjs'
       - 'supabase/migrations/20260927003600_admin_payment_control_center.sql'
       - '.github/workflows/validate-admin.yml'
@@ -24,6 +25,7 @@ on:
       - 'database/admin-integrity.sql'
       - 'test-admin-static.mjs'
       - 'test-admin-stage5-security-v2.mjs'
+      - 'audit/PROGRESS_9_PHASES_FA.md'
       - 'scripts/admin-browser-smoke.mjs'
       - '.github/workflows/validate-admin.yml'
 
