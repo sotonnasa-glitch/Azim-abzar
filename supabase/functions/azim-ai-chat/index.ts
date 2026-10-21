@@ -47,7 +47,6 @@ function response(body: unknown, status = 200, req?: Request) {
 
 function clientIp(req: Request) {
   return req.headers.get("cf-connecting-ip")?.trim() ||
-    req.headers.get("x-real-ip")?.trim() ||
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "";
 }
